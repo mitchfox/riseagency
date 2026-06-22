@@ -625,10 +625,10 @@ export default function ClubOutreachProposal() {
                     heroAutoplayedRef.current = true;
                   }}
                 />
-                {shouldCropHeroVideo(current.first_highlight_url) && !heroPreparing && (
+                {shouldCropHeroVideo(activeVideoUrl ?? current.first_highlight_url) && !heroPreparing && (
                   <CroppedHeroControls videoRef={videoRef} />
                 )}
-                {heroPreparing && (
+                {heroPreparing && !activeVideoUrl && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
                   <Loader2 className="h-8 w-8 animate-spin text-[#cbb96b]" />
                   <p className="text-xs uppercase tracking-[0.3em] text-white/50">
@@ -641,6 +641,44 @@ export default function ClubOutreachProposal() {
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
           </div>
+          {/* Video carousel — only when the player has more than one highlight */}
+          {(current.videos?.length ?? 0) > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {current.videos!.map((v) => {
+                const isActive = (activeVideoUrl ?? current.first_highlight_url) === v.videoUrl;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveVideoUrl(v.videoUrl);
+                      // Scroll the hero back into view on small screens.
+                      videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }}
+                    className={`shrink-0 rounded-lg border px-3 py-2 text-left transition-colors ${
+                      isActive
+                        ? "border-[#cbb96b] bg-[#cbb96b]/15"
+                        : "border-white/10 bg-white/[0.03] hover:border-[#cbb96b]/60"
+                    }`}
+                    style={isActive ? { boxShadow: `0 6px 18px -10px ${clubGlow}aa` } : undefined}
+                  >
+                    <div className="flex items-center gap-2">
+                      {v.logoUrl ? (
+                        <img src={v.logoUrl} alt="" className="h-6 w-6 object-contain bg-white/5 rounded" />
+                      ) : (
+                        <div className="h-6 w-6 rounded bg-white/5 flex items-center justify-center">
+                          <Video className="h-3 w-3 text-white/60" />
+                        </div>
+                      )}
+                      <span className="text-[11px] font-medium text-white/85 whitespace-nowrap max-w-[180px] truncate">
+                        {v.name}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
