@@ -478,6 +478,82 @@ export default function ClubOutreachProposal() {
   const isSuggestedToAgent = !!data.link.is_suggested_to_agent && isMandated;
   const suggestedAgentNote = (data.link.suggested_agent_note ?? "").trim();
 
+  if (inlineDataOpen) {
+    return (
+      <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
+        <div
+          className="fixed inset-0 -z-10 bg-black"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.85)), url(${blackMarbleBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="sticky top-0 z-20 bg-black/80 backdrop-blur border-b border-white/10">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setInlineDataOpen(false);
+                try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border border-white/15 text-white/80 hover:border-[#cbb96b]/60 hover:text-white transition"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {tr("inline.back", "Back to proposal")}
+            </button>
+            <p className="ml-auto text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#cbb96b] truncate">
+              {tr("card.videoTitle", "Video & Data")}
+              {current?.player?.name ? ` · ${current.player.name}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+          {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+          )}
+          {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+          )}
+          {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+          )}
+          {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
+            <MatchByMatchCard
+              analyses={current.match_by_match}
+              position={current?.player?.position ?? null}
+            />
+          )}
+          {current?.stars_url && (
+            <div className="flex justify-end pt-1">
+              <a
+                href={current.stars_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+              >
+                {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          )}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setInlineDataOpen(false);
+                try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+              }}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-white/15 text-white/80 hover:border-[#cbb96b]/60 hover:text-white transition"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {tr("inline.back", "Back to proposal")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
       {/* Smudged black marble brand background */}
