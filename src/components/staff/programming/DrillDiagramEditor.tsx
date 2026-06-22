@@ -469,6 +469,32 @@ export const DrillDiagramView = ({ diagram, className }: ViewProps) => {
           </g>
         );
       })}
+      {(diagram.shapes ?? []).map(s => {
+        const st = SHAPE_STYLES[s.kind];
+        const dx = s.to.x - s.from.x;
+        const dy = s.to.y - s.from.y;
+        const len = Math.max(0.001, Math.hypot(dx, dy));
+        const nx = -dy / len;
+        const ny = dx / len;
+        const half = st.width / 2;
+        if (s.kind === "line") {
+          return <line key={s.id} x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke={st.stroke} strokeWidth={st.width} strokeDasharray="3 2" strokeLinecap="round" opacity={0.9} />;
+        }
+        const p1 = { x: s.from.x + nx * half, y: s.from.y + ny * half };
+        const p2 = { x: s.to.x + nx * half, y: s.to.y + ny * half };
+        const p3 = { x: s.to.x - nx * half, y: s.to.y - ny * half };
+        const p4 = { x: s.from.x - nx * half, y: s.from.y - ny * half };
+        return (
+          <g key={s.id}>
+            <polygon points={`${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}`} fill={st.fill} stroke={st.stroke} strokeWidth="0.25" />
+            {s.kind === "rebounder" && (
+              <line x1={(s.from.x + s.to.x) / 2 - dx * 0.18} y1={(s.from.y + s.to.y) / 2 - dy * 0.18}
+                    x2={(s.from.x + s.to.x) / 2 + dx * 0.18} y2={(s.from.y + s.to.y) / 2 + dy * 0.18}
+                    stroke="#fde68a" strokeWidth="0.25" strokeDasharray="0.6 0.6" />
+            )}
+          </g>
+        );
+      })}
       {diagram.tokens.map(t => {
         if (t.kind === "player") {
           return (
