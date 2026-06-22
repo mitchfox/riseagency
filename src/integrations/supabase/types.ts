@@ -10254,6 +10254,7 @@ export type Database = {
         | "member"
         | "stats_updater"
         | "marketing_gallery"
+        | "table_editor"
       outreach_rapport_level:
         | "cold"
         | "warming"
@@ -10404,6 +10405,7 @@ export const Constants = {
         "member",
         "stats_updater",
         "marketing_gallery",
+        "table_editor",
       ],
       outreach_rapport_level: [
         "cold",
