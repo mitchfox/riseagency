@@ -2664,6 +2664,23 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the proposal section order for this player.</p>
                   <SectionOrderBuilder order={playerDefaultSectionOrder} onChange={setPlayerDefaultSectionOrder} />
                 </div>
+                <div>
+                  <Label>Default — Match by Match category</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Which tab opens first on the proposal's Match by Match table for this player.</p>
+                  <Select
+                    value={playerDefaultMbmCategory || "__default__"}
+                    onValueChange={(v) => setPlayerDefaultMbmCategory(v === "__default__" ? "" : v)}
+                  >
+                    <SelectTrigger className="max-w-xs"><SelectValue placeholder="Default (Passing)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__default__">Default (Passing)</SelectItem>
+                      <SelectItem value="Shooting">Shooting</SelectItem>
+                      <SelectItem value="Passing">Passing</SelectItem>
+                      <SelectItem value="Possession">Possession</SelectItem>
+                      <SelectItem value="Defending">Defending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex justify-end">
                   <Button onClick={saveDefaults} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
                 </div>
