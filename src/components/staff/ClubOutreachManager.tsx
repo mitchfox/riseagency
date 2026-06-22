@@ -2226,6 +2226,13 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       default_position: playerDefaultPosition.trim() || null,
       default_season_data_mode: playerDefaultSeasonMode || null,
       default_season_id: playerDefaultSeasonId,
+      default_show_form: playerDefaultShowForm,
+      default_show_in_numbers: playerDefaultShowInNumbers,
+      default_show_season_stats: playerDefaultShowSeasonStats,
+      default_show_strengths: playerDefaultShowStrengths,
+      default_key_details: playerDefaultKeyDetails,
+      default_section_order: playerDefaultSectionOrder,
+      default_selected_video_ids: playerDefaultSelectedVideoIds,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
