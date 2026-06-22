@@ -42,15 +42,28 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+export type IntroMediaItem = {
+  id: string;
+  kind: "image" | "video";
+  url: string;
+  show: boolean;
+  position: "intro" | "hub" | "both";
+};
+
+const newId = () =>
+  (typeof crypto !== "undefined" && (crypto as any).randomUUID
+    ? (crypto as any).randomUUID()
+    : `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+
 export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange }: Props) => {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const [images, setImages] = useState<Record<string, string>>({});
+  const [introMedia, setIntroMedia] = useState<IntroMediaItem[]>([]);
   const [language, setLanguage] = useState<string>("en");
   const [under18, setUnder18] = useState(false);
   const [secondaryParagraph, setSecondaryParagraph] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<null | "image" | "video">(null);
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +71,25 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       setLoading(true);
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
-      setImages((data?.section_images || {}) as Record<string, string>);
+      // Prefer the new intro_media list. Fall back to the legacy section_images
+      // record so older players don't lose their pictures on first open.
+      const rawList = Array.isArray(data?.intro_media) ? data!.intro_media : [];
+      let normalised: IntroMediaItem[] = rawList
+        .filter((x: any) => x && typeof x.url === "string" && x.url)
+        .map((x: any) => ({
+          id: String(x.id ?? newId()),
+          kind: x.kind === "video" ? "video" : "image",
+          url: String(x.url),
+          show: x.show !== false,
+          position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+        }));
+      if (normalised.length === 0) {
+        const legacy = (data?.section_images || {}) as Record<string, string>;
+        normalised = Object.values(legacy)
+          .filter(Boolean)
+          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const }));
+      }
+      setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
         .from("players").select("portal_language").eq("id", playerId).maybeSingle();
       setLanguage(pData?.portal_language || "en");
@@ -79,29 +110,53 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
     setHidden(next);
   };
 
-  const uploadImage = async (sectionId: string, file: File) => {
-    setUploadingId(sectionId);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `offer-sections/${playerId}/${sectionId}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("marketing-gallery")
-      .upload(path, file, { cacheControl: "3600", upsert: true });
-    if (error) {
-      toast.error("Upload failed");
-      setUploadingId(null);
-      return;
+  const uploadMedia = async (kind: "image" | "video", file: File) => {
+    setUploading(kind);
+    try {
+      const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+      const path = `offer-sections/${playerId}/${kind}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("marketing-gallery")
+        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
+      if (error) { toast.error("Upload failed"); return; }
+      const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+      setIntroMedia((prev) => [
+        ...prev,
+        { id: newId(), kind, url: data.publicUrl, show: true, position: "intro" },
+      ]);
+    } finally {
+      setUploading(null);
     }
-    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
-    setImages((prev) => ({ ...prev, [sectionId]: data.publicUrl }));
-    setUploadingId(null);
   };
+
+  const patchItem = (id: string, patch: Partial<IntroMediaItem>) =>
+    setIntroMedia((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  const removeItem = (id: string) =>
+    setIntroMedia((prev) => prev.filter((m) => m.id !== id));
+  const moveItem = (id: string, dir: -1 | 1) =>
+    setIntroMedia((prev) => {
+      const idx = prev.findIndex((m) => m.id === id);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      const j = idx + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return next;
+    });
 
   const save = async () => {
     setSaving(true);
+    // Keep the legacy section_images record in sync so anything still reading
+    // the old shape keeps working (mainly the public proposal renderer's fallback).
+    const legacyImages: Record<string, string> = {};
+    introMedia
+      .filter((m) => m.kind === "image" && m.show)
+      .forEach((m, i) => { legacyImages[`m${i}`] = m.url; });
     const payload = {
       player_id: playerId,
       hidden_sections: [...hidden],
-      section_images: images,
+      intro_media: introMedia,
+      section_images: legacyImages,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
