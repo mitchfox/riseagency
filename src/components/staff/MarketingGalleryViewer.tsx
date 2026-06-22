@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Download, Search, ImageIcon, Film, Play } from "lucide-react";
+import { Download, Search, ImageIcon, Film, Play, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface GalleryItem {
@@ -43,6 +43,9 @@ export const MarketingGalleryViewer = () => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"images" | "videos">("images");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [visibleCount, setVisibleCount] = useState(4);
+  const PAGE = 4;
 
   useEffect(() => {
     (async () => {
@@ -60,8 +63,45 @@ export const MarketingGalleryViewer = () => {
     })();
   }, []);
 
+  // Reset paging whenever the active filter set changes so users
+  // don't end up scrolled past the new shorter result list.
+  useEffect(() => { setVisibleCount(PAGE); }, [query, tab, activeFilters]);
+
+  // Smart filter chips — pull capitalised name-like tokens from the
+  // titles/descriptions/categories of the items in the current tab
+  // and keep the ones that appear in two or more assets.
+  const smartFilters = useMemo(() => {
+    const counts = new Map<string, number>();
+    const stop = new Set([
+      "The","And","For","With","From","Rise","Player","Players","Video","Image","Photo",
+      "Match","Goal","Goals","Clip","Story","Final","Highlights","Highlight","Reel","Vs","Of",
+    ]);
+    const tabItems = items.filter((it) => (tab === "images" ? it.file_type === "image" : it.file_type === "video"));
+    for (const it of tabItems) {
+      const text = `${it.title || ""} ${it.description || ""} ${it.category || ""}`;
+      const tokens = text.match(/\b[A-Z][a-zA-Z'’-]{2,}\b/g) || [];
+      const seen = new Set<string>();
+      for (const raw of tokens) {
+        const tok = raw.replace(/[’']s$/, "");
+        if (stop.has(tok)) continue;
+        if (seen.has(tok)) continue;
+        seen.add(tok);
+        counts.set(tok, (counts.get(tok) || 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .filter(([, n]) => n >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([name, n]) => ({ name, count: n }));
+  }, [items, tab]);
+
+  const toggleFilter = (name: string) =>
+    setActiveFilters((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const filters = activeFilters.map((f) => f.toLowerCase());
     return items
       .filter((it) => (tab === "images" ? it.file_type === "image" : it.file_type === "video"))
       .filter((it) =>
@@ -70,8 +110,17 @@ export const MarketingGalleryViewer = () => {
           : (it.title || "").toLowerCase().includes(q) ||
             (it.description || "").toLowerCase().includes(q) ||
             (it.category || "").toLowerCase().includes(q)
-      );
-  }, [items, query, tab]);
+      )
+      .filter((it) => {
+        if (filters.length === 0) return true;
+        const hay = `${it.title || ""} ${it.description || ""} ${it.category || ""}`.toLowerCase();
+        // Any-match: a chip narrows down to anything tagged with that name.
+        return filters.some((f) => hay.includes(f));
+      });
+  }, [items, query, tab, activeFilters]);
+
+  const visibleItems = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   return (
     <div className="space-y-6">
@@ -104,13 +153,47 @@ export const MarketingGalleryViewer = () => {
         </Tabs>
       </div>
 
+      {smartFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground mr-1">Filter</span>
+          {smartFilters.map(({ name, count }) => {
+            const on = activeFilters.includes(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => toggleFilter(name)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  on
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                {name}
+                <span className={`text-[10px] ${on ? "text-primary/70" : "text-muted-foreground"}`}>{count}</span>
+              </button>
+            );
+          })}
+          {activeFilters.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveFilters([])}
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+            >
+              <X className="w-3 h-3" /> Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p className="text-center text-muted-foreground py-12">Loading gallery...</p>
       ) : filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">No {tab} found.</p>
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((item) => (
+          {visibleItems.map((item) => (
             <div
               key={item.id}
               className="border border-border rounded-lg overflow-hidden bg-card hover:border-primary/50 transition-colors flex flex-col"
@@ -122,13 +205,14 @@ export const MarketingGalleryViewer = () => {
                     alt={item.title || "Marketing asset"}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <video
                     src={item.file_url}
                     className="w-full h-full object-cover"
                     controls
-                    preload="metadata"
+                    preload="none"
                   />
                 )}
                 {item.file_type === "video" && (
@@ -155,6 +239,17 @@ export const MarketingGalleryViewer = () => {
             </div>
           ))}
         </div>
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <p className="text-xs text-muted-foreground">
+            Showing {visibleItems.length} of {filtered.length}
+          </p>
+          {hasMore && (
+            <Button variant="outline" onClick={() => setVisibleCount((c) => c + PAGE)}>
+              Load {Math.min(PAGE, filtered.length - visibleCount)} more
+            </Button>
+          )}
+        </div>
+        </>
       )}
     </div>
   );
