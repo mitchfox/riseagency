@@ -61,6 +61,8 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
   const [language, setLanguage] = useState<string>("en");
   const [under18, setUnder18] = useState(false);
   const [secondaryParagraph, setSecondaryParagraph] = useState("");
+  const [showDatabaseCard, setShowDatabaseCard] = useState<boolean | null>(null);
+  const [playerFitScore, setPlayerFitScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "image" | "video">(null);
@@ -71,6 +73,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       setLoading(true);
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
+      setShowDatabaseCard(data?.show_database_card ?? null);
       // Prefer the new intro_media list. Fall back to the legacy section_images
       // record so older players don't lose their pictures on first open.
       const rawList = Array.isArray(data?.intro_media) ? data!.intro_media : [];
@@ -91,8 +94,9 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       }
       setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
-        .from("players").select("portal_language").eq("id", playerId).maybeSingle();
+        .from("players").select("portal_language, fit_score").eq("id", playerId).maybeSingle();
       setLanguage(pData?.portal_language || "en");
+      setPlayerFitScore(typeof pData?.fit_score === "number" ? pData.fit_score : null);
       const { data: portalData } = await (supabase as any)
         .from("player_portal_settings")
         .select("rise_with_us_under18, representation_subtitle_secondary")
