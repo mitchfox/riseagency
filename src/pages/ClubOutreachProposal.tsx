@@ -124,6 +124,7 @@ interface Payload {
     mandate_proof_path?: string | null;
     is_suggested_to_agent?: boolean | null;
     suggested_agent_note?: string | null;
+    alternate_profiles_blurb?: string | null;
   };
   club: { id: string; club_name: string; country: string | null; image_url: string | null } | null;
   players: PlayerEntry[];
