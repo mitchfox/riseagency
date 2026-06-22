@@ -73,6 +73,78 @@ function categoriseStatKey(key: string): StatCategory {
   return "Other";
 }
 
+/**
+ * Sub-bucket a key inside its category so we can show clear sub-headings
+ * (e.g. Attacking → Goals / Shots / Finishing). Order returned by
+ * SUB_ORDER drives render order; "Other" always renders last within its
+ * category.
+ */
+function subCategoriseStatKey(category: StatCategory, key: string): string {
+  const k = key.toLowerCase();
+  switch (category) {
+    case "Attacking":
+      if (/conversion|finish|xg_per_shot/.test(k)) return "Finishing";
+      if (/sot|on_target|shots_on/.test(k)) return "Shots on target";
+      if (/shot/.test(k)) return "Shots";
+      if (/xg|npxg/.test(k)) return "Expected goals";
+      if (/goal/.test(k)) return "Goals";
+      return "Other";
+    case "Chance Creation":
+      if (/assist/.test(k)) return "Assists";
+      if (/xa/.test(k)) return "Expected assists";
+      if (/key_pass/.test(k)) return "Key passes";
+      if (/cross/.test(k)) return "Crosses";
+      if (/through_ball/.test(k)) return "Through balls";
+      if (/big_chance|chance/.test(k)) return "Chances created";
+      if (/xgchain|xt\b/.test(k)) return "Build-up value";
+      return "Other";
+    case "Passing & Possession":
+      if (/long_pass|long_ball/.test(k)) return "Long passing";
+      if (/short_pass/.test(k)) return "Short passing";
+      if (/forward_pass|progressive_pass/.test(k)) return "Forward / progressive passing";
+      if (/pass.*acc|pass.*pct|pass.*%/.test(k)) return "Pass accuracy";
+      if (/pass/.test(k)) return "Passing volume";
+      if (/dribble/.test(k)) return "Dribbles & carries";
+      if (/carry|carries|progressive_run/.test(k)) return "Carries";
+      if (/touches/.test(k)) return "Touches";
+      if (/possession/.test(k)) return "Possession";
+      if (/turnover/.test(k)) return "Turnovers";
+      return "Other";
+    case "Defending":
+      if (/tackle/.test(k)) return "Tackles";
+      if (/interception/.test(k)) return "Interceptions";
+      if (/clearance/.test(k)) return "Clearances";
+      if (/block/.test(k)) return "Blocks";
+      if (/recover|ball_won/.test(k)) return "Ball recoveries";
+      if (/press/.test(k)) return "Pressing";
+      return "Other";
+    case "Goalkeeping":
+      if (/save/.test(k)) return "Saves";
+      if (/goals_conce/.test(k)) return "Goals conceded";
+      if (/claim|punch/.test(k)) return "Crosses & claims";
+      if (/sweep/.test(k)) return "Sweeping";
+      if (/keeper|gk_/.test(k)) return "Distribution";
+      return "Other";
+    case "Duels & Physical":
+      if (/aerial/.test(k)) return "Aerial duels";
+      if (/duel/.test(k)) return "Ground duels";
+      if (/sprint/.test(k)) return "Sprints";
+      if (/hsr/.test(k)) return "High-speed running";
+      if (/distance/.test(k)) return "Distance covered";
+      if (/speed/.test(k)) return "Top speed";
+      if (/fouled/.test(k)) return "Fouls won";
+      return "Other";
+    case "Discipline":
+      if (/yellow/.test(k)) return "Yellow cards";
+      if (/red/.test(k)) return "Red cards";
+      if (/foul/.test(k)) return "Fouls";
+      if (/offside/.test(k)) return "Offsides";
+      return "Other";
+    default:
+      return "Other";
+  }
+}
+
 export const MatchDataTotalsHeader = ({ analyses }: Props) => {
   // Discover every numeric stat key appearing across the loaded analyses.
   const allStatKeys = useMemo(() => {
@@ -166,37 +238,65 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
           <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
             Season averages by category
           </h4>
-          {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => (
-            <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="h-[3px] w-6 bg-[#C6A332]/70" />
-                <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
-                  {cat}
-                </h5>
-                <span className="text-[10px] text-muted-foreground ml-1">
-                  {grouped[cat].length}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
-                {grouped[cat].map((key) => {
-                  const avg = computeStatAverage(analyses, key);
-                  const suffix = isPercentageMetric(key) ? "%" : "";
-                  const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
-                  return (
-                    <div
-                      key={key}
-                      className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
-                    >
-                      <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
-                        {prettifyKey(key)}
+          {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => {
+            // Build sub-buckets, preserving insertion order so common buckets
+            // (e.g. Goals, Shots) appear before catch-all "Other".
+            const subBuckets: Record<string, string[]> = {};
+            for (const key of grouped[cat]) {
+              const sub = subCategoriseStatKey(cat, key);
+              if (!subBuckets[sub]) subBuckets[sub] = [];
+              subBuckets[sub].push(key);
+            }
+            const subNames = Object.keys(subBuckets).sort((a, b) => {
+              if (a === "Other") return 1;
+              if (b === "Other") return -1;
+              return a.localeCompare(b);
+            });
+            return (
+              <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
+                    {cat}
+                  </h5>
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    {grouped[cat].length}
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {subNames.map((sub) => (
+                    <div key={sub} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-px flex-1 bg-border/60" />
+                        <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                          {sub}
+                        </span>
+                        <span className="h-px flex-1 bg-border/60" />
                       </div>
-                      <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
+                        {subBuckets[sub].map((key) => {
+                          const avg = computeStatAverage(analyses, key);
+                          const suffix = isPercentageMetric(key) ? "%" : "";
+                          const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
+                          return (
+                            <div
+                              key={key}
+                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
+                            >
+                              <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
+                                {prettifyKey(key)}
+                              </div>
+                              <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
