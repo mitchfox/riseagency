@@ -10206,6 +10206,14 @@ export type Database = {
           visual_two_url: string
         }[]
       }
+      guard_jsonb_no_silent_wipe: {
+        Args: { _column: string; _new: Json; _old: Json; _table: string }
+        Returns: undefined
+      }
+      guard_text_no_silent_wipe: {
+        Args: { _column: string; _new: string; _old: string; _table: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
