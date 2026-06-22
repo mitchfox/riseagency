@@ -132,41 +132,44 @@ const assignedToStarter = (assigned: string[] | null, s: Starter): boolean => {
 // Highest-priority match wins (first hit).
 type BoxStat = "PTS" | "AST" | "REB" | "STL" | "BLK" | "TO";
 const BOX_RULES: { re: RegExp; stat: BoxStat; pts: number; label: string }[] = [
-  // Points — direct agency progress
-  { re: /payment received|invoice paid|received payment/i, stat: "PTS", pts: 80, label: "Payment received" },
-  { re: /signed|closed (deal|client)|contract signed|deal closed/i, stat: "PTS", pts: 50, label: "Closed paid client" },
-  { re: /testimonial|referral received/i, stat: "PTS", pts: 20, label: "Testimonial / referral" },
-  { re: /delivered|deliverable|report sent|highlight (sent|delivered)/i, stat: "PTS", pts: 15, label: "Deliverable completed" },
-  { re: /booked? (call|meeting)|qualified call|meeting held/i, stat: "PTS", pts: 12, label: "Booked qualified call" },
-  { re: /proposal|offer sent|representation offer/i, stat: "PTS", pts: 10, label: "Proposal sent" },
-  { re: /publish|posted|content posted|blog|article|reel|tiktok|story|stories/i, stat: "PTS", pts: 8, label: "Content published" },
-  { re: /landing page|deck|portfolio|improve offer/i, stat: "PTS", pts: 8, label: "Asset improved" },
-  { re: /recruit|database|add player|player.+(added|image|details)|shortlist/i, stat: "PTS", pts: 7, label: "Recruitment input" },
-  { re: /outreach|cold (message|email|dm)|send (message|email)|birthday/i, stat: "PTS", pts: 6, label: "Outreach sent" },
-  { re: /like|follow|engage|comment/i, stat: "PTS", pts: 5, label: "Engagement action" },
+  // Turnovers — wasted chances (check first so "missed call" doesn't hit booked call)
+  { re: /missed|forgot|late reply|dropped|no.?show|bounced/i, stat: "TO", pts: 2, label: "Turnover" },
+
+  // Points — direct agency progress (closed revenue, shipped work)
+  { re: /payment received|invoice paid|received payment/i, stat: "PTS", pts: 25, label: "Payment received" },
+  { re: /signed|closed (deal|client)|contract signed|deal closed/i, stat: "PTS", pts: 15, label: "Closed paid client" },
+  { re: /testimonial|referral received/i, stat: "PTS", pts: 8, label: "Testimonial / referral" },
+  { re: /delivered|deliverable|report sent|highlight (sent|delivered)|sent to (club|player)/i, stat: "PTS", pts: 4, label: "Deliverable shipped" },
+  { re: /booked? (call|meeting)|qualified call|meeting held|trial booked/i, stat: "PTS", pts: 4, label: "Booked qualified call" },
+  { re: /proposal|offer sent|representation offer/i, stat: "PTS", pts: 3, label: "Proposal sent" },
+  { re: /publish|posted|content posted|blog|article|reel|tiktok|story|stories|carousel/i, stat: "PTS", pts: 2, label: "Content published" },
+  { re: /landing page|deck|portfolio|improve offer/i, stat: "PTS", pts: 2, label: "Asset improved" },
 
   // Assists — created future scoring chances
-  { re: /intro(duction)?|connected|opened door/i, stat: "AST", pts: 8, label: "Intro / connection" },
-  { re: /lead list|prospect list|shortlist built/i, stat: "AST", pts: 6, label: "Lead list created" },
-  { re: /partner(ship)?|collab/i, stat: "AST", pts: 7, label: "Partner conversation" },
-  { re: /helpful idea|shared idea|sent insight/i, stat: "AST", pts: 5, label: "Idea shared" },
+  { re: /intro(duction)?|connected|opened door|warm intro|handoff|hand off|forwarded/i, stat: "AST", pts: 3, label: "Intro / connection" },
+  { re: /partner(ship)?|collab|joint/i, stat: "AST", pts: 2, label: "Partner conversation" },
+  { re: /lead list|prospect list|shortlist|target list/i, stat: "AST", pts: 2, label: "Lead list built" },
+  { re: /helpful idea|shared idea|sent insight|briefed|brief sent|tagged/i, stat: "AST", pts: 1, label: "Idea / brief shared" },
 
   // Rebounds — follow-ups and recoveries
-  { re: /unpaid|chase invoice|chase payment/i, stat: "REB", pts: 6, label: "Chased payment" },
-  { re: /follow.?up|chase|revive|reopen/i, stat: "REB", pts: 5, label: "Follow-up / revival" },
-  { re: /fix(ed)? (task|issue|bug)|cleanup|clean up/i, stat: "REB", pts: 5, label: "Recovered a miss" },
+  { re: /unpaid|chase invoice|chase payment/i, stat: "REB", pts: 3, label: "Chased payment" },
+  { re: /follow.?up|chase|revive|reopen|nudge|bumped|reschedul/i, stat: "REB", pts: 2, label: "Follow-up / revival" },
+  { re: /fix(ed)? (task|issue|bug)|cleanup|clean up|patched|tidied|updated|refresh/i, stat: "REB", pts: 1, label: "Recovered / tidied" },
 
   // Steals — captured opportunities
-  { re: /decision.?maker|found contact|sourced contact/i, stat: "STL", pts: 6, label: "Found decision-maker" },
-  { re: /spotted|noticed (lead|opportunity)|opportunistic/i, stat: "STL", pts: 5, label: "Spotted opportunity" },
-  { re: /trend|timely post|jumped on/i, stat: "STL", pts: 5, label: "Caught a trend" },
+  { re: /decision.?maker|found contact|sourced contact|scraped|enriched/i, stat: "STL", pts: 2, label: "Found decision-maker" },
+  { re: /spotted|noticed (lead|opportunity)|opportunistic|new lead/i, stat: "STL", pts: 2, label: "Spotted opportunity" },
+  { re: /trend|timely post|jumped on|first to/i, stat: "STL", pts: 2, label: "Caught a trend" },
 
   // Blocks — prevented problems
-  { re: /scope|clarif|prevent|template|checklist/i, stat: "BLK", pts: 5, label: "Prevented an issue" },
-  { re: /said no|declined|killed (idea|task)/i, stat: "BLK", pts: 4, label: "Said no to drag" },
+  { re: /scope|clarif|prevent|template|checklist|sop|process/i, stat: "BLK", pts: 2, label: "Prevented an issue" },
+  { re: /said no|declined|killed (idea|task)|removed|cut/i, stat: "BLK", pts: 2, label: "Said no to drag" },
+  { re: /documented|wrote up|guide/i, stat: "BLK", pts: 1, label: "Documented" },
 
-  // Turnovers — wasted chances
-  { re: /missed|forgot|late reply|dropped/i, stat: "TO", pts: 4, label: "Turnover" },
+  // Lower-tier PTS catch-alls (last, before default)
+  { re: /recruit|database|add player|player.+(added|image|details)/i, stat: "PTS", pts: 2, label: "Recruitment input" },
+  { re: /outreach|cold (message|email|dm)|send (message|email)|dm sent|birthday/i, stat: "PTS", pts: 1, label: "Outreach sent" },
+  { re: /like|follow|engage|comment/i, stat: "PTS", pts: 1, label: "Engagement action" },
 ];
 
 const BOX_KEYS: BoxStat[] = ["PTS", "AST", "REB", "STL", "BLK", "TO"];
@@ -184,8 +187,8 @@ function classifyTask(t: TaskRow): { stat: BoxStat; pts: number; label: string }
   for (const rule of BOX_RULES) {
     if (rule.re.test(hay)) return { stat: rule.stat, pts: rule.pts, label: rule.label };
   }
-  // Default: any completed action is worth a base 6 PTS.
-  return { stat: "PTS", pts: 6, label: "Action completed" };
+  // Default: any unmatched completed action is worth a base 1 PT.
+  return { stat: "PTS", pts: 1, label: "Action completed" };
 }
 
 type BoxLine = { PTS: number; AST: number; REB: number; STL: number; BLK: number; TO: number; plusMinus: number };
