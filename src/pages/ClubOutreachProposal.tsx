@@ -1632,9 +1632,11 @@ function StrengthsCard({ data, title }: { data: any; title?: string }) {
 function MatchByMatchCard({
   analyses,
   position,
+  excludeAnalysisIds,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
+  excludeAnalysisIds?: Set<string>;
 }) {
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
@@ -1649,10 +1651,12 @@ function MatchByMatchCard({
 
   const sorted = useMemo(
     () =>
-      [...analyses].sort((a, b) =>
-        (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""),
-      ),
-    [analyses],
+      [...analyses]
+        .filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id))
+        .sort((a, b) =>
+          (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""),
+        ),
+    [analyses, excludeAnalysisIds],
   );
 
   const fmtVal = (raw: any, key: string): string => {
