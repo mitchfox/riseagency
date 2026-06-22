@@ -748,7 +748,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_position, default_season_data_mode")
+      .select("default_fit_recommendation, default_position, default_season_data_mode, default_season_id")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
@@ -767,6 +767,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       // user picked alone.
       if (defaults?.default_season_data_mode === 'popup' || defaults?.default_season_data_mode === 'link') {
         setSeasonDataMode(defaults.default_season_data_mode);
+      }
+      if (defaults?.default_season_id && seasonId === null) {
+        setSeasonId(defaults.default_season_id as string);
       }
     } else {
       initialFit = defaultFit ?? "";
