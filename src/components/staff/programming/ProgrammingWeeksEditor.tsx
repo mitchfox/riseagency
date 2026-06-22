@@ -111,7 +111,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
 
     if (programmeLink) {
       const selectCols = programmeLink.table === "player_programs"
-        ? "linked_week_ids, start_date, end_date"
+        ? "linked_week_ids, start_date, end_date, weekly_schedules"
         : "linked_week_ids, start_date, end_date";
       const { data: prog, error: pErr } = await supabase
         .from(programmeLink.table as any)
@@ -124,6 +124,32 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         start: (prog as any)?.start_date ?? null,
         end: (prog as any)?.end_date ?? null,
       };
+      const legacySchedules = programmeLink.table === "player_programs" && Array.isArray((prog as any)?.weekly_schedules)
+        ? ((prog as any).weekly_schedules as LegacyWeeklySchedule[])
+        : [];
+      if (legacySchedules.length) {
+        const existingDates = new Set(allRows.filter(w => w.week_start_date).map(w => w.week_start_date));
+        const rowsToInsert = legacySchedules
+          .filter(w => w.week_start_date && !existingDates.has(w.week_start_date))
+          .map((w, index) => ({
+            player_id: playerId,
+            label: w.week || `Week ${allRows.length + index + 1}`,
+            week_start_date: w.week_start_date,
+            display_order: allRows.length + index,
+            slots: DAYS.reduce((acc, day) => {
+              const slot = legacySessionToSlot(programmeLink.programmeId, w[day]);
+              if (slot) acc[day] = slot;
+              return acc;
+            }, {} as Partial<Record<Day, Slot>>),
+          }));
+        if (rowsToInsert.length) {
+          const { data: inserted } = await supabase
+            .from("programming_weeks" as any)
+            .insert(rowsToInsert as any)
+            .select("*");
+          allRows.push(...(((inserted || []) as any[]).map(w => ({ ...w, slots: w.slots || {} })) as Week[]));
+        }
+      }
       const rangeIds = nextRange.start && nextRange.end
         ? allRows
             .filter(w => weekOverlapsRange(w.week_start_date, nextRange.start!, nextRange.end!))
