@@ -585,11 +585,11 @@ export default function ClubOutreachProposal() {
               <>
                 <video
                   ref={videoRef}
-                  key={`${current.first_highlight_url}-${heroBlobUrl ? "blob" : "stream"}`}
-                  src={heroBlobUrl ?? current.first_highlight_url}
-                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing ? "opacity-0" : "opacity-100"}`}
-                  style={heroCropStyle(current.first_highlight_url)}
-                  controls={!shouldCropHeroVideo(current.first_highlight_url)}
+                  key={`${activeVideoUrl ?? current.first_highlight_url}-${activeVideoUrl ? "alt" : heroBlobUrl ? "blob" : "stream"}`}
+                  src={activeVideoUrl ?? heroBlobUrl ?? current.first_highlight_url}
+                  className={`w-full h-full object-contain bg-black transition-opacity duration-300 ${heroPreparing && !activeVideoUrl ? "opacity-0" : "opacity-100"}`}
+                  style={heroCropStyle(activeVideoUrl ?? current.first_highlight_url)}
+                  controls={!shouldCropHeroVideo(activeVideoUrl ?? current.first_highlight_url)}
                   playsInline
                   preload="auto"
                   onLoadedMetadata={(e) => {
