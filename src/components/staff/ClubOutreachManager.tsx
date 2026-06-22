@@ -805,11 +805,14 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       if (!editing && selectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
-          .select("default_selected_video_ids")
+          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb")
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
         if (def.length > 0 && !cancelled) setSelectedVideoIds(def);
+        const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
+        if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
+        if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
       }
     })();
     return () => { cancelled = true; };
