@@ -1293,6 +1293,11 @@ const RiseWithUs = () => {
           .map((url) => ({ kind: "image" as const, url: url as string }));
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
+  // Hub Why-Us strip — items the staff flagged as hub or both.
+  const hubMedia: Array<{ kind: "image" | "video"; url: string }> =
+    settings.intro_media
+      .filter((m) => m.show && (m.position === "hub" || m.position === "both"))
+      .map((m) => ({ kind: m.kind, url: m.url }));
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
 
