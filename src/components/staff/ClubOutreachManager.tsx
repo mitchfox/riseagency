@@ -707,8 +707,16 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
 
   const addPlayer = async (id: string) => {
     setPlayerQuery("");
+    // Always look up per-player defaults so we can pre-fill position regardless
+    // of editing / single-vs-multi state.
+    const { data: defaults } = await (supabase as any)
+      .from("club_outreach_player_defaults")
+      .select("default_fit_recommendation, default_position")
+      .eq("player_id", id)
+      .maybeSingle();
+    const presetPosition: string | null = defaults?.default_position ?? null;
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: null, fit_recommendation: "", sort_order: prev.length }]);
+      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", sort_order: prev.length }]);
       return;
     }
     // Determine new entries count after adding
@@ -716,17 +724,12 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     let initialFit = "";
     if (willBeSingle) {
       // Single-player outreach: prefer that player's per-player default
-      const { data } = await (supabase as any)
-        .from("club_outreach_player_defaults")
-        .select("default_fit_recommendation")
-        .eq("player_id", id)
-        .maybeSingle();
-      initialFit = (data?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
+      initialFit = (defaults?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
     } else {
       initialFit = defaultFit ?? "";
     }
     setEntries(prev => {
-      const next = [...prev, { player_id: id, position_slot: null, fit_recommendation: initialFit, sort_order: prev.length }];
+      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, sort_order: prev.length }];
       // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
       if (prev.length === 1) {
         const [first] = prev;
@@ -738,6 +741,24 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
+
+  const savePlayerPositionDefault = async (playerId: string, position: string | null) => {
+    if (!position) {
+      toast.error("Pick a position first, then save it as default");
+      return;
+    }
+    const { error } = await (supabase as any)
+      .from("club_outreach_player_defaults")
+      .upsert(
+        { player_id: playerId, default_position: position, updated_at: new Date().toISOString() },
+        { onConflict: "player_id" },
+      );
+    if (error) {
+      toast.error(error.message ?? "Failed to save default");
+      return;
+    }
+    toast.success("Default position saved for this player");
+  };
 
   const save = async () => {
     if (isAgent) {
