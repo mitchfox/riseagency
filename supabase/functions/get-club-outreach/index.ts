@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
             // count.
             let q = supabase
               .from("player_analysis")
-              .select("id, player_id, analysis_date, opponent, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .select("id, player_id, analysis_date, opponent, club_logo_url, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
@@ -369,7 +369,8 @@ Deno.serve(async (req) => {
               id: String(x.id ?? x.videoUrl ?? x.video_url),
               name: String(x.name ?? "Highlight"),
               videoUrl: String(x.videoUrl ?? x.video_url),
-              logoUrl: x.logoUrl ?? null,
+              logoUrl: x.logoUrl ?? x.clubLogo ?? null,
+              venue: x.venue ?? null,
             }));
         } catch (_) {
           allVideos = [];
@@ -408,7 +409,7 @@ Deno.serve(async (req) => {
           const op = opKey ? clubLookup.get(opKey) : null;
           return {
             ...a,
-            opponent_logo: a.opponent_logo_url ?? op?.image_url ?? null,
+            opponent_logo: a.club_logo_url ?? a.opponent_logo_url ?? op?.image_url ?? null,
           };
         });
         // Per-player default Match by Match category lives on the outreach
