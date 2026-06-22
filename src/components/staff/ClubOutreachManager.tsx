@@ -1088,6 +1088,51 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                 ))}
               </div>
             </div>
+            <div>
+              <Label>Season data — popup or link</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Popup keeps clubs on the proposal in a wide in-page sheet. Link opens the player's Stars profile in a new tab.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(['popup', 'link'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setSeasonDataMode(mode)}
+                    className={`rounded-md border px-3 py-1.5 text-xs capitalize transition-colors ${
+                      seasonDataMode === mode
+                        ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
+                    }`}
+                  >
+                    {mode === 'popup' ? 'In-page popup' : 'Link to Stars profile'}
+                  </button>
+                ))}
+                {entries[0]?.player_id && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const pid = entries[0]?.player_id;
+                      if (!pid) return;
+                      const { error } = await (supabase as any)
+                        .from("club_outreach_player_defaults")
+                        .upsert(
+                          { player_id: pid, default_season_data_mode: seasonDataMode, updated_at: new Date().toISOString() },
+                          { onConflict: "player_id" },
+                        );
+                      if (error) {
+                        toast.error(error.message ?? "Failed to save default");
+                        return;
+                      }
+                      toast.success("Default data mode saved for this player");
+                    }}
+                    className="ml-auto text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Save as player default
+                  </button>
+                )}
+              </div>
+            </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
 
             <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
