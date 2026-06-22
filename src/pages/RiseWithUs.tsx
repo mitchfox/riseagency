@@ -1486,6 +1486,9 @@ const RiseWithUs = () => {
                   t={t}
                 />
 
+                {/* Players we've worked with — represented + mandated, live from DB. */}
+                <PlayersWeWorkWith />
+
                 {/* Pillar boxes — pathway, HQ, training methodology,
                     performance team, parent's role (U18 only),
                     multilingual support. */}
