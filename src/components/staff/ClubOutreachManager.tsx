@@ -608,6 +608,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
     (editing?.season_data_mode as 'popup' | 'link' | null) ?? defaultSeasonDataMode ?? 'popup',
   );
+  // Optional season scoping. Pulls from the primary player's named seasons
+  // (player_seasons) so the data popup / Form banner only counts matches
+  // inside that window. `null` means "all data".
+  const [seasonId, setSeasonId] = useState<string | null>(editing?.season_id ?? null);
+  const [playerSeasons, setPlayerSeasons] = useState<{ id: string; name: string }[]>([]);
   const [primaryVideos, setPrimaryVideos] = useState<{ id: string; name: string; videoUrl: string }[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(
     Array.isArray(editing?.selected_video_ids) ? (editing!.selected_video_ids as string[]) : [],
