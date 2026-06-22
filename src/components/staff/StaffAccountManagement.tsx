@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Users } from "lucide-react";
+import { UserPlus, Trash2, Users, ChevronDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { RolePermissionsEditor } from "./RolePermissionsEditor";
 import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
 import { HighlightMakersManagement } from "./HighlightMakersManagement";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AvailableRole {
   role_key: string;
