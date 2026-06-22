@@ -693,73 +693,6 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
-      {/* Why Us — credibility block + best-player imagery strip */}
-      <section className="max-w-3xl mx-auto px-6 mt-6">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
-            {tr("whyUs.title", "Why Rise")}
-          </p>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
-                {tr("whyUs.fifaEyebrow", "Licensed")}
-              </p>
-              <p className="mt-1.5 text-sm font-semibold text-white">
-                {tr("whyUs.fifaTitle", "FIFA Licensed Agency")}
-              </p>
-              <p className="mt-1 text-[12px] leading-snug text-white/65">
-                {tr("whyUs.fifaBody", "Operating under a current FIFA licence with full regulatory compliance.")}
-              </p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
-                {tr("whyUs.networkEyebrow", "Reach")}
-              </p>
-              <p className="mt-1.5 text-sm font-semibold text-white">
-                {tr("whyUs.networkTitle", "Global Network")}
-              </p>
-              <p className="mt-1 text-[12px] leading-snug text-white/65">
-                {tr("whyUs.networkBody", "Direct relationships with sporting and recruitment staff across European and overseas leagues.")}
-              </p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-black/30 p-3.5">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/55">
-                {tr("whyUs.perfEyebrow", "Method")}
-              </p>
-              <p className="mt-1.5 text-sm font-semibold text-white">
-                {tr("whyUs.perfTitle", "Performance-led")}
-              </p>
-              <p className="mt-1 text-[12px] leading-snug text-white/65">
-                {tr("whyUs.perfBody", "Every recommendation backed by our R90 methodology and match-by-match analysis.")}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-white/45">
-              {tr("whyUs.rosterLabel", "From our roster")}
-            </p>
-            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {WHY_US_IMAGERY.map((src, i) => (
-                <div
-                  key={i}
-                  className="relative shrink-0 h-20 w-16 sm:h-24 sm:w-20 rounded-lg overflow-hidden border border-white/10 bg-black"
-                  style={{ boxShadow: `0 6px 18px -8px ${clubGlow}55` }}
-                >
-                  <img
-                    src={src}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Sections after the hero video — order is staff-configurable per link */}
       {(() => {
         const order = normaliseSectionOrder(data.link.section_order);
@@ -886,31 +819,6 @@ export default function ClubOutreachProposal() {
 
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
-        {/* Brand signature band — sits above the CTAs so the proposal closes
-            with a clear Rise mark before the contact actions. */}
-        <div
-          className="relative mb-6 overflow-hidden rounded-2xl border border-white/10 px-5 py-4 flex items-center gap-4"
-          style={{
-            background: `linear-gradient(135deg, ${clubGlow}1f, transparent 70%), rgba(255,255,255,0.02)`,
-          }}
-        >
-          <img
-            src={riseLogoWhite}
-            alt="Rise Football Agency"
-            className="h-9 w-auto shrink-0 opacity-95"
-            style={{ filter: `drop-shadow(0 4px 14px ${clubGlow}55)` }}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
-              {tr("brand.eyebrow", "Rise Football Agency")}
-            </p>
-            <p className="mt-0.5 text-[12px] sm:text-[13px] leading-snug text-white/75">
-              {tr("brand.promise", "Performance-led representation. Considered moves, not noise.")}
-            </p>
-          </div>
-          <FifaLicenceBadge agentName={data.agent_name} />
-        </div>
-
         {isMandated && (
           <div className="text-center mb-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#cbb96b]/60 bg-[#cbb96b]/[0.12] px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-[#cbb96b]">
@@ -1538,9 +1446,9 @@ function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   const cols = count >= 4 ? "sm:grid-cols-4" : count === 3 ? "sm:grid-cols-3" : count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
   return (
     <SectionShell title={title ?? "In Numbers"} eyebrow="05">
-      <div className={`grid grid-cols-2 ${cols} gap-2`}>
+      <div className={`grid grid-cols-2 ${cols} gap-2 items-stretch`}>
         {stats.map((s, i) => (
-          <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
+          <div key={i} className="h-full rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center justify-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value}</div>
             <div className="mt-1 text-[10px] uppercase tracking-wider text-white/70 leading-tight break-words whitespace-normal">{s.label}</div>
             {s.description && (
