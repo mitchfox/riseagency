@@ -721,7 +721,8 @@ export default function ClubOutreachProposal() {
           cards: () => (
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
-                href={current.stars_url}
+                href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
+                onClick={data.link.season_data_mode === 'popup' ? () => setDataPopupOpen(true) : undefined}
                 icon={<Video className="h-6 w-6" />}
                 eyebrow="01"
                 title={tr("card.videoTitle", "Video & Data")}
