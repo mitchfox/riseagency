@@ -246,6 +246,23 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         />
       </div>
 
+      <div className="max-w-xs space-y-2">
+        <Label>Match by Match — default category</Label>
+        <Select
+          value={defaultCategory || "Passing"}
+          onValueChange={(v) => { setDirty(true); setDefaultCategory(v); }}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Shooting">Shooting</SelectItem>
+            <SelectItem value="Passing">Passing</SelectItem>
+            <SelectItem value="Possession">Possession</SelectItem>
+            <SelectItem value="Defending">Defending</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Which tab opens first on the proposal's Match by Match table. Defaults to Passing.</p>
+      </div>
+
       <div>
         <Label className="mb-2 block">Stats — drag to reorder, toggle to show, choose Auto or Manual value</Label>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
