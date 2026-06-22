@@ -92,6 +92,8 @@ interface WeeklySchedule {
 interface ProgrammingData {
   phaseName: string;
   phaseDates: string;
+  startDate: string;
+  endDate: string;
   overviewText: string;
   sessionA: SessionData;
   sessionB: SessionData;
@@ -161,6 +163,8 @@ const emptyWeeklySchedule = (): WeeklySchedule => ({
 const initialProgrammingData = (): ProgrammingData => ({
   phaseName: '',
   phaseDates: '',
+  startDate: '',
+  endDate: '',
   overviewText: '',
   sessionA: emptySession(),
   sessionB: emptySession(),
