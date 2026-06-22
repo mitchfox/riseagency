@@ -17,6 +17,10 @@ export interface ProgrammingSessionRef {
   sessionId?: string;
   /** Only set for legacy SPS sessions (e.g. 'sessionA'). */
   spsSessionField?: string;
+  /** When true, this ref is kept only so historic slot refIds resolve.
+   *  It should not be offered in the "Assign session" picker because the
+   *  same underlying programme is already available via its new mirror. */
+  hiddenFromPicker?: boolean;
 }
 
 const SPS_FIELDS = [
@@ -50,7 +54,9 @@ export const useProgrammingSessions = (playerId: string | null) => {
 
     const out: ProgrammingSessionRef[] = [];
 
-    // Skip legacy player_programs rows that are mirrors of a new sps_programs row
+    // Legacy player_programs rows mirrored by a new sps_programs row still
+    // emit refs so historic programming_weeks slot refIds keep resolving —
+    // but we hide them from the picker so users don't see duplicates.
     const mirroredLegacyIds = new Set<string>(
       ((spsNewProgRes.data || []) as any[])
         .map(p => p.legacy_player_program_id)
@@ -58,7 +64,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
     );
 
     for (const p of (spsRes.data || []) as any[]) {
-      if (mirroredLegacyIds.has(p.id)) continue;
+      const isMirrored = mirroredLegacyIds.has(p.id);
       const sess = (p.sessions || {}) as Record<string, any>;
       for (const f of SPS_FIELDS) {
         const data = sess[f] || sess[f.replace("session", "").toUpperCase()];
@@ -74,6 +80,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
           sessionKey: key,
           sessionTitle: data?.title ?? null,
           spsSessionField: f,
+          hiddenFromPicker: isMirrored,
         });
       }
     }
