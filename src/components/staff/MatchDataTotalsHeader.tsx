@@ -193,6 +193,167 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     };
   }, [analyses]);
 
+  // ----- Advanced statistical modelling -----
+  // Build per-match series for every numeric key, in chronological order
+  // (oldest -> newest) so trend slopes read naturally.
+  const series = useMemo(() => {
+    const sorted = [...analyses].sort((a, b) => {
+      const da = new Date(a?.analysis_date || 0).getTime();
+      const db = new Date(b?.analysis_date || 0).getTime();
+      return da - db;
+    });
+    const map: Record<string, { values: (number | null)[]; present: number[] }> = {};
+    for (const key of allStatKeys) {
+      const values = sorted.map((a) => {
+        const v = getStatValue(a, key);
+        return isNumericValue(v as number) ? (v as number) : null;
+      });
+      const present = values.filter((v): v is number => v != null);
+      map[key] = { values, present };
+    }
+    const r90Series = sorted.map((a) => effectiveR90(a));
+    return { sorted, map, r90Series };
+  }, [analyses, allStatKeys]);
+
+  const mean = (xs: number[]) => xs.reduce((s, v) => s + v, 0) / xs.length;
+  const std = (xs: number[]) => {
+    if (xs.length < 2) return 0;
+    const m = mean(xs);
+    return Math.sqrt(xs.reduce((s, v) => s + (v - m) ** 2, 0) / (xs.length - 1));
+  };
+  // Slope of linear regression of y on time index (per match). Positive
+  // = improving, negative = declining.
+  const slope = (ys: number[]) => {
+    const n = ys.length;
+    if (n < 3) return 0;
+    const xs = ys.map((_, i) => i);
+    const mx = mean(xs);
+    const my = mean(ys);
+    let num = 0;
+    let den = 0;
+    for (let i = 0; i < n; i++) {
+      num += (xs[i] - mx) * (ys[i] - my);
+      den += (xs[i] - mx) ** 2;
+    }
+    return den === 0 ? 0 : num / den;
+  };
+  // Pearson correlation between two equal-length series, using only
+  // indices where both are present.
+  const corr = (a: (number | null)[], b: (number | null)[]) => {
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] != null && b[i] != null) pairs.push([a[i] as number, b[i] as number]);
+    }
+    if (pairs.length < 4) return null;
+    const xs = pairs.map((p) => p[0]);
+    const ys = pairs.map((p) => p[1]);
+    const mx = mean(xs);
+    const my = mean(ys);
+    let num = 0;
+    let dx = 0;
+    let dy = 0;
+    for (let i = 0; i < pairs.length; i++) {
+      num += (xs[i] - mx) * (ys[i] - my);
+      dx += (xs[i] - mx) ** 2;
+      dy += (ys[i] - my) ** 2;
+    }
+    const den = Math.sqrt(dx * dy);
+    return den === 0 ? null : num / den;
+  };
+
+  // Per-key advanced metrics (mean, std, CV, trend, recent vs earlier).
+  const advanced = useMemo(() => {
+    const out: Record<string, {
+      mean: number;
+      std: number;
+      cv: number; // coefficient of variation
+      slope: number;
+      trendPct: number; // recent-half vs earlier-half % change
+      best: number;
+      worst: number;
+      n: number;
+    }> = {};
+    for (const key of allStatKeys) {
+      const present = series.map[key].present;
+      if (present.length < 2) continue;
+      const m = mean(present);
+      const s = std(present);
+      const sl = slope(present);
+      const half = Math.floor(present.length / 2);
+      const earlier = present.slice(0, half);
+      const recent = present.slice(present.length - half);
+      const eMean = earlier.length ? mean(earlier) : 0;
+      const rMean = recent.length ? mean(recent) : 0;
+      const trendPct = eMean === 0 ? 0 : ((rMean - eMean) / Math.abs(eMean)) * 100;
+      out[key] = {
+        mean: m,
+        std: s,
+        cv: m === 0 ? 0 : (s / Math.abs(m)) * 100,
+        slope: sl,
+        trendPct,
+        best: Math.max(...present),
+        worst: Math.min(...present),
+        n: present.length,
+      };
+    }
+    return out;
+  }, [allStatKeys, series]);
+
+  // Correlate every key with R90 to surface what actually moves the
+  // performance score for this player. Only show strong, well-evidenced
+  // links.
+  const r90Drivers = useMemo(() => {
+    const items: { key: string; r: number; n: number }[] = [];
+    for (const key of allStatKeys) {
+      const r = corr(series.map[key].values, series.r90Series);
+      if (r == null) continue;
+      const n = series.map[key].present.filter((_, i) => series.r90Series[i] != null).length;
+      if (n < 4) continue;
+      if (Math.abs(r) < 0.4) continue;
+      items.push({ key, r, n });
+    }
+    return items.sort((a, b) => Math.abs(b.r) - Math.abs(a.r)).slice(0, 12);
+  }, [allStatKeys, series]);
+
+  // Most/least consistent stats by coefficient of variation (lower CV =
+  // more consistent), restricted to keys with enough data and a non-zero
+  // mean.
+  const consistency = useMemo(() => {
+    const rows = Object.entries(advanced)
+      .filter(([, v]) => v.n >= 4 && v.mean !== 0)
+      .map(([key, v]) => ({ key, ...v }));
+    const sorted = [...rows].sort((a, b) => a.cv - b.cv);
+    return {
+      mostConsistent: sorted.slice(0, 6),
+      mostVolatile: sorted.slice(-6).reverse(),
+    };
+  }, [advanced]);
+
+  // Strongest non-trivial pairwise correlations between stats. We sample
+  // top keys (by presence count) to keep this tractable.
+  const statPairCorrs = useMemo(() => {
+    const topKeys = [...allStatKeys]
+      .filter((k) => series.map[k].present.length >= 4)
+      .sort((a, b) => series.map[b].present.length - series.map[a].present.length)
+      .slice(0, 30);
+    const seen = new Set<string>();
+    const pairs: { a: string; b: string; r: number }[] = [];
+    for (let i = 0; i < topKeys.length; i++) {
+      for (let j = i + 1; j < topKeys.length; j++) {
+        const a = topKeys[i];
+        const b = topKeys[j];
+        const key = a + "|" + b;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const r = corr(series.map[a].values, series.map[b].values);
+        if (r == null) continue;
+        if (Math.abs(r) < 0.6) continue;
+        pairs.push({ a, b, r });
+      }
+    }
+    return pairs.sort((a, b) => Math.abs(b.r) - Math.abs(a.r)).slice(0, 12);
+  }, [allStatKeys, series]);
+
   if (analyses.length === 0) return null;
 
   const grouped: Record<StatCategory, string[]> = {
@@ -219,6 +380,41 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
     { label: "Key passes", value: totals.keyPasses ? String(Math.round(totals.keyPasses)) : "—" },
   ];
 
+  const Section = ({
+    title,
+    count,
+    children,
+    defaultOpen = false,
+  }: {
+    title: string;
+    count?: string | number;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+  }) => (
+    <Collapsible defaultOpen={defaultOpen}>
+      <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-md border border-border/60 bg-background/30 px-3 py-2 hover:bg-background/50 transition">
+        <div className="flex items-center gap-2">
+          <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
+            {title}
+          </span>
+          {count != null && (
+            <span className="text-[10px] text-muted-foreground">{count}</span>
+          )}
+        </div>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3">{children}</CollapsibleContent>
+    </Collapsible>
+  );
+
+  const fmtPct = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(0)}%`;
+  const corrLabel = (r: number) => {
+    const a = Math.abs(r);
+    const strength = a >= 0.8 ? "very strong" : a >= 0.6 ? "strong" : "moderate";
+    return `${r >= 0 ? "+" : "−"}${a.toFixed(2)} ${strength}`;
+  };
+
   return (
     <div className="rounded-lg border-2 border-[#C6A332]/60 bg-card p-4 space-y-4">
       <div>
@@ -235,6 +431,128 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
           ))}
         </div>
       </div>
+
+      {/* Advanced statistical modelling — collapsed by default. */}
+      <div className="space-y-2">
+        <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
+          Advanced insights
+        </h4>
+
+        <Section title="R90 drivers" count={r90Drivers.length}>
+          {r90Drivers.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1">
+              Not enough overlapping data yet to link individual stats to R90.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+              {r90Drivers.map((d) => (
+                <div
+                  key={d.key}
+                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
+                >
+                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(d.key)}>
+                    {prettifyKey(d.key)}
+                  </span>
+                  <span
+                    className={
+                      "text-[10px] tabular-nums font-semibold " +
+                      (d.r >= 0 ? "text-emerald-400" : "text-rose-400")
+                    }
+                  >
+                    {corrLabel(d.r)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-muted-foreground mt-2 px-1">
+            Pearson correlation between each stat and R90 across the loaded window. Positive values mean the stat tends to rise on his higher-rated matches.
+          </p>
+        </Section>
+
+        <Section title="Form trends" count={Object.keys(advanced).length}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+            {Object.entries(advanced)
+              .filter(([, v]) => Math.abs(v.trendPct) >= 15 && v.n >= 4)
+              .sort((a, b) => Math.abs(b[1].trendPct) - Math.abs(a[1].trendPct))
+              .slice(0, 18)
+              .map(([key, v]) => (
+                <div
+                  key={key}
+                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
+                >
+                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(key)}>
+                    {prettifyKey(key)}
+                  </span>
+                  <span
+                    className={
+                      "text-[10px] tabular-nums font-semibold " +
+                      (v.trendPct >= 0 ? "text-emerald-400" : "text-rose-400")
+                    }
+                  >
+                    {fmtPct(v.trendPct)}
+                  </span>
+                </div>
+              ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 px-1">
+            Recent half of the window compared to the earlier half. Useful for spotting what's heating up or cooling off.
+          </p>
+        </Section>
+
+        <Section title="Consistency" count={consistency.mostConsistent.length + consistency.mostVolatile.length}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most consistent</div>
+              <div className="space-y-1">
+                {consistency.mostConsistent.map((row) => (
+                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
+                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most volatile</div>
+              <div className="space-y-1">
+                {consistency.mostVolatile.map((row) => (
+                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
+                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 px-1">
+            Standard deviation and coefficient of variation across the window. Low CV stats are the reliable floor; high CV stats are the fixable swings.
+          </p>
+        </Section>
+
+        <Section title="Stat interactions" count={statPairCorrs.length}>
+          {statPairCorrs.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1">No strong pairwise links surfaced in this window.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {statPairCorrs.map((p) => (
+                <div key={p.a + p.b} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-foreground/90 truncate" title={`${prettifyKey(p.a)} × ${prettifyKey(p.b)}`}>
+                    {prettifyKey(p.a)} <span className="text-muted-foreground">×</span> {prettifyKey(p.b)}
+                  </span>
+                  <span className={"text-[10px] tabular-nums font-semibold " + (p.r >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                    {corrLabel(p.r)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-muted-foreground mt-2 px-1">
+            Stats that move together (positive) or trade off (negative) match-to-match. Useful for spotting compensations and tactical patterns.
+          </p>
+        </Section>
+      </div>
+
       {allStatKeys.length > 0 && (
         <div className="space-y-4">
           <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
@@ -255,16 +573,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               return a.localeCompare(b);
             });
             return (
-              <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="h-[3px] w-6 bg-[#C6A332]/70" />
-                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
-                    {cat}
-                  </h5>
-                  <span className="text-[10px] text-muted-foreground ml-1">
-                    {grouped[cat].length}
-                  </span>
-                </div>
+              <Section key={cat} title={cat} count={grouped[cat].length}>
                 <div className="space-y-2.5">
                   {subNames.map((sub) => (
                     <div key={sub} className="space-y-1.5">
@@ -296,7 +605,7 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Section>
             );
           })}
         </div>
