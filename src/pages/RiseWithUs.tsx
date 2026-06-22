@@ -1401,6 +1401,31 @@ const RiseWithUs = () => {
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {/* Our Stars — clips + best player imagery */}
+                {hubMedia.length > 0 && (
+                  <section className="my-8 md:my-10">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+                        {ot("your_moments", "Your moments")}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
+                      {hubMedia.map((m, i) => (
+                        <div
+                          key={m.url + i}
+                          className="snap-start shrink-0 w-44 sm:w-52 md:w-60 aspect-[3/4] overflow-hidden rounded-2xl border border-primary/35 shadow-[0_0_30px_-12px_hsl(var(--gold)/0.55)] bg-black/40"
+                        >
+                          {m.kind === "video" ? (
+                            <video src={m.url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
+                          ) : (
+                            <img src={m.url} alt="" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
                 <StarsShowcase lang={lang} />
 
                 {GROUPS.map((g: GroupKey) => {
