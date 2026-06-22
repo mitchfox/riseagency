@@ -1827,3 +1827,61 @@ function MatchByMatchCard({
     </SectionShell>
   );
 }
+
+function RemainingVideosCard({
+  videos,
+  title,
+}: {
+  videos: { id: string; name: string; videoUrl: string; logoUrl: string | null }[];
+  title: string;
+}) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const active = videos[Math.min(activeIdx, videos.length - 1)] ?? videos[0];
+  if (!active) return null;
+  return (
+    <SectionShell title={title} eyebrow="05">
+      <div className="space-y-3">
+        <div className="relative w-full overflow-hidden rounded-xl bg-black border border-white/10 aspect-video">
+          <video
+            key={active.videoUrl}
+            src={active.videoUrl}
+            controls
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        </div>
+        {videos.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {videos.map((v, i) => {
+              const isActive = i === activeIdx;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setActiveIdx(i)}
+                  className={`flex-shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px] text-left transition ${
+                    isActive
+                      ? "border-[#cbb96b]/70 bg-[#cbb96b]/10 text-white"
+                      : "border-white/10 bg-white/[0.03] text-white/70 hover:border-[#cbb96b]/40"
+                  }`}
+                  style={{ maxWidth: 220 }}
+                >
+                  {v.logoUrl ? (
+                    <img
+                      src={v.logoUrl}
+                      alt=""
+                      onError={(e) => ((e.currentTarget.style.display = "none"))}
+                      className="h-5 w-5 object-contain flex-shrink-0"
+                    />
+                  ) : null}
+                  <span className="truncate">{v.name || "Highlight"}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </SectionShell>
+  );
+}
