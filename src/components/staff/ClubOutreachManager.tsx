@@ -1384,7 +1384,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
               <Label>Alternate Options (optional)</Label>
               <p className="text-[11px] text-muted-foreground">
-                A wide thin card at the bottom of the proposal where you add extra detail — e.g. free-transfer alternatives, loan options, budget profiles. Plain text, no images, no links.
+                A wide thin card at the bottom of the proposal where you add extra detail (e.g. free-transfer alternatives, loan options, budget profiles) and optionally link to other player profiles the club can switch to.
               </p>
               <Textarea
                 rows={4}
@@ -1393,6 +1393,69 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 onChange={(e) => setAltBlurb(e.target.value)}
                 className="text-sm"
               />
+              {/* Linked alternate player profiles. These render as plain
+                  clickable links inside the same card on the proposal so the
+                  club can switch to a different profile. */}
+              <div className="pt-2 space-y-2">
+                <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Linked profiles</Label>
+                {altLinkIds.length > 0 && (
+                  <div className="space-y-1.5">
+                    {altLinkIds.map((id, idx) => {
+                      const r = allRows.find(x => x.id === id);
+                      const pid = r?.link_players?.[0]?.player_id ?? r?.player_id ?? null;
+                      const p = pid ? playerById.get(pid) : null;
+                      const label = p?.name ?? r?.agent_name ?? r?.club?.club_name ?? r?.short_id ?? "Unknown";
+                      const sub = [p?.position, r?.club?.club_name].filter(Boolean).join(" · ");
+                      return (
+                        <div key={id} className="flex items-center gap-2 rounded border border-border bg-background/60 px-2 py-1.5 text-xs">
+                          <span className="flex-1 truncate">
+                            <span className="font-medium">{label}</span>
+                            {sub && <span className="text-muted-foreground"> — {sub}</span>}
+                          </span>
+                          <button type="button" disabled={idx === 0} onClick={() => setAltLinkIds(arr => { const n = [...arr]; [n[idx-1], n[idx]] = [n[idx], n[idx-1]]; return n; })} className="text-muted-foreground hover:text-foreground disabled:opacity-30">↑</button>
+                          <button type="button" disabled={idx === altLinkIds.length - 1} onClick={() => setAltLinkIds(arr => { const n = [...arr]; [n[idx+1], n[idx]] = [n[idx], n[idx+1]]; return n; })} className="text-muted-foreground hover:text-foreground disabled:opacity-30">↓</button>
+                          <button type="button" onClick={() => setAltLinkIds(arr => arr.filter(x => x !== id))} className="text-muted-foreground hover:text-red-400">×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <Input
+                  value={altQuery}
+                  onChange={(e) => setAltQuery(e.target.value)}
+                  placeholder="Search other outreach profiles to link…"
+                  className="h-8 text-xs"
+                />
+                {altQuery.trim() && (
+                  <div className="max-h-40 overflow-auto rounded border border-border bg-background/40 divide-y divide-border">
+                    {allRows
+                      .filter(r => r.id !== editing?.id && !altLinkIds.includes(r.id))
+                      .map(r => {
+                        const pid = r.link_players?.[0]?.player_id ?? r.player_id ?? null;
+                        const p = pid ? playerById.get(pid) : null;
+                        const label = p?.name ?? r.agent_name ?? r.club?.club_name ?? r.short_id ?? "";
+                        const haystack = `${label} ${r.club?.club_name ?? ""}`.toLowerCase();
+                        return haystack.includes(altQuery.trim().toLowerCase()) ? { r, p, label } : null;
+                      })
+                      .filter(Boolean)
+                      .slice(0, 20)
+                      .map((m: any) => (
+                        <button
+                          key={m.r.id}
+                          type="button"
+                          onClick={() => { setAltLinkIds(arr => [...arr, m.r.id]); setAltQuery(""); }}
+                          className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent/40 flex items-center gap-2"
+                        >
+                          <span className="flex-1 truncate">
+                            <span className="font-medium">{m.label}</span>
+                            {m.r.club?.club_name && <span className="text-muted-foreground"> — {m.r.club.club_name}</span>}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">Add</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
 
