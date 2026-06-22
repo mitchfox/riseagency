@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
 import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
+import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -128,7 +129,7 @@ export default function ClubOutreachManager() {
   const [defaultSeasonDataMode, setDefaultSeasonDataMode] = useState<'popup' | 'link'>('popup');
   const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [mode, setMode] = useState<OutreachMode>('club');
-  const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships'>('outreach');
+  const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships' | 'markettables'>('outreach');
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
@@ -279,7 +280,8 @@ export default function ClubOutreachManager() {
           { v: 'outreach', label: 'Outreach' },
           { v: 'strategy', label: 'Strategy' },
           { v: 'relationships', label: 'Relationships' },
-        ] as { v: 'outreach' | 'strategy' | 'relationships'; label: string }[]).map((t) => (
+          { v: 'markettables', label: 'Market Tables' },
+        ] as { v: 'outreach' | 'strategy' | 'relationships' | 'markettables'; label: string }[]).map((t) => (
           <button
             key={t.v}
             type="button"
@@ -293,7 +295,9 @@ export default function ClubOutreachManager() {
         ))}
       </div>
 
-      {topTab === 'relationships' ? (
+      {topTab === 'markettables' ? (
+        <MarketTablesTab />
+      ) : topTab === 'relationships' ? (
         <RelationshipsTab />
       ) : topTab === 'strategy' ? (
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
