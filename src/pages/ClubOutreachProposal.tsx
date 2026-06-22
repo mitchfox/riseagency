@@ -861,7 +861,7 @@ export default function ClubOutreachProposal() {
               {data.alternate_profiles.map((a) => (
                 <Link
                   key={a.short_id}
-                  to={`/c/${a.short_id}`}
+                  to={`/clubs/${a.short_id}`}
                   className="snap-start shrink-0 w-40 rounded-xl border border-white/10 bg-white/[0.04] hover:border-[#cbb96b]/60 hover:bg-white/[0.07] transition-all p-3 text-left"
                 >
                   <div className="aspect-square w-full overflow-hidden rounded-lg bg-white/5 mb-2">
