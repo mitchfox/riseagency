@@ -362,9 +362,6 @@ export const DrillDiagramEditor = ({ open, onClose, initial, onSave, title = "Di
             {(arrowStart || shapeStart) && (
               <circle cx={(arrowStart || shapeStart)!.x} cy={(arrowStart || shapeStart)!.y} r="1" fill="white" />
             )}
-            {false && arrowStart && (
-              <circle cx={arrowStart.x} cy={arrowStart.y} r="1" fill="white" />
-            )}
 
             {diagram.tokens.map(t => {
               const onPointerDown = startDragToken(t.id);
