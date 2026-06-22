@@ -1217,9 +1217,14 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Show on proposal</Label>
-              <p className="text-[11px] text-muted-foreground mt-1">Pull these sections through from the player's Stars profile.</p>
+            <p className="text-[11px] text-muted-foreground -mb-1">
+              The blocks below carry the primary player's saved defaults. Open one only if you need to override it for this outreach.
+            </p>
+            <Accordion type="multiple" className="space-y-2">
+            <AccordionItem value="show" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Show on proposal</AccordionTrigger>
+              <AccordionContent className="pb-3">
+              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from the player's Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
                   { v: showForm, set: setShowForm, label: "Form" },
@@ -1233,9 +1238,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </label>
                 ))}
               </div>
-            </div>
-            <div>
-              <Label>Season data — popup or link</Label>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="seasonmode" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season data — popup or link</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
                 Popup keeps clubs on the proposal in a wide in-page sheet. Link opens the player's Stars profile in a new tab.
               </p>
@@ -1278,9 +1285,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </button>
                 )}
               </div>
-            </div>
-            <div>
-              <Label>Season to show</Label>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="season" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season to show</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
                 Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
               </p>
@@ -1326,10 +1335,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </button>
                 )}
               </div>
-            </div>
+              </AccordionContent>
+            </AccordionItem>
             {primaryPlayerId && (
-              <div>
-                <Label>Videos to include (carousel)</Label>
+              <AccordionItem value="videos" className="border border-border rounded-md bg-background/40 px-3">
+                <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Videos to include (carousel)</AccordionTrigger>
+                <AccordionContent className="pb-3">
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Pick which of {playerById.get(primaryPlayerId)?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
                 </p>
@@ -1391,10 +1402,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     </div>
                   </>
                 )}
-              </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
-            <div className="rounded-md border border-border bg-background/40 p-3 space-y-2">
-              <Label>Alternate Options (optional)</Label>
+            <AccordionItem value="alt" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Alternate Options (optional)</AccordionTrigger>
+              <AccordionContent className="pb-3 space-y-2">
               <p className="text-[11px] text-muted-foreground">
                 A wide thin card at the bottom of the proposal where you add extra detail (e.g. free-transfer alternatives, loan options, budget profiles) and optionally link to other player profiles the club can switch to.
               </p>
@@ -1468,14 +1481,23 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </div>
                 )}
               </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
-
-            <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
-
-            <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
-
-            <div className="rounded-md border border-[#cbb96b]/40 bg-[#cbb96b]/[0.06] p-3">
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="keydetails" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Key detail tiles</AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="sectionorder" className="border border-border rounded-md bg-background/40 px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Section order</AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="mandate" className="border border-[#cbb96b]/40 rounded-md bg-[#cbb96b]/[0.06] px-3">
+              <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Mandate / suggested-to-agent</AccordionTrigger>
+              <AccordionContent className="pb-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <Checkbox checked={isMandated} onCheckedChange={(c) => setIsMandated(!!c)} />
                 <div>
@@ -1597,7 +1619,10 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   </div>
                 </div>
               )}
-            </div>
+              </AccordionContent>
+            </AccordionItem>
+            </Accordion>
+            <p className="text-[11px] text-muted-foreground">Club contact details live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
           </div>
         </div>
         <DialogFooter>
