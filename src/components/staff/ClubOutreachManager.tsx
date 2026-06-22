@@ -792,6 +792,34 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   // can pick which ones appear in the proposal carousel.
   const primaryPlayerId = entries[0]?.player_id ?? null;
   useEffect(() => {
+    // Load the primary player's named seasons so the staff can scope the
+    // proposal's data to one of them. Reset selection when the player
+    // changes unless we already pre-seeded it from defaults.
+    let cancelled = false;
+    if (!primaryPlayerId) {
+      setPlayerSeasons([]);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("player_seasons")
+        .select("id, name, sort_order")
+        .eq("player_id", primaryPlayerId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setPlayerSeasons((data ?? []) as { id: string; name: string }[]);
+      // If the currently picked seasonId belongs to a different player,
+      // drop it.
+      if (seasonId && !(data ?? []).some((s: any) => s.id === seasonId)) {
+        setSeasonId(null);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryPlayerId]);
+
+  useEffect(() => {
     let cancelled = false;
     if (!primaryPlayerId) {
       setPrimaryVideos([]);
