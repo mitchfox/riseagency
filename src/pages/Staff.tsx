@@ -953,6 +953,7 @@ const Staff = () => {
         title: 'Dashboard',
         icon: Calendar,
         sections: [
+          { id: 'teamperformance', title: 'Team Performance', icon: Trophy },
           { id: 'overview', title: 'My Tasks', icon: Users },
           { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
