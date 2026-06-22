@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film } from "lucide-react";
+import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film, ListChecks, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { MatchClipPlayer } from "@/components/staff/analysis/MatchClipPlayer";
 import { ScoreEditMode } from "@/components/staff/analysis/ScoreEditMode";
@@ -34,6 +35,8 @@ interface ActionReport {
   placeholder_minutes?: number | null;
   category?: string | null;
   notes?: string | null;
+  is_todo?: boolean;
+  todo_note?: string | null;
 }
 
 interface ActionReportsListProps {
