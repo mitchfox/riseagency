@@ -1977,6 +1977,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       agent_name: agentName.trim() || null,
       agent_image_url: agentImageUrl.trim() || null,
       default_fit_recommendation: defaultFit.trim() || null,
+      default_season_data_mode: defaultSeasonDataMode,
+      default_video_selection_mode: defaultVideoMode,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
