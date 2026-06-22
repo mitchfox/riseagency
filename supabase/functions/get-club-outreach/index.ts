@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
             // count.
             let q = supabase
               .from("player_analysis")
-              .select("player_id, analysis_date, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .select("id, player_id, analysis_date, opponent, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
