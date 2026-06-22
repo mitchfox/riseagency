@@ -240,64 +240,184 @@ export const TeamPerformance = () => {
     })();
   }, []);
 
-  const stats = useMemo(() => {
-    return STARTERS.map(s => {
-      const mine = tasks.filter(t => nameMatches(t.assigned_to, s.name));
-      const done = mine.filter(t => t.completed).length;
-      const total = mine.length;
-      const byCategory = new Map<string, number>();
-      mine.filter(t => t.completed).forEach(t => {
-        const k = (t.category || "Uncategorised").trim() || "Uncategorised";
-        byCategory.set(k, (byCategory.get(k) || 0) + 1);
-      });
-      return {
-        starter: s,
-        done,
-        total,
-        rate: total ? Math.round((done / total) * 100) : 0,
-        categories: Array.from(byCategory.entries()).sort((a, b) => b[1] - a[1]),
-      };
-    });
-  }, [tasks]);
+  // ------------------------------------------------------------
+  // Build the season log: every completion event (one per
+  // completion_log timestamp, plus last_completed_at fallback)
+  // is a "play". Each play has a date, starter and box-score
+  // contribution. We then bucket plays into weekly games.
+  // ------------------------------------------------------------
+  type Play = { date: Date; weekIdx: number; starterName: string | null; stat: BoxStat; pts: number; category: string };
 
-  const leaderboard = useMemo(() => [...stats].sort((a, b) => b.done - a.done), [stats]);
-  const topDone = leaderboard[0]?.done || 0;
-
-  // Weekly box score (last 7 days based on last_completed_at)
-  const boxScore = useMemo(() => {
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const team = emptyBox();
-    const perStarter = new Map<string, BoxLine>();
-    STARTERS.forEach(s => perStarter.set(s.name, emptyBox()));
-    let attempts = 0;
-    let madeWeighted = 0;
-
+  const plays = useMemo<Play[]>(() => {
+    const out: Play[] = [];
     tasks.forEach(t => {
-      if (!t.completed) return;
-      const ts = t.last_completed_at ? new Date(t.last_completed_at).getTime() : 0;
-      if (!ts || ts < cutoff) return;
       const c = classifyTask(t);
       if (!c) return;
-      team[c.stat] += c.pts;
-      attempts += 1;
-      if (c.stat === "PTS" && c.pts >= 3) madeWeighted += 1;
-      STARTERS.forEach(s => {
-        if (nameMatches(t.assigned_to, s.name)) {
-          const line = perStarter.get(s.name)!;
-          line[c.stat] += c.pts;
-        }
+      const matchedStarter = STARTERS.find(s => assignedToStarter(t.assigned_to, s)) || null;
+      const category = (t.category || "Uncategorised").trim() || "Uncategorised";
+
+      const stamps = new Set<string>();
+      (t.completion_log || []).forEach(raw => {
+        if (!raw) return;
+        const d = new Date(raw);
+        if (Number.isNaN(d.getTime())) return;
+        stamps.add(d.toISOString());
+      });
+      // If no log entries but the task is marked complete, count it once.
+      if (stamps.size === 0 && t.completed && t.last_completed_at) {
+        const d = new Date(t.last_completed_at);
+        if (!Number.isNaN(d.getTime())) stamps.add(d.toISOString());
+      }
+
+      stamps.forEach(iso => {
+        const d = new Date(iso);
+        out.push({
+          date: d,
+          weekIdx: weekIndex(d),
+          starterName: matchedStarter ? matchedStarter.name : null,
+          stat: c.stat,
+          pts: c.pts,
+          category,
+        });
       });
     });
-
-    const teamFinal = withPM(team);
-    const perStarterFinal = new Map<string, BoxLine>();
-    perStarter.forEach((v, k) => perStarterFinal.set(k, withPM(v)));
-    const fgPct = attempts ? Math.round((madeWeighted / attempts) * 100) : 0;
-    return { team: teamFinal, perStarter: perStarterFinal, attempts, fgPct };
+    return out;
   }, [tasks]);
 
-  const activeStat = open ? stats.find(s => s.starter.name === open.name) : null;
+  const currentWeekIdx = weekIndex(new Date());
+
+  // Per-week team box line
+  const weeklyBoxes = useMemo(() => {
+    const map = new Map<number, BoxLine>();
+    plays.forEach(p => {
+      if (!map.has(p.weekIdx)) map.set(p.weekIdx, emptyBox());
+      map.get(p.weekIdx)![p.stat] += p.pts;
+    });
+    const out = new Map<number, BoxLine>();
+    map.forEach((v, k) => out.set(k, withPM(v)));
+    return out;
+  }, [plays]);
+
+  // Per-week per-starter line
+  const weeklyByStarter = useMemo(() => {
+    const m = new Map<string, Map<number, BoxLine>>();
+    STARTERS.forEach(s => m.set(s.name, new Map()));
+    plays.forEach(p => {
+      if (!p.starterName) return;
+      const inner = m.get(p.starterName)!;
+      if (!inner.has(p.weekIdx)) inner.set(p.weekIdx, emptyBox());
+      inner.get(p.weekIdx)![p.stat] += p.pts;
+    });
+    const finalised = new Map<string, Map<number, BoxLine>>();
+    m.forEach((inner, name) => {
+      const f = new Map<number, BoxLine>();
+      inner.forEach((v, k) => f.set(k, withPM(v)));
+      finalised.set(name, f);
+    });
+    return finalised;
+  }, [plays]);
+
+  // Current-week box (the live game)
+  const boxScore = useMemo(() => {
+    const team = weeklyBoxes.get(currentWeekIdx) || withPM(emptyBox());
+    const perStarter = new Map<string, BoxLine>();
+    STARTERS.forEach(s => {
+      perStarter.set(s.name, weeklyByStarter.get(s.name)?.get(currentWeekIdx) || withPM(emptyBox()));
+    });
+    const attempts = plays.filter(p => p.weekIdx === currentWeekIdx).length;
+    const made = plays.filter(p => p.weekIdx === currentWeekIdx && p.stat === "PTS" && p.pts >= 8).length;
+    const fgPct = attempts ? Math.round((made / attempts) * 100) : 0;
+    return { team, perStarter, attempts, fgPct };
+  }, [weeklyBoxes, weeklyByStarter, currentWeekIdx, plays]);
+
+  // Season averages per starter (PPG/APG/RPG over weeks they have appeared in)
+  type AvgLine = { games: number; ppg: number; apg: number; rpg: number; spg: number; bpg: number; topg: number; pmpg: number; totalPts: number };
+  const seasonAverages = useMemo(() => {
+    const out = new Map<string, AvgLine>();
+    STARTERS.forEach(s => {
+      const weeks = weeklyByStarter.get(s.name) || new Map<number, BoxLine>();
+      const lines = Array.from(weeks.values());
+      const g = lines.length || 0;
+      const sum = (k: BoxStat) => lines.reduce((a, l) => a + l[k], 0);
+      const pm = lines.reduce((a, l) => a + l.plusMinus, 0);
+      out.set(s.name, {
+        games: g,
+        ppg: g ? +(sum("PTS") / g).toFixed(1) : 0,
+        apg: g ? +(sum("AST") / g).toFixed(1) : 0,
+        rpg: g ? +(sum("REB") / g).toFixed(1) : 0,
+        spg: g ? +(sum("STL") / g).toFixed(1) : 0,
+        bpg: g ? +(sum("BLK") / g).toFixed(1) : 0,
+        topg: g ? +(sum("TO") / g).toFixed(1) : 0,
+        pmpg: g ? +(pm / g).toFixed(1) : 0,
+        totalPts: sum("PTS"),
+      });
+    });
+    return out;
+  }, [weeklyByStarter]);
+
+  // Team season averages
+  const teamAverages = useMemo<AvgLine>(() => {
+    const lines = Array.from(weeklyBoxes.values());
+    const g = lines.length;
+    const sum = (k: BoxStat) => lines.reduce((a, l) => a + l[k], 0);
+    const pm = lines.reduce((a, l) => a + l.plusMinus, 0);
+    return {
+      games: g,
+      ppg: g ? +(sum("PTS") / g).toFixed(1) : 0,
+      apg: g ? +(sum("AST") / g).toFixed(1) : 0,
+      rpg: g ? +(sum("REB") / g).toFixed(1) : 0,
+      spg: g ? +(sum("STL") / g).toFixed(1) : 0,
+      bpg: g ? +(sum("BLK") / g).toFixed(1) : 0,
+      topg: g ? +(sum("TO") / g).toFixed(1) : 0,
+      pmpg: g ? +(pm / g).toFixed(1) : 0,
+      totalPts: sum("PTS"),
+    };
+  }, [weeklyBoxes]);
+
+  // 52-game fixture list starting week of 22 Jun 2026
+  const fixtures = useMemo(() => {
+    return Array.from({ length: 52 }, (_, i) => {
+      const line = weeklyBoxes.get(i) || withPM(emptyBox());
+      const { start, end } = weekLabel(i);
+      let result: "W" | "L" | "—" = "—";
+      if (i < currentWeekIdx) result = line.PTS >= WIN_THRESHOLD ? "W" : "L";
+      else if (i === currentWeekIdx) result = line.PTS >= WIN_THRESHOLD ? "W" : "—";
+      return { i, start, end, line, result, isCurrent: i === currentWeekIdx, isPast: i < currentWeekIdx };
+    });
+  }, [weeklyBoxes, currentWeekIdx]);
+
+  // Leaderboard (this week's PTS, fall back to season total)
+  const leaderboard = useMemo(() => {
+    return STARTERS.map(s => {
+      const wk = boxScore.perStarter.get(s.name)!;
+      const avg = seasonAverages.get(s.name)!;
+      return { starter: s, weekPts: wk.PTS, seasonPts: avg.totalPts, avg };
+    }).sort((a, b) => b.weekPts - a.weekPts || b.seasonPts - a.seasonPts);
+  }, [boxScore, seasonAverages]);
+  const topWeekPts = leaderboard[0]?.weekPts || 0;
+
+  // Per-starter category breakdown (for dialog)
+  const categoriesByStarter = useMemo(() => {
+    const m = new Map<string, Map<string, number>>();
+    STARTERS.forEach(s => m.set(s.name, new Map()));
+    plays.forEach(p => {
+      if (!p.starterName) return;
+      const inner = m.get(p.starterName)!;
+      inner.set(p.category, (inner.get(p.category) || 0) + 1);
+    });
+    const out = new Map<string, [string, number][]>();
+    m.forEach((inner, name) => {
+      out.set(name, Array.from(inner.entries()).sort((a, b) => b[1] - a[1]));
+    });
+    return out;
+  }, [plays]);
+
+  const wins = fixtures.filter(f => f.result === "W").length;
+  const losses = fixtures.filter(f => f.result === "L").length;
+
+  const activeAvg = open ? seasonAverages.get(open.name) : null;
   const activeBox = open ? boxScore.perStarter.get(open.name) : null;
+  const activeCategories = open ? (categoriesByStarter.get(open.name) || []) : [];
 
   return (
     <div className="space-y-6">
