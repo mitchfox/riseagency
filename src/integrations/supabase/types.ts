@@ -3728,6 +3728,47 @@ export type Database = {
         }
         Relationships: []
       }
+      market_table_entries: {
+        Row: {
+          chief_scout_name: string | null
+          club_id: string
+          created_at: string
+          id: string
+          market_table_key: string
+          notes: string | null
+          technical_director_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          chief_scout_name?: string | null
+          club_id: string
+          created_at?: string
+          id?: string
+          market_table_key: string
+          notes?: string | null
+          technical_director_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chief_scout_name?: string | null
+          club_id?: string
+          created_at?: string
+          id?: string
+          market_table_key?: string
+          notes?: string | null
+          technical_director_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_table_entries_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_map_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           budget: number | null
