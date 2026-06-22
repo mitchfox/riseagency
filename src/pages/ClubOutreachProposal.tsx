@@ -1347,18 +1347,20 @@ function KeyDetailsCard({
       secondary?: string | null;
       label: string;
     }) => (
-      <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center h-full">
-        <div className="h-12 flex items-center justify-center px-1">{visual}</div>
-        <p className="mt-2 min-h-[14px] text-[11px] text-white/85 leading-tight break-words">
-          {secondary || ""}
-        </p>
-        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-white/55 leading-tight">
+      <div className="rounded-xl bg-white/[0.03] border border-white/5 px-3 py-4 flex flex-col items-center justify-between text-center h-full min-h-[120px] gap-2">
+        <div className="flex-1 w-full flex items-center justify-center px-1">{visual}</div>
+        {secondary ? (
+          <p className="text-[11px] text-white/85 leading-tight break-words">
+            {secondary}
+          </p>
+        ) : null}
+        <p className="text-[10px] uppercase tracking-[0.2em] text-white/55 leading-tight">
           {label}
         </p>
       </div>
     );
     const TextValue = ({ value }: { value: string | React.ReactNode }) => (
-      <span className="text-lg sm:text-xl font-semibold leading-tight text-white break-words">
+      <span className="text-3xl sm:text-4xl font-semibold leading-none text-white break-words">
         {value || "-"}
       </span>
     );
@@ -1382,7 +1384,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.yearsOld", "Years old")}
-            visual={<span className="text-4xl font-semibold leading-none text-white">{age != null ? age : "-"}</span>}
+            visual={<TextValue value={age != null ? String(age) : "-"} />}
           />
         );
       case "nationality":
