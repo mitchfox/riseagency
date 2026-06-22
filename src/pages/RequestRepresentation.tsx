@@ -792,7 +792,7 @@ const RequestRepresentation = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40 md:px-8 md:pt-8 md:pb-44 lg:px-16"
+            className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-28 md:px-8 md:pt-8 md:pb-32 lg:px-16"
           >
             {/* Compact fixed mini header — only visible after scroll.
                 Doesn't reflow page so scrolling stays smooth. */}
@@ -896,7 +896,7 @@ const RequestRepresentation = () => {
               {/* Ballon d'Or vision — placed at the bottom, after the
                   grouped tile sections (including FAQs), so it closes
                   the page with the ambition statement. */}
-              <div className="my-6 md:my-8">
+              <div className="mt-6 md:mt-8">
                 <div
                   className="relative overflow-hidden rise-slant-card-lg border border-border/60"
                   style={solidBlackSectionStyle}
