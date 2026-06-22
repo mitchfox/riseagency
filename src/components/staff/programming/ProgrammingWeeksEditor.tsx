@@ -533,7 +533,7 @@ const SlotCell = ({ slot, refIndex, sessions, onPickSession, onPickFreeText, onC
           {sessions.length === 0 && (
             <p className="text-xs text-muted-foreground px-2 py-3">No sessions exist yet. Add sessions in an SPS or Technical programme first.</p>
           )}
-          {sessions.map(s => {
+          {sessions.filter(s => !s.hiddenFromPicker).map(s => {
             const isSps = s.effectiveType === "sps";
             return (
               <button
