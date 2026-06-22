@@ -843,6 +843,48 @@ export default function ClubOutreachProposal() {
         return <>{order.map((k) => renderers[k]?.())}</>;
       })()}
 
+      {/* Alternate profiles — other Rise players the receiving club may also
+          want to look at (e.g. budget-friendly options). Rendered as a wide
+          strip of mini-cards above the closing contact CTAs. */}
+      {Array.isArray(data.alternate_profiles) && data.alternate_profiles.length > 0 && (
+        <section className="max-w-3xl mx-auto px-6 mt-10">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-2">
+              {tr("alt.eyebrow", "Alternate Profiles")}
+            </p>
+            {data.link.alternate_profiles_blurb && (
+              <p className="text-[13px] leading-relaxed text-white/75 mb-4">
+                {data.link.alternate_profiles_blurb}
+              </p>
+            )}
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+              {data.alternate_profiles.map((a) => (
+                <Link
+                  key={a.short_id}
+                  to={`/c/${a.short_id}`}
+                  className="snap-start shrink-0 w-40 rounded-xl border border-white/10 bg-white/[0.04] hover:border-[#cbb96b]/60 hover:bg-white/[0.07] transition-all p-3 text-left"
+                >
+                  <div className="aspect-square w-full overflow-hidden rounded-lg bg-white/5 mb-2">
+                    {a.image_url ? (
+                      <img src={a.image_url} alt={a.player_name ?? ""} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full" />
+                    )}
+                  </div>
+                  <div className="text-[13px] font-semibold text-white truncate">{a.player_name ?? "Player"}</div>
+                  <div className="text-[11px] text-white/55 truncate">
+                    {[a.position, a.age != null ? `${a.age}` : null].filter(Boolean).join(" · ")}
+                  </div>
+                  {a.club && (
+                    <div className="text-[10px] text-white/40 truncate mt-0.5">{a.club}</div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Contact CTAs */}
       <div ref={contactsRef} className="max-w-3xl mx-auto px-6 mt-10 space-y-3">
         {/* Brand signature band — sits above the CTAs so the proposal closes
