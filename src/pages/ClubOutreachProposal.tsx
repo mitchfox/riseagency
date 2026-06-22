@@ -240,6 +240,7 @@ export default function ClubOutreachProposal() {
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [inlineDataOpen, setInlineDataOpen] = useState(false);
+  const [shownAnalysisIds, setShownAnalysisIds] = useState<Set<string>>(new Set());
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
