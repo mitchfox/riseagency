@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film } from "lucide-react";
+import { Plus, Search, TrendingUp, Edit, Eye, User, FileEdit, EyeOff, Radio, Play, Film, ListChecks, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { MatchClipPlayer } from "@/components/staff/analysis/MatchClipPlayer";
 import { ScoreEditMode } from "@/components/staff/analysis/ScoreEditMode";
@@ -34,6 +35,8 @@ interface ActionReport {
   placeholder_minutes?: number | null;
   category?: string | null;
   notes?: string | null;
+  is_todo?: boolean;
+  todo_note?: string | null;
 }
 
 interface ActionReportsListProps {
@@ -66,6 +69,10 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
   const [pendingReportType, setPendingReportType] = useState<'player' | 'team'>('player');
   const [showPlayerPicker, setShowPlayerPicker] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState("");
+  const [todoPickerOpen, setTodoPickerOpen] = useState(false);
+  const [todoNoteEditor, setTodoNoteEditor] = useState<{ id: string; note: string } | null>(null);
+  const [todoPickerSearch, setTodoPickerSearch] = useState("");
+  const [todoPickerNote, setTodoPickerNote] = useState("");
 
   useEffect(() => {
     if (scope.loading) return;
@@ -115,6 +122,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           placeholder_minutes,
           category,
           notes,
+          is_todo,
+          todo_note,
           players!player_analysis_player_id_fkey (
             name,
             image_url
@@ -142,6 +151,8 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
         placeholder_minutes: report.placeholder_minutes,
         category: report.category || "match",
         notes: report.notes || null,
+        is_todo: !!report.is_todo,
+        todo_note: report.todo_note || null,
       }));
 
       const scoped = scope.isScoped
@@ -184,7 +195,10 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       report.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlayer = playerFilter === "all" || report.player_id === playerFilter;
     const status = report.visibility_status || "draft";
-    const matchesStatus = statusTab === "all" || status === statusTab;
+    const matchesStatus =
+      statusTab === "all" ? true
+      : statusTab === "todo" ? !!report.is_todo
+      : status === statusTab;
     return matchesSearch && matchesPlayer && matchesStatus;
   });
 
@@ -194,10 +208,20 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       const matchesPlayer = playerFilter === "all" || r.player_id === playerFilter;
       return matchesSearch && matchesPlayer;
     }).length,
+    todo: reports.filter(r => r.is_todo).length,
     draft: reports.filter(r => (r.visibility_status || "draft") === "draft").length,
     clipped: reports.filter(r => r.visibility_status === "clipped").length,
     hidden: reports.filter(r => r.visibility_status === "hidden").length,
     live: reports.filter(r => r.visibility_status === "live").length,
+  };
+
+  const toggleTodo = async (report: ActionReport, next: boolean, note?: string | null) => {
+    const payload: any = { is_todo: next };
+    if (note !== undefined) payload.todo_note = note;
+    const { error } = await supabase.from("player_analysis").update(payload).eq("id", report.id);
+    if (error) { toast.error("Couldn't update To Do"); return; }
+    setReports(prev => prev.map(r => r.id === report.id ? { ...r, is_todo: next, ...(note !== undefined ? { todo_note: note } : {}) } : r));
+    toast.success(next ? "Added to To Do" : "Removed from To Do");
   };
 
   const beginCreateReport = (reportType: 'player' | 'team') => {
@@ -283,12 +307,27 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       <Tabs value={statusTab} onValueChange={setStatusTab}>
         <TabsList className="h-auto p-1 bg-muted/50">
           <TabsTrigger value="all" className="text-xs px-3 py-1.5">All ({statusCounts.all})</TabsTrigger>
+          <TabsTrigger value="todo" className="text-xs px-3 py-1.5 data-[state=active]:text-primary">
+            <ListChecks className="w-3 h-3 mr-1" />
+            To Do ({statusCounts.todo})
+          </TabsTrigger>
           <TabsTrigger value="draft" className="text-xs px-3 py-1.5">Draft ({statusCounts.draft})</TabsTrigger>
           <TabsTrigger value="clipped" className="text-xs px-3 py-1.5">Clipped ({statusCounts.clipped})</TabsTrigger>
           <TabsTrigger value="hidden" className="text-xs px-3 py-1.5">Hidden ({statusCounts.hidden})</TabsTrigger>
           <TabsTrigger value="live" className="text-xs px-3 py-1.5">Live ({statusCounts.live})</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {statusTab === "todo" && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            A manual list of reports that need action. Each one shows its note as a banner at the top of the report.
+          </p>
+          <Button size="sm" onClick={() => { setTodoPickerOpen(true); setTodoPickerSearch(""); setTodoPickerNote(""); }}>
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> Add to To Do
+          </Button>
+        </div>
+      )}
 
       {/* Reports List */}
       {filteredReports.length === 0 ? (
@@ -300,10 +339,33 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       ) : (
         <div className="grid gap-3">
           {filteredReports.map((report) => (
-            <div
-              key={report.id}
-              className="rounded-lg overflow-hidden text-white flex flex-col md:flex-row md:items-stretch"
-            >
+            <div key={report.id} className="rounded-lg overflow-hidden">
+              {report.is_todo && (
+                <div className="flex items-center gap-2 bg-primary/15 border-b border-primary/40 px-3 py-1.5 text-[11px] md:text-xs text-primary">
+                  <ListChecks className="w-3.5 h-3.5 shrink-0" />
+                  <span className="flex-1 truncate">
+                    <span className="font-semibold mr-1">To Do:</span>
+                    {report.todo_note?.trim() || <span className="opacity-70 italic">No note yet — click pencil to add one.</span>}
+                  </span>
+                  <button
+                    type="button"
+                    title="Edit note"
+                    onClick={() => setTodoNoteEditor({ id: report.id, note: report.todo_note || "" })}
+                    className="hover:text-primary/80 p-0.5"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove from To Do"
+                    onClick={() => toggleTodo(report, false, null)}
+                    className="hover:text-primary/80 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <div className="text-white flex flex-col md:flex-row md:items-stretch">
               {/* R90 Score */}
               {(() => {
                 const effectiveR90 = getEffectiveR90(report);
@@ -460,8 +522,20 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                       <Film className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
                       <span className="hidden md:inline">Score</span>
                     </Button>
+                    {!report.is_todo && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setTodoNoteEditor({ id: report.id, note: "" })}
+                        className="h-8 px-2 md:px-3"
+                        title="Add to To Do"
+                      >
+                        <ListChecks className="w-3 h-3 md:w-4 md:h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           ))}
@@ -595,6 +669,100 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
           }}
         />
       )}
+
+      {/* To Do — note editor (per report) */}
+      <Dialog open={!!todoNoteEditor} onOpenChange={(o) => !o && setTodoNoteEditor(null)}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>What needs to be done?</DialogTitle>
+          </DialogHeader>
+          {todoNoteEditor && (() => {
+            const report = reports.find(r => r.id === todoNoteEditor.id);
+            return (
+              <div className="space-y-3">
+                {report && (
+                  <p className="text-xs text-muted-foreground">
+                    {report.player_name} {report.opponent ? `vs ${report.opponent}` : ""}
+                  </p>
+                )}
+                <Textarea
+                  autoFocus
+                  value={todoNoteEditor.note}
+                  onChange={(e) => setTodoNoteEditor({ ...todoNoteEditor, note: e.target.value })}
+                  placeholder="e.g. Re-clip 17' goal, fix opponent name, rate finishing"
+                  rows={3}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setTodoNoteEditor(null)}>Cancel</Button>
+                  <Button
+                    onClick={async () => {
+                      if (!report) { setTodoNoteEditor(null); return; }
+                      await toggleTodo(report, true, todoNoteEditor.note.trim() || null);
+                      setTodoNoteEditor(null);
+                    }}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* To Do — pick an existing report to add */}
+      <Dialog open={todoPickerOpen} onOpenChange={setTodoPickerOpen}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add a report to To Do</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Search by player or opponent..."
+              value={todoPickerSearch}
+              onChange={(e) => setTodoPickerSearch(e.target.value)}
+            />
+            <Textarea
+              value={todoPickerNote}
+              onChange={(e) => setTodoPickerNote(e.target.value)}
+              placeholder="Optional note for the report banner"
+              rows={2}
+            />
+            <div className="max-h-[50vh] overflow-y-auto rounded border divide-y">
+              {reports
+                .filter(r => !r.is_todo)
+                .filter(r => {
+                  const q = todoPickerSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return (r.player_name || "").toLowerCase().includes(q) || (r.opponent || "").toLowerCase().includes(q);
+                })
+                .slice(0, 50)
+                .map(r => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={async () => {
+                      await toggleTodo(r, true, todoPickerNote.trim() || null);
+                      setTodoPickerOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-muted/50"
+                  >
+                    <span className="truncate">
+                      <span className="font-medium">{r.player_name}</span>
+                      <span className="text-muted-foreground"> · {r.opponent ? `vs ${r.opponent}` : "—"}</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {format(new Date(r.analysis_date), "dd MMM yyyy")}
+                    </span>
+                  </button>
+                ))}
+              {reports.filter(r => !r.is_todo).length === 0 && (
+                <p className="p-4 text-sm text-muted-foreground text-center">All reports are already on the To Do list.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
