@@ -3,6 +3,7 @@ import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useNightMode } from "@/hooks/useNightMode";
+import { useDayMode } from "@/hooks/useDayMode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -206,6 +207,13 @@ const Staff = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const isNight = useNightMode();
+  const isDay = useDayMode();
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDay) root.classList.add('staff-daytime');
+    else root.classList.remove('staff-daytime');
+    return () => root.classList.remove('staff-daytime');
+  }, [isDay]);
   const logoPressTimerRef = useRef<number | null>(null);
   const logoLongPressFiredRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
