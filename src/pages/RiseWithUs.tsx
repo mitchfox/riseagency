@@ -991,6 +991,15 @@ const IntroCinematic = ({
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
+  // Phase-3 carousel rotation across the curated intro items.
+  const [introIdx, setIntroIdx] = useState(0);
+  useEffect(() => {
+    if (phase !== 3 || extraIntro.length <= 1) return;
+    const t = setInterval(() => {
+      setIntroIdx((i) => (i + 1) % extraIntro.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [phase, extraIntro.length]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
@@ -1060,46 +1069,45 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — images and short clips — appear only on the
-          final RISE logo beat. Layout uses the same 1–6 frame grid as before
-          so existing compositions stay intact; videos play muted + looped. */}
-      {phase === 3 && extraIntro.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[5]">
-          {extraIntro.slice(0, 6).map((m, i) => {
-            const frame = getIntroImageFrames(extraIntro.slice(0, 6).length)[i];
-            const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
-            if (m.kind === "video") {
-              return (
+      {/* Uploaded intro media — images and short clips — rotate one at a time
+          on the final RISE logo beat with a crossfade between beats. Videos
+          play muted + looped while on screen. */}
+      {phase === 3 && extraIntro.length > 0 && (() => {
+        const frame = getIntroImageFrames(1)[0];
+        const m = extraIntro[introIdx % extraIntro.length];
+        const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+        return (
+          <div className="pointer-events-none absolute inset-0 z-[5]">
+            <AnimatePresence mode="wait">
+              {m.kind === "video" ? (
                 <motion.video
-                  key={m.url + i}
+                  key={m.url}
                   src={m.url}
                   className={commonClass}
                   style={frame.style}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  initial={{ opacity: 0, scale: 0.75 }}
-                  animate={{ opacity: 0.9, scale: 1 }}
-                  transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                  autoPlay muted loop playsInline
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 0.92, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.03 }}
+                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
                 />
-              );
-            }
-            return (
-              <motion.img
-                key={m.url + i}
-                src={m.url}
-                alt=""
-                className={commonClass}
-                style={frame.style}
-                initial={{ opacity: 0, scale: 0.75 }}
-                animate={{ opacity: 0.9, scale: 1 }}
-                transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-              />
-            );
-          })}
-        </div>
-      )}
+              ) : (
+                <motion.img
+                  key={m.url}
+                  src={m.url}
+                  alt=""
+                  className={commonClass}
+                  style={frame.style}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 0.92, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.03 }}
+                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })()}
 
       {/* Player image is intentionally NOT rendered in the intro cinematic.
           The intro must show only the smudged marble + RISE logo. */}
@@ -1293,6 +1301,11 @@ const RiseWithUs = () => {
           .map((url) => ({ kind: "image" as const, url: url as string }));
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
+  // Hub Why-Us strip — items the staff flagged as hub or both.
+  const hubMedia: Array<{ kind: "image" | "video"; url: string }> =
+    settings.intro_media
+      .filter((m) => m.show && (m.position === "hub" || m.position === "both"))
+      .map((m) => ({ kind: m.kind, url: m.url }));
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
 
@@ -1396,6 +1409,31 @@ const RiseWithUs = () => {
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {/* Our Stars — clips + best player imagery */}
+                {hubMedia.length > 0 && (
+                  <section className="my-8 md:my-10">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+                        {ot("your_moments", "Your moments")}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-primary/40" />
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
+                      {hubMedia.map((m, i) => (
+                        <div
+                          key={m.url + i}
+                          className="snap-start shrink-0 w-44 sm:w-52 md:w-60 aspect-[3/4] overflow-hidden rounded-2xl border border-primary/35 shadow-[0_0_30px_-12px_hsl(var(--gold)/0.55)] bg-black/40"
+                        >
+                          {m.kind === "video" ? (
+                            <video src={m.url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
+                          ) : (
+                            <img src={m.url} alt="" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
                 <StarsShowcase lang={lang} />
 
                 {GROUPS.map((g: GroupKey) => {
