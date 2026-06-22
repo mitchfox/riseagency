@@ -1059,17 +1059,37 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro images appear only on the final RISE logo beat. */}
-      {phase === 3 && extraImages.length > 0 && (
+      {/* Uploaded intro media — images and short clips — appear only on the
+          final RISE logo beat. Layout uses the same 1–6 frame grid as before
+          so existing compositions stay intact; videos play muted + looped. */}
+      {phase === 3 && extraIntro.length > 0 && (
         <div className="pointer-events-none absolute inset-0 z-[5]">
-          {extraImages.slice(0, 6).map((src, i) => {
-            const frame = getIntroImageFrames(extraImages.slice(0, 6).length)[i];
+          {extraIntro.slice(0, 6).map((m, i) => {
+            const frame = getIntroImageFrames(extraIntro.slice(0, 6).length)[i];
+            const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+            if (m.kind === "video") {
+              return (
+                <motion.video
+                  key={m.url + i}
+                  src={m.url}
+                  className={commonClass}
+                  style={frame.style}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  initial={{ opacity: 0, scale: 0.75 }}
+                  animate={{ opacity: 0.9, scale: 1 }}
+                  transition={{ duration: 0.95, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                />
+              );
+            }
             return (
               <motion.img
-                key={src + i}
-                src={src}
+                key={m.url + i}
+                src={m.url}
                 alt=""
-                className={`absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`}
+                className={commonClass}
                 style={frame.style}
                 initial={{ opacity: 0, scale: 0.75 }}
                 animate={{ opacity: 0.9, scale: 1 }}
