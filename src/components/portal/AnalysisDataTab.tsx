@@ -32,6 +32,7 @@ interface Analysis {
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
   season_final?: boolean | null;
+  data_unavailable?: boolean | null;
 }
 
 interface Props {
@@ -187,6 +188,13 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const selectAll = () => setSelectedIds(new Set(analyses.map(a => a.id)));
 
   const selectedAnalyses = analyses.filter(a => selectedIds.has(a.id));
+  // Matches flagged "no data available" never contribute to season
+  // aggregates or stat averages, even though their R90 can still appear
+  // in the per-match table below.
+  const aggregateAnalyses = useMemo(
+    () => selectedAnalyses.filter(a => !a.data_unavailable),
+    [selectedAnalyses],
+  );
 
   const currentMetrics = useMemo(() => {
     return positionCategories.find(c => c.category === activeStatCategory)?.metrics || [];
@@ -194,22 +202,22 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
   // Season averages including fixture_stats
   const seasonAverages = useMemo(() => {
-    if (selectedAnalyses.length === 0) return {};
+    if (aggregateAnalyses.length === 0) return {};
     const result: Record<string, number> = {};
 
     // Hidden reports must contribute their HIDDEN R90 / minutes, not the live values.
-    const r90Values = selectedAnalyses
+    const r90Values = aggregateAnalyses
       .map(a => effectiveR90(a))
       .filter((v): v is number => v != null);
     if (r90Values.length > 0) result.r90 = r90Values.reduce((s, v) => s + v, 0) / r90Values.length;
 
-    const mins = selectedAnalyses
+    const mins = aggregateAnalyses
       .map(a => effectiveMinutes(a))
       .filter((v): v is number => v != null);
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
     // All metrics from all categories using centralised aggregation
-    const allAvgs = computeAllStatAverages(selectedAnalyses, positionMetrics);
+    const allAvgs = computeAllStatAverages(aggregateAnalyses, positionMetrics);
     Object.entries(allAvgs).forEach(([key, val]) => {
       if (val != null) result[key] = val;
     });
@@ -217,12 +225,12 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     // Also check STAT_DEFS for striker_stats
     STAT_DEFS.forEach(sd => {
       if (result[sd.key] != null) return;
-      const avg = computeStatAverage(selectedAnalyses, sd.key);
+      const avg = computeStatAverage(aggregateAnalyses, sd.key);
       if (avg != null) result[sd.key] = avg;
     });
 
     return result;
-  }, [positionMetrics, selectedAnalyses]);
+  }, [positionMetrics, aggregateAnalyses]);
 
   const r90BarData = useMemo(() => {
     return selectedAnalyses
@@ -412,7 +420,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Matches</p>
-              <p className="font-semibold">{selectedAnalyses.length}</p>
+              <p className="font-semibold">{aggregateAnalyses.length}</p>
             </div>
           </div>
 
