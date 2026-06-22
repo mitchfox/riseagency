@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -105,6 +106,7 @@ interface Payload {
     show_in_numbers: boolean;
     show_season_stats: boolean;
     show_strengths: boolean;
+    season_data_mode?: 'popup' | 'link' | null;
     is_mandated?: boolean;
     key_details?: KeyDetailItem[] | null;
     section_order?: ProposalSectionKey[] | null;
@@ -211,6 +213,7 @@ export default function ClubOutreachProposal() {
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
+  const [dataPopupOpen, setDataPopupOpen] = useState(false);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
@@ -718,7 +721,8 @@ export default function ClubOutreachProposal() {
           cards: () => (
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
-                href={current.stars_url}
+                href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
+                onClick={data.link.season_data_mode === 'popup' ? () => setDataPopupOpen(true) : undefined}
                 icon={<Video className="h-6 w-6" />}
                 eyebrow="01"
                 title={tr("card.videoTitle", "Video & Data")}
@@ -1003,12 +1007,48 @@ export default function ClubOutreachProposal() {
           </div>
         );
       })()}
+
+      {/* Season data popup — opens in place of navigating to the Stars
+          profile when season_data_mode === 'popup'. Wide sheet, scrolls
+          internally, surfaces Form / In Numbers / Season Stats together. */}
+      <Dialog open={dataPopupOpen} onOpenChange={setDataPopupOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto bg-black text-white border-[#cbb96b]/30">
+          <DialogHeader>
+            <DialogTitle className="text-[#cbb96b]">
+              {tr("card.videoTitle", "Video & Data")}{current?.player?.name ? ` · ${current.player.name}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-2">
+            {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            )}
+            {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            )}
+            {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            )}
+            {current?.stars_url && (
+              <div className="flex justify-end pt-2">
+                <a
+                  href={current.stars_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs text-[#cbb96b] hover:underline"
+                >
+                  {tr("card.openFull", "Open full Stars profile")} <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -1019,8 +1059,9 @@ function ProposalCard({
   internal?: boolean;
   openLabel?: string;
   unavailableLabel?: string;
+  onClick?: () => void;
 }) {
-  const disabled = !href || !!disabledLabel;
+  const disabled = (!href && !onClick) || !!disabledLabel;
   const inner = (
     <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
@@ -1034,6 +1075,11 @@ function ProposalCard({
     </div>
   );
   if (disabled) return <div className="block min-h-[180px]">{inner}</div>;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block w-full min-h-[180px] text-left">{inner}</button>
+    );
+  }
   if (internal) {
     return <Link to={href!} className="block min-h-[180px]">{inner}</Link>;
   }

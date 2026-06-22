@@ -90,6 +90,7 @@ interface OutreachRow {
   language?: string | null;
   translations?: any | null;
   is_pending_strategy_draft?: boolean;
+  season_data_mode?: 'popup' | 'link' | null;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -586,6 +587,9 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
   const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
+  const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
+    (editing?.season_data_mode as 'popup' | 'link' | null) ?? 'popup',
+  );
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
   const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
   const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
@@ -711,7 +715,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_position")
+      .select("default_fit_recommendation, default_position, default_season_data_mode")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
@@ -725,6 +729,12 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
     if (willBeSingle) {
       // Single-player outreach: prefer that player's per-player default
       initialFit = (defaults?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
+      // Seed the season-data display mode from the player default on the
+      // very first add — once a second player joins we leave whatever the
+      // user picked alone.
+      if (defaults?.default_season_data_mode === 'popup' || defaults?.default_season_data_mode === 'link') {
+        setSeasonDataMode(defaults.default_season_data_mode);
+      }
     } else {
       initialFit = defaultFit ?? "";
     }
@@ -781,6 +791,7 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
         show_in_numbers: showInNumbers,
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
+        season_data_mode: seasonDataMode,
         is_mandated: isMandated,
         key_details: keyDetails,
         section_order: sectionOrder,
@@ -1075,6 +1086,51 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                     <span>{opt.label}</span>
                   </label>
                 ))}
+              </div>
+            </div>
+            <div>
+              <Label>Season data — popup or link</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Popup keeps clubs on the proposal in a wide in-page sheet. Link opens the player's Stars profile in a new tab.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(['popup', 'link'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setSeasonDataMode(mode)}
+                    className={`rounded-md border px-3 py-1.5 text-xs capitalize transition-colors ${
+                      seasonDataMode === mode
+                        ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
+                    }`}
+                  >
+                    {mode === 'popup' ? 'In-page popup' : 'Link to Stars profile'}
+                  </button>
+                ))}
+                {entries[0]?.player_id && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const pid = entries[0]?.player_id;
+                      if (!pid) return;
+                      const { error } = await (supabase as any)
+                        .from("club_outreach_player_defaults")
+                        .upsert(
+                          { player_id: pid, default_season_data_mode: seasonDataMode, updated_at: new Date().toISOString() },
+                          { onConflict: "player_id" },
+                        );
+                      if (error) {
+                        toast.error(error.message ?? "Failed to save default");
+                        return;
+                      }
+                      toast.success("Default data mode saved for this player");
+                    }}
+                    className="ml-auto text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Save as player default
+                  </button>
+                )}
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground">Club contact details now live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
