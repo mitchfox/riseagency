@@ -390,8 +390,8 @@ export default function MarketTablesTab() {
               const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
               const isOpen = expanded.has(club.id);
               return (
-                <>
-                <tr key={club.id} className="border-t border-border/40 hover:bg-muted/20">
+                <React.Fragment key={club.id}>
+                <tr className="border-t border-border/40 hover:bg-muted/20">
                   <td className="px-1 py-2 align-top">
                     <button
                       type="button"
@@ -482,7 +482,7 @@ export default function MarketTablesTab() {
                   </td>
                 </tr>
                 {isOpen && (
-                  <tr key={`${club.id}-extras`} className="border-t border-border/40 bg-muted/10">
+                  <tr className="border-t border-border/40 bg-muted/10">
                     <td />
                     <td colSpan={4} className="px-3 py-3">
                       {extras.length === 0 ? (
@@ -508,7 +508,7 @@ export default function MarketTablesTab() {
                     </td>
                   </tr>
                 )}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>
