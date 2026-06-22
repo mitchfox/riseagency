@@ -2006,6 +2006,14 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
   const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
+  const [playerDefaultShowForm, setPlayerDefaultShowForm] = useState<boolean>(false);
+  const [playerDefaultShowInNumbers, setPlayerDefaultShowInNumbers] = useState<boolean>(false);
+  const [playerDefaultShowSeasonStats, setPlayerDefaultShowSeasonStats] = useState<boolean>(false);
+  const [playerDefaultShowStrengths, setPlayerDefaultShowStrengths] = useState<boolean>(false);
+  const [playerDefaultKeyDetails, setPlayerDefaultKeyDetails] = useState<KeyDetailItem[]>(DEFAULT_KEY_DETAILS);
+  const [playerDefaultSectionOrder, setPlayerDefaultSectionOrder] = useState<ProposalSectionKey[]>(DEFAULT_SECTION_ORDER);
+  const [playerDefaultVideos, setPlayerDefaultVideos] = useState<{ id: string; name: string }[]>([]);
+  const [playerDefaultSelectedVideoIds, setPlayerDefaultSelectedVideoIds] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
