@@ -90,6 +90,7 @@ interface OutreachRow {
   language?: string | null;
   translations?: any | null;
   is_pending_strategy_draft?: boolean;
+  season_data_mode?: 'popup' | 'link' | null;
 }
 
 type OutreachMode = 'club' | 'agent';
