@@ -1402,6 +1402,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
 }
 
 function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
+  const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
   const STAT_LABELS: Record<string, string> = {
@@ -1441,6 +1442,13 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
   };
   const fmt = (v: number | null, k: string) =>
     v == null ? "-" : isPct(k) ? `${Math.round(v)}%` : v % 1 === 0 ? v.toString() : v.toFixed(2);
+  const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
+  const isStrong = (key: string, v: number | null) => {
+    if (v == null) return false;
+    const mk = normalizeStatKey(key);
+    if (!hasThresholds(mk)) return false;
+    return STRONG_GRADES.has(getGradeForScore(mk, v).grade);
+  };
   const items = (cfg.stats || []).map((s: any) => {
     const key = typeof s === "string" ? s : s.key;
     const label = humanize(key);
@@ -1472,7 +1480,14 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
               }}
             >
               {row.map((it) => (
-                <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+                <div
+                  key={it.key}
+                  className={`rounded-lg p-2 flex flex-col items-center text-center min-w-0 border ${
+                    isStrong(it.key, it.value)
+                      ? "bg-emerald-400/[0.08] border-emerald-400/30 shadow-[0_0_18px_-2px_rgba(74,222,128,0.45)]"
+                      : "bg-white/[0.03] border-white/5"
+                  }`}
+                >
                   <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
                     {it.label}
@@ -1488,7 +1503,14 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
           style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}
         >
           {items.map((it) => (
-            <div key={it.key} className="rounded-lg bg-white/[0.03] border border-white/5 p-2 flex flex-col items-center text-center min-w-0">
+            <div
+              key={it.key}
+              className={`rounded-lg p-2 flex flex-col items-center text-center min-w-0 border ${
+                isStrong(it.key, it.value)
+                  ? "bg-emerald-400/[0.08] border-emerald-400/30 shadow-[0_0_18px_-2px_rgba(74,222,128,0.45)]"
+                  : "bg-white/[0.03] border-white/5"
+              }`}
+            >
               <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
               <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
                 {it.label}
