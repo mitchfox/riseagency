@@ -1006,11 +1006,23 @@ function OutreachDialog({ open, onClose, players, clubs, onSaved, onClubAdded, e
                           <div className="text-sm font-semibold truncate">{p?.name ?? "Unknown"}</div>
                           <div className="text-[10px] text-muted-foreground">{idx + 1} of {entries.length}</div>
                         </div>
-                        <div className="w-28">
-                          <Select value={e.position_slot ?? ""} onValueChange={(v) => updateEntry(e.player_id, { position_slot: v || null })}>
-                            <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Position" /></SelectTrigger>
-                            <SelectContent>{POSITION_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                          </Select>
+                        <div className="flex items-center gap-1">
+                          <div className="w-28">
+                            <Select value={e.position_slot ?? ""} onValueChange={(v) => updateEntry(e.player_id, { position_slot: v || null })}>
+                              <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Position" /></SelectTrigger>
+                              <SelectContent>{POSITION_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-9 px-2 text-[10px] uppercase tracking-wide text-[#C6A332] hover:text-[#C6A332] hover:bg-[#C6A332]/10"
+                            title="Save this position as the per-player default for future club outreach links"
+                            onClick={() => savePlayerPositionDefault(e.player_id, e.position_slot)}
+                          >
+                            Save default
+                          </Button>
                         </div>
                         <Button size="sm" variant="ghost" onClick={() => removePlayer(e.player_id)}><X className="h-4 w-4" /></Button>
                       </div>
