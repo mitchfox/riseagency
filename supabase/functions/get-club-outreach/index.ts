@@ -299,10 +299,20 @@ Deno.serve(async (req) => {
           .filter((s: string) => s.length > 0)
       )
     );
+    // Also include every opponent name we'll surface in Match by Match so the
+    // proposal can render a small club logo next to each row.
+    const uniqueOpponentNames = Array.from(
+      new Set(
+        (formAnalyses ?? [])
+          .map((a: any) => (a.opponent ?? "").toString().trim())
+          .filter((s: string) => s.length > 0)
+      )
+    );
+    const allClubNames = Array.from(new Set([...uniqueClubNames, ...uniqueOpponentNames]));
     let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
-    if (uniqueClubNames.length) {
+    if (allClubNames.length) {
       // Case-insensitive name match via ilike OR-list keeps lookups tolerant.
-      const orFilter = uniqueClubNames
+      const orFilter = allClubNames
         .map((n) => `club_name.ilike.${n.replace(/[,()]/g, " ")}`)
         .join(",");
       const { data: clubRows } = await supabase
