@@ -721,15 +721,21 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
                           const avg = computeStatAverage(analyses, key);
                           const suffix = isPercentageMetric(key) ? "%" : "";
                           const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
+                          const seriesValues = series.map[key]?.values || [];
                           return (
                             <div
                               key={key}
-                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
+                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 space-y-1"
                             >
                               <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
                                 {prettifyKey(key)}
                               </div>
-                              <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                              <div className="flex items-end justify-between gap-2">
+                                <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                                <div className="text-muted-foreground/70">
+                                  <Sparkline values={seriesValues} width={56} height={18} fill={false} />
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
