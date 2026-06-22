@@ -97,6 +97,7 @@ interface PlayerEntry {
     id: string;
     analysis_date: string;
     opponent: string | null;
+    opponent_logo?: string | null;
     result: string | null;
     r90_score: number | null;
     minutes_played: number | null;
