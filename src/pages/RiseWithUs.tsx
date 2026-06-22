@@ -1231,16 +1231,17 @@ const RiseWithUs = () => {
       const searchName = slug.replace(/-/g, " ");
       const { data, error } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status")
+        .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
       if (error || !data) { setNotFound(true); }
       else {
         setPlayer(data);
+        setFitScore(typeof (data as any).fit_score === "number" ? (data as any).fit_score : null);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images, intro_media")
+          .select("hidden_sections, section_images, intro_media, show_database_card")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -1264,6 +1265,7 @@ const RiseWithUs = () => {
             : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
+          show_database_card: sData?.show_database_card ?? null,
         });
         // NOTE: We do NOT call switchLanguage here — it would redirect to a
         // different language subdomain on production and break the offer
