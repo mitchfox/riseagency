@@ -54,17 +54,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
 
     const out: ProgrammingSessionRef[] = [];
 
-    // Legacy player_programs rows mirrored by a new sps_programs row still
-    // emit refs so historic programming_weeks slot refIds keep resolving —
-    // but we hide them from the picker so users don't see duplicates.
-    const mirroredLegacyIds = new Set<string>(
-      ((spsNewProgRes.data || []) as any[])
-        .map(p => p.legacy_player_program_id)
-        .filter(Boolean)
-    );
-
     for (const p of (spsRes.data || []) as any[]) {
-      const isMirrored = mirroredLegacyIds.has(p.id);
       const sess = (p.sessions || {}) as Record<string, any>;
       for (const f of SPS_FIELDS) {
         const data = sess[f] || sess[f.replace("session", "").toUpperCase()];
@@ -80,31 +70,35 @@ export const useProgrammingSessions = (playerId: string | null) => {
           sessionKey: key,
           sessionTitle: data?.title ?? null,
           spsSessionField: f,
-          hiddenFromPicker: isMirrored,
         });
       }
     }
 
-    // New normalised SPS rows
-    const newSpsProgIds = ((spsNewProgRes.data || []) as any[]).map(p => p.id);
+    // Normalised SPS refs are kept only as invisible aliases so any weeks that
+    // were briefly linked to them still resolve back to the old JSONB editor.
+    const newSpsRows = (spsNewProgRes.data || []) as any[];
+    const newSpsProgIds = newSpsRows.map(p => p.id);
     if (newSpsProgIds.length) {
       const { data: spsSess } = await supabase
         .from("sps_sessions" as any)
         .select("id, program_id, session_key, session_kind, title, display_order")
         .in("program_id", newSpsProgIds)
         .order("display_order");
-      const newProgName = new Map(((spsNewProgRes.data || []) as any[]).map(p => [p.id, p.program_name]));
+      const newProg = new Map(newSpsRows.map(p => [p.id, p]));
       for (const s of (spsSess || []) as any[]) {
+        const prog = newProg.get(s.program_id);
+        if (!prog?.legacy_player_program_id) continue;
         const prefix = s.session_kind === "pre" ? "Pre-" : "";
         out.push({
           refId: `sps:${s.id}`,
-          source: "sps_normalised",
+          source: "sps",
           effectiveType: "sps",
-          programmeId: s.program_id,
-          programmeName: newProgName.get(s.program_id) || "SPS programme",
+          programmeId: prog.legacy_player_program_id,
+          programmeName: prog.program_name || "SPS programme",
           sessionKey: `${prefix}${s.session_key || ""}`,
           sessionTitle: s.title ?? null,
-          sessionId: s.id,
+          spsSessionField: s.session_kind === "pre" ? `preSession${s.session_key}` : `session${s.session_key}`,
+          hiddenFromPicker: true,
         });
       }
     }
