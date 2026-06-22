@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
             // count.
             let q = supabase
               .from("player_analysis")
-              .select("id, player_id, analysis_date, opponent, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .select("id, player_id, analysis_date, opponent, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
@@ -406,7 +406,10 @@ Deno.serve(async (req) => {
         const matchByMatchWithLogos = allAnalyses.map((a: any) => {
           const opKey = (a.opponent ?? "").toString().toLowerCase().trim();
           const op = opKey ? clubLookup.get(opKey) : null;
-          return { ...a, opponent_logo: op?.image_url ?? null };
+          return {
+            ...a,
+            opponent_logo: a.opponent_logo_url ?? op?.image_url ?? null,
+          };
         });
         // Per-player default Match by Match category lives on the outreach
         // defaults now (kept on form_config as a legacy fallback).

@@ -1840,19 +1840,51 @@ function RemainingVideosCard({
   if (!active) return null;
   return (
     <SectionShell title={title} eyebrow="05">
-      <div className="space-y-3">
-        <div className="relative w-full overflow-hidden rounded-xl bg-black border border-white/10 aspect-video">
+      <div>
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden border-4 md:border-[6px] border-[#cbb96b]">
           <video
             key={active.videoUrl}
             src={active.videoUrl}
             controls
             playsInline
             preload="metadata"
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 w-full h-full object-contain"
           />
+          {videos.length > 1 && (
+            <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
+              <div className="flex items-center justify-center gap-2 pointer-events-auto">
+                {videos.map((v, i) => {
+                  const isActive = i === activeIdx;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setActiveIdx(i)}
+                      title={v.name || `Highlight ${i + 1}`}
+                      className={`relative flex-shrink-0 w-10 h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
+                        isActive
+                          ? "border-[#cbb96b] scale-110"
+                          : "border-[#cbb96b]/20 hover:border-[#cbb96b]/50"
+                      }`}
+                    >
+                      {v.logoUrl ? (
+                        <img
+                          src={v.logoUrl}
+                          alt=""
+                          onError={(e) => (e.currentTarget.style.display = "none")}
+                          className="w-full h-full object-contain p-0.5"
+                          loading="eager"
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         {videos.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <div className="md:hidden mt-2 grid grid-cols-8 gap-1.5">
             {videos.map((v, i) => {
               const isActive = i === activeIdx;
               return (
@@ -1860,22 +1892,20 @@ function RemainingVideosCard({
                   key={v.id}
                   type="button"
                   onClick={() => setActiveIdx(i)}
-                  className={`flex-shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px] text-left transition ${
-                    isActive
-                      ? "border-[#cbb96b]/70 bg-[#cbb96b]/10 text-white"
-                      : "border-white/10 bg-white/[0.03] text-white/70 hover:border-[#cbb96b]/40"
+                  title={v.name || `Highlight ${i + 1}`}
+                  className={`relative aspect-square rounded border transition-all overflow-hidden bg-background/90 ${
+                    isActive ? "border-[#cbb96b] scale-110" : "border-[#cbb96b]/30"
                   }`}
-                  style={{ maxWidth: 220 }}
                 >
                   {v.logoUrl ? (
                     <img
                       src={v.logoUrl}
                       alt=""
-                      onError={(e) => ((e.currentTarget.style.display = "none"))}
-                      className="h-5 w-5 object-contain flex-shrink-0"
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                      className="w-full h-full object-contain p-0.5"
+                      loading="eager"
                     />
                   ) : null}
-                  <span className="truncate">{v.name || "Highlight"}</span>
                 </button>
               );
             })}
