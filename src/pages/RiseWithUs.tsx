@@ -9,6 +9,7 @@ import {
   Play,
   CalendarClock, CheckCircle2,
 } from "lucide-react";
+import { SlantedBox, widont } from "@/components/SlantedBox";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -292,15 +293,6 @@ const PILLARS: Pillar[] = [
       "Full Premier League level support — analysis, S&C, nutrition, sports psychology, technique — wrapped around you, working off one shared plan, not a list of disconnected freelancers.",
   },
   {
-    key: "vision",
-    icon: Trophy,
-    titleKey: "rwu_vision_title", titleFallback: "Our Ballon d'Or Vision",
-    bodyKey:  "rwu_vision_body",
-    bodyFallback:
-      "Our ambition is the highest level the game has — Ballon d'Or, Team of the Year, World Cup. We pick a small group of players we genuinely believe can get there, and we back them all the way. This is the most exciting time to join, with a massive opportunity to be one of the first.",
-    badgeKey: "rwu_vision_badge", badgeFallback: "Forward-looking · Limited spots",
-  },
-  {
     key: "parent",
     icon: Users2,
     titleKey: "rwu_parent_title", titleFallback: "The Parent's Role",
@@ -385,6 +377,99 @@ const PillarsSection = ({
           );
         })}
       </div>
+    </div>
+  );
+};
+
+/* ============== BALLON D'OR VISION CARD ==============
+ * Item 9 — dedicated full-width vision card sitting above the
+ * pillar grid on the Rise With Us hub. Carries the urgency without
+ * leaning on a "FOMO" badge — the framing does the work. CTA opens
+ * the existing meeting booker dialog.
+ */
+const BallonDorVisionCard = ({
+  lang,
+  firstName,
+  onBookMeeting,
+  t,
+}: {
+  lang: string;
+  firstName: string;
+  onBookMeeting: () => void;
+  t: (key: string, fallback: string) => string;
+}) => {
+  const headline = t(
+    "vision.headline",
+    "Why not you?",
+  );
+  const body = t(
+    "vision.body",
+    `Our ambition is the very top of the game — Ballon d'Or, Team of the Year, World Cup winners. We pick a small group of players we genuinely believe can get there, and we back them all the way. If you have what it takes to work with us, ${firstName}, there's no reason that group can't include you.`,
+  );
+  const urgency = t(
+    "vision.urgency",
+    "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
+  );
+  const cta = t("vision.cta", "Set up our meeting");
+
+  return (
+    <div className="my-6 md:my-8">
+      <SlantedBox
+        slant={22}
+        innerClassName="px-5 py-6 md:px-8 md:py-8"
+        className="overflow-hidden"
+      >
+        {/* Ambient gold sweep behind the copy */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.20),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,hsl(var(--gold)/0.12),transparent_60%)]" />
+        </div>
+
+        <div className="relative grid gap-5 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-7">
+          <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/12 shadow-[0_0_36px_hsl(var(--gold)/0.30)] md:h-14 md:w-14">
+              <Trophy className="h-6 w-6 text-primary md:h-7 md:w-7" />
+            </div>
+            <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+              {t("vision.eyebrow", "Our vision")}
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <p
+              className="font-bebas text-3xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-4xl lg:text-5xl"
+              style={{ textShadow: "0 0 22px hsl(var(--gold)/0.35)", textWrap: "balance" } as React.CSSProperties}
+            >
+              {widont(headline)}
+            </p>
+            <p
+              className="mt-3 text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
+              style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+            >
+              {widont(body)}
+            </p>
+            <p
+              className="mt-3 text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+              style={{ textWrap: "balance" } as React.CSSProperties}
+            >
+              {widont(urgency)}
+            </p>
+          </div>
+
+          <div className="flex md:justify-end">
+            <button
+              type="button"
+              onClick={onBookMeeting}
+              className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
+              style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+            >
+              <CalendarClock className="h-4 w-4 text-primary" />
+              <span>{cta}</span>
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </button>
+          </div>
+        </div>
+      </SlantedBox>
     </div>
   );
 };
@@ -1024,14 +1109,18 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 24px hsl(var(--gold)/0.45)" }}>
                 {fullName.toUpperCase()}
               </p>
-              <p className="text-justify text-base sm:text-xl md:text-2xl leading-snug text-foreground font-medium"
-                 style={{ wordSpacing: "-0.03em" }}>
-                {offerT(lang, "stood_out_line", "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star.")}
+              <p
+                className="mx-auto max-w-[36ch] text-base sm:text-xl md:text-2xl leading-snug text-foreground font-medium sm:max-w-[42ch] md:max-w-[44ch]"
+                style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+              >
+                {widont(offerT(lang, "stood_out_line", "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star."))}
               </p>
               {secondaryParagraph && (
-                <p className="text-justify text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90"
-                   style={{ wordSpacing: "-0.02em" }}>
-                  {secondaryParagraph}
+                <p
+                  className="mx-auto max-w-[40ch] text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90 sm:max-w-[46ch] md:max-w-[50ch]"
+                  style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
+                >
+                  {widont(secondaryParagraph)}
                 </p>
               )}
             </motion.div>
@@ -1040,10 +1129,10 @@ const IntroCinematic = ({
             <motion.p key="p2"
               initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.45 }}
-              className="text-justify text-base sm:text-xl md:text-2xl leading-relaxed text-foreground/95"
-              style={{ wordSpacing: "-0.02em" }}
+              className="mx-auto max-w-[38ch] text-base sm:text-xl md:text-2xl leading-relaxed text-foreground/95 sm:max-w-[44ch] md:max-w-[48ch]"
+              style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
             >
-              {offerT(lang, "differentiate_line", "We differentiate players by their will, skill and potential, to find those who will use our English Premier League Performance Team to the fullest effect to realise their potential on the pitch and in life.")}
+              {widont(offerT(lang, "differentiate_line", "We differentiate players by their will, skill and potential, to find those who will use our English Premier League Performance Team to the fullest effect to realise their potential on the pitch and in life."))}
             </motion.p>
           )}
           {phase === 3 && (
@@ -1230,19 +1319,33 @@ const RiseWithUs = () => {
                     </div>
                     <div className="mt-1 w-full rounded-2xl border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
                       <p
-                        className="text-justify text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px] [text-justify:inter-word]"
-                        style={{ hyphens: "none", wordBreak: "normal", overflowWrap: "normal" }}
+                        className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
+                        style={{
+                          textWrap: "pretty",
+                          hyphens: "none",
+                          wordBreak: "normal",
+                          overflowWrap: "normal",
+                        } as React.CSSProperties}
                       >
-                        {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                        {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
                       </p>
                     </div>
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
+                {/* Item 9 — dedicated Ballon d'Or vision card sits
+                    above the pillar grid and the Stars showcase. */}
+                <BallonDorVisionCard
+                  lang={lang}
+                  firstName={firstName}
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
+
                 {/* Pillar boxes — pathway, HQ, training methodology,
-                    performance team, Ballon d'Or vision/FOMO,
-                    parent's role (U18 only), multilingual support. */}
+                    performance team, parent's role (U18 only),
+                    multilingual support. */}
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {/* Our Stars — clips + best player imagery */}
