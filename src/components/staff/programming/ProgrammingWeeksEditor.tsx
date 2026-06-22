@@ -131,17 +131,24 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       .filter(w => !!w.week_start_date)
       .sort((a, b) => (a.week_start_date! < b.week_start_date! ? -1 : 1));
     const source: Week | undefined = datedWeeks[datedWeeks.length - 1] ?? weeks[weeks.length - 1];
+    // Use UTC throughout so a BST/CET browser doesn't shift the date
+    // back a day when we serialise with toISOString().
     let nextStart: Date;
     if (source?.week_start_date) {
-      nextStart = new Date(source.week_start_date + "T00:00:00");
-      nextStart.setDate(nextStart.getDate() + 7);
+      const m = source.week_start_date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        nextStart = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 7));
+      } else {
+        const tmp = new Date(source.week_start_date);
+        nextStart = new Date(Date.UTC(tmp.getFullYear(), tmp.getMonth(), tmp.getDate() + 7));
+      }
     } else {
-      nextStart = new Date();
-      const day = nextStart.getDay(); // 0 Sun..6 Sat
-      const offset = day === 0 ? 1 : (8 - day); // next Monday
-      nextStart.setDate(nextStart.getDate() + offset);
+      const today = new Date();
+      const day = today.getUTCDay();
+      const offset = day === 0 ? 1 : (8 - day);
+      nextStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + offset));
     }
-    const iso = nextStart.toISOString().slice(0, 10);
+    const iso = `${nextStart.getUTCFullYear()}-${String(nextStart.getUTCMonth() + 1).padStart(2, "0")}-${String(nextStart.getUTCDate()).padStart(2, "0")}`;
     // Carry over the source week's sessions / free-text slots so the new week
     // starts fully populated. The session refs point to the same underlying
     // programme sessions, so any edits to a session apply across weeks as before.
