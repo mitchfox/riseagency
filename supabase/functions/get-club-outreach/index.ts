@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
       )
     );
     const allClubNames = Array.from(new Set([...uniqueClubNames, ...uniqueOpponentNames]));
-    let clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
+    const clubLookup = new Map<string, { image_url: string | null; country: string | null }>();
     if (allClubNames.length) {
       // Case-insensitive name match via ilike OR-list keeps lookups tolerant.
       const orFilter = allClubNames
