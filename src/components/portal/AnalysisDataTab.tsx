@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
-import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag } from "lucide-react";
+import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag, Ban } from "lucide-react";
 import { getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
@@ -344,6 +344,22 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const handleCancelEdit = () => {
     setEditingCell(null);
     setEditValue("");
+  };
+
+  const toggleDataUnavailable = async (analysis: Analysis) => {
+    const next = !analysis.data_unavailable;
+    const { error } = await supabase
+      .from("player_analysis")
+      .update({ data_unavailable: next })
+      .eq("id", analysis.id);
+    if (error) {
+      toast.error("Failed to update");
+      return;
+    }
+    analysis.data_unavailable = next;
+    // Force re-render by nudging selectedIds set identity.
+    setSelectedIds(prev => new Set(prev));
+    toast.success(next ? "Marked as no data available" : "Restored match data");
   };
 
   // Most recent match (by date) — that's the candidate the staff button toggles
