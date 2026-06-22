@@ -843,18 +843,43 @@ export default function ClubOutreachProposal() {
         return <>{order.map((k) => renderers[k]?.())}</>;
       })()}
 
-      {/* Alternate Options — plain wide thin card with a heading and free-text
-          body the staffer writes per outreach. No images, no links, no player
-          cards. Renders only when there is content to show. */}
-      {data.link.alternate_profiles_blurb && data.link.alternate_profiles_blurb.trim() && (
+      {/* Alternate Options — wide thin card with a heading, the staffer's
+          free-text note, and plain clickable links to alternate player
+          profiles the club can switch to. Renders only when blurb or linked
+          profiles exist. */}
+      {((data.link.alternate_profiles_blurb && data.link.alternate_profiles_blurb.trim()) ||
+        (Array.isArray(data.alternate_profiles) && data.alternate_profiles.length > 0)) && (
         <section className="max-w-3xl mx-auto px-6 mt-10">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b] mb-2">
               {tr("alt.eyebrow", "Alternate Options")}
             </p>
-            <p className="text-[13px] leading-relaxed text-white/80 whitespace-pre-wrap">
-              {data.link.alternate_profiles_blurb}
-            </p>
+            {data.link.alternate_profiles_blurb && data.link.alternate_profiles_blurb.trim() && (
+              <p className="text-[13px] leading-relaxed text-white/80 whitespace-pre-wrap">
+                {data.link.alternate_profiles_blurb}
+              </p>
+            )}
+            {Array.isArray(data.alternate_profiles) && data.alternate_profiles.length > 0 && (
+              <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px]">
+                {data.alternate_profiles.map((alt) => {
+                  const href = alt.target_type === 'agent'
+                    ? `/agents/${alt.short_id}`
+                    : `/club-proposal/${alt.short_id}`;
+                  const meta = [alt.position, alt.club].filter(Boolean).join(" · ");
+                  return (
+                    <li key={alt.short_id}>
+                      <a
+                        href={href}
+                        className="text-[#cbb96b] hover:text-white underline underline-offset-4 decoration-[#cbb96b]/40 hover:decoration-white transition-colors"
+                      >
+                        {alt.player_name ?? alt.short_id}
+                      </a>
+                      {meta && <span className="text-white/50"> — {meta}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </section>
       )}
