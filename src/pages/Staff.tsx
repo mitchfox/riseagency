@@ -1522,6 +1522,11 @@ const Staff = () => {
                   <DropdownMenuItem onClick={() => window.open('/', '_blank')}>
                     <ExternalLink className="h-4 w-4 mr-2" /> Home
                   </DropdownMenuItem>
+                  {(isAdmin || !permissionManagedRole || canView('overview')) && (
+                    <DropdownMenuItem onClick={() => setExpandedSection('overview')}>
+                      <ClipboardList className="h-4 w-4 mr-2" /> My Tasks
+                    </DropdownMenuItem>
+                  )}
                   {(isAdmin || !permissionManagedRole) && (
                     <DropdownMenuItem onClick={() => setPortalQuickOpen(true)}>
                       <Users className="h-4 w-4 mr-2" /> Open a Player Portal
@@ -1558,6 +1563,16 @@ const Staff = () => {
                   <ExternalLink className="h-4 w-4" />
                 </Button>
                 {(isAdmin || !permissionManagedRole || canView('header_music')) && <StaffMusicPlayer />}
+                {(isAdmin || !permissionManagedRole || canView('overview')) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Open My Tasks"
+                    onClick={() => setExpandedSection('overview')}
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                  </Button>
+                )}
                 {(isAdmin || !permissionManagedRole) && (
                   <Button
                     variant="ghost"
