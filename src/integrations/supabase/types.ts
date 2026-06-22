@@ -1168,6 +1168,7 @@ export type Database = {
           player_id: string | null
           prepared_for_name: string | null
           season_data_mode: string
+          season_id: string | null
           section_order: Json | null
           selected_video_ids: string[]
           short_id: string
@@ -1211,6 +1212,7 @@ export type Database = {
           player_id?: string | null
           prepared_for_name?: string | null
           season_data_mode?: string
+          season_id?: string | null
           section_order?: Json | null
           selected_video_ids?: string[]
           short_id: string
@@ -1254,6 +1256,7 @@ export type Database = {
           player_id?: string | null
           prepared_for_name?: string | null
           season_data_mode?: string
+          season_id?: string | null
           section_order?: Json | null
           selected_video_ids?: string[]
           short_id?: string
@@ -1290,6 +1293,13 @@ export type Database = {
             referencedRelation: "players_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "club_outreach_links_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "player_seasons"
+            referencedColumns: ["id"]
+          },
         ]
       }
       club_outreach_player_defaults: {
@@ -1300,6 +1310,7 @@ export type Database = {
           default_key_details: Json | null
           default_position: string | null
           default_season_data_mode: string | null
+          default_season_id: string | null
           default_selected_video_ids: string[]
           highlights_url: string | null
           player_id: string
@@ -1314,6 +1325,7 @@ export type Database = {
           default_key_details?: Json | null
           default_position?: string | null
           default_season_data_mode?: string | null
+          default_season_id?: string | null
           default_selected_video_ids?: string[]
           highlights_url?: string | null
           player_id: string
@@ -1328,6 +1340,7 @@ export type Database = {
           default_key_details?: Json | null
           default_position?: string | null
           default_season_data_mode?: string | null
+          default_season_id?: string | null
           default_selected_video_ids?: string[]
           highlights_url?: string | null
           player_id?: string
@@ -1336,6 +1349,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "club_outreach_player_defaults_default_season_id_fkey"
+            columns: ["default_season_id"]
+            isOneToOne: false
+            referencedRelation: "player_seasons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "club_outreach_player_defaults_player_id_fkey"
             columns: ["player_id"]

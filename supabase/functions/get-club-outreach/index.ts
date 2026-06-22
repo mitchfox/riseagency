@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, selected_video_ids, alternate_profile_link_ids, alternate_profiles_blurb, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url, is_suggested_to_agent, suggested_agent_note"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, alternate_profile_link_ids, alternate_profiles_blurb, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url, is_suggested_to_agent, suggested_agent_note"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -232,6 +232,33 @@ Deno.serve(async (req) => {
     );
 
     // Form configs + recent analyses for the optional Form banner
+    // Resolve the optional season window once for all players (the link
+    // currently scopes to the primary player's season).
+    let seasonStartDate: string | null = null;
+    let seasonEndDate: string | null = null;
+    if ((link as any).season_id) {
+      const { data: season } = await supabase
+        .from("player_seasons")
+        .select("start_analysis_id, end_analysis_id")
+        .eq("id", (link as any).season_id)
+        .maybeSingle();
+      const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
+      if (ids.length) {
+        const { data: bounds } = await supabase
+          .from("player_analysis")
+          .select("id, analysis_date")
+          .in("id", ids);
+        const dates = (bounds ?? [])
+          .map((r: any) => r.analysis_date as string | null)
+          .filter(Boolean)
+          .sort();
+        if (dates.length > 0) {
+          seasonStartDate = dates[0];
+          seasonEndDate = dates[dates.length - 1];
+        }
+      }
+    }
+
     const [{ data: formCfgs }, { data: formAnalyses }] = await Promise.all([
       playerIds.length
         ? supabase
@@ -240,11 +267,20 @@ Deno.serve(async (req) => {
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
       playerIds.length
-        ? supabase
-            .from("player_analysis")
-            .select("player_id, analysis_date, striker_stats, fixture_stats, minutes_played")
-            .in("player_id", playerIds)
-            .order("analysis_date", { ascending: false })
+        ? (() => {
+            // Dataless matches never contribute to averages, form banners,
+            // or any season aggregate — only games that had real data should
+            // count.
+            let q = supabase
+              .from("player_analysis")
+              .select("player_id, analysis_date, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .in("player_id", playerIds)
+              .or("data_unavailable.is.null,data_unavailable.eq.false")
+              .order("analysis_date", { ascending: false });
+            if (seasonStartDate) q = q.gte("analysis_date", seasonStartDate);
+            if (seasonEndDate) q = q.lte("analysis_date", seasonEndDate);
+            return q;
+          })()
         : Promise.resolve({ data: [] as any[] }),
     ]);
     const formCfgByPlayer = new Map<string, any>((formCfgs ?? []).map((c: any) => [c.player_id, c]));

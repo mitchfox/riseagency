@@ -95,6 +95,7 @@ interface OutreachRow {
   selected_video_ids?: string[] | null;
   alternate_profile_link_ids?: string[] | null;
   alternate_profiles_blurb?: string | null;
+  season_id?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -607,6 +608,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
     (editing?.season_data_mode as 'popup' | 'link' | null) ?? defaultSeasonDataMode ?? 'popup',
   );
+  // Optional season scoping. Pulls from the primary player's named seasons
+  // (player_seasons) so the data popup / Form banner only counts matches
+  // inside that window. `null` means "all data".
+  const [seasonId, setSeasonId] = useState<string | null>(editing?.season_id ?? null);
+  const [playerSeasons, setPlayerSeasons] = useState<{ id: string; name: string }[]>([]);
   const [primaryVideos, setPrimaryVideos] = useState<{ id: string; name: string; videoUrl: string }[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(
     Array.isArray(editing?.selected_video_ids) ? (editing!.selected_video_ids as string[]) : [],
@@ -742,7 +748,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_position, default_season_data_mode")
+      .select("default_fit_recommendation, default_position, default_season_data_mode, default_season_id")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
@@ -761,6 +767,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       // user picked alone.
       if (defaults?.default_season_data_mode === 'popup' || defaults?.default_season_data_mode === 'link') {
         setSeasonDataMode(defaults.default_season_data_mode);
+      }
+      if (defaults?.default_season_id && seasonId === null) {
+        setSeasonId(defaults.default_season_id as string);
       }
     } else {
       initialFit = defaultFit ?? "";
@@ -782,6 +791,34 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   // Whenever the primary player changes, fetch their highlights so the staff
   // can pick which ones appear in the proposal carousel.
   const primaryPlayerId = entries[0]?.player_id ?? null;
+  useEffect(() => {
+    // Load the primary player's named seasons so the staff can scope the
+    // proposal's data to one of them. Reset selection when the player
+    // changes unless we already pre-seeded it from defaults.
+    let cancelled = false;
+    if (!primaryPlayerId) {
+      setPlayerSeasons([]);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("player_seasons")
+        .select("id, name, sort_order")
+        .eq("player_id", primaryPlayerId)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (cancelled) return;
+      setPlayerSeasons((data ?? []) as { id: string; name: string }[]);
+      // If the currently picked seasonId belongs to a different player,
+      // drop it.
+      if (seasonId && !(data ?? []).some((s: any) => s.id === seasonId)) {
+        setSeasonId(null);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryPlayerId]);
+
   useEffect(() => {
     let cancelled = false;
     if (!primaryPlayerId) {
@@ -885,6 +922,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         show_season_stats: showSeasonStats,
         show_strengths: showStrengths,
         season_data_mode: seasonDataMode,
+        season_id: seasonId,
         selected_video_ids: selectedVideoIds,
         alternate_profile_link_ids: altLinkIds,
         alternate_profiles_blurb: altBlurb.trim() || null,
@@ -1221,6 +1259,54 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                         return;
                       }
                       toast.success("Default data mode saved for this player");
+                    }}
+                    className="ml-auto text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    Save as player default
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label>Season to show</Label>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div className="min-w-[220px]">
+                  <Select
+                    value={seasonId ?? "__all__"}
+                    onValueChange={(v) => setSeasonId(v === "__all__" ? null : v)}
+                    disabled={!primaryPlayerId}
+                  >
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder={primaryPlayerId ? "All seasons" : "Add a player first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All seasons</SelectItem>
+                      {playerSeasons.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {primaryPlayerId && playerSeasons.length === 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    No seasons set up yet — add them in Data → Player Summary.
+                  </span>
+                )}
+                {primaryPlayerId && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { error } = await (supabase as any)
+                        .from("club_outreach_player_defaults")
+                        .upsert(
+                          { player_id: primaryPlayerId, default_season_id: seasonId, updated_at: new Date().toISOString() },
+                          { onConflict: "player_id" },
+                        );
+                      if (error) { toast.error(error.message ?? "Failed to save default"); return; }
+                      toast.success("Default season saved for this player");
                     }}
                     className="ml-auto text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                   >
