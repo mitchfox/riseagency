@@ -898,7 +898,7 @@ const RequestRepresentation = () => {
                     <div className="flex md:justify-end">
                       <button
                         type="button"
-                        onClick={() => setRepDialogOpen(true)}
+                        onClick={() => setShowForm(true)}
                         className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
                         style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
                       >
