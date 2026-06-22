@@ -208,8 +208,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         return false;
       }
     }
-  }), [order, enabled, modes, manualValues, windowSize, playerId, loading, dirty]);
-  // include defaultCategory dep so saveNow captures latest
+  }), [order, enabled, modes, manualValues, windowSize, defaultCategory, playerId, loading, dirty]);
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
