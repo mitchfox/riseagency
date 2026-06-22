@@ -40,9 +40,10 @@ interface Props {
   };
   /** When true, hides the embedded "Master schedule" collapsible (used to avoid recursion). */
   hideMasterCollapsible?: boolean;
+  hideProgramDateControls?: boolean;
 }
 
-export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterCollapsible }: Props) => {
+export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterCollapsible, hideProgramDateControls }: Props) => {
   const [masterOpen, setMasterOpen] = useState(false);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [allPlayerWeeks, setAllPlayerWeeks] = useState<Week[]>([]);
@@ -74,7 +75,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
 
     if (programmeLink) {
       const selectCols = programmeLink.table === "player_programs"
-        ? "linked_week_ids, end_date"
+        ? "linked_week_ids, start_date, end_date"
         : "linked_week_ids, start_date, end_date";
       const { data: prog, error: pErr } = await supabase
         .from(programmeLink.table as any)
