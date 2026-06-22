@@ -2494,6 +2494,56 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Textarea rows={4} className="mt-1.5" value={playerDefaultFit} onChange={(e) => setPlayerDefaultFit(e.target.value)} placeholder="Tailored fit note for this player when sent solo to a club." />
                 </div>
                 <div>
+                  <Label>Default position slot</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Auto-fills the position dropdown when this player is added to an outreach.</p>
+                  <Select value={playerDefaultPosition || "__none__"} onValueChange={(v) => setPlayerDefaultPosition(v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="mt-1.5 h-9 text-xs"><SelectValue placeholder="No default" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No default</SelectItem>
+                      {POSITION_SLOTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Default season data display</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">How the Video &amp; Data tile opens for this player by default. Leave on "Use global default" to follow the proposal-wide setting.</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {([
+                      { v: '' as const, label: 'Use global default' },
+                      { v: 'popup' as const, label: 'In-page popup' },
+                      { v: 'link' as const, label: 'Link to Stars profile' },
+                    ]).map((opt) => (
+                      <button
+                        key={opt.v || 'global'}
+                        type="button"
+                        onClick={() => setPlayerDefaultSeasonMode(opt.v)}
+                        className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${playerDefaultSeasonMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Default season to show</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Scope the data popup and Form banner to one of this player's named seasons. Leave on "All seasons" to use every match.</p>
+                  <Select
+                    value={playerDefaultSeasonId ?? "__all__"}
+                    onValueChange={(v) => setPlayerDefaultSeasonId(v === "__all__" ? null : v)}
+                  >
+                    <SelectTrigger className="mt-1.5 h-9 text-xs"><SelectValue placeholder="All seasons" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All seasons</SelectItem>
+                      {playerSeasonsForDefaults.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {playerSeasonsForDefaults.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">No seasons set up yet — add them in Data → Player Summary.</p>
+                  )}
+                </div>
+                <div>
                   <Label className="flex items-center gap-2"><FileBadge2 className="h-3.5 w-3.5" /> Proof of Representation PDF</Label>
                   {defaults.proof_path ? (
                     <p className="text-[11px] text-muted-foreground mt-1 font-mono break-all">{defaults.proof_path}</p>
