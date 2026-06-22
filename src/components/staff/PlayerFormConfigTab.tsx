@@ -112,6 +112,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windowSize, setWindowSize] = useState<number>(5);
+  const [defaultCategory, setDefaultCategory] = useState<string>("Passing");
   // Ordered list of all keys; selected ones are stored true in `enabled`
   const [order, setOrder] = useState<string[]>(FORM_STAT_OPTIONS.map(o => o.key));
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
@@ -126,12 +127,15 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
       setLoading(true);
       const { data } = await (supabase as any)
         .from("player_form_config")
-        .select("window_size, stats")
+        .select("window_size, stats, match_by_match_default_category")
         .eq("player_id", playerId)
         .maybeSingle();
       if (cancelled) return;
       if (data) {
         setWindowSize(data.window_size || 5);
+        setDefaultCategory(
+          (data.match_by_match_default_category as string | null) || "Passing",
+        );
         // stats can be either:
         //   string[] (legacy) — auto mode for each
         //   { key, mode, value }[] (new)
@@ -189,6 +193,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
         _player_id: playerId,
         _window_size: windowSize,
         _stats: stats,
+        _match_by_match_default_category: defaultCategory || null,
       });
     if (error) throw error;
     setDirty(false);
@@ -204,6 +209,7 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
       }
     }
   }), [order, enabled, modes, manualValues, windowSize, playerId, loading, dirty]);
+  // include defaultCategory dep so saveNow captures latest
 
   const handleSave = async (event?: MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
