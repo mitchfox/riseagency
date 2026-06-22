@@ -77,7 +77,7 @@ export const CoachingDataSection = () => {
   const fetchPlayerAnalyses = async (playerId: string) => {
     const { data } = await supabase
       .from("player_analysis")
-      .select("id, analysis_date, opponent, r90_score, minutes_played, result, striker_stats, fixture_stats, visibility_status, placeholder_raw_score, placeholder_minutes, season_final")
+      .select("id, analysis_date, opponent, r90_score, minutes_played, result, striker_stats, fixture_stats, visibility_status, placeholder_raw_score, placeholder_minutes, season_final, data_unavailable")
       .eq("player_id", playerId)
       .order("analysis_date", { ascending: false });
     setAnalyses(data || []);
