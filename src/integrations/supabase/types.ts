@@ -1384,6 +1384,8 @@ export type Database = {
           agent_image_url: string | null
           agent_name: string | null
           default_fit_recommendation: string | null
+          default_season_data_mode: string
+          default_video_selection_mode: string
           id: number
           updated_at: string
           whatsapp_number: string | null
@@ -1392,6 +1394,8 @@ export type Database = {
           agent_image_url?: string | null
           agent_name?: string | null
           default_fit_recommendation?: string | null
+          default_season_data_mode?: string
+          default_video_selection_mode?: string
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
@@ -1400,6 +1404,8 @@ export type Database = {
           agent_image_url?: string | null
           agent_name?: string | null
           default_fit_recommendation?: string | null
+          default_season_data_mode?: string
+          default_video_selection_mode?: string
           id?: number
           updated_at?: string
           whatsapp_number?: string | null
