@@ -112,7 +112,6 @@ export const PlayerFormConfigTab = forwardRef<PlayerFormConfigHandle, Props>(({ 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windowSize, setWindowSize] = useState<number>(5);
-  const [defaultCategory, setDefaultCategory] = useState<string>("Passing");
   // Ordered list of all keys; selected ones are stored true in `enabled`
   const [order, setOrder] = useState<string[]>(FORM_STAT_OPTIONS.map(o => o.key));
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
