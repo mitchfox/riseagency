@@ -172,9 +172,12 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       return;
     }
     setProgrammeRange(next);
+    const dbPatch: Record<string, string | null> = {};
+    if ("start" in patch) dbPatch.start_date = patch.start ?? null;
+    if ("end" in patch) dbPatch.end_date = patch.end ?? null;
     const { error } = await supabase
       .from(programmeLink.table as any)
-      .update(patch as any)
+      .update(dbPatch as any)
       .eq("id", programmeLink.programmeId);
     if (error) {
       toast.error(error.message);
