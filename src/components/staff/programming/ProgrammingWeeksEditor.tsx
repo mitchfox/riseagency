@@ -137,6 +137,24 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     load();
   };
 
+  const updateProgrammeRange = async (patch: Partial<typeof programmeRange>) => {
+    if (!programmeLink) return;
+    const next = { ...programmeRange, ...patch };
+    if (next.start && next.end && next.end < next.start) {
+      toast.error("End date cannot be before start date");
+      return;
+    }
+    setProgrammeRange(next);
+    const { error } = await supabase
+      .from(programmeLink.table as any)
+      .update(patch as any)
+      .eq("id", programmeLink.programmeId);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
+  };
+
   /** Create one programming_weeks row per Monday inside the programme date range
    * that isn't already linked, and link each new one to the programme. */
   const generateWeeksForPeriod = async () => {
