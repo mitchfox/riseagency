@@ -4,12 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Target, CheckCircle2, ListChecks, Star, Activity } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Trophy, Target, CheckCircle2, ListChecks, Star, Activity, CalendarDays } from "lucide-react";
 
 type Starter = {
   position: string;
   abbr: string;
   name: string;
+  userIds: string[];
   role: string;
   responsibilities: string[];
   floorGeneral?: boolean;
@@ -23,6 +25,7 @@ const STARTERS: Starter[] = [
     position: "Point Guard",
     abbr: "PG",
     name: "Jolon",
+    userIds: ["ba2a30f2-3f0e-4267-ab04-ce74ac751aa4"],
     role: "Floor general. Sets the agency's direction and orchestrates every play.",
     responsibilities: [
       "Set weekly priorities and call the plays",
@@ -38,6 +41,7 @@ const STARTERS: Starter[] = [
     position: "Shooting Guard",
     abbr: "SG",
     name: "Sandra",
+    userIds: ["d4f0e437-5193-4c6a-b8ee-24376496062d"],
     role: "Scoring threat. Converts opportunities into visible wins.",
     responsibilities: [
       "Close outreach and follow-ups with conviction",
@@ -52,6 +56,7 @@ const STARTERS: Starter[] = [
     position: "Small Forward",
     abbr: "SF",
     name: "Anthony",
+    userIds: ["95b6eece-4a7c-4ef2-a61e-d89574b79aa3"],
     role: "Versatile wing. Bridges analysis, scouting and player development.",
     responsibilities: [
       "Build and deliver player performance reports",
@@ -67,6 +72,7 @@ const STARTERS: Starter[] = [
     position: "Power Forward",
     abbr: "PF",
     name: "Mutsa",
+    userIds: ["a68c3599-d780-4f03-9d4e-3c63a5b9ce63"],
     role: "Workhorse. Wins the contested possessions on recruitment and outreach.",
     responsibilities: [
       "Grind club outreach pipelines and follow through",
@@ -81,6 +87,7 @@ const STARTERS: Starter[] = [
     position: "Centre",
     abbr: "C",
     name: "Kuda",
+    userIds: ["c0af9c15-400b-4c68-95a8-a0419565015a"],
     role: "Anchor. Keeps the foundation — admin, finance and data — solid.",
     responsibilities: [
       "Protect the rim — invoices, contracts, compliance",
