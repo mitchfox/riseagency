@@ -1441,6 +1441,24 @@ const RiseWithUs = () => {
                 )}
                 <StarsShowcase lang={lang} />
 
+                {/* Scouting database snapshot — shows the prospect they're tracked
+                    in our database with neighbouring rows blurred. Auto-shows when
+                    fit_score >= 60, or when staff have toggled it on. */}
+                {(settings.show_database_card === true
+                  || (settings.show_database_card == null && (fitScore ?? 0) >= 60)) && (
+                  <ScoutingDatabaseCard
+                    playerId={player.id}
+                    playerName={player.name}
+                    position={player.position}
+                    club={player.club}
+                    nationality={player.nationality}
+                    imageUrl={player.image_url}
+                    fitScore={fitScore}
+                    lang={lang}
+                    t={t}
+                  />
+                )}
+
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
                   if (cards.length === 0) return null;
