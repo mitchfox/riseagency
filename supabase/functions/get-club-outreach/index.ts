@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: link, error: linkErr } = await supabase
       .from("club_outreach_links")
       .select(
-        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url, is_suggested_to_agent, suggested_agent_note"
+        "id, short_id, player_id, club_id, fit_recommendation, club_contact_name, club_contact_role, club_contact_phone, club_contact_accent, prepared_for_name, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, selected_video_ids, created_at, archived_at, target_type, agent_name, agent_logo_url, language, translations, is_mandated, key_details, section_order, mandated_agent_name, mandated_agent_role, mandated_agent_phone, mandated_agent_logo_url, mandate_proof_path, mandate_proof_url, is_suggested_to_agent, suggested_agent_note"
       )
       .eq("short_id", shortId)
       .maybeSingle();
@@ -306,18 +306,40 @@ Deno.serve(async (req) => {
         const clubInfo = clubKey ? clubLookup.get(clubKey) : null;
         // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
+        let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null }[] = [];
         let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
           if (typeof h === "string") h = JSON.parse(h);
-          if (h && !Array.isArray(h) && h.matchHighlights) h = h.matchHighlights;
+          let pool: any[] = [];
           if (Array.isArray(h)) {
-            const first = h.find((x: any) => x && (x.videoUrl || x.video_url));
-            firstHighlightUrl = first?.videoUrl ?? first?.video_url ?? null;
+            pool = h;
+          } else if (h && typeof h === "object") {
+            pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
           }
+          allVideos = pool
+            .filter((x: any) => x && (x.videoUrl || x.video_url))
+            .map((x: any) => ({
+              id: String(x.id ?? x.videoUrl ?? x.video_url),
+              name: String(x.name ?? "Highlight"),
+              videoUrl: String(x.videoUrl ?? x.video_url),
+              logoUrl: x.logoUrl ?? null,
+            }));
         } catch (_) {
-          firstHighlightUrl = null;
+          allVideos = [];
         }
+        // Filter by per-link selected_video_ids only for the primary player.
+        const isPrimary = e.player_id === primaryPlayerId;
+        const selectedIds: string[] = Array.isArray((link as any).selected_video_ids)
+          ? (link as any).selected_video_ids
+          : [];
+        let videos = allVideos;
+        if (isPrimary && selectedIds.length > 0) {
+          const set = new Set(selectedIds);
+          const filtered = allVideos.filter((v) => set.has(v.id));
+          if (filtered.length > 0) videos = filtered;
+        }
+        firstHighlightUrl = videos[0]?.videoUrl ?? null;
         try {
           bioParsed = p?.bio ? (typeof p.bio === "string" ? JSON.parse(p.bio) : p.bio) : null;
         } catch (_) {
@@ -345,6 +367,7 @@ Deno.serve(async (req) => {
             bioClubLogo ?? clubInfo?.image_url ?? p?.club_logo ?? null,
           player_club_country: clubInfo?.country ?? null,
           first_highlight_url: firstHighlightUrl,
+          videos,
           top_stats: bioParsed?.topStats ?? null,
           season_stats: bioParsed?.seasonStats ?? null,
           strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,
