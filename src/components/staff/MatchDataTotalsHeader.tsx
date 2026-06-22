@@ -580,54 +580,42 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               Not enough overlapping data yet to link individual stats to R90.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {r90Drivers.map((d) => (
-                <div
-                  key={d.key}
-                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
-                >
-                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(d.key)}>
-                    {prettifyKey(d.key)}
-                  </span>
-                  <span
-                    className={
-                      "text-[10px] tabular-nums font-semibold " +
-                      (d.r >= 0 ? "text-emerald-400" : "text-rose-400")
-                    }
-                  >
-                    {corrLabel(d.r)}
-                  </span>
+                <div key={d.key} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(d.key)}>{prettifyKey(d.key)}</span>
+                    <span className={"text-[10px] tabular-nums font-semibold " + (d.r >= 0 ? "text-emerald-400" : "text-rose-400")}>{(d.r >= 0 ? "+" : "−") + Math.abs(d.r).toFixed(2)}</span>
+                  </div>
+                  <div className="text-muted-foreground"><CorrBar r={d.r} /></div>
+                  <div className="text-muted-foreground/80"><MiniScatter xs={series.map[d.key].values} ys={series.r90Series} height={48} /></div>
+                  <div className="text-[10px] text-muted-foreground/80">n={d.n} · {Math.abs(d.r) >= 0.8 ? "very strong" : Math.abs(d.r) >= 0.6 ? "strong" : "moderate"} link to R90</div>
                 </div>
               ))}
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Pearson correlation between each stat and R90 across the loaded window. Positive values mean the stat tends to rise on his higher-rated matches.
+            Each card plots the stat (x) against R90 (y) match-by-match. The bar shows direction and strength; an up-sloping regression line means the stat lifts R90.
           </p>
         </Section>
 
         <Section title="Form trends" count={Object.keys(advanced).length}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {Object.entries(advanced)
               .filter(([, v]) => Math.abs(v.trendPct) >= 15 && v.n >= 4)
               .sort((a, b) => Math.abs(b[1].trendPct) - Math.abs(a[1].trendPct))
               .slice(0, 18)
               .map(([key, v]) => (
-                <div
-                  key={key}
-                  className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2"
-                >
-                  <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(key)}>
-                    {prettifyKey(key)}
-                  </span>
-                  <span
-                    className={
-                      "text-[10px] tabular-nums font-semibold " +
-                      (v.trendPct >= 0 ? "text-emerald-400" : "text-rose-400")
-                    }
-                  >
-                    {fmtPct(v.trendPct)}
-                  </span>
+                <div key={key} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-foreground/90 truncate" title={prettifyKey(key)}>{prettifyKey(key)}</span>
+                    <span className={"text-[10px] tabular-nums font-semibold " + (v.trendPct >= 0 ? "text-emerald-400" : "text-rose-400")}>{fmtPct(v.trendPct)}</span>
+                  </div>
+                  <div className="text-muted-foreground"><Sparkline values={series.map[key].values} width={150} height={28} /></div>
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground/80 tabular-nums">
+                    <span>avg {v.mean.toFixed(2)}</span>
+                    <span>peak {v.best.toFixed(2)}</span>
+                  </div>
                 </div>
               ))}
           </div>
@@ -642,9 +630,12 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most consistent</div>
               <div className="space-y-1">
                 {consistency.mostConsistent.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
-                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
-                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  <div key={row.key} className="rounded border border-border/60 bg-background/40 px-2 py-1.5 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                      <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                    </div>
+                    <div className="text-muted-foreground"><ConsistencyStrip values={series.map[row.key].values} /></div>
                   </div>
                 ))}
               </div>
@@ -653,16 +644,19 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Most volatile</div>
               <div className="space-y-1">
                 {consistency.mostVolatile.map((row) => (
-                  <div key={row.key} className="flex items-center justify-between gap-2 rounded border border-border/60 bg-background/40 px-2 py-1">
-                    <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
-                    <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                  <div key={row.key} className="rounded border border-border/60 bg-background/40 px-2 py-1.5 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] truncate" title={prettifyKey(row.key)}>{prettifyKey(row.key)}</span>
+                      <span className="text-[10px] tabular-nums text-foreground/80">±{row.std.toFixed(2)} <span className="text-muted-foreground">({row.cv.toFixed(0)}% CV)</span></span>
+                    </div>
+                    <div className="text-muted-foreground"><ConsistencyStrip values={series.map[row.key].values} /></div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Standard deviation and coefficient of variation across the window. Low CV stats are the reliable floor; high CV stats are the fixable swings.
+            Gold band = ±1σ around the mean, dashed line = mean. Dots are individual matches — tight clusters are the reliable floor, wide spreads are fixable swings.
           </p>
         </Section>
 
@@ -670,21 +664,23 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
           {statPairCorrs.length === 0 ? (
             <p className="text-xs text-muted-foreground px-1">No strong pairwise links surfaced in this window.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {statPairCorrs.map((p) => (
-                <div key={p.a + p.b} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-foreground/90 truncate" title={`${prettifyKey(p.a)} × ${prettifyKey(p.b)}`}>
-                    {prettifyKey(p.a)} <span className="text-muted-foreground">×</span> {prettifyKey(p.b)}
-                  </span>
-                  <span className={"text-[10px] tabular-nums font-semibold " + (p.r >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    {corrLabel(p.r)}
-                  </span>
+                <div key={p.a + p.b} className="rounded-md border border-border/60 bg-background/40 px-2.5 py-2 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-foreground/90 truncate" title={prettifyKey(p.a)}>{prettifyKey(p.a)}</div>
+                      <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(p.b)}>vs {prettifyKey(p.b)}</div>
+                    </div>
+                    <span className={"text-[10px] tabular-nums font-semibold shrink-0 " + (p.r >= 0 ? "text-emerald-400" : "text-rose-400")}>{(p.r >= 0 ? "+" : "−") + Math.abs(p.r).toFixed(2)}</span>
+                  </div>
+                  <div className="text-muted-foreground/80"><MiniScatter xs={series.map[p.a].values} ys={series.map[p.b].values} width={160} height={60} /></div>
                 </div>
               ))}
             </div>
           )}
           <p className="text-[10px] text-muted-foreground mt-2 px-1">
-            Stats that move together (positive) or trade off (negative) match-to-match. Useful for spotting compensations and tactical patterns.
+            Each scatter plots two stats match-by-match with a best-fit line. Up-sloping = they rise together, down-sloping = they trade off.
           </p>
         </Section>
       </div>
