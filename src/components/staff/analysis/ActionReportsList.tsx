@@ -339,10 +339,33 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       ) : (
         <div className="grid gap-3">
           {filteredReports.map((report) => (
-            <div
-              key={report.id}
-              className="rounded-lg overflow-hidden text-white flex flex-col md:flex-row md:items-stretch"
-            >
+            <div key={report.id} className="rounded-lg overflow-hidden">
+              {report.is_todo && (
+                <div className="flex items-center gap-2 bg-primary/15 border-b border-primary/40 px-3 py-1.5 text-[11px] md:text-xs text-primary">
+                  <ListChecks className="w-3.5 h-3.5 shrink-0" />
+                  <span className="flex-1 truncate">
+                    <span className="font-semibold mr-1">To Do:</span>
+                    {report.todo_note?.trim() || <span className="opacity-70 italic">No note yet — click pencil to add one.</span>}
+                  </span>
+                  <button
+                    type="button"
+                    title="Edit note"
+                    onClick={() => setTodoNoteEditor({ id: report.id, note: report.todo_note || "" })}
+                    className="hover:text-primary/80 p-0.5"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Remove from To Do"
+                    onClick={() => toggleTodo(report, false, null)}
+                    className="hover:text-primary/80 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <div className="text-white flex flex-col md:flex-row md:items-stretch">
               {/* R90 Score */}
               {(() => {
                 const effectiveR90 = getEffectiveR90(report);
