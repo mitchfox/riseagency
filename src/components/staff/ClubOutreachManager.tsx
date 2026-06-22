@@ -2084,6 +2084,16 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       const sm = (data as any)?.default_season_data_mode;
       setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
       setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
+      setPlayerDefaultShowForm(!!(data as any)?.default_show_form);
+      setPlayerDefaultShowInNumbers(!!(data as any)?.default_show_in_numbers);
+      setPlayerDefaultShowSeasonStats(!!(data as any)?.default_show_season_stats);
+      setPlayerDefaultShowStrengths(!!(data as any)?.default_show_strengths);
+      const kd = (data as any)?.default_key_details;
+      setPlayerDefaultKeyDetails(Array.isArray(kd) && kd.length > 0 ? normaliseKeyDetails(kd) : DEFAULT_KEY_DETAILS);
+      const so = (data as any)?.default_section_order;
+      setPlayerDefaultSectionOrder(Array.isArray(so) && so.length > 0 ? normaliseSectionOrder(so) : DEFAULT_SECTION_ORDER);
+      const dv = (data as any)?.default_selected_video_ids;
+      setPlayerDefaultSelectedVideoIds(Array.isArray(dv) ? dv : []);
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
@@ -2091,6 +2101,21 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
       setPlayerSeasonsForDefaults((seasons ?? []) as { id: string; name: string }[]);
+      // Load this player's highlights so we can offer the same video picker
+      // that lives inside the new-outreach dialog.
+      const { data: playerRow } = await supabase
+        .from("players")
+        .select("highlights")
+        .eq("id", selectedPlayerId)
+        .maybeSingle();
+      let h: any = (playerRow as any)?.highlights ?? null;
+      try { if (typeof h === "string") h = JSON.parse(h); } catch (_) { h = null; }
+      let pool: any[] = [];
+      if (Array.isArray(h)) pool = h;
+      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+      setPlayerDefaultVideos(pool
+        .filter((x: any) => x && (x.videoUrl || x.video_url))
+        .map((x: any) => ({ id: String(x.id ?? x.videoUrl ?? x.video_url), name: String(x.name ?? "Highlight") })));
     })();
   }, [selectedPlayerId]);
 
