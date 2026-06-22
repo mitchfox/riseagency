@@ -334,7 +334,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const handleDouble = (e: React.MouseEvent) => { e.stopPropagation(); removeShape(s.id); };
               if (s.kind === "line") {
                 return (
-                  <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: "grab" }}>
+                    <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: tool === "select" && isSelected ? "grab" : "pointer" }}>
                     {/* fat invisible hit area for easier grabbing */}
                     <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke="transparent" strokeWidth="4" />
                     <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke={st.stroke} strokeWidth={st.width} strokeDasharray="3 2" strokeLinecap="round" opacity={0.9} />
@@ -350,7 +350,7 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
               const p4 = { x: s.from.x - nx * half, y: s.from.y - ny * half };
               const pts = `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}`;
               return (
-                <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: "grab" }}>
+                <g key={s.id} onMouseDown={startDragShape(s.id)} onClick={handleClick} onDoubleClick={handleDouble} style={{ cursor: tool === "select" && isSelected ? "grab" : "pointer" }}>
                   {/* invisible thick hit area */}
                   <line x1={s.from.x} y1={s.from.y} x2={s.to.x} y2={s.to.y} stroke="transparent" strokeWidth={Math.max(5, st.width + 3)} />
                   <polygon points={pts} fill={st.fill} stroke={st.stroke} strokeWidth="0.25" />
@@ -453,8 +453,8 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
             ? arrowStart ? "Click the end point to finish the arrow." : "Click the start point of the arrow."
             : tool === "line" || tool === "wall" || tool === "rebounder"
             ? shapeStart ? `Click the end point to finish the ${tool}.` : `Click the start point of the ${tool}. Walls and rebounders are placed between two points.`
-            : tool === "select" ? "Drag tokens to reposition. Double-click to remove."
-            : "Click on the pitch to place. You can drag any item at any time."}
+            : tool === "select" ? "Click an item to select it, then drag the selected item to reposition. Double-click to remove."
+            : "Click on the pitch to place. Existing items only move with Select."}
         </p>
 
       <div className="flex justify-end gap-2 pt-1">
