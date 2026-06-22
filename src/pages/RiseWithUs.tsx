@@ -1058,6 +1058,51 @@ const IntroCinematic = ({
         transition={{ duration: 24, ease: "linear", repeat: Infinity }}
       />
 
+      {/* Floating gold embers — drift upward across every phase to give the
+          intro a constant sense of motion without distracting from the text. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
+        {Array.from({ length: 28 }).map((_, i) => {
+          const left = (i * 37) % 100;
+          const delay = (i * 0.31) % 6;
+          const duration = 9 + ((i * 1.7) % 7);
+          const size = 2 + (i % 4);
+          const drift = (i % 2 === 0 ? 1 : -1) * (10 + (i % 5) * 6);
+          return (
+            <motion.span
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${left}%`,
+                bottom: -20,
+                width: size,
+                height: size,
+                background: "hsl(var(--gold))",
+                boxShadow: "0 0 12px hsl(var(--gold) / 0.85), 0 0 24px hsl(var(--gold) / 0.4)",
+              }}
+              initial={{ y: 0, x: 0, opacity: 0 }}
+              animate={{ y: -window.innerHeight - 60, x: drift, opacity: [0, 0.85, 0.85, 0] }}
+              transition={{ duration, delay, repeat: Infinity, ease: "linear" }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Soft horizontal shimmer that sweeps across when the phase changes,
+          like a stage light grazing the screen. */}
+      <motion.div
+        aria-hidden="true"
+        key={`shimmer-${phase}`}
+        className="pointer-events-none absolute inset-y-0 z-[3] w-[40vw]"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, hsl(var(--gold) / 0.18) 50%, transparent 100%)",
+          filter: "blur(8px)",
+        }}
+        initial={{ x: "-50vw", opacity: 0 }}
+        animate={{ x: "120vw", opacity: [0, 0.9, 0] }}
+        transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+      />
+
       {/* Click ripples */}
       {pulses.map((p) => (
         <motion.span
@@ -1173,13 +1218,46 @@ const IntroCinematic = ({
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center gap-5"
             >
-              <motion.img
-                src={riseLogoWhite} alt="RISE"
-                className="h-24 sm:h-32 md:h-40 w-auto"
-                initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
-                animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.7))" }}
-                transition={{ duration: 1.2, repeat: Infinity, repeatType: "mirror" }}
-              />
+              <div className="relative flex items-center justify-center">
+                {/* Orbiting gold dots ringing the logo. */}
+                <motion.div
+                  aria-hidden="true"
+                  className="absolute inset-0 -m-10 sm:-m-14"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 14, ease: "linear", repeat: Infinity }}
+                >
+                  {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+                    <span
+                      key={deg}
+                      className="absolute left-1/2 top-1/2 block h-1.5 w-1.5 rounded-full"
+                      style={{
+                        background: "hsl(var(--gold))",
+                        boxShadow: "0 0 14px hsl(var(--gold) / 0.85)",
+                        transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-78px)`,
+                        opacity: 0.4 + ((i % 3) * 0.2),
+                      }}
+                    />
+                  ))}
+                </motion.div>
+                {/* Pulsing halo behind the mark. */}
+                <motion.div
+                  aria-hidden="true"
+                  className="absolute h-40 w-40 sm:h-56 sm:w-56 md:h-72 md:w-72 rounded-full"
+                  style={{
+                    background:
+                      "radial-gradient(circle, hsl(var(--gold) / 0.55) 0%, transparent 70%)",
+                  }}
+                  animate={{ scale: [0.85, 1.1, 0.85], opacity: [0.45, 0.85, 0.45] }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.img
+                  src={riseLogoWhite} alt="RISE"
+                  className="relative h-24 sm:h-32 md:h-40 w-auto"
+                  initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
+                  animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.85))" }}
+                  transition={{ duration: 1.2, repeat: Infinity, repeatType: "mirror" }}
+                />
+              </div>
               <p className="font-bebas text-4xl sm:text-6xl md:text-7xl uppercase tracking-[0.2em] text-foreground"
                  style={{ textShadow: "0 0 28px hsl(var(--gold)/0.55)" }}>
                 {offerT(lang, "rise_with_us", "Rise With Us")}
