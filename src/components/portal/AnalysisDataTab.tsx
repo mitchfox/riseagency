@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
-import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag } from "lucide-react";
+import { User, Calendar, MapPin, Trophy, Pencil, Check, X, Flag, Ban } from "lucide-react";
 import { getMetricCategoriesForPosition, getMetricsForPosition } from "@/components/staff/ComparisonPlayerData";
 import { supabase } from "@/integrations/supabase/client";
 import { PitchHeatmap } from "@/components/report/PitchHeatmap";
@@ -32,6 +32,7 @@ interface Analysis {
   placeholder_raw_score?: number | null;
   placeholder_minutes?: number | null;
   season_final?: boolean | null;
+  data_unavailable?: boolean | null;
 }
 
 interface Props {
@@ -187,6 +188,13 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
   const selectAll = () => setSelectedIds(new Set(analyses.map(a => a.id)));
 
   const selectedAnalyses = analyses.filter(a => selectedIds.has(a.id));
+  // Matches flagged "no data available" never contribute to season
+  // aggregates or stat averages, even though their R90 can still appear
+  // in the per-match table below.
+  const aggregateAnalyses = useMemo(
+    () => selectedAnalyses.filter(a => !a.data_unavailable),
+    [selectedAnalyses],
+  );
 
   const currentMetrics = useMemo(() => {
     return positionCategories.find(c => c.category === activeStatCategory)?.metrics || [];
@@ -194,22 +202,22 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
 
   // Season averages including fixture_stats
   const seasonAverages = useMemo(() => {
-    if (selectedAnalyses.length === 0) return {};
+    if (aggregateAnalyses.length === 0) return {};
     const result: Record<string, number> = {};
 
     // Hidden reports must contribute their HIDDEN R90 / minutes, not the live values.
-    const r90Values = selectedAnalyses
+    const r90Values = aggregateAnalyses
       .map(a => effectiveR90(a))
       .filter((v): v is number => v != null);
     if (r90Values.length > 0) result.r90 = r90Values.reduce((s, v) => s + v, 0) / r90Values.length;
 
-    const mins = selectedAnalyses
+    const mins = aggregateAnalyses
       .map(a => effectiveMinutes(a))
       .filter((v): v is number => v != null);
     if (mins.length > 0) result.totalMinutes = mins.reduce((s, v) => s + v, 0);
 
     // All metrics from all categories using centralised aggregation
-    const allAvgs = computeAllStatAverages(selectedAnalyses, positionMetrics);
+    const allAvgs = computeAllStatAverages(aggregateAnalyses, positionMetrics);
     Object.entries(allAvgs).forEach(([key, val]) => {
       if (val != null) result[key] = val;
     });
@@ -217,12 +225,12 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     // Also check STAT_DEFS for striker_stats
     STAT_DEFS.forEach(sd => {
       if (result[sd.key] != null) return;
-      const avg = computeStatAverage(selectedAnalyses, sd.key);
+      const avg = computeStatAverage(aggregateAnalyses, sd.key);
       if (avg != null) result[sd.key] = avg;
     });
 
     return result;
-  }, [positionMetrics, selectedAnalyses]);
+  }, [positionMetrics, aggregateAnalyses]);
 
   const r90BarData = useMemo(() => {
     return selectedAnalyses
@@ -338,6 +346,22 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     setEditValue("");
   };
 
+  const toggleDataUnavailable = async (analysis: Analysis) => {
+    const next = !analysis.data_unavailable;
+    const { error } = await supabase
+      .from("player_analysis")
+      .update({ data_unavailable: next })
+      .eq("id", analysis.id);
+    if (error) {
+      toast.error("Failed to update");
+      return;
+    }
+    analysis.data_unavailable = next;
+    // Force re-render by nudging selectedIds set identity.
+    setSelectedIds(prev => new Set(prev));
+    toast.success(next ? "Marked as no data available" : "Restored match data");
+  };
+
   // Most recent match (by date) — that's the candidate the staff button toggles
   // as the season-ending fixture.
   const mostRecentAnalysis = useMemo(() => {
@@ -412,7 +436,7 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Matches</p>
-              <p className="font-semibold">{selectedAnalyses.length}</p>
+              <p className="font-semibold">{aggregateAnalyses.length}</p>
             </div>
           </div>
 
@@ -531,9 +555,30 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                 <TableRow key={a.id}>
                   <TableCell className="text-sm">{new Date(a.analysis_date).toLocaleDateString(dateLocale(playerData?.portal_language))}</TableCell>
                   <TableCell className="text-sm font-medium">
-                    {a.opponent || '-'}
+                    <div className="flex items-center gap-2">
+                      <span>{a.opponent || '-'}</span>
+                      {embedded && (
+                        <button
+                          onClick={() => toggleDataUnavailable(a)}
+                          title={a.data_unavailable ? "Restore match data" : "Mark as no data available"}
+                          className={`inline-flex items-center justify-center w-5 h-5 rounded transition-colors ${
+                            a.data_unavailable
+                              ? "text-destructive hover:text-destructive/80"
+                              : "text-muted-foreground/40 hover:text-muted-foreground"
+                          }`}
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm">{effectiveMinutes(a) ?? '-'}</TableCell>
+                  <TableCell className="text-sm">
+                    {a.data_unavailable ? (
+                      <span className="blur-sm select-none text-muted-foreground">–</span>
+                    ) : (
+                      effectiveMinutes(a) ?? '-'
+                    )}
+                  </TableCell>
                   <TableCell>
                     {(() => {
                       const r = effectiveR90(a);
@@ -546,7 +591,13 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                       );
                     })()}
                   </TableCell>
-                  {currentMetrics.map(m => {
+                  {a.data_unavailable ? (
+                    <TableCell colSpan={currentMetrics.length} className="text-sm">
+                      <div className="flex items-center justify-center text-xs uppercase tracking-wider text-muted-foreground italic">
+                        No data available
+                      </div>
+                    </TableCell>
+                  ) : currentMetrics.map(m => {
                     const val = getStatValue(a, m.key);
                     const isEditing = editingCell?.analysisId === a.id && editingCell?.metricKey === m.key;
                     

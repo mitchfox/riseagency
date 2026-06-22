@@ -5037,6 +5037,7 @@ export type Database = {
           category: string
           club_logo_url: string | null
           created_at: string
+          data_unavailable: boolean
           estimated_ready_at: string | null
           fixture_id: string | null
           fixture_stats: Json | null
@@ -5079,6 +5080,7 @@ export type Database = {
           category?: string
           club_logo_url?: string | null
           created_at?: string
+          data_unavailable?: boolean
           estimated_ready_at?: string | null
           fixture_id?: string | null
           fixture_stats?: Json | null
@@ -5121,6 +5123,7 @@ export type Database = {
           category?: string
           club_logo_url?: string | null
           created_at?: string
+          data_unavailable?: boolean
           estimated_ready_at?: string | null
           fixture_id?: string | null
           fixture_stats?: Json | null
