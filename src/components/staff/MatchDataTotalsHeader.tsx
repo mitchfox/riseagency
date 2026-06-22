@@ -148,6 +148,10 @@ function subCategoriseStatKey(category: StatCategory, key: string): string {
 }
 
 export const MatchDataTotalsHeader = ({ analyses }: Props) => {
+  // Matches flagged as "no data available" are excluded from every total /
+  // average shown here. They may still keep an R90 in the per-match table
+  // but they contribute nothing to season aggregates.
+  analyses = (analyses || []).filter((a) => !a?.data_unavailable);
   // Discover every numeric stat key appearing across the loaded analyses.
   const allStatKeys = useMemo(() => {
     const keys = new Set<string>();
