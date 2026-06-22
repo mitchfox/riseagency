@@ -195,7 +195,10 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       report.opponent?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlayer = playerFilter === "all" || report.player_id === playerFilter;
     const status = report.visibility_status || "draft";
-    const matchesStatus = statusTab === "all" || status === statusTab;
+    const matchesStatus =
+      statusTab === "all" ? true
+      : statusTab === "todo" ? !!report.is_todo
+      : status === statusTab;
     return matchesSearch && matchesPlayer && matchesStatus;
   });
 
@@ -205,10 +208,20 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
       const matchesPlayer = playerFilter === "all" || r.player_id === playerFilter;
       return matchesSearch && matchesPlayer;
     }).length,
+    todo: reports.filter(r => r.is_todo).length,
     draft: reports.filter(r => (r.visibility_status || "draft") === "draft").length,
     clipped: reports.filter(r => r.visibility_status === "clipped").length,
     hidden: reports.filter(r => r.visibility_status === "hidden").length,
     live: reports.filter(r => r.visibility_status === "live").length,
+  };
+
+  const toggleTodo = async (report: ActionReport, next: boolean, note?: string | null) => {
+    const payload: any = { is_todo: next };
+    if (note !== undefined) payload.todo_note = note;
+    const { error } = await supabase.from("player_analysis").update(payload).eq("id", report.id);
+    if (error) { toast.error("Couldn't update To Do"); return; }
+    setReports(prev => prev.map(r => r.id === report.id ? { ...r, is_todo: next, ...(note !== undefined ? { todo_note: note } : {}) } : r));
+    toast.success(next ? "Added to To Do" : "Removed from To Do");
   };
 
   const beginCreateReport = (reportType: 'player' | 'team') => {
