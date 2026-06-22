@@ -589,14 +589,12 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {a.data_unavailable ? (
-                      <span className="blur-sm select-none text-muted-foreground">–</span>
-                    ) : (
-                      effectiveMinutes(a) ?? '-'
-                    )}
+                    {effectiveMinutes(a) ?? '-'}
                   </TableCell>
                   <TableCell>
-                    {(() => {
+                    {a.data_unavailable ? (
+                      <span className="blur-sm select-none text-muted-foreground font-bold text-sm">–</span>
+                    ) : (() => {
                       const r = effectiveR90(a);
                       return r != null ? (
                         <span className="font-bold text-sm" style={{ color: getR90Color(r) }}>
