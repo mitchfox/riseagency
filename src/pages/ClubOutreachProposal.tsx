@@ -1765,12 +1765,24 @@ function MatchByMatchCard({
                   {sorted.map((a) => (
                     <tr key={a.id} className="border-t border-white/5 hover:bg-white/[0.02]">
                       <td className="px-2.5 py-1.5 sticky left-0 bg-black/80 backdrop-blur z-10">
-                        <div className="text-white/90 whitespace-nowrap">
-                          {a.opponent || "-"}
-                        </div>
-                        <div className="text-white/40 text-[10px] whitespace-nowrap">
-                          {fmtDate(a.analysis_date)}
-                          {a.result ? ` · ${a.result}` : ""}
+                        <div className="flex items-center gap-2">
+                          {a.opponent_logo ? (
+                            <img
+                              src={a.opponent_logo}
+                              alt={a.opponent ?? ""}
+                              onError={(e) => ((e.currentTarget.style.display = "none"))}
+                              className="h-5 w-5 object-contain flex-shrink-0"
+                            />
+                          ) : null}
+                          <div>
+                            <div className="text-white/90 whitespace-nowrap">
+                              {a.opponent || "-"}
+                            </div>
+                            <div className="text-white/40 text-[10px] whitespace-nowrap">
+                              {fmtDate(a.analysis_date)}
+                              {a.result ? ` · ${a.result}` : ""}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       {c.metrics.map((m) => (
