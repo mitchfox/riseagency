@@ -4,8 +4,13 @@ import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
+import { SpsSection } from "@/components/staff/programming/SpsSection";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { useState as useReactState } from "react";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -21,6 +26,7 @@ export const StrengthPowerSpeedSection = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
   const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
+  const [legacyOpen, setLegacyOpen] = useState(false);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -91,12 +97,25 @@ export const StrengthPowerSpeedSection = () => {
               onSuccess={() => {}}
             />
           </div>
-          <ProgrammingManagement
-            embedded
-            playerId={currentPlayer.id}
-            playerName={currentPlayer.name}
-            isAdmin={true}
-          />
+
+          <SpsSection playerId={currentPlayer.id} playerName={currentPlayer.name} />
+
+          <Collapsible open={legacyOpen} onOpenChange={setLegacyOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wide">Legacy editor (manual save) — kept temporarily for parity</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${legacyOpen ? "rotate-180" : ""}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <ProgrammingManagement
+                embedded
+                playerId={currentPlayer.id}
+                playerName={currentPlayer.name}
+                isAdmin={true}
+              />
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       )}
     </div>
