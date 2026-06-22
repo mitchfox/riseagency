@@ -2,13 +2,10 @@ import { useState, useEffect } from "react";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell, ChevronDown } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
-import { SpsSection } from "@/components/staff/programming/SpsSection";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -24,12 +21,6 @@ export const StrengthPowerSpeedSection = () => {
   const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.sps.selectedPlayer", "all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
   const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
-  // The "new normalised" editor (SpsSection) was a wrong turn — it never
-  // received the player_programs JSONB data so all existing programmes
-  // appeared empty. We've moved the original editor back to primary; the
-  // normalised one is parked behind a collapsible until we decide to delete
-  // it entirely.
-  const [normalisedOpen, setNormalisedOpen] = useState(false);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -107,18 +98,6 @@ export const StrengthPowerSpeedSection = () => {
             playerName={currentPlayer.name}
             isAdmin={true}
           />
-
-          <Collapsible open={normalisedOpen} onOpenChange={setNormalisedOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide">Normalised editor (do not use — pending removal)</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${normalisedOpen ? "rotate-180" : ""}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-3">
-              <SpsSection playerId={currentPlayer.id} playerName={currentPlayer.name} />
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       )}
     </div>
