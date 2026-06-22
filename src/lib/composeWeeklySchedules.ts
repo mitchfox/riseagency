@@ -24,7 +24,7 @@ const SPS_FIELDS = [
 
 export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
   // Pull all programming_weeks for the player and resolve refIds → session keys
-  const [weeksRes, spsProgs, techProgs] = await Promise.all([
+  const [weeksRes, spsProgs, techProgs, spsNewProgs] = await Promise.all([
     supabase
       .from("programming_weeks" as any)
       .select("id, label, week_start_date, slots, display_order, created_at")
@@ -39,6 +39,10 @@ export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
       .from("technical_programs" as any)
       .select("id, linked_week_ids")
       .eq("player_id", playerId),
+    supabase
+      .from("sps_programs" as any)
+      .select("id, linked_week_ids")
+      .eq("player_id", playerId),
   ]);
 
   const refToSession = new Map<string, SessionMeta>();
@@ -51,6 +55,22 @@ export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
       if (!hasContent) continue;
       const key = f.replace("session", "");
       refToSession.set(`sps:${p.id}:${f}`, { key, title: data?.title ?? null, type: "sps" });
+    }
+  }
+
+  const newSpsProgIds = ((spsNewProgs.data || []) as any[]).map((p) => p.id);
+  if (newSpsProgIds.length) {
+    const { data: spsSess } = await supabase
+      .from("sps_sessions" as any)
+      .select("id, session_key, session_kind, title")
+      .in("program_id", newSpsProgIds);
+    for (const s of ((spsSess || []) as any[])) {
+      const prefix = s.session_kind === "pre" ? "Pre-" : "";
+      refToSession.set(`sps:${s.id}`, {
+        key: `${prefix}${s.session_key || ""}`,
+        title: s.title ?? null,
+        type: "sps",
+      });
     }
   }
 
@@ -99,6 +119,10 @@ export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
     byProgram.set(p.id, ids.map((id) => weekById.get(id)).filter(Boolean).map(buildWeek));
   }
   for (const p of (techProgs.data || []) as any[]) {
+    const ids: string[] = (p.linked_week_ids || []) as string[];
+    byProgram.set(p.id, ids.map((id) => weekById.get(id)).filter(Boolean).map(buildWeek));
+  }
+  for (const p of (spsNewProgs.data || []) as any[]) {
     const ids: string[] = (p.linked_week_ids || []) as string[];
     byProgram.set(p.id, ids.map((id) => weekById.get(id)).filter(Boolean).map(buildWeek));
   }
