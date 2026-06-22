@@ -64,6 +64,7 @@ const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccoun
 const PlayerPasswordManagement = lazy(() => import("@/components/staff/PlayerPasswordManagement").then(m => ({ default: m.PlayerPasswordManagement })));
 const ClubNetworkManagement = lazy(() => import("@/components/staff/ClubNetworkManagement"));
 const ClubOutreachManager = lazy(() => import("@/components/staff/ClubOutreachManager"));
+const MarketTablesStandalone = lazy(() => import("@/components/staff/outreach/MarketTablesTab"));
 const LegalManagement = lazy(() => import("@/components/staff/LegalManagement"));
 const PartnersManagement = lazy(() => import("@/components/staff/PartnersManagement").then(m => ({ default: m.PartnersManagement })));
 const LanguagesManagement = lazy(() => import("@/components/staff/LanguagesManagement"));
