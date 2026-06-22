@@ -48,6 +48,7 @@ const SiteVisitorsManagement = lazy(() => import("@/components/staff/SiteVisitor
 const InvoiceManagement = lazy(() => import("@/components/staff/InvoiceManagement").then(m => ({ default: m.InvoiceManagement })));
 const UpdatesManagement = lazy(() => import("@/components/staff/UpdatesManagement").then(m => ({ default: m.UpdatesManagement })));
 const StaffAccountabilityOverview = lazy(() => import("@/components/staff/StaffAccountabilityOverview").then(m => ({ default: m.StaffAccountabilityOverview })));
+const TeamPerformance = lazy(() => import("@/components/staff/TeamPerformance").then(m => ({ default: m.TeamPerformance })));
 const InteractionHistory = lazy(() => import("@/components/staff/InteractionHistory").then(m => ({ default: m.InteractionHistory })));
 const StaffAvailabilityManagement = lazy(() => import("@/components/staff/StaffAvailabilityManagement").then(m => ({ default: m.StaffAvailabilityManagement })));
 const StaffSchedulesManagement = lazy(() => import("@/components/staff/StaffSchedulesManagement").then(m => ({ default: m.StaffSchedulesManagement })));
@@ -126,6 +127,7 @@ import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
 import { Palette, Tv, Music } from "lucide-react";
 import { UserRoundCheck } from "lucide-react";
 import { Image as GalleryImageIcon } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { 
   Calendar, 
   Users, 
@@ -197,7 +199,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'markettables' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'teamperformance' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'markettables' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -361,10 +363,10 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'overview';
+    let defaultSection = 'teamperformance';
     if (permissionManagedRole) {
       const viewable = getViewableSections();
-      const firstViewable = viewable.find(s => s !== 'overview' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
+      const firstViewable = viewable.find(s => s !== 'overview' && s !== 'teamperformance' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
         || viewable.find(s => s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall');
       if (firstViewable) defaultSection = firstViewable;
     }
@@ -878,6 +880,7 @@ const Staff = () => {
           title: 'Dashboard',
           icon: Calendar,
         sections: [
+            { id: 'teamperformance', title: 'Team Performance', icon: Trophy },
             { id: 'overview', title: 'My Tasks', icon: Users },
             { id: 'dashboard', title: 'Dashboard', icon: Calendar },
             { id: 'focusedtasks', title: 'Focused Tasks', icon: ClipboardList },
@@ -950,6 +953,7 @@ const Staff = () => {
         title: 'Dashboard',
         icon: Calendar,
         sections: [
+          { id: 'teamperformance', title: 'Team Performance', icon: Trophy },
           { id: 'overview', title: 'My Tasks', icon: Users },
           { id: 'dashboard', title: 'Dashboard', icon: Calendar },
           { id: '_group_schedule', title: 'Schedule', isGroupLabel: true },
@@ -1941,6 +1945,7 @@ const Staff = () => {
                   <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={canManageSection('analysis')} /></div>
                   {expandedSection === 'dashboard' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
                   {expandedSection === 'overview' && <StaffAccountabilityOverview isAdmin={isAdmin} userId={user?.id} />}
+                  {expandedSection === 'teamperformance' && <TeamPerformance />}
                   {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
                   {expandedSection === 'schedule' && (
                     <div className="space-y-6">
