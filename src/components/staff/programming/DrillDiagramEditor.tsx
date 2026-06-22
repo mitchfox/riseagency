@@ -447,12 +447,11 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
             : "Click on the pitch to place. You can drag any item at any time."}
         </p>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => { onSave(diagram); onClose(); }}><Plus className="w-3.5 h-3.5 mr-1" />Save diagram</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="flex justify-end gap-2 pt-1">
+        {onCancel && <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>}
+        <Button size="sm" onClick={() => onSave(diagram)}><Plus className="w-3.5 h-3.5 mr-1" />Save diagram</Button>
+      </div>
+    </div>
   );
 };
 
