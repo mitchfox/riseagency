@@ -125,6 +125,8 @@ export default function ClubOutreachManager() {
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
+  const [defaultSeasonDataMode, setDefaultSeasonDataMode] = useState<'popup' | 'link'>('popup');
+  const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [mode, setMode] = useState<OutreachMode>('club');
   const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships'>('outreach');
 
@@ -133,8 +135,16 @@ export default function ClubOutreachManager() {
     setTemplates((data ?? []) as QuickTemplate[]);
   };
   const loadSettings = async () => {
-    const { data } = await (supabase as any).from("club_outreach_settings").select("default_fit_recommendation").eq("id", 1).maybeSingle();
+    const { data } = await (supabase as any)
+      .from("club_outreach_settings")
+      .select("default_fit_recommendation, default_season_data_mode, default_video_selection_mode")
+      .eq("id", 1)
+      .maybeSingle();
     setDefaultFit(data?.default_fit_recommendation ?? "");
+    const sm = data?.default_season_data_mode;
+    if (sm === 'popup' || sm === 'link') setDefaultSeasonDataMode(sm);
+    const vm = data?.default_video_selection_mode;
+    if (vm === 'all' || vm === 'first' || vm === 'custom') setDefaultVideoMode(vm);
   };
 
   const load = async () => {
@@ -370,10 +380,10 @@ export default function ClubOutreachManager() {
       )}
 
       {newOpen && (
-      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
+      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
       )}
       {editRow && (
-      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
+      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
       )}
       {settingsOpen && (
         <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
@@ -577,7 +587,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; mode?: OutreachMode; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; }) {
   const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
@@ -591,7 +601,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
   const [showStrengths, setShowStrengths] = useState<boolean>(editing?.show_strengths ?? false);
   const [seasonDataMode, setSeasonDataMode] = useState<'popup' | 'link'>(
-    (editing?.season_data_mode as 'popup' | 'link' | null) ?? 'popup',
+    (editing?.season_data_mode as 'popup' | 'link' | null) ?? defaultSeasonDataMode ?? 'popup',
   );
   const [primaryVideos, setPrimaryVideos] = useState<{ id: string; name: string; videoUrl: string }[]>([]);
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>(
@@ -809,7 +819,19 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
-        if (def.length > 0 && !cancelled) setSelectedVideoIds(def);
+        if (def.length > 0 && !cancelled) {
+          setSelectedVideoIds(def);
+        } else if (!cancelled) {
+          // Fall back to the global default video selection mode.
+          if (defaultVideoMode === 'first' && list.length > 0) {
+            setSelectedVideoIds([list[0].id]);
+          } else if (defaultVideoMode === 'custom') {
+            // Custom mode: leave empty as a signal "all", staff picks manually.
+            // We intentionally don't pre-tick anything.
+            setSelectedVideoIds([]);
+          }
+          // 'all' → leave [] (renderer treats empty as "show all").
+        }
         const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
@@ -1870,6 +1892,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [agentUploading, setAgentUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [defaultFit, setDefaultFit] = useState("");
+  const [defaultSeasonDataMode, setDefaultSeasonDataMode] = useState<'popup' | 'link'>('popup');
+  const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [newTplTitle, setNewTplTitle] = useState("");
   const [newTplContent, setNewTplContent] = useState("");
@@ -1899,11 +1923,15 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation").eq("id", 1).maybeSingle();
+      const { data } = await (supabase as any).from("club_outreach_settings").select("whatsapp_number, agent_name, agent_image_url, default_fit_recommendation, default_season_data_mode, default_video_selection_mode").eq("id", 1).maybeSingle();
       setWhatsapp(data?.whatsapp_number ?? "");
       setAgentName(data?.agent_name ?? "");
       setAgentImageUrl(data?.agent_image_url ?? "");
       setDefaultFit(data?.default_fit_recommendation ?? "");
+      const sm = data?.default_season_data_mode;
+      if (sm === 'popup' || sm === 'link') setDefaultSeasonDataMode(sm);
+      const vm = data?.default_video_selection_mode;
+      if (vm === 'all' || vm === 'first' || vm === 'custom') setDefaultVideoMode(vm);
       setLoading(false);
       const { data: tpls } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
       setTemplates((tpls ?? []) as QuickTemplate[]);
@@ -1949,6 +1977,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       agent_name: agentName.trim() || null,
       agent_image_url: agentImageUrl.trim() || null,
       default_fit_recommendation: defaultFit.trim() || null,
+      default_season_data_mode: defaultSeasonDataMode,
+      default_video_selection_mode: defaultVideoMode,
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2118,6 +2148,64 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
             <Textarea rows={4} value={defaultFit} onChange={(e) => setDefaultFit(e.target.value)} placeholder="e.g. A press-resistant ball-progresser who fits a possession-led 4-3-3..." />
             <div className="flex justify-end mt-2">
               <Button onClick={saveWhatsapp} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save default</Button>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <FileEdit className="h-4 w-4 text-[#cbb96b]" />
+              <h3 className="text-sm font-semibold">Proposal auto-defaults</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              What every new outreach starts with before you tweak it. Per-player defaults still override these, and you can change any of it on the individual outreach.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-semibold">Season data display</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+                  How the Video &amp; Data tile opens. Popup keeps clubs on the proposal in a wide in-page sheet. Link sends them out to the player's Stars page.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { v: 'popup' as const, label: 'In-page popup' },
+                    { v: 'link' as const, label: 'Link to Stars profile' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => setDefaultSeasonDataMode(opt.v)}
+                      className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${defaultSeasonDataMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold">Video carousel — what auto-shows</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+                  Which of the player's Stars highlights pre-fill the hero carousel before you manually pick.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { v: 'all' as const, label: 'All Stars highlights' },
+                    { v: 'first' as const, label: 'First highlight only' },
+                    { v: 'custom' as const, label: 'None — pick manually' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => setDefaultVideoMode(opt.v)}
+                      className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${defaultVideoMode === opt.v ? 'border-[#cbb96b] bg-[#cbb96b]/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end mt-3">
+              <Button onClick={saveWhatsapp} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
             </div>
           </section>
 
