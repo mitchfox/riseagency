@@ -1176,7 +1176,7 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, rise_with_us_under18: false, representation_subtitle_secondary: null });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [introDone, setIntroDone] = useState(false);
@@ -1209,7 +1209,7 @@ const RiseWithUs = () => {
         setPlayer(data);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images")
+          .select("hidden_sections, section_images, intro_media")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -1220,6 +1220,17 @@ const RiseWithUs = () => {
         setSettings({
           hidden_sections: (sData?.hidden_sections || []) as string[],
           section_images: (sData?.section_images || {}) as Record<string, string>,
+          intro_media: Array.isArray(sData?.intro_media)
+            ? (sData!.intro_media as any[])
+                .filter((x) => x && typeof x.url === "string" && x.url)
+                .map((x) => ({
+                  id: String(x.id ?? x.url),
+                  kind: x.kind === "video" ? "video" : "image",
+                  url: String(x.url),
+                  show: x.show !== false,
+                  position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+                }))
+            : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
         });
