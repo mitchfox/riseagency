@@ -238,37 +238,65 @@ export const MatchDataTotalsHeader = ({ analyses }: Props) => {
           <h4 className="text-[11px] uppercase tracking-[0.18em] text-[#C6A332]">
             Season averages by category
           </h4>
-          {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => (
-            <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="h-[3px] w-6 bg-[#C6A332]/70" />
-                <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
-                  {cat}
-                </h5>
-                <span className="text-[10px] text-muted-foreground ml-1">
-                  {grouped[cat].length}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
-                {grouped[cat].map((key) => {
-                  const avg = computeStatAverage(analyses, key);
-                  const suffix = isPercentageMetric(key) ? "%" : "";
-                  const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
-                  return (
-                    <div
-                      key={key}
-                      className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
-                    >
-                      <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
-                        {prettifyKey(key)}
+          {CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0).map((cat) => {
+            // Build sub-buckets, preserving insertion order so common buckets
+            // (e.g. Goals, Shots) appear before catch-all "Other".
+            const subBuckets: Record<string, string[]> = {};
+            for (const key of grouped[cat]) {
+              const sub = subCategoriseStatKey(cat, key);
+              if (!subBuckets[sub]) subBuckets[sub] = [];
+              subBuckets[sub].push(key);
+            }
+            const subNames = Object.keys(subBuckets).sort((a, b) => {
+              if (a === "Other") return 1;
+              if (b === "Other") return -1;
+              return a.localeCompare(b);
+            });
+            return (
+              <div key={cat} className="rounded-md border border-border/60 bg-background/20 p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-[3px] w-6 bg-[#C6A332]/70" />
+                  <h5 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/90">
+                    {cat}
+                  </h5>
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    {grouped[cat].length}
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {subNames.map((sub) => (
+                    <div key={sub} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-px flex-1 bg-border/60" />
+                        <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                          {sub}
+                        </span>
+                        <span className="h-px flex-1 bg-border/60" />
                       </div>
-                      <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
+                        {subBuckets[sub].map((key) => {
+                          const avg = computeStatAverage(analyses, key);
+                          const suffix = isPercentageMetric(key) ? "%" : "";
+                          const display = avg == null ? "—" : `${formatStat(key, avg, true)}${suffix}`;
+                          return (
+                            <div
+                              key={key}
+                              className="rounded-md border border-border/60 bg-background/40 px-2.5 py-1.5"
+                            >
+                              <div className="text-[10px] text-muted-foreground truncate" title={prettifyKey(key)}>
+                                {prettifyKey(key)}
+                              </div>
+                              <div className="text-sm font-semibold text-foreground tabular-nums">{display}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
