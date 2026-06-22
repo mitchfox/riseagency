@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlayerCombobox } from "@/components/staff/PlayerCombobox";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,12 @@ export const StrengthPowerSpeedSection = () => {
   const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.sps.selectedPlayer", "all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
   const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
-  const [legacyOpen, setLegacyOpen] = useState(false);
+  // The "new normalised" editor (SpsSection) was a wrong turn — it never
+  // received the player_programs JSONB data so all existing programmes
+  // appeared empty. We've moved the original editor back to primary; the
+  // normalised one is parked behind a collapsible until we decide to delete
+  // it entirely.
+  const [normalisedOpen, setNormalisedOpen] = useState(false);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -97,22 +101,22 @@ export const StrengthPowerSpeedSection = () => {
             />
           </div>
 
-          <SpsSection playerId={currentPlayer.id} playerName={currentPlayer.name} />
+          <ProgrammingManagement
+            embedded
+            playerId={currentPlayer.id}
+            playerName={currentPlayer.name}
+            isAdmin={true}
+          />
 
-          <Collapsible open={legacyOpen} onOpenChange={setLegacyOpen}>
+          <Collapsible open={normalisedOpen} onOpenChange={setNormalisedOpen}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm" className="w-full justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide">Legacy editor (manual save) — kept temporarily for parity</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${legacyOpen ? "rotate-180" : ""}`} />
+                <span className="text-xs font-semibold uppercase tracking-wide">Normalised editor (do not use — pending removal)</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${normalisedOpen ? "rotate-180" : ""}`} />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
-              <ProgrammingManagement
-                embedded
-                playerId={currentPlayer.id}
-                playerName={currentPlayer.name}
-                isAdmin={true}
-              />
+              <SpsSection playerId={currentPlayer.id} playerName={currentPlayer.name} />
             </CollapsibleContent>
           </Collapsible>
         </div>
