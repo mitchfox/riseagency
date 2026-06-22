@@ -598,6 +598,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     Array.isArray(editing?.selected_video_ids) ? (editing!.selected_video_ids as string[]) : [],
   );
   const [loadingPrimaryVideos, setLoadingPrimaryVideos] = useState(false);
+  const [altLinkIds, setAltLinkIds] = useState<string[]>(
+    Array.isArray(editing?.alternate_profile_link_ids) ? (editing!.alternate_profile_link_ids as string[]) : [],
+  );
+  const [altBlurb, setAltBlurb] = useState<string>(editing?.alternate_profiles_blurb ?? "");
+  const [altQuery, setAltQuery] = useState<string>("");
   const [isMandated, setIsMandated] = useState<boolean>(editing?.is_mandated ?? false);
   const [mandatedAgentName, setMandatedAgentName] = useState<string>(editing?.mandated_agent_name ?? "");
   const [mandatedAgentRole, setMandatedAgentRole] = useState<string>(editing?.mandated_agent_role ?? "");
