@@ -27,6 +27,7 @@ import { Player3DPop, preloadPlayer3DVariant } from "@/components/Player3DPop";
 import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/data/scoutingSkills";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
+import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
 
 export type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
