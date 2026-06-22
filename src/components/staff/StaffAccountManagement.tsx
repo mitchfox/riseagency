@@ -777,13 +777,6 @@ export const StaffAccountManagement = () => {
       {assignmentUserId && (
         <StatsUpdaterAssignments userId={assignmentUserId} open={!!assignmentUserId} onOpenChange={(o) => !o && setAssignmentUserId(null)} />
       )}
-
-      {/* Highlights Makers (username-only external clip editors) */}
-      <Card>
-        <CardContent className="pt-6">
-          <HighlightMakersManagement isAdmin={isAdmin} />
-        </CardContent>
-      </Card>
     </div>
   );
 };
