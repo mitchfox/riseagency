@@ -2607,6 +2607,60 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                     <input type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProof(f); }} disabled={uploading} />
                   </label>
                 </div>
+                <div>
+                  <Label>Default — show on proposal</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Which sections pre-tick when this player is added to a new outreach.</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {[
+                      { v: playerDefaultShowForm, set: setPlayerDefaultShowForm, label: "Form" },
+                      { v: playerDefaultShowInNumbers, set: setPlayerDefaultShowInNumbers, label: "In Numbers" },
+                      { v: playerDefaultShowSeasonStats, set: setPlayerDefaultShowSeasonStats, label: "Season stats" },
+                      { v: playerDefaultShowStrengths, set: setPlayerDefaultShowStrengths, label: "Strengths / Play style" },
+                    ].map((opt) => (
+                      <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
+                        <Checkbox checked={opt.v} onCheckedChange={(c) => opt.set(!!c)} />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {playerDefaultVideos.length > 0 && (
+                  <div>
+                    <Label>Default — videos to include</Label>
+                    <p className="text-[11px] text-muted-foreground mt-1">Pre-ticks the highlights carousel. Leave all unticked to show every video.</p>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                      {playerDefaultVideos.map((v) => {
+                        const isOn = playerDefaultSelectedVideoIds.includes(v.id);
+                        return (
+                          <label key={v.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
+                            <Checkbox
+                              checked={isOn}
+                              onCheckedChange={(c) => {
+                                setPlayerDefaultSelectedVideoIds((prev) => c ? Array.from(new Set([...prev, v.id])) : prev.filter((id) => id !== v.id));
+                              }}
+                            />
+                            <span className="truncate">{v.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {playerDefaultSelectedVideoIds.length > 0 && (
+                      <button type="button" onClick={() => setPlayerDefaultSelectedVideoIds([])} className="mt-2 text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+                        Clear (show all)
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <Label>Default — key detail tiles</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the Key Details tiles on a new outreach for this player.</p>
+                  <KeyDetailsBuilder items={playerDefaultKeyDetails} onChange={setPlayerDefaultKeyDetails} />
+                </div>
+                <div>
+                  <Label>Default — section order</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pre-fills the proposal section order for this player.</p>
+                  <SectionOrderBuilder order={playerDefaultSectionOrder} onChange={setPlayerDefaultSectionOrder} />
+                </div>
                 <div className="flex justify-end">
                   <Button onClick={saveDefaults} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
                 </div>
