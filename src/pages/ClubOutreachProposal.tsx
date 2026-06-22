@@ -509,13 +509,13 @@ export default function ClubOutreachProposal() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
-          {current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+          {!data.link.show_form && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
             <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
           )}
-          {Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+          {!data.link.show_in_numbers && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
             <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
           )}
-          {Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+          {!data.link.show_season_stats && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
             <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
           )}
           {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
