@@ -87,6 +87,9 @@ verify_jwt = false
 [functions.delete-staff-account]
 verify_jwt = false
 
+[functions.staff-impersonate]
+verify_jwt = false
+
 [functions.generate-cognisance-question]
 verify_jwt = true
 

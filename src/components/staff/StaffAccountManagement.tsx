@@ -13,6 +13,8 @@ import { RolePermissionsEditor } from "./RolePermissionsEditor";
 import { StatsUpdaterAssignments } from "./StatsUpdaterAssignments";
 import { HighlightMakersManagement } from "./HighlightMakersManagement";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { QuickLoginDialog } from "./QuickLoginDialog";
+import { LogIn } from "lucide-react";
 
 interface AvailableRole {
   role_key: string;
@@ -51,6 +53,7 @@ export const StaffAccountManagement = () => {
   const [editingName, setEditingName] = useState<{ userId: string; name: string } | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [assignmentUserId, setAssignmentUserId] = useState<string | null>(null);
+  const [quickLoginTarget, setQuickLoginTarget] = useState<{ userId: string; email: string; fullName: string; role: string } | null>(null);
 
   useEffect(() => {
     checkAdminRole();
@@ -564,6 +567,22 @@ export const StaffAccountManagement = () => {
                         <Users className="h-4 w-4 mr-1" /> Players
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setQuickLoginTarget({
+                          userId: account.user_id,
+                          email: account.profiles?.email || '',
+                          fullName: account.profiles?.full_name || account.profiles?.email || '',
+                          role: account.role,
+                        })
+                      }
+                      className="w-full sm:w-auto"
+                      title="Issue a single-use sign-in link to preview this account"
+                    >
+                      <LogIn className="h-4 w-4 mr-1" /> Quick login
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -777,6 +796,11 @@ export const StaffAccountManagement = () => {
       {assignmentUserId && (
         <StatsUpdaterAssignments userId={assignmentUserId} open={!!assignmentUserId} onOpenChange={(o) => !o && setAssignmentUserId(null)} />
       )}
+      <QuickLoginDialog
+        open={!!quickLoginTarget}
+        onOpenChange={(o) => !o && setQuickLoginTarget(null)}
+        target={quickLoginTarget}
+      />
     </div>
   );
 };
