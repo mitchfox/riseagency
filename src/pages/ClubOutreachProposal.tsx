@@ -213,6 +213,7 @@ export default function ClubOutreachProposal() {
   const contactsRef = useRef<HTMLDivElement | null>(null);
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
+  const [dataPopupOpen, setDataPopupOpen] = useState(false);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
