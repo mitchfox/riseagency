@@ -5459,6 +5459,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          match_by_match_default_category: string | null
           player_id: string
           stats: Json
           updated_at: string
@@ -5467,6 +5468,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          match_by_match_default_category?: string | null
           player_id: string
           stats?: Json
           updated_at?: string
@@ -5475,6 +5477,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          match_by_match_default_category?: string | null
           player_id?: string
           stats?: Json
           updated_at?: string
@@ -10275,10 +10278,20 @@ export type Database = {
         Args: { _player_id: string; _rows: Json }
         Returns: number
       }
-      save_player_form_config: {
-        Args: { _player_id: string; _stats: Json; _window_size: number }
-        Returns: undefined
-      }
+      save_player_form_config:
+        | {
+            Args: { _player_id: string; _stats: Json; _window_size: number }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _match_by_match_default_category?: string
+              _player_id: string
+              _stats: Json
+              _window_size: number
+            }
+            Returns: undefined
+          }
       setup_app_settings: { Args: never; Returns: undefined }
       sync_sps_program_to_legacy: {
         Args: { _sps_program_id: string }
