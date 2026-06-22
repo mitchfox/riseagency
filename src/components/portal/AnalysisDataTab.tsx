@@ -170,6 +170,22 @@ export const AnalysisDataTab = ({ analyses, playerData, embedded }: Props) => {
     setSeasonFinalIds(new Set(analyses.filter(a => a.season_final).map(a => a.id)));
   }, [analyses]);
 
+  // Keep selectedIds in sync as analyses load/change. Without this, the
+  // Set initialised on first mount (often before analyses arrive) stays
+  // empty and the Player Summary shows "-" / 0 matches.
+  useEffect(() => {
+    setSelectedIds(prev => {
+      const ids = new Set(analyses.map(a => a.id));
+      // Preserve any user toggles for ids that still exist; auto-select
+      // newly-arrived ids that weren't known before.
+      const next = new Set<string>();
+      analyses.forEach(a => {
+        if (prev.size === 0 || prev.has(a.id)) next.add(a.id);
+      });
+      return next;
+    });
+  }, [analyses]);
+
   useEffect(() => {
     const defaultCategory = positionCategories[0]?.category;
     if (defaultCategory && !positionCategories.some(category => category.category === activeStatCategory)) {
