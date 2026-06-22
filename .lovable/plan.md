@@ -1,113 +1,79 @@
+## 1. Normalise SPS (Strength · Power · Speed)
 
-# Round 2 — proposal & outreach upgrades
+Today SPS programmes live as one giant `player_programs.sessions` JSONB blob (plus `weekly_schedules` JSONB). That's why edits need a Save button while Technical (row-per-session/drill) autosaves on blur. We'll mirror the Technical schema for SPS so every field writes immediately.
 
-Scoped strictly to your latest feedback. Each section also flags my best understanding so you can correct before I cut code.
+### New tables (mirror of Technical)
 
-## 1. Rise With Us — intro media (clips + images, with layouts)
+- `sps_programs` — id, player_id, program_name, phase_name, start_date, end_date, overview_text, is_current, display_order, linked_week_ids (uuid[])
+- `sps_sessions` — id, program_id, session_key ("A"–"H"), session_kind ('main' | 'pre'), title, description, staff_notes, display_order
+- `sps_exercises` — id, session_id, name, description, reps, sets, load, recovery_time, video_url, display_order
+- All four with `GRANT … TO authenticated/service_role`, RLS scoped via existing staff role helpers, and `updated_at` triggers.
 
-Today: `player_offer_settings.section_images` is a flat `Record<string, string>` of image URLs that appear on the final RISE-logo beat of the intro. Fixed layouts exist for 1–6 images.
+`programming_weeks.slots[*].refId` already supports `sps:<programId>:<sessionField>`. We extend the parser in `useProgrammingSessions` / `composeWeeklySchedules` to also resolve `sps:<sessionRowId>` for the new tables, so weekly schedules keep working unchanged from a slot-cell perspective.
 
-Build:
-- Migrate the store to `intro_media: Array<{ id, kind: "image" | "video", url, show: boolean, position: "intro" | "hub" | "both" }>` (keeping a back-compat reader for the old `section_images` shape so nothing breaks).
-- Staff editor (in `PlayerOfferCustomiser`): per-item toggle for **Show**, dropdown for **Where** (Intro / Hub Why-Us strip / Both), and a small thumbnail preview. Add an "Add video clip" button alongside the existing image upload.
-- Intro renderer: rotate the active items in/out (3–4s per beat, crossfade) instead of all appearing at once. Videos play muted/looped while on screen; images get a subtle Ken-Burns. Keep the existing 1/2/3/4/5/6 frame layouts but reuse them for whichever items are visible at any one time, so a single visible item still anchors centre-right rather than looking lost.
-- Hub: items flagged `position: "hub"` (or `both`) feed into the Why Us / Stars strip instead of the current hard-coded FFF imagery.
+### Editor rewrite
 
-## 2. Rise With Us — intro text alignment per language
+Replace the giant `ProgrammingManagement.tsx` SPS editor with a new `SpsProgramEditor` modelled exactly on `TechnicalProgramEditor.tsx`:
+- Programme header row (name, phase, start/end, current, delete) using onBlur direct writes.
+- Sessions as collapsibles (A/B/C… plus a "Pre-session" toggle on each).
+- Exercises as drag-orderable rows; each field onBlur-saves to `sps_exercises`.
+- Existing dialogs ("Save to coaching DB", "Exercise database selector", "Session database selector", paste/AI parse) get rewired to insert rows instead of mutating JSON.
+- Remove `hasUnsavedChanges`, `saveProgrammingData`, the localStorage backup and the visible Save button. Show the same subtle "Saving…/Saved" toast pattern Technical uses.
 
-Today: phase 1/2 paragraphs use `text-justify` + negative `wordSpacing`, which leaves the orphaned single-word line you're seeing.
+### Data migration
 
-Build:
-- Drop `text-justify`, switch to `text-pretty` (CSS `text-wrap: pretty`) with a per-language `max-w-*` lookup so each language gets a measure tuned to its average word length (e.g. DE/RU wider, EN/IT narrower).
-- Add a `widont` helper that swaps the last space in each paragraph for a non-breaking space to kill single-word orphans across every language.
-- Same treatment for the name + invitation lines on phase 0.
+One-off SQL inside the migration:
+```text
+For each row in player_programs:
+  insert sps_programs (copy phase/overview/dates/linked_week_ids)
+  for each session field A..H (+ preA..H):
+    if sessions[field].exercises is non-empty:
+      insert sps_sessions (session_key, session_kind)
+      for each exercise: insert sps_exercises
+  for each weekly_schedules entry:
+    if a programming_weeks row doesn't already exist for that date:
+      insert programming_weeks with slots derived from the legacy day strings
+```
+After back-fill, `player_programs` rows are kept read-only as a legacy fallback for one release, then dropped in a follow-up.
 
-## 3. "Stack in rating system" — clarification
+### Portal / renderer compatibility
 
-You marked this auto-done on the note. In the codebase the proposal already shows the player's R90 ranking inside the "In Numbers" card. **Please confirm that's what you meant**; if you meant something else (e.g. a visible ladder of where they sit vs other Rise players), I'll scope it separately.
+Three places read the legacy shape today: `composeWeeklySchedulesForPlayer`, the player Dashboard, and `TechnicalProgramView` (SPS sibling). We update them in this order:
+1. `useProgrammingSessions` and `composeWeeklySchedulesForPlayer` read from `sps_programs/sessions/exercises` first, falling back to `player_programs` only if no SPS rows exist for the player.
+2. Portal SPS view (`SPSSessionView` / Dashboard "today" lookup) reads the new tables.
+3. `replace-program` edge function + CSV importer + AI paste now insert into the new tables.
 
-## 4. Why Us — proper build
+### Files touched (high-level)
 
-Today: three credibility cards (FIFA / Network / Performance-led) and a 6-image strip pulled from the FFF project assets.
+- New: `supabase/migrations/<ts>_sps_normalise.sql`, `src/components/staff/programming/SpsProgramEditor.tsx`, small helpers next to it
+- Edited: `ProgrammingManagement.tsx` (shrunk to a thin shell that lists programmes and embeds the new editor + weeks editor), `useProgrammingSessions.ts`, `composeWeeklySchedules.ts`, `StrengthPowerSpeedSection.tsx`, portal SPS renderers, `replace-program/index.ts`, `import-exercises*` scripts left untouched (developer scripts only).
 
-Build (this pass, with FFF content as the seed):
-- Replace the static `WHY_US_IMAGERY` import with a curated FFF-style **"Players we've worked with"** strip: name + age-at-signing + headline outcome per face. Source content from the FFF project's player records.
-- Add a **track record** mini-block under the three credibility cards (clubs reached, trials secured, retention rate) using the same FFF data while we wait for your richer source.
-- All boxes pick up the slant motif (item 9 below) so this section reads as a single Why-Us slab.
-- Leave a `whyUs.imagery` config hook so when you send the updated images/copy I swap them in without restructuring.
+## 2. Technical programme — clearer dates & layout
 
-## 5. Club Outreach — multiple videos, Stars-style
+In `TechnicalSection.tsx`, the programme card header currently dumps name / phase / two unlabelled date inputs / buttons into one wrapping flex row. Fix:
 
-Today: hero uses `player.first_highlight_url` only.
+- Two-row header: top row = programme name + phase + Current/Save/Delete buttons; second row = small captioned fields `Start date`, `End date` with `type="date"` inputs and a derived "Duration: 6 weeks" badge.
+- Above each date input, a tiny uppercase label ("Start" / "End"). On hover, tooltip "Used to filter which weeks appear under this programme."
+- Validation: if end_date < start_date, highlight the end date red and toast.
 
-Build:
-- New per-link field `selected_video_ids: string[]` on `club_outreach_links` (defaulting to `[first_highlight_url]`).
-- Staff editor: multi-select chip picker listing all of the player's highlight clips. Order is drag-to-reorder.
-- Proposal hero: render the same multi-clip carousel pattern used on the Stars profiles (auto-rotate, thumb dots, tap to switch). Single-clip case stays identical to today.
+## 3. Show weeks that fit the programme's date period
 
-## 6. Club Outreach — Alternate Profiles link block
+In `ProgrammingWeeksEditor` when `programmeLink` is set:
 
-Build:
-- New per-link field `alternate_profile_link_ids: string[]` plus `alternate_profiles_blurb: text`.
-- Staff editor: search-and-add other outreach links to attach as alternates, plus a free-text blurb ("If budget is tight, here are free options…").
-- Proposal renderer: bottom-of-page **Alternate Profiles** section — a button + the blurb + a horizontal strip of mini-cards (player face, name, position, age) each linking to the alternate outreach link.
+- After loading `weeks` (currently just `linked_week_ids` resolved in order), look up the parent programme's `start_date` / `end_date`.
+- If both are present, filter the displayed weeks to those whose `week_start_date` is between start_date and end_date (inclusive of the Monday containing start_date and the Monday on/before end_date).
+- Show a small banner above the table: `Showing 6 weeks between 1 Sep 2026 and 12 Oct 2026.` with an "Outside this period (2)" toggle that re-includes the rest.
+- New button `Generate weeks for this period` — creates one `programming_weeks` row per Monday in the range that isn't already linked, then links them. Reuses the existing date-math in `addNextWeek`.
+- Sort the visible rows by `week_start_date` ascending so they line up chronologically regardless of `display_order`.
 
-## 7. Club Outreach — data popup vs Stars link
+## Technical details
 
-Today: Video & Data card opens the player's Stars profile in a new tab.
+- All new tables follow the project's grant + RLS pattern (admin/staff write; players read only their own via `players.id = auth.uid()` join — same as Technical).
+- The `slots.refId` format gains a second SPS variant `sps:<sessionRowId>`; the legacy `sps:<programId>:<field>` form keeps resolving via fallback until the legacy data is dropped.
+- Date filtering uses UTC-safe parsing identical to `addNextWeek` to avoid BST/CET off-by-one.
+- No changes to `technical_*` tables — only the header UI for programmes.
 
-Build:
-- New per-link toggle `season_data_mode: "popup" | "link"` (default `popup`).
-- When `popup`: clicking the Video & Data tile opens a wide in-page sheet (full-screen on mobile, max-w-5xl on desktop) showing the same season stats / in-numbers / form blocks already on the Stars profile, with no navigation away from the outreach proposal.
-- When `link`: existing behaviour.
+## Out of scope (flag for a later pass)
 
-## 8. Club Outreach — per-player saved defaults
-
-New table `club_outreach_player_defaults` (one row per player) holding:
-- `default_position` (auto-applies to new outreach links so you don't reset it each time)
-- `default_selected_video_ids`
-- `default_alternate_profile_link_ids` + `default_alternate_profiles_blurb`
-- `default_season_data_mode`
-- `default_key_details` override
-
-When you add a player to a new club outreach link, these defaults seed the link. Manual overrides on a specific link don't write back to the defaults unless you tick "Save as default for this player".
-
-## 9. Ballon d'Or vision — dedicated card
-
-Today: lives as one pillar box with a "FOMO" badge.
-
-Build:
-- Pull it out into its own full-width card on the Rise With Us hub, above the existing pillar grid, with: a short ambition statement, the "why not you" framing, an urgency line ("we pick a small group — and the seats are filling"), and a CTA to the meeting booker. No badge — the urgency reads from copy + visual weight.
-- Translation keys: `vision.headline`, `vision.body`, `vision.urgency`, `vision.cta`.
-
-## 10. Auto-select position on Club Outreach
-
-- The per-player default (item 8 above) sets the position when a new outreach link is created.
-- Editor: position field shows a "Save as player default" toggle so you can pin it once.
-
-## 11. Slant motif everywhere
-
-Today: slant clip applied only to pillar boxes and the Stars showcase.
-
-Build:
-- Promote the `slantClip` polygon + `solidBlackSectionStyle` from `RiseWithUs.tsx` into a shared `src/components/SlantedBox.tsx`.
-- Replace the rounded card containers in:
-  - Club Outreach: hero metadata, Key Details tiles, Why Rise block, each section card, brand signature band, Alternate Profiles strip.
-  - Rise With Us: scouting card, performance card, form/numbers/season-stats/strengths cards, meeting booker CTA.
-- Keep border + shadow tokens identical so theming stays consistent; only the corner geometry changes.
-
----
-
-## Order of build
-1. **3** confirm with you (no code).
-2. **9** Ballon d'Or card, **11** slant component rollout (visual foundations).
-3. **2** intro text alignment, **1** intro media model + editor + renderer.
-4. **4** Why Us proper build using FFF content.
-5. **8** per-player defaults table + editor, then **10** auto position, **5** multi-video, **6** alternate profiles, **7** data popup all writing/reading through the defaults.
-
-## Questions before I start
-
-- **Item 3** — is "stack in rating system" the existing R90 ranking on In Numbers, or something more visible / different?
-- **Item 4** — happy for me to pull seed Why-Us copy + faces from the FFF project now, with a clean swap-in once you send the new material?
-- **Item 7** — popup as new default, OK to migrate existing links to `popup` automatically, or leave existing ones on `link` and only default new ones to popup?
-- **Item 1** — intro rotation pace: 3–4s per beat with crossfade sound right, or do you want it slower / faster?
+- Dropping `player_programs` JSONB columns — defer one release so we can confirm portal renderers are stable on the new tables.
+- Reworking the AI paste/Excel importers to fully bypass the legacy shape — they'll keep building the JSON, then a small adapter splits it into the new tables.

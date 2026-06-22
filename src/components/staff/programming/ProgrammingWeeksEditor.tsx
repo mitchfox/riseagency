@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, Link2, Unlink, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Link2, Unlink, ChevronDown, CalendarRange } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useProgrammingSessions, ProgrammingSessionRef } from "./useProgrammingSessions";
@@ -35,7 +35,7 @@ interface Props {
    * Delete becomes "unlink from programme" (the underlying week stays).
    */
   programmeLink?: {
-    table: "player_programs" | "technical_programs";
+    table: "player_programs" | "technical_programs" | "sps_programs";
     programmeId: string;
   };
   /** When true, hides the embedded "Master schedule" collapsible (used to avoid recursion). */
@@ -50,6 +50,8 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<ProgrammingSessionRef | null>(null);
+  const [programmeRange, setProgrammeRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const [showOutsideRange, setShowOutsideRange] = useState(false);
   const { sessions, reload: reloadSessions } = useProgrammingSessions(playerId);
 
   const refIndex = useMemo(() => {
@@ -71,13 +73,20 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
     setAllPlayerWeeks(allRows);
 
     if (programmeLink) {
+      const selectCols = programmeLink.table === "player_programs"
+        ? "linked_week_ids, end_date"
+        : "linked_week_ids, start_date, end_date";
       const { data: prog, error: pErr } = await supabase
         .from(programmeLink.table as any)
-        .select("linked_week_ids")
+        .select(selectCols)
         .eq("id", programmeLink.programmeId)
         .single();
       if (pErr) toast.error(pErr.message);
       const ids: string[] = (((prog as any)?.linked_week_ids) || []) as string[];
+      setProgrammeRange({
+        start: (prog as any)?.start_date ?? null,
+        end: (prog as any)?.end_date ?? null,
+      });
       setLinkedIds(ids);
       const ordered = ids
         .map(id => allRows.find(w => w.id === id))
@@ -85,12 +94,36 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       setWeeks(ordered);
     } else {
       setLinkedIds([]);
+      setProgrammeRange({ start: null, end: null });
       setWeeks(allRows);
     }
     setLoading(false);
   }, [playerId, programmeLink?.table, programmeLink?.programmeId]);
 
   useEffect(() => { load(); }, [load]);
+
+  /** Weeks that fall inside the parent programme's start/end window. */
+  const filteredWeeks = useMemo(() => {
+    if (!programmeLink || !programmeRange.start || !programmeRange.end) return weeks;
+    // Chronological sort regardless of display_order.
+    const sorted = [...weeks].sort((a, b) => {
+      const av = a.week_start_date || "9999-12-31";
+      const bv = b.week_start_date || "9999-12-31";
+      return av < bv ? -1 : av > bv ? 1 : 0;
+    });
+    if (showOutsideRange) return sorted;
+    return sorted.filter(w => {
+      if (!w.week_start_date) return true;
+      return w.week_start_date >= programmeRange.start! && w.week_start_date <= programmeRange.end!;
+    });
+  }, [weeks, programmeLink, programmeRange, showOutsideRange]);
+
+  const outsideCount = useMemo(() => {
+    if (!programmeLink || !programmeRange.start || !programmeRange.end) return 0;
+    return weeks.filter(w =>
+      w.week_start_date && (w.week_start_date < programmeRange.start! || w.week_start_date > programmeRange.end!)
+    ).length;
+  }, [weeks, programmeLink, programmeRange]);
 
   const setLinkedIdsRemote = async (ids: string[]) => {
     if (!programmeLink) return;
@@ -101,6 +134,59 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       .eq("id", programmeLink.programmeId);
     if (error) return toast.error(error.message);
     load();
+  };
+
+  /** Create one programming_weeks row per Monday inside the programme date range
+   * that isn't already linked, and link each new one to the programme. */
+  const generateWeeksForPeriod = async () => {
+    if (!programmeLink || !programmeRange.start || !programmeRange.end) return;
+    const startM = programmeRange.start.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const endM = programmeRange.end.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!startM || !endM) return;
+    const startDate = new Date(Date.UTC(+startM[1], +startM[2] - 1, +startM[3]));
+    const endDate = new Date(Date.UTC(+endM[1], +endM[2] - 1, +endM[3]));
+    // Snap start to Monday on/before the start date
+    const day = startDate.getUTCDay(); // 0=Sun
+    const back = day === 0 ? 6 : day - 1;
+    const cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate() - back));
+    const existingDates = new Set(
+      allPlayerWeeks.filter(w => w.week_start_date).map(w => w.week_start_date as string)
+    );
+    const isoOf = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    const newRows: any[] = [];
+    const toLink: string[] = [];
+    let weekNum = 1;
+    while (cursor.getTime() <= endDate.getTime()) {
+      const iso = isoOf(cursor);
+      if (!existingDates.has(iso)) {
+        newRows.push({
+          player_id: playerId,
+          label: `Week ${weekNum}`,
+          week_start_date: iso,
+          display_order: allPlayerWeeks.length + newRows.length,
+          slots: {},
+        });
+      } else {
+        // Existing week — link it if it's not already linked
+        const existing = allPlayerWeeks.find(w => w.week_start_date === iso);
+        if (existing && !linkedIds.includes(existing.id)) toLink.push(existing.id);
+      }
+      cursor.setUTCDate(cursor.getUTCDate() + 7);
+      weekNum += 1;
+    }
+    if (newRows.length) {
+      const { data: inserted, error } = await supabase
+        .from("programming_weeks" as any)
+        .insert(newRows)
+        .select("id");
+      if (error) return toast.error(error.message);
+      ((inserted || []) as any[]).forEach(r => toLink.push(r.id));
+    }
+    if (toLink.length) {
+      await setLinkedIdsRemote([...linkedIds, ...toLink]);
+    } else {
+      toast.success("All weeks in this period are already linked");
+    }
   };
 
   const addWeek = async () => {
@@ -205,6 +291,11 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
   if (loading) return <p className="text-sm text-muted-foreground">Loading schedule…</p>;
 
   const linkable = programmeLink ? allPlayerWeeks.filter(w => !linkedIds.includes(w.id)) : [];
+  const visibleWeeks = filteredWeeks;
+  const rangeActive = !!(programmeLink && programmeRange.start && programmeRange.end);
+  const rangeLabel = rangeActive
+    ? `${visibleWeeks.length} ${visibleWeeks.length === 1 ? "week" : "weeks"} between ${programmeRange.start} and ${programmeRange.end}`
+    : null;
 
   return (
     <div className="space-y-3">
@@ -257,20 +348,43 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
               </PopoverContent>
             </Popover>
           )}
+          {rangeActive && (
+            <Button size="sm" variant="outline" onClick={generateWeeksForPeriod}>
+              <CalendarRange className="w-3.5 h-3.5 mr-1" />Generate weeks for this period
+            </Button>
+          )}
           <Button size="sm" onClick={addWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add week</Button>
           <Button size="sm" variant="secondary" onClick={addNextWeek}><Plus className="w-3.5 h-3.5 mr-1" />Add next week</Button>
         </div>
       </div>
 
-      {weeks.length === 0 && (
+      {rangeActive && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border rounded px-3 py-2">
+          <CalendarRange className="w-3.5 h-3.5" />
+          <span>Showing {rangeLabel}.</span>
+          {outsideCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowOutsideRange(v => !v)}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              {showOutsideRange ? "Hide" : `Show ${outsideCount} outside this period`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {visibleWeeks.length === 0 && (
         <p className="text-sm text-muted-foreground">
           {programmeLink
-            ? "No weeks linked yet. Add a new week or link an existing one from the player's master schedule."
+            ? (rangeActive
+                ? "No linked weeks fall inside this programme's date range. Use Generate weeks for this period, or click Show outside this period above."
+                : "No weeks linked yet. Add a new week or link an existing one from the player's master schedule.")
             : "No weeks yet. Add one to start scheduling."}
         </p>
       )}
 
-      {weeks.length > 0 && (
+      {visibleWeeks.length > 0 && (
         <div className="rounded-md border overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
@@ -283,7 +397,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
               </tr>
             </thead>
             <tbody>
-              {weeks.map(week => (
+              {visibleWeeks.map(week => (
                 <tr key={week.id} className="border-b last:border-0 align-top">
                   <td className="px-2 py-2 sticky left-0 bg-background z-10">
                     <div className="flex flex-col gap-1">

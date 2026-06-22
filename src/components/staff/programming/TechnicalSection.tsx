@@ -12,6 +12,7 @@ import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
 import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
+import { Label } from "@/components/ui/label";
 
 interface Program {
   id: string;
@@ -22,6 +23,14 @@ interface Program {
   is_current: boolean;
   display_order: number;
 }
+
+const weeksBetween = (start: string | null, end: string | null) => {
+  if (!start || !end) return null;
+  const s = new Date(start + "T00:00:00Z").getTime();
+  const e = new Date(end + "T00:00:00Z").getTime();
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return null;
+  return Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24 * 7)));
+};
 
 export const TechnicalSection = () => {
   const [players, setPlayers] = useState<any[]>([]);
@@ -69,7 +78,8 @@ export const TechnicalSection = () => {
 
   const updateProgram = async (id: string, patch: Partial<Program>) => {
     const { error } = await supabase.from("technical_programs" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setPrograms(prev => prev.map(pr => pr.id === id ? { ...pr, ...patch } as Program : pr));
   };
 
   const toggleCurrent = async (id: string, makeCurrent: boolean) => {
@@ -150,7 +160,7 @@ export const TechnicalSection = () => {
 
               {programs.map(p => (
             <Card key={p.id} className={p.is_current ? "border-primary" : ""}>
-              <CardHeader className="py-3">
+              <CardHeader className="py-3 space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Collapsible open={openProgram === p.id} onOpenChange={(o) => setOpenProgram(o ? p.id : null)}>
                     <CollapsibleTrigger asChild>
@@ -168,19 +178,7 @@ export const TechnicalSection = () => {
                     defaultValue={p.phase_name || ""}
                     placeholder="Phase"
                     onBlur={(e) => updateProgram(p.id, { phase_name: e.target.value })}
-                    className="h-8 max-w-[200px]"
-                  />
-                  <Input
-                    type="date"
-                    defaultValue={p.start_date || ""}
-                    onBlur={(e) => updateProgram(p.id, { start_date: e.target.value || null } as any)}
-                    className="h-8 max-w-[150px]"
-                  />
-                  <Input
-                    type="date"
-                    defaultValue={p.end_date || ""}
-                    onBlur={(e) => updateProgram(p.id, { end_date: e.target.value || null } as any)}
-                    className="h-8 max-w-[150px]"
+                    className="h-8 max-w-[220px]"
                   />
                   <Button
                     size="sm"
@@ -196,6 +194,46 @@ export const TechnicalSection = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {(() => {
+                  const duration = weeksBetween(p.start_date, p.end_date);
+                  const endBeforeStart = p.start_date && p.end_date && p.end_date < p.start_date;
+                  return (
+                    <div className="flex flex-wrap items-end gap-3 pl-9">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Start date</Label>
+                        <Input
+                          type="date"
+                          defaultValue={p.start_date || ""}
+                          onBlur={(e) => updateProgram(p.id, { start_date: e.target.value || null } as any)}
+                          className="h-8 w-[150px]"
+                          title="When this programme begins. Used to filter which weeks appear under it."
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">End date</Label>
+                        <Input
+                          type="date"
+                          defaultValue={p.end_date || ""}
+                          onBlur={(e) => {
+                            const v = e.target.value || null;
+                            if (v && p.start_date && v < p.start_date) {
+                              toast.error("End date cannot be before start date");
+                              e.target.value = p.end_date || "";
+                              return;
+                            }
+                            updateProgram(p.id, { end_date: v } as any);
+                          }}
+                          className={`h-8 w-[150px] ${endBeforeStart ? "border-destructive" : ""}`}
+                          title="When this programme ends. Used to filter which weeks appear under it."
+                        />
+                      </div>
+                      {duration && (
+                        <Badge variant="outline" className="h-8">Duration: {duration} {duration === 1 ? "week" : "weeks"}</Badge>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardHeader>
               {openProgram === p.id && (
                 <CardContent>

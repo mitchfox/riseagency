@@ -8527,6 +8527,154 @@ export type Database = {
           },
         ]
       }
+      sps_exercises: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          load: string | null
+          name: string
+          recovery_time: string | null
+          reps: string | null
+          session_id: string
+          sets: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          load?: string | null
+          name?: string
+          recovery_time?: string | null
+          reps?: string | null
+          session_id: string
+          sets?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          load?: string | null
+          name?: string
+          recovery_time?: string | null
+          reps?: string | null
+          session_id?: string
+          sets?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sps_exercises_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sps_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sps_programs: {
+        Row: {
+          created_at: string
+          display_order: number
+          end_date: string | null
+          id: string
+          is_current: boolean
+          legacy_player_program_id: string | null
+          linked_week_ids: string[]
+          overview_text: string | null
+          phase_name: string | null
+          player_id: string
+          program_name: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          legacy_player_program_id?: string | null
+          linked_week_ids?: string[]
+          overview_text?: string | null
+          phase_name?: string | null
+          player_id: string
+          program_name?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_current?: boolean
+          legacy_player_program_id?: string | null
+          linked_week_ids?: string[]
+          overview_text?: string | null
+          phase_name?: string | null
+          player_id?: string
+          program_name?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sps_sessions: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          program_id: string
+          session_key: string
+          session_kind: string
+          staff_notes: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          program_id: string
+          session_key: string
+          session_kind?: string
+          staff_notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          program_id?: string
+          session_key?: string
+          session_kind?: string
+          staff_notes?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sps_sessions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "sps_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_activity_log: {
         Row: {
           action: string
@@ -10000,6 +10148,10 @@ export type Database = {
         Returns: undefined
       }
       setup_app_settings: { Args: never; Returns: undefined }
+      sync_sps_program_to_legacy: {
+        Args: { _sps_program_id: string }
+        Returns: undefined
+      }
       update_role_label: {
         Args: { _description: string; _label: string; _role_key: string }
         Returns: undefined
