@@ -78,7 +78,8 @@ export const TechnicalSection = () => {
 
   const updateProgram = async (id: string, patch: Partial<Program>) => {
     const { error } = await supabase.from("technical_programs" as any).update(patch as any).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) return toast.error(error.message);
+    setPrograms(prev => prev.map(pr => pr.id === id ? { ...pr, ...patch } as Program : pr));
   };
 
   const toggleCurrent = async (id: string, makeCurrent: boolean) => {
