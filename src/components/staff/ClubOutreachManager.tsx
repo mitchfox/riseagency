@@ -856,7 +856,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       if (!editing && selectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
-          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb")
+          .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
           .eq("player_id", primaryPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
@@ -876,6 +876,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         const altDef = Array.isArray(defs?.default_alternate_profile_link_ids) ? defs.default_alternate_profile_link_ids : [];
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
+        if (!cancelled) {
+          if (typeof defs?.default_show_form === 'boolean') setShowForm(defs.default_show_form);
+          if (typeof defs?.default_show_in_numbers === 'boolean') setShowInNumbers(defs.default_show_in_numbers);
+          if (typeof defs?.default_show_season_stats === 'boolean') setShowSeasonStats(defs.default_show_season_stats);
+          if (typeof defs?.default_show_strengths === 'boolean') setShowStrengths(defs.default_show_strengths);
+          if (Array.isArray(defs?.default_section_order) && defs.default_section_order.length > 0) {
+            setSectionOrder(normaliseSectionOrder(defs.default_section_order));
+          }
+          if (Array.isArray(defs?.default_key_details) && defs.default_key_details.length > 0) {
+            setKeyDetails(normaliseKeyDetails(defs.default_key_details));
+          }
+        }
       }
     })();
     return () => { cancelled = true; };
