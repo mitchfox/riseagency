@@ -10148,6 +10148,10 @@ export type Database = {
         Returns: undefined
       }
       setup_app_settings: { Args: never; Returns: undefined }
+      sync_sps_program_to_legacy: {
+        Args: { _sps_program_id: string }
+        Returns: undefined
+      }
       update_role_label: {
         Args: { _description: string; _label: string; _role_key: string }
         Returns: undefined
