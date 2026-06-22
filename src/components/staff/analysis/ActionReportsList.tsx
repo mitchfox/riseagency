@@ -525,6 +525,7 @@ export const ActionReportsList = ({ onCreateReport, onEditReport, defaultPlayerI
                   </div>
                 </div>
               </div>
+              </div>
             </div>
           ))}
         </div>
