@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
 
     const { data: linkPlayers } = await supabase
       .from("club_outreach_link_players")
-      .select("player_id, position_slot, fit_recommendation, situation, sort_order")
+      .select("player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order")
       .eq("link_id", link.id)
       .order("sort_order", { ascending: true });
 
