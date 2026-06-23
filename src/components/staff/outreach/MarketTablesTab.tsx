@@ -305,9 +305,9 @@ function MarketContactSlot({
         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
           showConfirm
             ? "border-risegold bg-risegold/15 text-risegold hover:bg-risegold/25"
-            : hasSavedName && !contact
+            : hasSavedName && !hasSavedContactDetails
               ? "border-risegold/70 text-risegold hover:bg-risegold/10"
-              : "border-border text-muted-foreground hover:text-white hover:border-[#cbb96b]/60"
+              : "border-border text-muted-foreground hover:text-white hover:border-risegold/60"
         } ${saving ? "opacity-60" : ""}`}
       >
         <Icon className="h-3.5 w-3.5" />
@@ -326,7 +326,6 @@ export default function MarketTablesTab() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ContactEditState | null>(null);
   const [savingContact, setSavingContact] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingToNetwork, setAddingToNetwork] = useState(false);
 
@@ -478,7 +477,7 @@ export default function MarketTablesTab() {
         setLoading(false);
       }
     })();
-  }, [reloadKey]);
+  }, []);
 
   const countries = useMemo(() => {
     const set = new Set<string>();
