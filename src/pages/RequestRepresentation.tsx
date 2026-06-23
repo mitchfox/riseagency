@@ -910,7 +910,9 @@ const RequestRepresentation = () => {
 
               {/* Ballon d'Or vision — placed at the bottom, after the
                   grouped tile sections (including FAQs), so it closes
-                  the page with the ambition statement. */}
+                  the page with the ambition statement. The trophy icon
+                  is replaced with the actual Ballon d'Or photograph,
+                  centred above the headline copy. */}
               <div className="mt-6 md:mt-8">
                 <div
                   className="relative overflow-hidden rise-slant-card-lg border border-border/60"
@@ -920,15 +922,17 @@ const RequestRepresentation = () => {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.20),transparent_55%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,hsl(var(--gold)/0.12),transparent_60%)]" />
                   </div>
-                  <div className="relative grid gap-5 px-5 py-6 md:grid-cols-[auto,1fr] md:items-center md:gap-7 md:px-8 md:py-8">
-                    <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/12 shadow-[0_0_36px_hsl(var(--gold)/0.30)] md:h-14 md:w-14">
-                        <Trophy className="h-6 w-6 text-primary md:h-7 md:w-7" />
-                      </div>
-                      <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-                        {t("vision.eyebrow", "Our vision")}
-                      </p>
-                    </div>
+                  <div className="relative flex flex-col items-center gap-4 px-5 py-7 text-center md:gap-5 md:px-8 md:py-9">
+                    <img
+                      src={ballondorAsset.url}
+                      alt="Ballon d'Or"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-24 w-auto md:h-32 lg:h-36 drop-shadow-[0_0_28px_hsl(var(--gold)/0.45)]"
+                    />
+                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+                      {t("vision.eyebrow", "Our vision")}
+                    </p>
                     <div className="min-w-0">
                       <p
                         className="font-bebas text-3xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-4xl lg:text-5xl"
@@ -937,7 +941,7 @@ const RequestRepresentation = () => {
                         {widont(t("vision.headline", "Only The Best."))}
                       </p>
                       <p
-                        className="mt-3 text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
+                        className="mx-auto mt-3 max-w-3xl text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
                         style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
                       >
                         {widont(t(
