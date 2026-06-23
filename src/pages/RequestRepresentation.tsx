@@ -1628,8 +1628,16 @@ export const DetailView = ({
                 </svg>
 
                 {/* ===== Copy blocks ===== */}
-                {/* Jolon copy — top-left, white text over black marble */}
-                <div className="relative z-[3] p-5 md:p-7">
+                {/* Jolon copy — top-left, white text over black marble plate */}
+                <div
+                  className="relative z-[3] m-4 self-start overflow-hidden rounded-2xl border border-white/10 p-5 md:m-6 md:p-6"
+                  style={{
+                    backgroundImage: `url(${blackMarbleBg})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
+                  }}
+                >
                   <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
                     {t("representation.director_role_ceo", "CEO")}
                   </p>
@@ -1650,8 +1658,16 @@ export const DetailView = ({
                   </p>
                 </div>
 
-                {/* Kuda copy — top-right, right-aligned, black text over white marble */}
-                <div className="relative z-[3] p-5 text-right md:p-7">
+                {/* Kuda copy — top-right, right-aligned, black text over white marble plate */}
+                <div
+                  className="relative z-[3] m-4 self-start overflow-hidden rounded-2xl border border-black/10 p-5 text-right md:m-6 md:p-6 md:justify-self-end"
+                  style={{
+                    backgroundImage: `url(${whiteMarbleBg})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
+                  }}
+                >
                   <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-[hsl(var(--gold))] md:text-[12px]">
                     {t("representation.director_role_coo", "COO")}
                   </p>
