@@ -1558,42 +1558,96 @@ export const DetailView = ({
                   />
                 </div>
 
-                {/* ===== Headshots: anchored bottom, cropped at the waist
-                       via a top-fading mask so the heads sit high and the
-                       diagonal seam blends through them. ===== */}
-                {/* Jolon — left half, colour, bottom-anchored.
-                    The image's bottom half is clipped off and the element
-                    is then translated down by 50% of its own height so the
-                    surviving top half (head & shoulders) sits flush with
-                    the bottom of the card. A soft top-fade mask blends
-                    the crown into the marble. */}
-                <img
-                  src={jolonHeadshotCutout}
-                  alt="Jolon Levene"
-                  loading="lazy"
-                  decoding="async"
-                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[95%] w-auto object-contain object-bottom md:h-[105%] md:left-[2%]"
+                {/* ===== Headshot frames — each headshot lives inside a
+                       container clipped to the SAME diagonal polygon as
+                       its background half, so the photo is naturally
+                       framed by the seam (Canva-style) rather than
+                       overlapping it. A soft top-fade mask on the image
+                       still blends the crown into the marble. ===== */}
+                {/* Jolon frame — desktop: left diagonal half */}
+                <div
+                  className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
                   style={{
-                    WebkitMaskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
-                    maskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
-                  } as React.CSSProperties}
-                />
-                {/* Kuda — right half, black & white, bottom-anchored. */}
-                <img
-                  src={kudaHeadshotCutout}
-                  alt="Kuda Butawo"
-                  loading="lazy"
-                  decoding="async"
-                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[95%] w-auto object-contain object-bottom md:h-[105%] md:right-[2%]"
+                    clipPath: "polygon(0% 0%, 58% 0%, 42% 100%, 0% 100%)",
+                  }}
+                >
+                  <img
+                    src={jolonHeadshotCutout}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-0 left-[2%] h-[105%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                      maskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                    } as React.CSSProperties}
+                  />
+                </div>
+                {/* Kuda frame — desktop: right diagonal half */}
+                <div
+                  className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
                   style={{
-                    WebkitMaskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
-                    maskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
-                  } as React.CSSProperties}
-                />
+                    clipPath: "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)",
+                  }}
+                >
+                  <img
+                    src={kudaHeadshotCutout}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-0 right-[2%] h-[105%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                      maskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                    } as React.CSSProperties}
+                  />
+                </div>
+                {/* Jolon frame — mobile: top diagonal half */}
+                <div
+                  className="pointer-events-none absolute inset-0 z-[1] md:hidden"
+                  style={{
+                    clipPath: "polygon(0% 0%, 100% 0%, 100% 42%, 0% 58%)",
+                  }}
+                >
+                  <img
+                    src={jolonHeadshotCutout}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-0 left-0 h-[95%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                      maskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                    } as React.CSSProperties}
+                  />
+                </div>
+                {/* Kuda frame — mobile: bottom diagonal half */}
+                <div
+                  className="pointer-events-none absolute inset-0 z-[1] md:hidden"
+                  style={{
+                    clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)",
+                  }}
+                >
+                  <img
+                    src={kudaHeadshotCutout}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-0 right-0 h-[95%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                      maskImage:
+                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                    } as React.CSSProperties}
+                  />
+                </div>
 
                 {/* ===== Diagonal Rise Gold divider — sits over the seam. */}
                 <svg
