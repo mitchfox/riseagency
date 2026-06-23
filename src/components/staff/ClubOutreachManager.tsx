@@ -2000,7 +2000,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [newTplContent, setNewTplContent] = useState("");
   const [tplSaving, setTplSaving] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>("");
-  const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null }>({ stars_url_override: "", highlights_url: "", proof_path: null });
+  const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null; transfermarkt_url: string }>({ stars_url_override: "", highlights_url: "", proof_path: null, transfermarkt_url: "" });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
@@ -2015,6 +2015,10 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultVideos, setPlayerDefaultVideos] = useState<{ id: string; name: string }[]>([]);
   const [playerDefaultSelectedVideoIds, setPlayerDefaultSelectedVideoIds] = useState<string[]>([]);
   const [playerDefaultMbmCategory, setPlayerDefaultMbmCategory] = useState<string>("");
+  const [playerStatOrders, setPlayerStatOrders] = useState<Record<string, string[]>>({});
+  const [playerGameOrder, setPlayerGameOrder] = useState<string[]>([]);
+  const [playerSeasonGames, setPlayerSeasonGames] = useState<{ id: string; opponent: string; analysis_date: string }[]>([]);
+  const [statOrderSeasonId, setStatOrderSeasonId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
