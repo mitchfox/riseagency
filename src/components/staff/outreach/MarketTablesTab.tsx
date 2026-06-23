@@ -518,7 +518,7 @@ export default function MarketTablesTab() {
       <div className="md:hidden space-y-2">
         {filtered.length === 0 && (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-xs text-muted-foreground">
-            No clubs match. Strategies need clubs added before they show here.
+            No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
           </div>
         )}
         {filtered.map((club) => {
@@ -659,7 +659,7 @@ export default function MarketTablesTab() {
           <tbody>
             {filtered.length === 0 && (
               <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground text-xs">
-                No clubs match. Strategies need clubs added before they show here.
+                No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
               </td></tr>
             )}
             {filtered.map((club) => {
