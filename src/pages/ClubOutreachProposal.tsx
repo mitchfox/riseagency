@@ -1185,6 +1185,7 @@ export default function ClubOutreachProposal() {
                 subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
                 openLabel={tr("card.open", "Open")}
                 unavailableLabel={tr("card.unavailable", "Unavailable")}
+                accentBorder
               />
               {data.link.target_type !== 'agent' && (
                 (isMandated ? (
@@ -1219,7 +1220,7 @@ export default function ClubOutreachProposal() {
           ),
           form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
-              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
             </section>
           ) : null,
           in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
