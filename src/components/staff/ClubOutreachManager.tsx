@@ -1102,7 +1102,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             section_order: Array.isArray(e.section_order) && e.section_order.length > 0 ? e.section_order : sectionOrder,
             sort_order: i,
           }));
-          const { error: lpErr } = await supabase.from("club_outreach_link_players").insert(rows);
+          const { error: lpErr } = await (supabase as any).from("club_outreach_link_players").insert(rows);
           if (lpErr) throw lpErr;
         }
       }
