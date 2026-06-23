@@ -57,7 +57,22 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
-interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; situation: string | null; sort_order: number; }
+interface LinkPlayerRow {
+  player_id: string;
+  position_slot: string | null;
+  fit_recommendation: string | null;
+  situation: string | null;
+  sort_order: number;
+  show_form?: boolean | null;
+  show_in_numbers?: boolean | null;
+  show_season_stats?: boolean | null;
+  show_strengths?: boolean | null;
+  season_data_mode?: 'popup' | 'link' | null;
+  season_id?: string | null;
+  selected_video_ids?: string[] | null;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
+}
 interface OutreachRow {
   id: string;
   short_id: string;
@@ -160,7 +175,7 @@ export default function ClubOutreachManager() {
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
       supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name"),
-      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order"),
+      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
     const clubMap = new Map((clubRows ?? []).map((c: any) => [c.id, c]));
@@ -672,6 +687,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     editing?.section_order ? normaliseSectionOrder(editing.section_order) : DEFAULT_SECTION_ORDER
   );
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
+  const [activeSettingsPlayerId, setActiveSettingsPlayerId] = useState<string>(editing?.link_players?.[0]?.player_id ?? "");
   const [saving, setSaving] = useState(false);
   const [language, setLanguage] = useState<string>(editing?.language ?? "en");
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -684,6 +700,36 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
   const selectedIds = new Set(entries.map(e => e.player_id));
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  const activeSettingsEntry = entries.find((e) => e.player_id === activeSettingsPlayerId) ?? entries[0] ?? null;
+  const activeSettingsPlayer = activeSettingsEntry ? playerById.get(activeSettingsEntry.player_id) : null;
+
+  useEffect(() => {
+    if (entries.length === 0) {
+      setActiveSettingsPlayerId("");
+      return;
+    }
+    if (!entries.some((e) => e.player_id === activeSettingsPlayerId)) {
+      setActiveSettingsPlayerId(entries[0].player_id);
+    }
+  }, [entries, activeSettingsPlayerId]);
+
+  const patchPlayerSettings = (patch: Partial<LinkPlayerRow>) => {
+    if (!activeSettingsEntry) return;
+    updateEntry(activeSettingsEntry.player_id, patch);
+  };
+  const activeShowForm = activeSettingsEntry?.show_form ?? showForm;
+  const activeShowInNumbers = activeSettingsEntry?.show_in_numbers ?? showInNumbers;
+  const activeShowSeasonStats = activeSettingsEntry?.show_season_stats ?? showSeasonStats;
+  const activeShowStrengths = activeSettingsEntry?.show_strengths ?? showStrengths;
+  const activeSeasonDataMode = activeSettingsEntry?.season_data_mode ?? seasonDataMode;
+  const activeSeasonId = activeSettingsEntry?.season_id ?? seasonId;
+  const activeSelectedVideoIds = Array.isArray(activeSettingsEntry?.selected_video_ids) ? activeSettingsEntry!.selected_video_ids! : selectedVideoIds;
+  const activeKeyDetails = Array.isArray(activeSettingsEntry?.key_details) && activeSettingsEntry!.key_details!.length > 0
+    ? normaliseKeyDetails(activeSettingsEntry!.key_details)
+    : keyDetails;
+  const activeSectionOrder = Array.isArray(activeSettingsEntry?.section_order) && activeSettingsEntry!.section_order!.length > 0
+    ? normaliseSectionOrder(activeSettingsEntry!.section_order)
+    : sectionOrder;
 
   const filteredPlayers = useMemo(() => {
     const n = playerQuery.trim().toLowerCase();
@@ -780,7 +826,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id")
+      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id, default_selected_video_ids, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
@@ -789,8 +835,25 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // player has one saved on their outreach settings — whether we're editing
     // an existing link or adding the 2nd+ player to a multi-player outreach.
     const playerDefaultFit: string = (defaults?.default_fit_recommendation ?? "").trim();
+    const makeEntry = (sortOrder: number, fit: string): LinkPlayerRow => ({
+      player_id: id,
+      position_slot: presetPosition,
+      fit_recommendation: fit,
+      situation: presetSituation,
+      sort_order: sortOrder,
+      show_form: typeof defaults?.default_show_form === 'boolean' ? defaults.default_show_form : showForm,
+      show_in_numbers: typeof defaults?.default_show_in_numbers === 'boolean' ? defaults.default_show_in_numbers : showInNumbers,
+      show_season_stats: typeof defaults?.default_show_season_stats === 'boolean' ? defaults.default_show_season_stats : showSeasonStats,
+      show_strengths: typeof defaults?.default_show_strengths === 'boolean' ? defaults.default_show_strengths : showStrengths,
+      season_data_mode: (defaults?.default_season_data_mode === 'popup' || defaults?.default_season_data_mode === 'link') ? defaults.default_season_data_mode : seasonDataMode,
+      season_id: (defaults?.default_season_id as string | null) ?? null,
+      selected_video_ids: Array.isArray(defaults?.default_selected_video_ids) ? defaults.default_selected_video_ids : [],
+      key_details: Array.isArray(defaults?.default_key_details) && defaults.default_key_details.length > 0 ? normaliseKeyDetails(defaults.default_key_details) : keyDetails,
+      section_order: Array.isArray(defaults?.default_section_order) && defaults.default_section_order.length > 0 ? normaliseSectionOrder(defaults.default_section_order) : sectionOrder,
+    });
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: playerDefaultFit || (defaultFit ?? ""), situation: presetSituation, sort_order: prev.length }]);
+      setEntries(prev => [...prev, makeEntry(prev.length, playerDefaultFit || (defaultFit ?? ""))]);
+      setActiveSettingsPlayerId(id);
       return;
     }
     // Determine new entries count after adding
@@ -814,7 +877,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       initialFit = playerDefaultFit || (defaultFit ?? "");
     }
     setEntries(prev => {
-      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, situation: presetSituation, sort_order: prev.length }];
+      const next = [...prev, makeEntry(prev.length, initialFit)];
       // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
       if (prev.length === 1) {
         const [first] = prev;
@@ -823,6 +886,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       }
       return next;
     });
+    setActiveSettingsPlayerId(id);
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
@@ -838,12 +902,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   // Whenever the primary player changes, fetch their highlights so the staff
   // can pick which ones appear in the proposal carousel.
   const primaryPlayerId = entries[0]?.player_id ?? null;
+  const settingsPlayerId = activeSettingsEntry?.player_id ?? primaryPlayerId;
   useEffect(() => {
     // Load the primary player's named seasons so the staff can scope the
     // proposal's data to one of them. Reset selection when the player
     // changes unless we already pre-seeded it from defaults.
     let cancelled = false;
-    if (!primaryPlayerId) {
+    if (!settingsPlayerId) {
       setPlayerSeasons([]);
       return;
     }
@@ -851,24 +916,24 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       const { data } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
-        .eq("player_id", primaryPlayerId)
+        .eq("player_id", settingsPlayerId)
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
       if (cancelled) return;
       setPlayerSeasons((data ?? []) as { id: string; name: string }[]);
       // If the currently picked seasonId belongs to a different player,
       // drop it.
-      if (seasonId && !(data ?? []).some((s: any) => s.id === seasonId)) {
-        setSeasonId(null);
+      if (activeSettingsEntry?.season_id && !(data ?? []).some((s: any) => s.id === activeSettingsEntry.season_id)) {
+        patchPlayerSettings({ season_id: null });
       }
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryPlayerId]);
+  }, [settingsPlayerId]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!primaryPlayerId) {
+    if (!settingsPlayerId) {
       setPrimaryVideos([]);
       return;
     }
@@ -877,7 +942,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       const { data, error } = await supabase
         .from("players")
         .select("highlights")
-        .eq("id", primaryPlayerId)
+        .eq("id", settingsPlayerId)
         .maybeSingle();
       if (cancelled) return;
       setLoadingPrimaryVideos(false);
@@ -900,23 +965,23 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       setPrimaryVideos(list);
       // Seed selection from per-player default when this is a fresh outreach
       // and the user hasn't yet picked anything for this player.
-      if (!editing && selectedVideoIds.length === 0) {
+      if (!editing && activeSettingsEntry && activeSelectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
           .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
-          .eq("player_id", primaryPlayerId)
+          .eq("player_id", settingsPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
         if (def.length > 0 && !cancelled) {
-          setSelectedVideoIds(def);
+          patchPlayerSettings({ selected_video_ids: def });
         } else if (!cancelled) {
           // Fall back to the global default video selection mode.
           if (defaultVideoMode === 'first' && list.length > 0) {
-            setSelectedVideoIds([list[0].id]);
+            patchPlayerSettings({ selected_video_ids: [list[0].id] });
           } else if (defaultVideoMode === 'custom') {
             // Custom mode: leave empty as a signal "all", staff picks manually.
             // We intentionally don't pre-tick anything.
-            setSelectedVideoIds([]);
+            patchPlayerSettings({ selected_video_ids: [] });
           }
           // 'all' → leave [] (renderer treats empty as "show all").
         }
@@ -924,22 +989,24 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
         if (!cancelled) {
-          if (typeof defs?.default_show_form === 'boolean') setShowForm(defs.default_show_form);
-          if (typeof defs?.default_show_in_numbers === 'boolean') setShowInNumbers(defs.default_show_in_numbers);
-          if (typeof defs?.default_show_season_stats === 'boolean') setShowSeasonStats(defs.default_show_season_stats);
-          if (typeof defs?.default_show_strengths === 'boolean') setShowStrengths(defs.default_show_strengths);
+          const patch: Partial<LinkPlayerRow> = {};
+          if (typeof defs?.default_show_form === 'boolean') patch.show_form = defs.default_show_form;
+          if (typeof defs?.default_show_in_numbers === 'boolean') patch.show_in_numbers = defs.default_show_in_numbers;
+          if (typeof defs?.default_show_season_stats === 'boolean') patch.show_season_stats = defs.default_show_season_stats;
+          if (typeof defs?.default_show_strengths === 'boolean') patch.show_strengths = defs.default_show_strengths;
           if (Array.isArray(defs?.default_section_order) && defs.default_section_order.length > 0) {
-            setSectionOrder(normaliseSectionOrder(defs.default_section_order));
+            patch.section_order = normaliseSectionOrder(defs.default_section_order);
           }
           if (Array.isArray(defs?.default_key_details) && defs.default_key_details.length > 0) {
-            setKeyDetails(normaliseKeyDetails(defs.default_key_details));
+            patch.key_details = normaliseKeyDetails(defs.default_key_details);
           }
+          if (Object.keys(patch).length > 0) patchPlayerSettings(patch);
         }
       }
     })();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryPlayerId]);
+  }, [settingsPlayerId]);
 
   const savePlayerPositionDefault = async (playerId: string, position: string | null) => {
     if (!position) {
@@ -976,18 +1043,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         player_id: entries[0]?.player_id ?? null,
         fit_recommendation: entries[0]?.fit_recommendation ?? null,
         prepared_for_name: preparedFor.trim() || null,
-        show_form: showForm,
-        show_in_numbers: showInNumbers,
-        show_season_stats: showSeasonStats,
-        show_strengths: showStrengths,
-        season_data_mode: seasonDataMode,
-        season_id: seasonId,
-        selected_video_ids: selectedVideoIds,
+        show_form: entries[0]?.show_form ?? showForm,
+        show_in_numbers: entries[0]?.show_in_numbers ?? showInNumbers,
+        show_season_stats: entries[0]?.show_season_stats ?? showSeasonStats,
+        show_strengths: entries[0]?.show_strengths ?? showStrengths,
+        season_data_mode: entries[0]?.season_data_mode ?? seasonDataMode,
+        season_id: entries[0]?.season_id ?? seasonId,
+        selected_video_ids: Array.isArray(entries[0]?.selected_video_ids) ? entries[0]!.selected_video_ids : selectedVideoIds,
         alternate_profile_link_ids: altLinkIds,
         alternate_profiles_blurb: altBlurb.trim() || null,
         is_mandated: isMandated,
-        key_details: keyDetails,
-        section_order: sectionOrder,
+        key_details: Array.isArray(entries[0]?.key_details) && entries[0]!.key_details!.length > 0 ? entries[0]!.key_details : keyDetails,
+        section_order: Array.isArray(entries[0]?.section_order) && entries[0]!.section_order!.length > 0 ? entries[0]!.section_order : sectionOrder,
         mandated_agent_name: isMandated ? (mandatedAgentName.trim() || null) : null,
         mandated_agent_role: isMandated ? (mandatedAgentRole.trim() || null) : null,
         mandated_agent_phone: isMandated ? (mandatedAgentPhone.trim() || null) : null,
@@ -1024,9 +1091,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             position_slot: e.position_slot,
             fit_recommendation: e.fit_recommendation,
             situation: (e.situation ?? "").trim() || null,
+            show_form: e.show_form ?? showForm,
+            show_in_numbers: e.show_in_numbers ?? showInNumbers,
+            show_season_stats: e.show_season_stats ?? showSeasonStats,
+            show_strengths: e.show_strengths ?? showStrengths,
+            season_data_mode: e.season_data_mode ?? seasonDataMode,
+            season_id: e.season_id ?? null,
+            selected_video_ids: Array.isArray(e.selected_video_ids) ? e.selected_video_ids : [],
+            key_details: Array.isArray(e.key_details) && e.key_details.length > 0 ? e.key_details : keyDetails,
+            section_order: Array.isArray(e.section_order) && e.section_order.length > 0 ? e.section_order : sectionOrder,
             sort_order: i,
           }));
-          const { error: lpErr } = await supabase.from("club_outreach_link_players").insert(rows);
+          const { error: lpErr } = await (supabase as any).from("club_outreach_link_players").insert(rows);
           if (lpErr) throw lpErr;
         }
       }
@@ -1292,23 +1368,47 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-[11px] text-muted-foreground -mb-1">
-              The blocks below carry the primary player's saved defaults. Open one only if you need to override it for this outreach.
-            </p>
+            <div className="rounded-md border border-[#cbb96b]/30 bg-[#cbb96b]/[0.05] p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wider text-[#cbb96b] font-semibold">Player settings</span>
+                <span className="text-[11px] text-muted-foreground">Pick a player, then set exactly what shows for that player on this proposal.</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {entries.map((entry, idx) => {
+                  const p = playerById.get(entry.player_id);
+                  const active = activeSettingsEntry?.player_id === entry.player_id;
+                  return (
+                    <button
+                      key={entry.player_id}
+                      type="button"
+                      onClick={() => setActiveSettingsPlayerId(entry.player_id)}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        active
+                          ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
+                      }`}
+                    >
+                      {p?.image_url ? <img src={p.image_url} className="h-5 w-5 rounded-full object-cover" /> : <span className="h-5 w-5 rounded-full bg-muted" />}
+                      <span>{p?.name ?? `Player ${idx + 1}`}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <Accordion type="multiple" className="space-y-2">
             <AccordionItem value="show" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Show on proposal</AccordionTrigger>
               <AccordionContent className="pb-3">
-              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from the player's Stars profile.</p>
+              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
-                  { v: showForm, set: setShowForm, label: "Form" },
-                  { v: showInNumbers, set: setShowInNumbers, label: "In Numbers" },
-                  { v: showSeasonStats, set: setShowSeasonStats, label: "Season stats" },
-                  { v: showStrengths, set: setShowStrengths, label: "Strengths / Play style" },
+                  { v: activeShowForm, key: "show_form" as const, label: "Form" },
+                  { v: activeShowInNumbers, key: "show_in_numbers" as const, label: "In Numbers" },
+                  { v: activeShowSeasonStats, key: "show_season_stats" as const, label: "Season stats" },
+                  { v: activeShowStrengths, key: "show_strengths" as const, label: "Strengths / Play style" },
                 ].map((opt) => (
                   <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
-                    <Checkbox checked={opt.v} onCheckedChange={(c) => opt.set(!!c)} />
+                    <Checkbox checked={opt.v} onCheckedChange={(c) => patchPlayerSettings({ [opt.key]: !!c } as Partial<LinkPlayerRow>)} />
                     <span>{opt.label}</span>
                   </label>
                 ))}
@@ -1326,9 +1426,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setSeasonDataMode(mode)}
+                    onClick={() => patchPlayerSettings({ season_data_mode: mode })}
                     className={`rounded-md border px-3 py-1.5 text-xs capitalize transition-colors ${
-                      seasonDataMode === mode
+                      activeSeasonDataMode === mode
                         ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
                         : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
                     }`}
@@ -1336,16 +1436,16 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     {mode === 'popup' ? 'In-page popup' : 'Link to Stars profile'}
                   </button>
                 ))}
-                {entries[0]?.player_id && (
+                {activeSettingsEntry?.player_id && (
                   <button
                     type="button"
                     onClick={async () => {
-                      const pid = entries[0]?.player_id;
+                      const pid = activeSettingsEntry?.player_id;
                       if (!pid) return;
                       const { error } = await (supabase as any)
                         .from("club_outreach_player_defaults")
                         .upsert(
-                          { player_id: pid, default_season_data_mode: seasonDataMode, updated_at: new Date().toISOString() },
+                          { player_id: pid, default_season_data_mode: activeSeasonDataMode, updated_at: new Date().toISOString() },
                           { onConflict: "player_id" },
                         );
                       if (error) {
@@ -1366,17 +1466,17 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season to show</AccordionTrigger>
               <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
-                Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
+                Scope the data popup and Form banner to one of {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
                   <Select
-                    value={seasonId ?? "__all__"}
-                    onValueChange={(v) => setSeasonId(v === "__all__" ? null : v)}
-                    disabled={!primaryPlayerId}
+                    value={activeSeasonId ?? "__all__"}
+                    onValueChange={(v) => patchPlayerSettings({ season_id: v === "__all__" ? null : v })}
+                    disabled={!activeSettingsEntry}
                   >
                     <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder={primaryPlayerId ? "All seasons" : "Add a player first"} />
+                      <SelectValue placeholder={activeSettingsEntry ? "All seasons" : "Add a player first"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">All seasons</SelectItem>
@@ -1386,19 +1486,19 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     </SelectContent>
                   </Select>
                 </div>
-                {primaryPlayerId && playerSeasons.length === 0 && (
+                {activeSettingsEntry && playerSeasons.length === 0 && (
                   <span className="text-[11px] text-muted-foreground">
                     No seasons set up yet — add them in Data → Player Summary.
                   </span>
                 )}
-                {primaryPlayerId && (
+                {activeSettingsEntry?.player_id && (
                   <button
                     type="button"
                     onClick={async () => {
                       const { error } = await (supabase as any)
                         .from("club_outreach_player_defaults")
                         .upsert(
-                          { player_id: primaryPlayerId, default_season_id: seasonId, updated_at: new Date().toISOString() },
+                          { player_id: activeSettingsEntry.player_id, default_season_id: activeSeasonId, updated_at: new Date().toISOString() },
                           { onConflict: "player_id" },
                         );
                       if (error) { toast.error(error.message ?? "Failed to save default"); return; }
@@ -1412,12 +1512,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
               </div>
               </AccordionContent>
             </AccordionItem>
-            {primaryPlayerId && (
+            {activeSettingsEntry?.player_id && (
               <AccordionItem value="videos" className="border border-border rounded-md bg-background/40 px-3">
                 <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Videos to include (carousel)</AccordionTrigger>
                 <AccordionContent className="pb-3">
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Pick which of {playerById.get(primaryPlayerId)?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
+                  Pick which of {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
                 </p>
                 {loadingPrimaryVideos ? (
                   <div className="mt-2 text-[11px] text-muted-foreground">Loading highlights…</div>
@@ -1427,19 +1527,20 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   <>
                     <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                       {primaryVideos.map((v) => {
-                        const allOn = selectedVideoIds.length === 0;
-                        const isOn = allOn || selectedVideoIds.includes(v.id);
+                        const allOn = activeSelectedVideoIds.length === 0;
+                        const isOn = allOn || activeSelectedVideoIds.includes(v.id);
                         return (
                           <label key={v.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
                             <Checkbox
                               checked={isOn}
                               onCheckedChange={(c) => {
-                                setSelectedVideoIds((prev) => {
+                                const next = (() => {
                                   // Promote "all" (empty) into an explicit list before toggling.
-                                  const base = prev.length === 0 ? primaryVideos.map((x) => x.id) : prev;
+                                  const base = activeSelectedVideoIds.length === 0 ? primaryVideos.map((x) => x.id) : activeSelectedVideoIds;
                                   if (c) return Array.from(new Set([...base, v.id]));
                                   return base.filter((id) => id !== v.id);
-                                });
+                                })();
+                                patchPlayerSettings({ selected_video_ids: next });
                               }}
                             />
                             <span className="truncate">{v.name}</span>
@@ -1450,7 +1551,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedVideoIds([])}
+                        onClick={() => patchPlayerSettings({ selected_video_ids: [] })}
                         className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                       >
                         Show all videos
@@ -1461,7 +1562,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                           const { error } = await (supabase as any)
                             .from("club_outreach_player_defaults")
                             .upsert(
-                              { player_id: primaryPlayerId, default_selected_video_ids: selectedVideoIds, updated_at: new Date().toISOString() },
+                              { player_id: activeSettingsEntry.player_id, default_selected_video_ids: activeSelectedVideoIds, updated_at: new Date().toISOString() },
                               { onConflict: "player_id" },
                             );
                           if (error) {
@@ -1561,13 +1662,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <AccordionItem value="keydetails" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Key detail tiles</AccordionTrigger>
               <AccordionContent className="pb-3">
-                <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+                <KeyDetailsBuilder items={activeKeyDetails} onChange={(next) => patchPlayerSettings({ key_details: next })} />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="sectionorder" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Section order</AccordionTrigger>
               <AccordionContent className="pb-3">
-                <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+                <SectionOrderBuilder order={activeSectionOrder} onChange={(next) => patchPlayerSettings({ section_order: next })} />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="mandate" className="border border-[#cbb96b]/40 rounded-md bg-[#cbb96b]/[0.06] px-3">

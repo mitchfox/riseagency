@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
 
     const { data: linkPlayers } = await supabase
       .from("club_outreach_link_players")
-      .select("player_id, position_slot, fit_recommendation, situation, sort_order")
+      .select("player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order")
       .eq("link_id", link.id)
       .order("sort_order", { ascending: true });
 
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order, default_situation"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order, default_situation, default_fit_recommendation"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -232,33 +232,40 @@ Deno.serve(async (req) => {
       (defaultsRows ?? []).map((d: any) => [d.player_id, d])
     );
 
-    // Form configs + recent analyses for the optional Form banner
-    // Resolve the optional season window once for all players (the link
-    // currently scopes to the primary player's season).
-    let seasonStartDate: string | null = null;
-    let seasonEndDate: string | null = null;
-    if ((link as any).season_id) {
-      const { data: season } = await supabase
-        .from("player_seasons")
-        .select("start_analysis_id, end_analysis_id")
-        .eq("id", (link as any).season_id)
-        .maybeSingle();
-      const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
-      if (ids.length) {
-        const { data: bounds } = await supabase
-          .from("player_analysis")
-          .select("id, analysis_date")
-          .in("id", ids);
-        const dates = (bounds ?? [])
-          .map((r: any) => r.analysis_date as string | null)
-          .filter(Boolean)
-          .sort();
-        if (dates.length > 0) {
-          seasonStartDate = dates[0];
-          seasonEndDate = dates[dates.length - 1];
-        }
+    // Form configs + recent analyses for the optional Form banner. Season
+    // windows are now resolved per player attached to the outreach.
+    const seasonBoundsCache = new Map<string, Promise<{ start: string | null; end: string | null }>>();
+    const getSeasonBounds = (seasonId: string | null | undefined) => {
+      if (!seasonId) return Promise.resolve({ start: null, end: null });
+      if (!seasonBoundsCache.has(seasonId)) {
+        seasonBoundsCache.set(seasonId, (async () => {
+          let seasonStartDate: string | null = null;
+          let seasonEndDate: string | null = null;
+          const { data: season } = await supabase
+            .from("player_seasons")
+            .select("start_analysis_id, end_analysis_id")
+            .eq("id", seasonId)
+            .maybeSingle();
+          const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
+          if (ids.length) {
+            const { data: bounds } = await supabase
+              .from("player_analysis")
+              .select("id, analysis_date")
+              .in("id", ids);
+            const dates = (bounds ?? [])
+              .map((r: any) => r.analysis_date as string | null)
+              .filter(Boolean)
+              .sort();
+            if (dates.length > 0) {
+              seasonStartDate = dates[0];
+              seasonEndDate = dates[dates.length - 1];
+            }
+          }
+          return { start: seasonStartDate, end: seasonEndDate };
+        })());
       }
-    }
+      return seasonBoundsCache.get(seasonId)!;
+    };
 
     const [{ data: formCfgs }, { data: formAnalyses }] = await Promise.all([
       playerIds.length
@@ -278,8 +285,6 @@ Deno.serve(async (req) => {
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
-            if (seasonStartDate) q = q.gte("analysis_date", seasonStartDate);
-            if (seasonEndDate) q = q.lte("analysis_date", seasonEndDate);
             return q;
           })()
         : Promise.resolve({ data: [] as any[] }),
@@ -408,13 +413,15 @@ Deno.serve(async (req) => {
           allVideos = [];
           starsOrderedVideos = [];
         }
-        // Filter by per-link selected_video_ids only for the primary player.
-        const isPrimary = e.player_id === primaryPlayerId;
-        const selectedIds: string[] = Array.isArray((link as any).selected_video_ids)
+        // Filter by this outreach player's selected_video_ids, falling back to
+        // the legacy link-level selection for old links.
+        const selectedIds: string[] = Array.isArray((e as any).selected_video_ids) && (e as any).selected_video_ids.length > 0
+          ? (e as any).selected_video_ids
+          : Array.isArray((link as any).selected_video_ids)
           ? (link as any).selected_video_ids
           : [];
         let videos = allVideos;
-        if (isPrimary && selectedIds.length > 0) {
+        if (selectedIds.length > 0) {
           const set = new Set(selectedIds);
           const filtered = allVideos.filter((v) => set.has(v.id));
           if (filtered.length > 0) videos = filtered;
@@ -434,7 +441,13 @@ Deno.serve(async (req) => {
         // Form banner inputs
         const cfg = formCfgByPlayer.get(e.player_id) ?? null;
         const windowSize = cfg?.window_size ?? 5;
-        const allAnalyses = analysesByPlayer.get(e.player_id) ?? [];
+        const seasonIdForPlayer = (e as any).season_id ?? (link as any).season_id ?? null;
+        const bounds = await getSeasonBounds(seasonIdForPlayer);
+        const allAnalyses = (analysesByPlayer.get(e.player_id) ?? []).filter((a: any) => {
+          if (bounds.start && a.analysis_date < bounds.start) return false;
+          if (bounds.end && a.analysis_date > bounds.end) return false;
+          return true;
+        });
         const recentAnalyses = allAnalyses.slice(0, windowSize);
         // Attach the resolved opponent logo to every match row.
         const matchByMatchWithLogos = allAnalyses.map((a: any) => {
@@ -454,7 +467,16 @@ Deno.serve(async (req) => {
         return {
           player: p ?? null,
           position_slot: e.position_slot,
-          fit_recommendation: e.fit_recommendation,
+          fit_recommendation: ((e as any).fit_recommendation && String((e as any).fit_recommendation).trim())
+            ? (e as any).fit_recommendation
+            : ((d as any)?.default_fit_recommendation ?? null),
+          show_form: (e as any).show_form ?? (link as any).show_form ?? false,
+          show_in_numbers: (e as any).show_in_numbers ?? (link as any).show_in_numbers ?? false,
+          show_season_stats: (e as any).show_season_stats ?? (link as any).show_season_stats ?? false,
+          show_strengths: (e as any).show_strengths ?? (link as any).show_strengths ?? false,
+          season_data_mode: (e as any).season_data_mode ?? (link as any).season_data_mode ?? "popup",
+          key_details: (e as any).key_details ?? (link as any).key_details ?? null,
+          section_order: (e as any).section_order ?? (link as any).section_order ?? null,
           situation: ((e as any).situation && String((e as any).situation).trim())
             ? (e as any).situation
             : ((d as any)?.default_situation ?? null),

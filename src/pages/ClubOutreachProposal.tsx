@@ -84,6 +84,13 @@ interface PlayerEntry {
   fit_recommendation: string | null;
   situation: string | null;
   sort_order: number;
+  show_form?: boolean | null;
+  show_in_numbers?: boolean | null;
+  show_season_stats?: boolean | null;
+  show_strengths?: boolean | null;
+  season_data_mode?: 'popup' | 'link' | null;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
   stars_url: string | null;
   highlights_url: string | null;
   proof_of_representation_url: string | null;
@@ -532,6 +539,13 @@ export default function ClubOutreachProposal() {
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
   const hasMultiple = data.players.length > 1;
+  const showFormForCurrent = current.show_form ?? data.link.show_form;
+  const showInNumbersForCurrent = current.show_in_numbers ?? data.link.show_in_numbers;
+  const showSeasonStatsForCurrent = current.show_season_stats ?? data.link.show_season_stats;
+  const showStrengthsForCurrent = current.show_strengths ?? data.link.show_strengths;
+  const seasonDataModeForCurrent = current.season_data_mode ?? data.link.season_data_mode;
+  const keyDetailsForCurrent = normaliseKeyDetails(current.key_details ?? data.link.key_details);
+  const sectionOrderForCurrent = normaliseSectionOrder(current.section_order ?? data.link.section_order);
   const fitTextEn = (current.fit_recommendation ?? "").trim();
   const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
   const situationText = (current.situation ?? "").trim();
@@ -606,19 +620,20 @@ export default function ClubOutreachProposal() {
               />
             );
           })()}
-          {!data.link.show_form && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+          {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
             <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
           )}
-          {!data.link.show_in_numbers && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+          {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
             <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
           )}
-          {!data.link.show_season_stats && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+          {!showSeasonStatsForCurrent && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
             <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
           )}
           {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
             <MatchByMatchCard
               analyses={current.match_by_match}
               position={current?.player?.position ?? null}
+              playerId={current?.player?.id ?? null}
               excludeAnalysisIds={shownAnalysisIds}
               defaultCategory={current?.match_by_match_default_category ?? null}
               statOrders={current?.match_by_match_stat_orders ?? null}
@@ -899,7 +914,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} />
       </section>
 
       {/* Hero - first Stars highlight video, falls back to player image */}
@@ -1125,7 +1140,7 @@ export default function ClubOutreachProposal() {
 
       {/* Sections after the hero video - order is staff-configurable per link */}
       {(() => {
-        const order = normaliseSectionOrder(data.link.section_order);
+        const order = sectionOrderForCurrent;
         const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
           fit: () => fitText ? (
             <section key="fit" className="max-w-3xl mx-auto px-6 mt-6">
@@ -1146,9 +1161,9 @@ export default function ClubOutreachProposal() {
           cards: () => (
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
-                href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
+                href={seasonDataModeForCurrent === 'popup' ? null : current.stars_url}
                 onClick={
-                  data.link.season_data_mode === 'popup'
+                  seasonDataModeForCurrent === 'popup'
                     ? () => {
                         setInlineDataOpen(true);
                         try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
@@ -1193,22 +1208,22 @@ export default function ClubOutreachProposal() {
               )}
             </section>
           ),
-          form: () => (data.link.show_form && current.form_config && current.form_analyses) ? (
+          form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
               <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
             </section>
           ) : null,
-          in_numbers: () => (data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
+          in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
             <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
               <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
             </section>
           ) : null,
-          season_stats: () => (data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
+          season_stats: () => (showSeasonStatsForCurrent && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
             <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
               <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
             </section>
           ) : null,
-          strengths: () => (data.link.show_strengths && current.strengths_and_play_style) ? (
+          strengths: () => (showStrengthsForCurrent && current.strengths_and_play_style) ? (
             <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
               <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
             </section>
@@ -2039,6 +2054,7 @@ function MatchByMatchCard({
   analyses,
   position,
   excludeAnalysisIds,
+  playerId,
   defaultCategory: defaultCategoryProp,
   statOrders,
   gameOrder,
@@ -2046,6 +2062,7 @@ function MatchByMatchCard({
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
   excludeAnalysisIds?: Set<string>;
+  playerId?: string | null;
   defaultCategory?: string | null;
   statOrders?: Record<string, string[]> | null;
   gameOrder?: string[] | null;
@@ -2137,15 +2154,50 @@ function MatchByMatchCard({
     categories[0]?.category ||
     "";
 
-  const sorted = useMemo(() => {
-    const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
-    return rankGames(base, gameOrder ?? null);
-  }, [analyses, excludeAnalysisIds, gameOrder]);
-
   const [viewMode, setViewMode] = useState<"per90" | "raw">("per90");
   const [openClipsForId, setOpenClipsForId] = useState<string | null>(null);
   const [clipsLoading, setClipsLoading] = useState(false);
   const [clipsForOpen, setClipsForOpen] = useState<any[]>([]);
+  const [clipAvailability, setClipAvailability] = useState<Record<string, boolean>>({});
+
+  const sorted = useMemo(() => {
+    const base = [...analyses].filter((a) => {
+      if (!excludeAnalysisIds || !excludeAnalysisIds.has(a.id)) return true;
+      const status = (a.visibility_status ?? "").toString().toLowerCase();
+      return status === "clipped" || status === "live" || !!a.has_clips || !!clipAvailability[a.id];
+    });
+    return rankGames(base, gameOrder ?? null);
+  }, [analyses, excludeAnalysisIds, gameOrder, clipAvailability]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = analyses.map((a) => a.id).filter(Boolean);
+    if (ids.length === 0) {
+      setClipAvailability({});
+      return;
+    }
+    setClipAvailability((prev) => {
+      const next: Record<string, boolean> = {};
+      ids.forEach((id) => { next[id] = prev[id] ?? !!analyses.find((a) => a.id === id)?.has_clips; });
+      return next;
+    });
+    (async () => {
+      let query = supabase
+        .from("performance_report_actions")
+        .select("analysis_id")
+        .in("analysis_id", ids)
+        .not("video_url", "is", null);
+      const { data, error } = await query;
+      if (cancelled || error) return;
+      const found = new Set((data ?? []).map((r: any) => r.analysis_id).filter(Boolean));
+      setClipAvailability((prev) => {
+        const next: Record<string, boolean> = {};
+        ids.forEach((id) => { next[id] = found.has(id) || prev[id] || false; });
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [analyses]);
 
   const hasPlayableReport = (a: any): boolean => {
     if (!a) return false;
@@ -2153,7 +2205,7 @@ function MatchByMatchCard({
     if (status === "clipped") return true;
     if (status === "live" && a.has_clips) return true;
     // Fallback: explicit has_clips flag from the API.
-    return !!a.has_clips;
+    return !!a.has_clips || !!clipAvailability[a.id];
   };
 
   const openClipsForAnalysis = async (analysisId: string) => {
