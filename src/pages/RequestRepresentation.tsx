@@ -1570,12 +1570,33 @@ export const DetailView = ({
                   className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[58%] overflow-hidden md:block"
                   style={{ clipPath: "polygon(0% 0%, 100% 0%, 72.5% 100%, 0% 100%)" }}
                 >
+                  {/* Soft radial halo behind Jolon to ease the contrast
+                      between the cutout and the black marble. */}
+                  <div
+                    aria-hidden
+                    className="absolute left-[28%] top-[4%] h-[70%] w-[70%] -translate-x-1/2 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(closest-side, hsl(var(--gold) / 0.32) 0%, hsl(var(--gold) / 0.14) 35%, rgba(0,0,0,0) 72%)",
+                      filter: "blur(18px)",
+                    }}
+                  />
                   <img
                     src={jolonHeadshotCutout}
                     alt="Jolon Levene"
                     loading="lazy"
                     decoding="async"
-                    className="absolute top-0 left-1/2 h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.58)]"
+                    className="absolute top-0 left-[28%] h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_22px_46px_rgba(0,0,0,0.55)]"
+                  />
+                  {/* Bottom feather so the cutout fades into the marble
+                      instead of stopping in a hard line. */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-[42%]"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.92) 100%)",
+                    }}
                   />
                 </div>
                 {/* Kuda frame — desktop: right diagonal half */}
@@ -1583,12 +1604,29 @@ export const DetailView = ({
                   className="pointer-events-none absolute inset-y-0 right-0 z-[1] hidden w-[58%] overflow-hidden md:block"
                   style={{ clipPath: "polygon(27.5% 0%, 100% 0%, 100% 100%, 0% 100%)" }}
                 >
+                  <div
+                    aria-hidden
+                    className="absolute left-[72%] top-[4%] h-[70%] w-[70%] -translate-x-1/2 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(closest-side, hsl(var(--gold) / 0.22) 0%, hsl(var(--gold) / 0.10) 35%, rgba(255,255,255,0) 72%)",
+                      filter: "blur(18px)",
+                    }}
+                  />
                   <img
                     src={kudaHeadshotCutout}
                     alt="Kuda Butawo"
                     loading="lazy"
                     decoding="async"
-                    className="absolute top-0 left-1/2 h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.28)]"
+                    className="absolute top-0 left-[72%] h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_22px_46px_rgba(0,0,0,0.28)]"
+                  />
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-[42%]"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 55%, rgba(255,255,255,0.92) 100%)",
+                    }}
                   />
                 </div>
                 {/* Jolon frame — mobile: top diagonal half */}
@@ -1596,6 +1634,15 @@ export const DetailView = ({
                   className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-[58%] overflow-hidden md:hidden"
                   style={{ clipPath: "polygon(0% 0%, 100% 0%, 100% 72.5%, 0% 100%)" }}
                 >
+                  <div
+                    aria-hidden
+                    className="absolute left-1/2 top-[6%] h-[78%] w-[80%] -translate-x-1/2 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(closest-side, hsl(var(--gold) / 0.30) 0%, hsl(var(--gold) / 0.12) 35%, rgba(0,0,0,0) 72%)",
+                      filter: "blur(18px)",
+                    }}
+                  />
                   <img
                     src={jolonHeadshotCutout}
                     alt="Jolon Levene"
@@ -1603,18 +1650,43 @@ export const DetailView = ({
                     decoding="async"
                     className="absolute top-0 left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.58)]"
                   />
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-[40%]"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.9) 100%)",
+                    }}
+                  />
                 </div>
                 {/* Kuda frame — mobile: bottom diagonal half */}
                 <div
                   className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1] h-[58%] overflow-hidden md:hidden"
                   style={{ clipPath: "polygon(0% 27.5%, 100% 0%, 100% 100%, 0% 100%)" }}
                 >
+                  <div
+                    aria-hidden
+                    className="absolute left-1/2 top-[8%] h-[78%] w-[80%] -translate-x-1/2 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(closest-side, hsl(var(--gold) / 0.20) 0%, hsl(var(--gold) / 0.08) 35%, rgba(255,255,255,0) 72%)",
+                      filter: "blur(18px)",
+                    }}
+                  />
                   <img
                     src={kudaHeadshotCutout}
                     alt="Kuda Butawo"
                     loading="lazy"
                     decoding="async"
                     className="absolute top-[6%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.28)]"
+                  />
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-[40%]"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 60%, rgba(255,255,255,0.92) 100%)",
+                    }}
                   />
                 </div>
 
