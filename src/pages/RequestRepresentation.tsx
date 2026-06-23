@@ -1515,7 +1515,7 @@ export const DetailView = ({
                 >
                   {widont(t(
                     "representation.worked_with_context",
-                    "The names shown reflect Fuel For Football performance work alongside current RISE represented players. It is not a claim that every player is now represented by RISE or has a direct relationship with RISE. Our future is to bring that same performance depth into a complete representation model for the players we work with next.",
+                    "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
                   ))}
                 </p>
               </div>
