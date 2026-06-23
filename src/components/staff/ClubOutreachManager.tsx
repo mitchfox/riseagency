@@ -1368,23 +1368,47 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-[11px] text-muted-foreground -mb-1">
-              The blocks below carry the primary player's saved defaults. Open one only if you need to override it for this outreach.
-            </p>
+            <div className="rounded-md border border-[#cbb96b]/30 bg-[#cbb96b]/[0.05] p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wider text-[#cbb96b] font-semibold">Player settings</span>
+                <span className="text-[11px] text-muted-foreground">Pick a player, then set exactly what shows for that player on this proposal.</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {entries.map((entry, idx) => {
+                  const p = playerById.get(entry.player_id);
+                  const active = activeSettingsEntry?.player_id === entry.player_id;
+                  return (
+                    <button
+                      key={entry.player_id}
+                      type="button"
+                      onClick={() => setActiveSettingsPlayerId(entry.player_id)}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        active
+                          ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
+                      }`}
+                    >
+                      {p?.image_url ? <img src={p.image_url} className="h-5 w-5 rounded-full object-cover" /> : <span className="h-5 w-5 rounded-full bg-muted" />}
+                      <span>{p?.name ?? `Player ${idx + 1}`}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <Accordion type="multiple" className="space-y-2">
             <AccordionItem value="show" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Show on proposal</AccordionTrigger>
               <AccordionContent className="pb-3">
-              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from the player's Stars profile.</p>
+              <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
-                  { v: showForm, set: setShowForm, label: "Form" },
-                  { v: showInNumbers, set: setShowInNumbers, label: "In Numbers" },
-                  { v: showSeasonStats, set: setShowSeasonStats, label: "Season stats" },
-                  { v: showStrengths, set: setShowStrengths, label: "Strengths / Play style" },
+                  { v: activeShowForm, patch: { show_form: !activeShowForm }, label: "Form" },
+                  { v: activeShowInNumbers, patch: { show_in_numbers: !activeShowInNumbers }, label: "In Numbers" },
+                  { v: activeShowSeasonStats, patch: { show_season_stats: !activeShowSeasonStats }, label: "Season stats" },
+                  { v: activeShowStrengths, patch: { show_strengths: !activeShowStrengths }, label: "Strengths / Play style" },
                 ].map((opt) => (
                   <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
-                    <Checkbox checked={opt.v} onCheckedChange={(c) => opt.set(!!c)} />
+                    <Checkbox checked={opt.v} onCheckedChange={(c) => patchPlayerSettings({ [Object.keys(opt.patch)[0]]: !!c } as Partial<LinkPlayerRow>)} />
                     <span>{opt.label}</span>
                   </label>
                 ))}
@@ -1402,9 +1426,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setSeasonDataMode(mode)}
+                    onClick={() => patchPlayerSettings({ season_data_mode: mode })}
                     className={`rounded-md border px-3 py-1.5 text-xs capitalize transition-colors ${
-                      seasonDataMode === mode
+                      activeSeasonDataMode === mode
                         ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground"
                         : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"
                     }`}
@@ -1412,16 +1436,16 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     {mode === 'popup' ? 'In-page popup' : 'Link to Stars profile'}
                   </button>
                 ))}
-                {entries[0]?.player_id && (
+                {activeSettingsEntry?.player_id && (
                   <button
                     type="button"
                     onClick={async () => {
-                      const pid = entries[0]?.player_id;
+                      const pid = activeSettingsEntry?.player_id;
                       if (!pid) return;
                       const { error } = await (supabase as any)
                         .from("club_outreach_player_defaults")
                         .upsert(
-                          { player_id: pid, default_season_data_mode: seasonDataMode, updated_at: new Date().toISOString() },
+                          { player_id: pid, default_season_data_mode: activeSeasonDataMode, updated_at: new Date().toISOString() },
                           { onConflict: "player_id" },
                         );
                       if (error) {
@@ -1442,17 +1466,17 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Season to show</AccordionTrigger>
               <AccordionContent className="pb-3">
               <p className="text-[11px] text-muted-foreground mt-1">
-                Scope the data popup and Form banner to one of {playerById.get(primaryPlayerId ?? "")?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
+                Scope the data popup and Form banner to one of {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s named seasons. Leave on "All seasons" to use every match.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
                   <Select
-                    value={seasonId ?? "__all__"}
-                    onValueChange={(v) => setSeasonId(v === "__all__" ? null : v)}
-                    disabled={!primaryPlayerId}
+                    value={activeSeasonId ?? "__all__"}
+                    onValueChange={(v) => patchPlayerSettings({ season_id: v === "__all__" ? null : v })}
+                    disabled={!activeSettingsEntry}
                   >
                     <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder={primaryPlayerId ? "All seasons" : "Add a player first"} />
+                      <SelectValue placeholder={activeSettingsEntry ? "All seasons" : "Add a player first"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">All seasons</SelectItem>
@@ -1462,19 +1486,19 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     </SelectContent>
                   </Select>
                 </div>
-                {primaryPlayerId && playerSeasons.length === 0 && (
+                {activeSettingsEntry && playerSeasons.length === 0 && (
                   <span className="text-[11px] text-muted-foreground">
                     No seasons set up yet — add them in Data → Player Summary.
                   </span>
                 )}
-                {primaryPlayerId && (
+                {activeSettingsEntry?.player_id && (
                   <button
                     type="button"
                     onClick={async () => {
                       const { error } = await (supabase as any)
                         .from("club_outreach_player_defaults")
                         .upsert(
-                          { player_id: primaryPlayerId, default_season_id: seasonId, updated_at: new Date().toISOString() },
+                          { player_id: activeSettingsEntry.player_id, default_season_id: activeSeasonId, updated_at: new Date().toISOString() },
                           { onConflict: "player_id" },
                         );
                       if (error) { toast.error(error.message ?? "Failed to save default"); return; }
@@ -1488,12 +1512,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
               </div>
               </AccordionContent>
             </AccordionItem>
-            {primaryPlayerId && (
+            {activeSettingsEntry?.player_id && (
               <AccordionItem value="videos" className="border border-border rounded-md bg-background/40 px-3">
                 <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Videos to include (carousel)</AccordionTrigger>
                 <AccordionContent className="pb-3">
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Pick which of {playerById.get(primaryPlayerId)?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
+                  Pick which of {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s Stars highlights appear under the hero video. Leave all ticked to show every video. The first ticked plays first.
                 </p>
                 {loadingPrimaryVideos ? (
                   <div className="mt-2 text-[11px] text-muted-foreground">Loading highlights…</div>
@@ -1503,19 +1527,20 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                   <>
                     <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                       {primaryVideos.map((v) => {
-                        const allOn = selectedVideoIds.length === 0;
-                        const isOn = allOn || selectedVideoIds.includes(v.id);
+                        const allOn = activeSelectedVideoIds.length === 0;
+                        const isOn = allOn || activeSelectedVideoIds.includes(v.id);
                         return (
                           <label key={v.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
                             <Checkbox
                               checked={isOn}
                               onCheckedChange={(c) => {
-                                setSelectedVideoIds((prev) => {
+                                const next = (() => {
                                   // Promote "all" (empty) into an explicit list before toggling.
-                                  const base = prev.length === 0 ? primaryVideos.map((x) => x.id) : prev;
+                                  const base = activeSelectedVideoIds.length === 0 ? primaryVideos.map((x) => x.id) : activeSelectedVideoIds;
                                   if (c) return Array.from(new Set([...base, v.id]));
                                   return base.filter((id) => id !== v.id);
-                                });
+                                })();
+                                patchPlayerSettings({ selected_video_ids: next });
                               }}
                             />
                             <span className="truncate">{v.name}</span>
@@ -1526,7 +1551,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setSelectedVideoIds([])}
+                        onClick={() => patchPlayerSettings({ selected_video_ids: [] })}
                         className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                       >
                         Show all videos
@@ -1537,7 +1562,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                           const { error } = await (supabase as any)
                             .from("club_outreach_player_defaults")
                             .upsert(
-                              { player_id: primaryPlayerId, default_selected_video_ids: selectedVideoIds, updated_at: new Date().toISOString() },
+                              { player_id: activeSettingsEntry.player_id, default_selected_video_ids: activeSelectedVideoIds, updated_at: new Date().toISOString() },
                               { onConflict: "player_id" },
                             );
                           if (error) {
