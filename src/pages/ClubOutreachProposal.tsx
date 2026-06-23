@@ -9,6 +9,7 @@ import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
+import { rankGames } from "@/lib/matchByMatchOrder";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -2098,18 +2099,7 @@ function MatchByMatchCard({
 
   const sorted = useMemo(() => {
     const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
-    const order = Array.isArray(gameOrder) ? gameOrder.map(normaliseOpp).filter(Boolean) : [];
-    if (order.length === 0) {
-      return base.sort((a, b) => (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""));
-    }
-    const rank = new Map<string, number>();
-    order.forEach((n, i) => { if (!rank.has(n)) rank.set(n, i); });
-    return base.sort((a, b) => {
-      const ar = rank.get(normaliseOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
-      const br = rank.get(normaliseOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
-      if (ar !== br) return ar - br;
-      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
-    });
+    return rankGames(base, gameOrder ?? null);
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
   const fmtVal = (raw: any, key: string): string => {
