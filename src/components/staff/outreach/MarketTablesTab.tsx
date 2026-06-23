@@ -244,7 +244,7 @@ function MarketContactSlot({
   placeholder: string;
   links: ReactNode;
   inputClassName: string;
-  onConfirm: (value: string | null) => Promise<void>;
+  onConfirm: (value: string | null) => Promise<boolean | void>;
   onEdit: () => void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -264,8 +264,8 @@ function MarketContactSlot({
     if (!isDirty || saving) return;
     setSaving(true);
     try {
-      await onConfirm(cleanDraft || null);
-      setDraft(cleanDraft);
+      const saved = await onConfirm(cleanDraft || null);
+      if (saved !== false) setDraft(cleanDraft);
     } finally {
       setSaving(false);
     }
@@ -273,7 +273,7 @@ function MarketContactSlot({
 
   const Icon = showConfirm ? Check : hasSavedContactDetails ? Pencil : UserPlus;
   const buttonTitle = showConfirm
-    ? "Confirm this person in Market Tables and Network"
+    ? "Confirm this person in Market Tables"
     : hasSavedContactDetails
       ? "Show or edit existing contact details"
       : hasSavedName
@@ -626,14 +626,29 @@ export default function MarketTablesTab() {
     if ("chief_scout_name" in patch) {
       payload.chief_scout_name = patch.chief_scout_name ?? null;
     }
-    const { data: saved, error } = await (supabase as any)
+    const saveRequest = (supabase as any)
       .from("market_table_entries")
       .upsert(payload, { onConflict: "market_table_key,club_id" })
       .select("club_id, technical_director_name, chief_scout_name")
       .single();
+    let saved: Entry | null = null;
+    let error: { message: string } | null = null;
+    try {
+      const result = await Promise.race([
+        saveRequest,
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("Save timed out. Please try again.")), 15000);
+        }),
+      ]);
+      saved = (result.data ?? null) as Entry | null;
+      error = result.error ?? null;
+    } catch (e: any) {
+      error = { message: e?.message ?? "Save failed" };
+    }
     if (error) {
+      setEntries((prev) => ({ ...prev, [clubId]: current }));
       toast.error(error.message);
-      return;
+      return false;
     }
     if (saved) {
       // Reconcile with whatever's actually in the DB after the partial upsert
@@ -648,6 +663,7 @@ export default function MarketTablesTab() {
       }));
     }
     toast.success("Saved", { duration: 1200 });
+    return true;
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
@@ -681,12 +697,9 @@ export default function MarketTablesTab() {
 
   const persistAndShell = async (club: ClubRow, role: "td" | "cs", value: string | null) => {
     if (role === "td") {
-      await persist(club.id, { technical_director_name: value });
-      await ensureContactShell(club, value, "Technical Director");
-    } else {
-      await persist(club.id, { chief_scout_name: value });
-      await ensureContactShell(club, value, "Chief Scout");
+      return persist(club.id, { technical_director_name: value });
     }
+    return persist(club.id, { chief_scout_name: value });
   };
 
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
