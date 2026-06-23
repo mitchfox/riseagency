@@ -2238,17 +2238,35 @@ function MatchByMatchCard({
   return (
     <SectionShell title="Match-By-Match Data" eyebrow="06">
       <Tabs defaultValue={defaultCat}>
-        <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
-          {categories.map((c) => (
-            <TabsTrigger
-              key={c.category}
-              value={c.category}
-              className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
-            >
-              {c.category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-2">
+          <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
+            {categories.map((c) => (
+              <TabsTrigger
+                key={c.category}
+                value={c.category}
+                className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
+              >
+                {c.category}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="ml-auto inline-flex rounded-md border border-white/10 bg-white/[0.04] p-0.5 text-[11px]">
+            {(["per90", "raw"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setViewMode(m)}
+                className={`px-2.5 py-1 rounded transition-colors ${
+                  viewMode === m
+                    ? "bg-[#cbb96b]/20 text-[#cbb96b]"
+                    : "text-white/60 hover:text-white/80"
+                }`}
+              >
+                {m === "per90" ? "Per 90" : "Raw"}
+              </button>
+            ))}
+          </div>
+        </div>
         {categories.map((c) => (
           <TabsContent key={c.category} value={c.category} className="mt-3">
             <div className="overflow-x-auto rounded-lg border border-white/10">
