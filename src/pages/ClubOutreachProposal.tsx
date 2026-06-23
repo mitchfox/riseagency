@@ -622,7 +622,7 @@ export default function ClubOutreachProposal() {
             );
           })()}
           {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
-            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
           )}
           {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
             <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
@@ -1185,6 +1185,7 @@ export default function ClubOutreachProposal() {
                 subtitle={tr("card.videoSubtitle", "Full profile, highlights and statistics")}
                 openLabel={tr("card.open", "Open")}
                 unavailableLabel={tr("card.unavailable", "Unavailable")}
+                accentBorder
               />
               {data.link.target_type !== 'agent' && (
                 (isMandated ? (
@@ -1219,7 +1220,7 @@ export default function ClubOutreachProposal() {
           ),
           form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
-              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
             </section>
           ) : null,
           in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
@@ -1530,7 +1531,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick, accentBorder,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -1542,10 +1543,11 @@ function ProposalCard({
   openLabel?: string;
   unavailableLabel?: string;
   onClick?: () => void;
+  accentBorder?: boolean;
 }) {
   const disabled = (!href && !onClick) || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${accentBorder && !disabled ? "border-primary/55 ring-1 ring-primary/35 ring-offset-2 ring-offset-background shadow-[0_0_0_1px_rgba(198,163,50,0.18),0_18px_55px_-28px_rgba(198,163,50,0.75)]" : "border-white/10"} ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
       </div>
@@ -1851,9 +1853,25 @@ function KeyDetailsCard({
           </a>
         ) : null}
       </div>
-      <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
-        {tiles.map((it, i) => renderTile(it, i))}
-      </div>
+      {count === 5 ? (
+        <>
+          <div className="grid grid-cols-2 gap-2 auto-rows-fr sm:hidden">
+            {tiles.map((it, i) => renderTile(it, i))}
+          </div>
+          <div className="hidden sm:block space-y-2">
+            <div className="grid grid-cols-3 gap-2 auto-rows-fr">
+              {tiles.slice(0, 3).map((it, i) => renderTile(it, i))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 auto-rows-fr max-w-[66.666%] mx-auto">
+              {tiles.slice(3, 5).map((it, i) => renderTile(it, i + 3))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
+          {tiles.map((it, i) => renderTile(it, i))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1932,7 +1950,7 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
   // Lay 5 items out as 3+2 centred; otherwise one even row.
   const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
-  const formTitle = (titleTemplate ?? "Form · Last {n}").replace("{n}", String(cfg.window_size));
+  const formTitle = (titleTemplate ?? "Form · Last {n} games").replace("{n}", String(cfg.window_size));
   return (
     <SectionShell title={formTitle} eyebrow="04">
       {useSplit ? (
