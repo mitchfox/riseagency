@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { lazyWithRetry as lazy } from "@/lib/lazyWithRetry";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -355,7 +356,14 @@ const Staff = () => {
   // Restore tabs and active section from localStorage / URL on mount
   useEffect(() => {
     if (!isStaff) return;
-    const urlSection = searchParams.get('section');
+    const rawUrlSection = searchParams.get('section');
+    // The user has repeatedly asked that Club Outreach is the opening section.
+    // Stale links / localStorage values keep forcing teamperformance/overview,
+    // so on initial mount we ignore those two and fall through to the default.
+    const STALE_DEFAULTS = new Set(['teamperformance', 'overview', 'dashboard']);
+    const urlSection = rawUrlSection && !STALE_DEFAULTS.has(rawUrlSection)
+      ? rawUrlSection
+      : null;
     const isTrustedNetworkRole = !!currentRole && /trusted[_\s-]?network/i.test(currentRole);
 
     // For permission-managed roles, wait for permissions to load before determining initial section

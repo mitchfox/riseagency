@@ -174,27 +174,51 @@ export default function MarketTablesTab() {
     (async () => {
       setLoading(true);
       try {
-        // Market Tables must always be the full club database, not just clubs that
-        // happen to be referenced by strategies. Fetch every club directly, then
-        // overlay strategy labels where saved filters carry a more precise league.
-        const { data: stratRows } = await (supabase as any)
+        // Market Tables is driven by the saved Outreach Strategies. Each strategy
+        // carries the country + league it represents and the explicit list of
+        // club ids to include. We fetch those strategies, build a club_id ->
+        // {country, league} map, then load the matching club rows from
+        // club_map_positions so we get real names/logos.
+        const { data: stratRows, error: stratErr } = await (supabase as any)
           .from("club_outreach_strategies")
-          .select("filters, defaults");
-        // clubId -> { country, league_level } from the strategy that references it.
-        const stratByClub = new Map<string, { country: string | null; level: string | null }>();
+          .select("name, filters");
+        if (stratErr) throw stratErr;
+
+        // clubId -> labels from the strategy that references it. First strategy
+        // wins so the same club doesn't end up duplicated under two leagues.
+        const stratByClub = new Map<
+          string,
+          { country: string | null; league: string | null }
+        >();
         (stratRows ?? []).forEach((s: any) => {
-          const sCountry = (s?.filters?.country ?? null) as string | null;
-          const sLevel = (s?.filters?.league_level ?? null) as string | null;
+          const sCountry = ((s?.filters?.country ?? null) as string | null) || null;
+          const sLevel =
+            ((s?.filters?.league_level ?? s?.filters?.league ?? null) as string | null) || null;
           (s?.filters?.club_ids ?? []).forEach((id: string) => {
             if (!id) return;
             if (!stratByClub.has(id)) {
-              stratByClub.set(id, { country: sCountry, level: sLevel });
+              stratByClub.set(id, { country: sCountry, league: sLevel });
             }
           });
         });
 
-        const [clubRows, { data: contactRows }, { data: entryRows }] = await Promise.all([
-          fetchAllClubRows(),
+        const clubIds = Array.from(stratByClub.keys());
+
+        // Fetch the actual club rows in chunks (Supabase .in() caps at ~1000 ids).
+        const clubRows: ClubRow[] = [];
+        const CHUNK = 500;
+        for (let i = 0; i < clubIds.length; i += CHUNK) {
+          const slice = clubIds.slice(i, i + CHUNK);
+          if (slice.length === 0) continue;
+          const { data, error } = await supabase
+            .from("club_map_positions")
+            .select("id, club_name, country, league, league_level, image_url")
+            .in("id", slice);
+          if (error) throw error;
+          clubRows.push(...(((data ?? []) as unknown) as ClubRow[]));
+        }
+
+        const [{ data: contactRows }, { data: entryRows }] = await Promise.all([
           supabase
             .from("club_network_contacts")
             .select("id, name, club_name, position, email, phone, country"),
@@ -204,25 +228,27 @@ export default function MarketTablesTab() {
             .eq("market_table_key", MARKET_TABLE_KEY),
         ]);
 
-        // Overlay the strategy's country + league_level so every league referenced
-        // by a strategy is represented in the filters and table, even when the
-        // club_map_positions row is missing the league field.
-        const enriched: ClubRow[] = ((clubRows ?? []) as ClubRow[]).map((c) => {
+        // Overlay the strategy's country + league onto the club record so the
+        // filters always reflect the strategy the club was saved under, even
+        // when the underlying club_map_positions row has different/older labels.
+        const enriched: ClubRow[] = clubRows.map((c) => {
           const s = stratByClub.get(c.id);
           return {
             ...c,
-            country: c.country ?? s?.country ?? null,
-            league: c.league ?? c.league_level ?? s?.level ?? null,
+            country: s?.country ?? c.country ?? null,
+            league: s?.league ?? c.league ?? c.league_level ?? null,
           };
         });
 
-        setClubs(enriched.sort((a, b) => {
-          const c = (a.country ?? "").localeCompare(b.country ?? "");
-          if (c !== 0) return c;
-          const l = (a.league ?? "").localeCompare(b.league ?? "");
-          if (l !== 0) return l;
-          return a.club_name.localeCompare(b.club_name);
-        }));
+        setClubs(
+          enriched.sort((a, b) => {
+            const c = (a.country ?? "").localeCompare(b.country ?? "");
+            if (c !== 0) return c;
+            const l = (a.league ?? "").localeCompare(b.league ?? "");
+            if (l !== 0) return l;
+            return a.club_name.localeCompare(b.club_name);
+          }),
+        );
         setContacts((contactRows ?? []) as ContactRow[]);
         const map: Record<string, Entry> = {};
         (entryRows ?? []).forEach((r: any) => {
@@ -492,7 +518,7 @@ export default function MarketTablesTab() {
       <div className="md:hidden space-y-2">
         {filtered.length === 0 && (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-xs text-muted-foreground">
-            No clubs match. Strategies need clubs added before they show here.
+            No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
           </div>
         )}
         {filtered.map((club) => {
@@ -633,7 +659,7 @@ export default function MarketTablesTab() {
           <tbody>
             {filtered.length === 0 && (
               <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground text-xs">
-                No clubs match. Strategies need clubs added before they show here.
+                No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
               </td></tr>
             )}
             {filtered.map((club) => {
