@@ -2163,6 +2163,37 @@ function MatchByMatchCard({
   const [openClipsForId, setOpenClipsForId] = useState<string | null>(null);
   const [clipsLoading, setClipsLoading] = useState(false);
   const [clipsForOpen, setClipsForOpen] = useState<any[]>([]);
+  const [clipAvailability, setClipAvailability] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const ids = sorted.map((a) => a.id).filter(Boolean);
+    if (ids.length === 0) {
+      setClipAvailability({});
+      return;
+    }
+    setClipAvailability((prev) => {
+      const next: Record<string, boolean> = {};
+      ids.forEach((id) => { next[id] = prev[id] ?? !!sorted.find((a) => a.id === id)?.has_clips; });
+      return next;
+    });
+    (async () => {
+      let query = supabase
+        .from("performance_report_actions")
+        .select("analysis_id")
+        .in("analysis_id", ids)
+        .not("video_url", "is", null);
+      const { data, error } = await query;
+      if (cancelled || error) return;
+      const found = new Set((data ?? []).map((r: any) => r.analysis_id).filter(Boolean));
+      setClipAvailability((prev) => {
+        const next: Record<string, boolean> = {};
+        ids.forEach((id) => { next[id] = found.has(id) || prev[id] || false; });
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [sorted]);
 
   const hasPlayableReport = (a: any): boolean => {
     if (!a) return false;
@@ -2170,7 +2201,7 @@ function MatchByMatchCard({
     if (status === "clipped") return true;
     if (status === "live" && a.has_clips) return true;
     // Fallback: explicit has_clips flag from the API.
-    return !!a.has_clips;
+    return !!a.has_clips || !!clipAvailability[a.id];
   };
 
   const openClipsForAnalysis = async (analysisId: string) => {
