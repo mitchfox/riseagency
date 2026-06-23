@@ -1,6 +1,6 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { MapPin, Clock, Eye, Globe } from "lucide-react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { ProposalVisit } from "./ProposalVisitorsBell";
 
 const fmtDuration = (s: number | null | undefined) => {
@@ -79,14 +79,51 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
     });
   }, [visits]);
 
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  const computePosition = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const panelWidth = 420;
+    let left = r.left;
+    if (left + panelWidth > window.innerWidth - 12) left = Math.max(12, window.innerWidth - panelWidth - 12);
+    setPos({ top: r.bottom + 8, left });
+  };
+
+  const handleEnter = () => {
+    if (closeTimer.current) { window.clearTimeout(closeTimer.current); closeTimer.current = null; }
+    computePosition();
+    setOpen(true);
+  };
+  const handleLeave = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
+  };
+
   return (
-    <HoverCard openDelay={80} closeDelay={120}>
-      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent
-        align="start"
-        sideOffset={6}
-        className="w-[360px] max-w-[92vw] p-0 border-[#cbb96b]/40 bg-popover shadow-xl shadow-black/50"
+    <>
+      <div
+        ref={triggerRef}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        onFocus={handleEnter}
+        onBlur={handleLeave}
+        onClick={() => { computePosition(); setOpen((o) => !o); }}
+        className="contents"
       >
+        {children}
+      </div>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <div
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: 420, maxWidth: "92vw", zIndex: 1000 }}
+          className="rounded-md border border-[#cbb96b]/40 bg-popover text-popover-foreground shadow-xl shadow-black/50 p-0 animate-in fade-in-0 zoom-in-95"
+        >
         <div className="flex items-center justify-between px-3 py-2 border-b border-border/60">
           <span className="text-[10px] uppercase tracking-[0.18em] text-[#cbb96b] font-semibold flex items-center gap-1.5">
             <Eye className="h-3 w-3" /> Visitor detail
@@ -95,7 +132,7 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
             {sessions.length} visitor{sessions.length === 1 ? "" : "s"}
           </span>
         </div>
-        <ul className="divide-y divide-border/50 max-h-[320px] overflow-y-auto">
+        <ul className="divide-y divide-border/50 max-h-[360px] overflow-y-auto">
           {sessions.map((s) => (
             <li key={s.key} className="px-3 py-2.5 text-xs space-y-1.5">
               <div className="flex items-start justify-between gap-2">
@@ -131,7 +168,9 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
             </li>
           ))}
         </ul>
-      </HoverCardContent>
-    </HoverCard>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
