@@ -1811,7 +1811,9 @@ function KeyDetailsCard({
     }
   };
 
-  // Adaptive grid: 2 cols on mobile, scale up so 5+ tiles still look balanced.
+  // Adaptive grid: 2 cols on mobile. Keep five key details as a clean 3-2
+  // desktop split instead of the awkward 4-1 row, especially on multi-player
+  // proposals where each player's saved defaults can differ.
   // Use a static map so Tailwind's JIT keeps the classes.
   const count = tiles.length;
   const colMap: Record<number, string> = {
@@ -1820,7 +1822,7 @@ function KeyDetailsCard({
     3: "sm:grid-cols-3",
     4: "sm:grid-cols-4",
   };
-  const desktopCols = count <= 4 ? colMap[count] : count % 3 === 0 ? "sm:grid-cols-3" : "sm:grid-cols-4";
+  const desktopCols = count <= 4 ? colMap[count] : "sm:grid-cols-3";
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
