@@ -560,7 +560,6 @@ export default function ClubOutreachManager() {
               <div className="flex items-center gap-3 mb-3">
                 <h3 className="text-white text-lg font-semibold tracking-tight">Viewed</h3>
                 <span className="text-xs text-muted-foreground">{viewedRows.length}</span>
-                <span className="text-[10px] uppercase tracking-wider text-[#cbb96b]/80">Non-UK visitors</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
