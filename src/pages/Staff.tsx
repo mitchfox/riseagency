@@ -966,7 +966,7 @@ const Staff = () => {
           sections: [
 { id: 'clubnetwork', title: 'Network', icon: Network },
             { id: 'playerlist', title: 'Player List', icon: Users },
-            { id: 'representationoffers', title: 'Representation Offers', icon: UserRoundCheck },
+            { id: 'representationoffers', title: 'Player Outreach', icon: UserRoundCheck },
             { id: 'casestudies', title: 'Scripts', icon: MessageSquare },
             { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
             { id: 'recruitment', title: 'Recruitment', icon: Target },
