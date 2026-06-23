@@ -215,6 +215,30 @@ export default function ClubOutreachManager() {
       ? `${EXTERNAL_APP_BASE}/agents/${shortId}`
       : `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
 
+  // On Lovable preview / sandbox hosts, opening the production URL escapes
+  // the iframe so you can't see how the proposal looks at a mobile width
+  // from here. Detect those hosts and use a same-origin URL instead so it
+  // opens in a sibling tab inside Lovable. On the live site it falls back
+  // to the external production URL as before.
+  const isLovablePreviewHost = () => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    return h === "localhost"
+      || h.endsWith(".lovable.app")
+      || h.endsWith(".lovableproject.com")
+      || h.endsWith(".lovable.dev");
+  };
+  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent', externalUrl?: string) => {
+    if (isLovablePreviewHost()) {
+      const path = targetType === 'agent'
+        ? `/agents/${shortId}`
+        : `/club-proposal/${shortId}`;
+      window.open(`${window.location.origin}${path}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    openExternalUrl(externalUrl ?? externalProposalUrl(shortId, targetType));
+  };
+
   const copyLink = async (shortId: string, targetType?: 'club' | 'agent') => {
     await navigator.clipboard.writeText(proposalUrl(shortId, targetType));
     toast.success("Link copied");
@@ -281,7 +305,7 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex w-full sm:w-auto sm:inline-flex overflow-x-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
+      <div className="grid grid-cols-2 sm:inline-flex sm:w-auto sm:flex w-full rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'outreach', label: 'Outreach' },
           { v: 'strategy', label: 'Strategy' },
@@ -292,7 +316,7 @@ export default function ClubOutreachManager() {
             key={t.v}
             type="button"
             onClick={() => setTopTab(t.v)}
-            className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-wider rounded-md transition ${
+            className={`w-full sm:w-auto whitespace-nowrap text-center px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-wider rounded-md transition ${
               topTab === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -309,7 +333,7 @@ export default function ClubOutreachManager() {
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>
-      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+      <div className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'club', label: 'Club Outreach' },
           { v: 'agent', label: 'Agent Outreach' },
@@ -318,7 +342,7 @@ export default function ClubOutreachManager() {
             key={t.v}
             type="button"
             onClick={() => setMode(t.v)}
-            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+            className={`w-full sm:w-auto text-center px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
               mode === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -326,16 +350,16 @@ export default function ClubOutreachManager() {
           </button>
         ))}
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 items-stretch text-center sm:text-left">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+        <div className="grid grid-cols-2 sm:flex gap-2">
+          <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
-          <Button variant="outline" onClick={() => setSettingsOpen(true)}>
+          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
         </div>
@@ -371,6 +395,7 @@ export default function ClubOutreachManager() {
                       players={players}
                       url={proposalUrl(r.short_id, r.target_type)}
                       externalUrl={externalProposalUrl(r.short_id, r.target_type)}
+                      onOpen={() => openProposalLink(r.short_id, r.target_type, externalProposalUrl(r.short_id, r.target_type))}
                       onCopy={() => copyLink(r.short_id, r.target_type)}
                       onEdit={() => setEditRow(r)}
                       onLog={() => setLogRow(r)}
@@ -407,7 +432,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
+function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -545,7 +570,7 @@ function OutreachCard({ row, url, externalUrl, players, onCopy, onEdit, onLog, o
           title="Open link in browser"
           onClick={(e) => {
             e.preventDefault();
-            openExternalUrl(externalUrl);
+            onOpen();
           }}
         >
           <ExternalLink className="h-3.5 w-3.5" />
