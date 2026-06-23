@@ -2002,10 +2002,10 @@ function MatchByMatchCard({
     return null;
   };
 
-  const isStrong = (raw: any, key: string, mins: number | null): boolean => {
-    if (raw === null || raw === undefined || raw === "") return false;
+  const gradeFor = (raw: any, key: string, mins: number | null): string | null => {
+    if (raw === null || raw === undefined || raw === "") return null;
     const n = Number(raw);
-    if (!Number.isFinite(n)) return false;
+    if (!Number.isFinite(n)) return null;
     // Try the key directly, then strip the `_per90` suffix so per-90 keys
     // map back to their base metric configs (e.g. `npxg_per90` → `npxg`).
     const candidates = [key, key.replace(/_per90$/i, "")];
@@ -2014,11 +2014,34 @@ function MatchByMatchCard({
       const norm = normalizeStatKey(c);
       if (hasThresholds(norm)) { mk = norm; break; }
     }
-    if (!mk) return false;
+    if (!mk) return null;
     // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
     const isPct = /_pct$|_percentage$/i.test(key);
     const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
-    return STRONG_GRADES.has(getGradeForScore(mk, scaled).grade);
+    const g = getGradeForScore(mk, scaled).grade;
+    return STRONG_GRADES.has(g) ? g : null;
+  };
+
+  // Ovular pill styling that deepens with the grade. Top tier (A*) uses Rise Gold.
+  const pillClass = (grade: string | null): string => {
+    if (!grade) return "";
+    switch (grade) {
+      case "B":
+      case "B-":
+        return "bg-emerald-500/15 text-emerald-200 shadow-[0_0_10px_-2px_rgba(16,185,129,0.45)]";
+      case "B+":
+        return "bg-emerald-500/25 text-emerald-100 shadow-[0_0_12px_-2px_rgba(16,185,129,0.6)]";
+      case "A-":
+        return "bg-emerald-500/40 text-white shadow-[0_0_14px_-2px_rgba(16,185,129,0.75)]";
+      case "A":
+        return "bg-emerald-600/60 text-white shadow-[0_0_18px_-2px_rgba(5,150,105,0.85)]";
+      case "A+":
+        return "bg-emerald-700/75 text-white shadow-[0_0_20px_-2px_rgba(4,120,87,0.95)]";
+      case "A*":
+        return "bg-[#C6A332]/85 text-black shadow-[0_0_22px_-2px_rgba(198,163,50,0.95)]";
+      default:
+        return "";
+    }
   };
 
   const fmtDate = (iso: string) => {
@@ -2052,7 +2075,7 @@ function MatchByMatchCard({
                   <tr className="bg-white/[0.04] text-white/60">
                     <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
                     {c.metrics.map((m) => (
-                      <th key={m.key} className="text-right px-2.5 py-2 font-medium whitespace-nowrap">
+                      <th key={m.key} className="text-center px-2.5 py-2 font-medium whitespace-nowrap">
                         {m.label}
                       </th>
                     ))}
@@ -2083,18 +2106,26 @@ function MatchByMatchCard({
                           </div>
                         </div>
                       </td>
-                      {c.metrics.map((m) => (
-                        <td
-                          key={m.key}
-                          className={`px-2.5 py-1.5 text-right tabular-nums whitespace-nowrap ${
-                            isStrong(getVal(a, m.key), m.key, a.minutes_played ?? null)
-                              ? "text-emerald-200 bg-emerald-400/[0.10] shadow-[inset_0_0_18px_-4px_rgba(74,222,128,0.5)]"
-                              : "text-white/80"
-                          }`}
-                        >
-                          {fmtVal(getVal(a, m.key), m.key)}
-                        </td>
-                      ))}
+                      {c.metrics.map((m) => {
+                        const g = gradeFor(getVal(a, m.key), m.key, a.minutes_played ?? null);
+                        const pill = pillClass(g);
+                        return (
+                          <td
+                            key={m.key}
+                            className="px-2.5 py-1.5 text-center tabular-nums whitespace-nowrap"
+                          >
+                            {pill ? (
+                              <span className={`inline-block rounded-full px-2.5 py-0.5 ${pill}`}>
+                                {fmtVal(getVal(a, m.key), m.key)}
+                              </span>
+                            ) : (
+                              <span className="text-white/80">
+                                {fmtVal(getVal(a, m.key), m.key)}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
