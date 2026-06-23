@@ -233,7 +233,9 @@ export default function ClubOutreachManager() {
       const path = targetType === 'agent'
         ? `/agents/${shortId}`
         : `/club-proposal/${shortId}`;
-      window.open(`${window.location.origin}${path}`, "_blank", "noopener,noreferrer");
+      // Navigate in-place so the proposal renders inside the Lovable preview
+      // iframe at whatever device width you're testing.
+      window.location.assign(path);
       return;
     }
     openExternalUrl(externalUrl ?? externalProposalUrl(shortId, targetType));
