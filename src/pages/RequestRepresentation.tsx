@@ -1484,6 +1484,138 @@ export const DetailView = ({
               ))}
             </div>
           )}
+
+          {/* Who we've worked with — body copy + live carousel */}
+          {activeCard === "worked_with" && (
+            <div className="space-y-4">
+              <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                <p
+                  className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                  style={{ textWrap: "pretty" } as React.CSSProperties}
+                >
+                  {widont(t(
+                    "representation.worked_with_body",
+                    "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football. Now we RISE more holistically with our players combining exclusive representation with elite performance training.",
+                  ))}
+                </p>
+              </div>
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                <PlayersWeWorkWith bare />
+              </div>
+            </div>
+          )}
+
+          {/* The Directors — split card, marble halves, diagonal gold divider */}
+          {activeCard === "directors" && (
+            <div
+              className="relative overflow-hidden rise-slant-card-lg border border-border/60"
+              style={solidBlackSectionStyle}
+            >
+              <div className="grid md:grid-cols-2">
+                {/* Jolon — black marble side, colour photo */}
+                <div
+                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
+                  style={{
+                    backgroundImage: "url('/black-marble.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+                  <img
+                    src={jolonHeadshotAsset.url}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="pointer-events-none absolute bottom-0 right-0 h-[88%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      WebkitMaskComposite: "source-in",
+                      maskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      maskComposite: "intersect",
+                    } as React.CSSProperties}
+                  />
+                  <div className="relative">
+                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+                      {t("representation.director_role_founder", "Founder")}
+                    </p>
+                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-foreground md:text-3xl">
+                      {t("representation.director_jolon_name", "Jolon Levene")}
+                    </p>
+                    <p
+                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-foreground/90 md:text-[14.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.director_jolon_bio",
+                        "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
+                      ))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Kuda — white marble side, B&W photo */}
+                <div
+                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
+                  style={{
+                    backgroundImage: "url('/white-marble.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-white/10 to-white/40" />
+                  <img
+                    src={kudaHeadshotAsset.url}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="pointer-events-none absolute bottom-0 right-0 h-[92%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      WebkitMaskComposite: "source-in",
+                      maskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      maskComposite: "intersect",
+                    } as React.CSSProperties}
+                  />
+                  <div className="relative">
+                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-[hsl(var(--gold))] md:text-[12px]">
+                      {t("representation.director_role_director", "Director")}
+                    </p>
+                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-black md:text-3xl">
+                      {t("representation.director_kuda_name", "Kuda Butawo")}
+                    </p>
+                    <p
+                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-black/85 md:text-[14.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.director_kuda_bio",
+                        "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
+                      ))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diagonal Rise Gold divider between the two halves */}
+              <div className="pointer-events-none absolute inset-0 hidden md:block">
+                <div
+                  className="absolute top-0 bottom-0 left-1/2 w-[3px] -translate-x-1/2 bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
+                  style={{ transform: "translateX(-50%) skewX(-9deg)" }}
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 md:hidden">
+                <div
+                  className="mx-auto h-[3px] w-[88%] bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
+                  style={{ transform: "skewY(-3deg)" }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.section>
