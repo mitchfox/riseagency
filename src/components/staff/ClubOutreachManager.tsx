@@ -215,6 +215,30 @@ export default function ClubOutreachManager() {
       ? `${EXTERNAL_APP_BASE}/agents/${shortId}`
       : `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
 
+  // On Lovable preview / sandbox hosts, opening the production URL escapes
+  // the iframe so you can't see how the proposal looks at a mobile width
+  // from here. Detect those hosts and use a same-origin URL instead so it
+  // opens in a sibling tab inside Lovable. On the live site it falls back
+  // to the external production URL as before.
+  const isLovablePreviewHost = () => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    return h === "localhost"
+      || h.endsWith(".lovable.app")
+      || h.endsWith(".lovableproject.com")
+      || h.endsWith(".lovable.dev");
+  };
+  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent', externalUrl?: string) => {
+    if (isLovablePreviewHost()) {
+      const path = targetType === 'agent'
+        ? `/agents/${shortId}`
+        : `/club-proposal/${shortId}`;
+      window.open(`${window.location.origin}${path}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    openExternalUrl(externalUrl ?? externalProposalUrl(shortId, targetType));
+  };
+
   const copyLink = async (shortId: string, targetType?: 'club' | 'agent') => {
     await navigator.clipboard.writeText(proposalUrl(shortId, targetType));
     toast.success("Link copied");
