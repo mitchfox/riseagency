@@ -2083,6 +2083,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         stars_url_override: data?.stars_url_override ?? "",
         highlights_url: data?.highlights_url ?? "",
         proof_path: data?.proof_of_representation_path ?? null,
+        transfermarkt_url: (data as any)?.transfermarkt_url ?? "",
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
@@ -2100,6 +2101,12 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       const dv = (data as any)?.default_selected_video_ids;
       setPlayerDefaultSelectedVideoIds(Array.isArray(dv) ? dv : []);
       setPlayerDefaultMbmCategory(((data as any)?.default_match_by_match_category as string | null) ?? "");
+      const so2 = (data as any)?.match_by_match_stat_orders;
+      setPlayerStatOrders(so2 && typeof so2 === "object" && !Array.isArray(so2) ? so2 : {});
+      const go = (data as any)?.match_by_match_game_order;
+      setPlayerGameOrder(Array.isArray(go) ? go : []);
+      setStatOrderSeasonId(null);
+      setPlayerSeasonGames([]);
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
