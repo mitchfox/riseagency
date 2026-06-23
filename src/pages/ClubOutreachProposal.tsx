@@ -254,6 +254,15 @@ export default function ClubOutreachProposal() {
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
   const heroAutoplayedRef = useRef(false);
+  // Main hero video carousel paging — matches the Stars-profile pattern used
+  // by the inline "Match-By-Match Video" card (logo tiles + arrows when there
+  // are more videos than fit on screen).
+  const [heroCarouselStart, setHeroCarouselStart] = useState(0);
+  const [heroMobileVisibleRows, setHeroMobileVisibleRows] = useState(1);
+  useEffect(() => {
+    setHeroCarouselStart(0);
+    setHeroMobileVisibleRows(1);
+  }, [activeIndex]);
 
   useEffect(() => {
     const node = contactsRef.current;
