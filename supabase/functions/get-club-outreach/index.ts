@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order, default_situation"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order, default_situation, default_fit_recommendation"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -467,7 +467,9 @@ Deno.serve(async (req) => {
         return {
           player: p ?? null,
           position_slot: e.position_slot,
-          fit_recommendation: e.fit_recommendation,
+          fit_recommendation: ((e as any).fit_recommendation && String((e as any).fit_recommendation).trim())
+            ? (e as any).fit_recommendation
+            : ((d as any)?.default_fit_recommendation ?? null),
           show_form: (e as any).show_form ?? (link as any).show_form ?? false,
           show_in_numbers: (e as any).show_in_numbers ?? (link as any).show_in_numbers ?? false,
           show_season_stats: (e as any).show_season_stats ?? (link as any).show_season_stats ?? false,
