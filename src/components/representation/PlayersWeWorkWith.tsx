@@ -22,7 +22,7 @@ interface Props {
 }
 
 /**
- * Rolling marquee of represented and mandated players for the
+ * Rolling marquee of worked-with and represented players for the
  * public representation / rise-with-us pages. Pulls live data from
  * the players table and limits this view to current RISE represented
  * players plus Fuel For Football performance-work players, excluding
