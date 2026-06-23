@@ -35,6 +35,8 @@ interface Entry {
 
 const MARKET_TABLE_KEY = "summer-26";
 const CLUB_FETCH_PAGE_SIZE = 1000;
+const CONTACT_FETCH_PAGE_SIZE = 1000;
+const CONTACT_SELECT = "id, name, club_name, position, email, phone, country";
 const BELGIUM_1ST_CLUBS = [
   "RSC Anderlecht",
   "Royal Antwerp FC",
@@ -118,6 +120,28 @@ const matchContactForClub = (
     (c) => c.position && re.test(c.position) && contactMatchesClub(c, clubName, country),
   ) ?? null;
 
+const matchContactByNameForClub = (
+  contacts: ContactRow[],
+  clubName: string,
+  country: string | null,
+  name: string | null | undefined,
+): ContactRow | null => {
+  const target = norm(name);
+  if (!target) return null;
+  return contacts.find((c) => norm(c.name) === target && contactMatchesClub(c, clubName, country)) ?? null;
+};
+
+const contactHasSavedDetails = (contact: ContactRow | null): boolean =>
+  Boolean(contact?.email?.trim() || contact?.phone?.trim());
+
+const upsertContactRow = (rows: ContactRow[], row: ContactRow): ContactRow[] => {
+  const idx = rows.findIndex((c) => c.id === row.id);
+  if (idx === -1) return [row, ...rows];
+  const next = [...rows];
+  next[idx] = row;
+  return next;
+};
+
 const additionalContactsForClub = (
   contacts: ContactRow[],
   clubName: string,
@@ -184,6 +208,21 @@ const fetchAllClubRows = async (): Promise<ClubRow[]> => {
   return all;
 };
 
+const fetchAllContactRows = async (): Promise<ContactRow[]> => {
+  const all: ContactRow[] = [];
+  for (let from = 0; ; from += CONTACT_FETCH_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("club_network_contacts")
+      .select(CONTACT_SELECT)
+      .order("id")
+      .range(from, from + CONTACT_FETCH_PAGE_SIZE - 1);
+    if (error) throw error;
+    all.push(...(((data ?? []) as unknown) as ContactRow[]));
+    if (!data || data.length < CONTACT_FETCH_PAGE_SIZE) break;
+  }
+  return all;
+};
+
 type ContactEditState = {
   club: ClubRow;
   role: "td" | "cs" | "extra";
@@ -218,6 +257,7 @@ function MarketContactSlot({
   const cleanDraft = draft.trim();
   const isDirty = cleanDraft !== value.trim();
   const hasSavedName = value.trim().length > 0;
+  const hasSavedContactDetails = contactHasSavedDetails(contact);
   const showConfirm = isDirty;
 
   const confirm = async () => {
@@ -231,10 +271,10 @@ function MarketContactSlot({
     }
   };
 
-  const Icon = showConfirm ? Check : contact ? Pencil : UserPlus;
+  const Icon = showConfirm ? Check : hasSavedContactDetails ? Pencil : UserPlus;
   const buttonTitle = showConfirm
     ? "Confirm this person in Market Tables and Network"
-    : contact
+    : hasSavedContactDetails
       ? "Show or edit existing contact details"
       : hasSavedName
         ? "Add contact details for this person"
@@ -247,7 +287,6 @@ function MarketContactSlot({
         placeholder={placeholder}
         className={inputClassName}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={confirm}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
