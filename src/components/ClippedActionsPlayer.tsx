@@ -49,6 +49,8 @@ interface ClippedActionsPlayerProps {
   onReorderClip?: (fromIndex: number, toPosition: number) => void;
   /** Remove clip from playlist callback. */
   onRemoveClip?: (index: number) => void;
+  /** Hide R90/action score badges (used by club proposal context). */
+  hideScores?: boolean;
 }
 
 const normaliseType = (t: string) => (t || '').trim().toLowerCase().replace(/\s+/g, ' ');
