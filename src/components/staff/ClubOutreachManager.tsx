@@ -57,7 +57,22 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
-interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; situation: string | null; sort_order: number; }
+interface LinkPlayerRow {
+  player_id: string;
+  position_slot: string | null;
+  fit_recommendation: string | null;
+  situation: string | null;
+  sort_order: number;
+  show_form?: boolean | null;
+  show_in_numbers?: boolean | null;
+  show_season_stats?: boolean | null;
+  show_strengths?: boolean | null;
+  season_data_mode?: 'popup' | 'link' | null;
+  season_id?: string | null;
+  selected_video_ids?: string[] | null;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
+}
 interface OutreachRow {
   id: string;
   short_id: string;
