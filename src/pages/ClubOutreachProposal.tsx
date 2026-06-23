@@ -1859,8 +1859,15 @@ function MatchByMatchCard({
     if (raw === null || raw === undefined || raw === "") return false;
     const n = Number(raw);
     if (!Number.isFinite(n)) return false;
-    const mk = normalizeStatKey(key);
-    if (!hasThresholds(mk)) return false;
+    // Try the key directly, then strip the `_per90` suffix so per-90 keys
+    // map back to their base metric configs (e.g. `npxg_per90` → `npxg`).
+    const candidates = [key, key.replace(/_per90$/i, "")];
+    let mk: string | null = null;
+    for (const c of candidates) {
+      const norm = normalizeStatKey(c);
+      if (hasThresholds(norm)) { mk = norm; break; }
+    }
+    if (!mk) return false;
     // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
     const isPct = /_pct$|_percentage$/i.test(key);
     const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
