@@ -2439,7 +2439,8 @@ function MatchByMatchCard({
                       {visibleMetrics.map((m) => {
                         const displayValue = getValue(a, m.key, viewMode);
                         const per90Value = getValue(a, m.key, "per90");
-                        const g = gradeFor(m.key, per90Value);
+                        // Grade pills are only meaningful in the per-90 view.
+                        const g = viewMode === "per90" ? gradeFor(m.key, per90Value) : null;
                         const pill = pillClass(g);
                         return (
                           <td
