@@ -2105,6 +2105,59 @@ function MatchByMatchOrderEditor({
   );
 }
 
+function SortableGameRow({
+  id,
+  index,
+  opponent,
+  date,
+  isFirst,
+  isLast,
+  onUp,
+  onDown,
+}: {
+  id: string;
+  index: number;
+  opponent: string | null;
+  date: string | null;
+  isFirst: boolean;
+  isLast: boolean;
+  onUp: () => void;
+  onDown: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-0.5"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <span className="text-muted-foreground w-6">{index + 1}.</span>
+      <span className="flex-1 truncate">{opponent ?? "?"}</span>
+      <span className="text-muted-foreground text-[10px]">{date}</span>
+      <button type="button" onClick={onUp} disabled={isFirst} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+        <ArrowUp className="h-3 w-3" />
+      </button>
+      <button type="button" onClick={onDown} disabled={isLast} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+        <ArrowDown className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
 const ADDABLE_KEY_DETAIL_KINDS: KeyDetailKind[] = [
   "club",
   "age",
