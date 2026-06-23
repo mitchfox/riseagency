@@ -1,62 +1,44 @@
-## What changes
+Plan:
 
-### 1. Per-player defaults — what we save
+1. Get Staff opening on Club Outreach, not Team Performance
+- Make `/staff` always resolve to `section=cluboutreach` on first staff load.
+- Ignore stale `teamperformance` and `overview` values from URL/local storage on initial load, so old cached links cannot keep forcing the wrong section.
+- Keep direct clicks in the staff sidebar working after the page is already open.
 
-Extend `club_outreach_player_defaults` so each player can carry defaults for everything that's currently set per outreach. New columns:
+2. Fix the dynamic import failure across staff sections
+- Add a safe lazy-load retry for staff section chunks so a stale published asset hash does not leave Staff broken.
+- If a dynamic import fails, clear app caches/service workers and reload once rather than showing a dead staff section.
+- Keep this scoped to staff chunk loading, not hosting redirects.
 
-- `default_show_form` (bool)
-- `default_show_in_numbers` (bool)
-- `default_show_season_stats` (bool)
-- `default_show_strengths` (bool)
-- `default_section_order` (jsonb — array of section keys)
+3. Put Club Outreach forms inline properly
+- Ensure Settings, Create New Outreach and Edit Outreach render as in-page panels, not popups.
+- Place the inline panel directly under the action buttons so it is visible immediately after clicking.
+- Keep Communications/logging as its own dialog only if it is not part of the settings/create/edit flow.
 
-These join the existing per-player default columns: `default_selected_video_ids`, `default_season_id`, `default_season_data_mode`, `default_key_details`, `default_fit_recommendation`, `default_position`, `default_alternate_profile_link_ids`, `default_alternate_profiles_blurb`, `highlights_url`, `stars_url_override`, `proof_of_representation_path`.
+4. Rebuild Market Tables around saved Strategy leagues and nations
+- Use saved strategies as the source of truth for which countries/leagues appear in Market Tables.
+- Use each strategy’s saved `club_ids`, `country`, `league` and `league_level` to build the table rows.
+- Display all clubs attached to every saved strategy, including Conference League, Europa League and Champions League where saved.
+- Support both `league` and `league_level` filters so saved strategy values do not disappear because the wrong field is read.
+- Remove the previous behaviour that shows unrelated full-club-database rows by default.
 
-### 2. Per-player defaults — settings UI
+5. Repair specific missing strategy and league data paths
+- Check Tyrese Conference League, Czech Republic 2nd and the Belgium 1st/2nd strategies from the saved strategy records.
+- Ensure each saved strategy produces a non-zero club list if it has saved clubs.
+- If a saved strategy has filters but no club IDs, derive the club list from the matching saved country/league fields instead of showing 0.
 
-In the Club Outreach Settings dialog, the per-player block gains:
+6. Fix Market Tables contacts in expanded club rows
+- Show actual contact name, role, email, phone and link details instead of repeating the club name.
+- Keep the Add Additional Contact button visible after expanding a club.
+- Add a button on existing contacts to add missing number/contact/link details.
+- When a contact is added to Network, carry club, role, name and contact details with it.
 
-- "Show on proposal" toggles (Form / In Numbers / Season Stats / Strengths)
-- "Default season to show" + "Season data display" (already partly there — keep)
-- "Videos to include by default" — same picker as the outreach dialog, sourced from the player's Stars highlights
-- "Default key details tiles" — same `KeyDetailsBuilder` used on the outreach
-- "Default section order" — same `SectionOrderBuilder` used on the outreach
+7. Verify Quick Log ordering
+- Confirm Quick Log is sorted by number of completions, highest first.
+- Keep the completion count visible on each quick-log action.
 
-One "Save player defaults" button covers everything.
-
-### 3. New outreach dialog — prefill + collapse
-
-When a player is added to a new outreach (and it's the primary player), prefill from their defaults:
-
-- show_form / show_in_numbers / show_season_stats / show_strengths
-- selected_video_ids
-- season_id / season_data_mode
-- key_details (only if outreach doesn't already have custom ones)
-- section_order
-
-Existing outreaches don't get overwritten — defaults only fill in when the field is empty / at its initial state.
-
-Then group the editor into collapsed sections (shadcn `Accordion`, all closed by default) so the dialog is short and you only open what you want to override. Groups:
-
-1. Basics — club / agent target, players, language, prepared for, mandate
-2. Show on proposal — the four toggles
-3. Videos to include
-4. Season data — mode + season selector
-5. Key details tiles
-6. Section order
-7. Alternate Options (blurb + linked profiles)
-
-Header strip stays visible; everything below collapses.
-
-### 4. Out of scope
-
-- No changes to the public proposal page rendering — same fields, just better defaults flowing in.
-- Multi-player outreaches: defaults still pull from the primary (first) player only, same as today.
-
-## Technical notes
-
-- Migration: `ALTER TABLE public.club_outreach_player_defaults ADD COLUMN ...` for the five new columns. Table already has grants and policies — no new grants needed.
-- `OutreachDialog` already loads the player defaults row in two places (lines ~750 and ~858 of `ClubOutreachManager.tsx`). Extend those two `select(...)` calls and apply the new defaults into local state when the primary player is set and the corresponding outreach field is still at its initial empty value.
-- `saveDefaults` in `SettingsDialog` (~line 2147) gets the new columns added to its upsert.
-- `KeyDetailsBuilder` and `SectionOrderBuilder` are already exported in the same file — reuse directly in the settings panel.
-- Wrap the existing editor blocks in `Accordion` / `AccordionItem` / `AccordionTrigger` / `AccordionContent` from `@/components/ui/accordion`. Default `value=[]` so all sections start collapsed.
+8. Verify in preview before reporting back
+- Load `/staff` and confirm it opens Club Outreach.
+- Open Club Outreach without the dynamic import error.
+- Open Market Tables and confirm saved strategy countries/leagues show clubs instead of 0 results.
+- Expand a club and confirm additional contacts display the right fields and edit/add buttons.
