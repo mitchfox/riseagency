@@ -13,6 +13,7 @@ interface ClubRow {
   club_name: string;
   country: string | null;
   league: string | null;
+  league_level?: string | null;
   image_url: string | null;
 }
 
@@ -156,13 +157,12 @@ export default function MarketTablesTab() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // 1) Collect every club_id referenced by current strategies, and remember
-      //    each strategy's country + league_level so we can label the club with
-      //    the strategy's league even when club_map_positions has no league row.
+      // Market Tables must always be the full club database, not just clubs that
+      // happen to be referenced by strategies. Fetch every club directly, then
+      // overlay strategy labels where saved filters carry a more precise league.
       const { data: stratRows } = await (supabase as any)
         .from("club_outreach_strategies")
         .select("filters, defaults");
-      const ids = new Set<string>();
       // clubId -> { country, league_level } from the strategy that references it.
       const stratByClub = new Map<string, { country: string | null; level: string | null }>();
       (stratRows ?? []).forEach((s: any) => {
@@ -170,27 +170,17 @@ export default function MarketTablesTab() {
         const sLevel = (s?.filters?.league_level ?? null) as string | null;
         (s?.filters?.club_ids ?? []).forEach((id: string) => {
           if (!id) return;
-          ids.add(id);
           if (!stratByClub.has(id)) {
             stratByClub.set(id, { country: sCountry, level: sLevel });
           }
         });
-        (s?.defaults?.extra_clubs ?? []).forEach((ec: any) => {
-          if (ec?.id) ids.add(ec.id);
-        });
       });
-
-      if (ids.size === 0) {
-        setClubs([]);
-        setLoading(false);
-        return;
-      }
 
       const [{ data: clubRows }, { data: contactRows }, { data: entryRows }] = await Promise.all([
         supabase
           .from("club_map_positions")
-          .select("id, club_name, country, league, image_url")
-          .in("id", Array.from(ids)),
+          .select("id, club_name, country, league, league_level, image_url")
+          .order("club_name"),
         supabase
           .from("club_network_contacts")
           .select("id, name, club_name, position, email, phone, country"),
@@ -209,7 +199,7 @@ export default function MarketTablesTab() {
         return {
           ...c,
           country: c.country ?? s.country,
-          league: c.league ?? s.level,
+          league: c.league ?? c.league_level ?? s.level,
         };
       });
 
