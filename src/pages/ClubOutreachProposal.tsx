@@ -303,11 +303,19 @@ export default function ClubOutreachProposal() {
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
+    // Only surface the position chips when there are 3+ primary players AND
+    // at least two of them share the same slot — otherwise the chips are
+    // noise and the "Back to all players" button is enough.
+    if (data.players.length < 3) return [];
+    const counts = new Map<string, number>();
     data.players.forEach((e) => {
       const s = (e.position_slot ?? "").trim();
-      if (s && s.toLowerCase() !== "all") set.add(s);
+      if (!s || s.toLowerCase() === "all") return;
+      counts.set(s, (counts.get(s) ?? 0) + 1);
+      set.add(s);
     });
-    return Array.from(set);
+    const hasDuplicateSlot = Array.from(counts.values()).some((n) => n >= 2);
+    return hasDuplicateSlot ? Array.from(set) : [];
   }, [data]);
 
   const filteredPlayers = useMemo(() => {
