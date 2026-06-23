@@ -620,13 +620,13 @@ export default function ClubOutreachProposal() {
               />
             );
           })()}
-          {!data.link.show_form && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
+          {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
             <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
           )}
-          {!data.link.show_in_numbers && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
+          {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
             <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
           )}
-          {!data.link.show_season_stats && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
+          {!showSeasonStatsForCurrent && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
             <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
           )}
           {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
@@ -913,7 +913,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} items={normaliseKeyDetails(data.link.key_details)} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} />
       </section>
 
       {/* Hero - first Stars highlight video, falls back to player image */}
@@ -1139,7 +1139,7 @@ export default function ClubOutreachProposal() {
 
       {/* Sections after the hero video - order is staff-configurable per link */}
       {(() => {
-        const order = normaliseSectionOrder(data.link.section_order);
+        const order = sectionOrderForCurrent;
         const renderers: Record<ProposalSectionKey, () => React.ReactNode> = {
           fit: () => fitText ? (
             <section key="fit" className="max-w-3xl mx-auto px-6 mt-6">
@@ -1160,9 +1160,9 @@ export default function ClubOutreachProposal() {
           cards: () => (
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
-                href={data.link.season_data_mode === 'popup' ? null : current.stars_url}
+                href={seasonDataModeForCurrent === 'popup' ? null : current.stars_url}
                 onClick={
-                  data.link.season_data_mode === 'popup'
+                  seasonDataModeForCurrent === 'popup'
                     ? () => {
                         setInlineDataOpen(true);
                         try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
@@ -1207,22 +1207,22 @@ export default function ClubOutreachProposal() {
               )}
             </section>
           ),
-          form: () => (data.link.show_form && current.form_config && current.form_analyses) ? (
+          form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
               <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
             </section>
           ) : null,
-          in_numbers: () => (data.link.show_in_numbers && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
+          in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
             <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
               <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
             </section>
           ) : null,
-          season_stats: () => (data.link.show_season_stats && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
+          season_stats: () => (showSeasonStatsForCurrent && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
             <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
               <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
             </section>
           ) : null,
-          strengths: () => (data.link.show_strengths && current.strengths_and_play_style) ? (
+          strengths: () => (showStrengthsForCurrent && current.strengths_and_play_style) ? (
             <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
               <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
             </section>
