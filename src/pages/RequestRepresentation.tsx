@@ -160,7 +160,7 @@ export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }>
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
   worked_with:  { key: "representation.worked_with_title", fallback: "Who We've Worked With" },
-  directors:    { key: "representation.directors_title",   fallback: "The Directors" },
+  directors:    { key: "representation.directors_title",   fallback: "Our Background" },
 };
 
 export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
