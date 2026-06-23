@@ -1193,6 +1193,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                         value={e.fit_recommendation ?? ""}
                         onChange={(ev) => updateEntry(e.player_id, { fit_recommendation: ev.target.value })}
                       />
+                      <Textarea
+                        rows={3}
+                        className="mt-2 text-sm"
+                        placeholder={`Situation for ${p?.name?.split(" ")[0] ?? "this player"} — contract status, availability, transfer context.`}
+                        value={e.situation ?? ""}
+                        onChange={(ev) => updateEntry(e.player_id, { situation: ev.target.value })}
+                      />
                     </div>
                   );
                 })}
