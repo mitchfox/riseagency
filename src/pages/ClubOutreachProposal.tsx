@@ -2289,7 +2289,9 @@ function MatchByMatchCard({
                         </div>
                       </td>
                       {c.metrics.map((m) => {
-                        const g = gradeFor(getVal(a, m.key), m.key, a.minutes_played ?? null);
+                        const displayValue = getValue(a, m.key, viewMode);
+                        const per90Value = getValue(a, m.key, "per90");
+                        const g = gradeFor(m.key, per90Value);
                         const pill = pillClass(g);
                         return (
                           <td
@@ -2298,11 +2300,11 @@ function MatchByMatchCard({
                           >
                             {pill ? (
                               <span className={`inline-block rounded-full px-2.5 py-0.5 ${pill}`}>
-                                {fmtVal(getVal(a, m.key), m.key)}
+                                {fmtVal(displayValue, m.key)}
                               </span>
                             ) : (
                               <span className="text-white/80">
-                                {fmtVal(getVal(a, m.key), m.key)}
+                                {fmtVal(displayValue, m.key)}
                               </span>
                             )}
                           </td>
