@@ -1088,7 +1088,7 @@ const Staff = () => {
           { id: 'clubnetwork', title: 'Network', icon: Network },
           { id: 'playerlist', title: 'Player List', icon: Users },
           { id: 'interactionhistory', title: 'Interaction History', icon: MessageSquare },
-           { id: 'representationoffers', title: 'Representation Offers', icon: UserRoundCheck },
+           { id: 'representationoffers', title: 'Player Outreach', icon: UserRoundCheck },
            { id: 'casestudies', title: 'Scripts', icon: MessageSquare },
            { id: 'transferreports', title: 'Transfer Reports', icon: FileText },
           { id: '_group_scouting', title: 'Scouting', isGroupLabel: true },
