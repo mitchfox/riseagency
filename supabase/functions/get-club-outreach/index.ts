@@ -232,16 +232,19 @@ Deno.serve(async (req) => {
       (defaultsRows ?? []).map((d: any) => [d.player_id, d])
     );
 
-    // Form configs + recent analyses for the optional Form banner
-    // Resolve the optional season window once for all players (the link
-    // currently scopes to the primary player's season).
-    let seasonStartDate: string | null = null;
-    let seasonEndDate: string | null = null;
-    if ((link as any).season_id) {
+    // Form configs + recent analyses for the optional Form banner. Season
+    // windows are now resolved per player attached to the outreach.
+    const seasonBoundsCache = new Map<string, Promise<{ start: string | null; end: string | null }>>();
+    const getSeasonBounds = (seasonId: string | null | undefined) => {
+      if (!seasonId) return Promise.resolve({ start: null, end: null });
+      if (!seasonBoundsCache.has(seasonId)) {
+        seasonBoundsCache.set(seasonId, (async () => {
+          let seasonStartDate: string | null = null;
+          let seasonEndDate: string | null = null;
       const { data: season } = await supabase
         .from("player_seasons")
         .select("start_analysis_id, end_analysis_id")
-        .eq("id", (link as any).season_id)
+            .eq("id", seasonId)
         .maybeSingle();
       const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
       if (ids.length) {
@@ -258,7 +261,11 @@ Deno.serve(async (req) => {
           seasonEndDate = dates[dates.length - 1];
         }
       }
-    }
+          return { start: seasonStartDate, end: seasonEndDate };
+        })());
+      }
+      return seasonBoundsCache.get(seasonId)!;
+    };
 
     const [{ data: formCfgs }, { data: formAnalyses }] = await Promise.all([
       playerIds.length
@@ -278,8 +285,6 @@ Deno.serve(async (req) => {
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
-            if (seasonStartDate) q = q.gte("analysis_date", seasonStartDate);
-            if (seasonEndDate) q = q.lte("analysis_date", seasonEndDate);
             return q;
           })()
         : Promise.resolve({ data: [] as any[] }),
