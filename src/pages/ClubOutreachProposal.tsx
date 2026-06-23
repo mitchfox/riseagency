@@ -1481,7 +1481,27 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+      <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2">
+        <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+        {entry.transfermarkt_url ? (
+          <a
+            href={entry.transfermarkt_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on Transfermarkt"
+            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/10 bg-[#0a3853]/30 hover:bg-[#0a3853]/60 hover:border-[#1f7a8c]/60 text-[10px] uppercase tracking-[0.18em] text-white/85 transition"
+          >
+            <span
+              aria-hidden="true"
+              className="inline-flex items-center justify-center h-4 w-4 rounded-sm bg-[#1f7a8c] text-white text-[8px] font-bold leading-none"
+            >
+              TM
+            </span>
+            <span>Transfermarkt</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : null}
+      </div>
       <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
         {tiles.map((it, i) => renderTile(it, i))}
       </div>
