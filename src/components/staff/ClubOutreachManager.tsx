@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -320,6 +320,70 @@ export default function ClubOutreachManager() {
     return map;
   }, [filtered]);
 
+  const closeSettingsPanel = () => {
+    setSettingsOpen(false);
+    loadTemplates();
+    loadSettings();
+  };
+
+  if (newOpen) {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={() => setNewOpen(false)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Back to Outreach
+        </Button>
+        <OutreachDialog
+          mode={mode}
+          open={newOpen}
+          onClose={() => setNewOpen(false)}
+          players={players}
+          clubs={clubs}
+          allRows={rows}
+          defaultFit={defaultFit}
+          defaultSeasonDataMode={defaultSeasonDataMode}
+          defaultVideoMode={defaultVideoMode}
+          onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
+          onSaved={() => { setNewOpen(false); load(); }}
+        />
+      </div>
+    );
+  }
+
+  if (editRow) {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={() => setEditRow(null)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Back to Outreach
+        </Button>
+        <OutreachDialog
+          mode={(editRow.target_type ?? 'club') as OutreachMode}
+          open={!!editRow}
+          onClose={() => setEditRow(null)}
+          players={players}
+          clubs={clubs}
+          allRows={rows}
+          defaultFit={defaultFit}
+          defaultSeasonDataMode={defaultSeasonDataMode}
+          defaultVideoMode={defaultVideoMode}
+          editing={editRow}
+          onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
+          onSaved={() => { setEditRow(null); load(); }}
+        />
+      </div>
+    );
+  }
+
+  if (settingsOpen) {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={closeSettingsPanel} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Back to Outreach
+        </Button>
+        <SettingsDialog open={settingsOpen} onClose={closeSettingsPanel} players={players} clubs={clubs} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:inline-flex sm:w-auto sm:flex w-full rounded-lg border border-border bg-muted/30 p-1 gap-1">
@@ -373,10 +437,10 @@ export default function ClubOutreachManager() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
-          <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
+          <Button onClick={() => { setNewOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
-          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={() => { setSettingsOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
         </div>
@@ -414,7 +478,7 @@ export default function ClubOutreachManager() {
                       externalUrl={externalProposalUrl(r.short_id, r.target_type)}
                       onOpen={() => openProposalLink(r.short_id, r.target_type, externalProposalUrl(r.short_id, r.target_type))}
                       onCopy={() => copyLink(r.short_id, r.target_type)}
-                      onEdit={() => setEditRow(r)}
+                      onEdit={() => { setEditRow(r); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}
@@ -431,15 +495,6 @@ export default function ClubOutreachManager() {
         </div>
       )}
 
-      {newOpen && (
-      <OutreachDialog mode={mode} open={newOpen} onClose={() => setNewOpen(false)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setNewOpen(false); load(); }} />
-      )}
-      {editRow && (
-      <OutreachDialog mode={(editRow.target_type ?? 'club') as OutreachMode} open={!!editRow} onClose={() => setEditRow(null)} players={players} clubs={clubs} allRows={rows} defaultFit={defaultFit} defaultSeasonDataMode={defaultSeasonDataMode} defaultVideoMode={defaultVideoMode} editing={editRow} onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))} onSaved={() => { setEditRow(null); load(); }} />
-      )}
-      {settingsOpen && (
-        <SettingsDialog open={settingsOpen} onClose={() => { setSettingsOpen(false); loadTemplates(); loadSettings(); }} players={players} clubs={clubs} />
-      )}
       {logRow && (
         <CommunicationsDialog open={!!logRow} onClose={() => setLogRow(null)} outreach={logRow} players={players} />
       )}

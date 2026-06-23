@@ -175,6 +175,8 @@ import {
 } from "lucide-react";
 
 const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
+const DEFAULT_STAFF_SECTION = 'cluboutreach';
+const STALE_STAFF_DEFAULTS = new Set(['teamperformance', 'overview', 'dashboard']);
 
 const getPrimaryStaffRole = (roles: string[]) => {
   if (roles.includes('admin')) return 'admin';
@@ -360,8 +362,7 @@ const Staff = () => {
     // The user has repeatedly asked that Club Outreach is the opening section.
     // Stale links / localStorage values keep forcing teamperformance/overview,
     // so on initial mount we ignore those two and fall through to the default.
-    const STALE_DEFAULTS = new Set(['teamperformance', 'overview', 'dashboard']);
-    const urlSection = rawUrlSection && !STALE_DEFAULTS.has(rawUrlSection)
+    const urlSection = rawUrlSection && !STALE_STAFF_DEFAULTS.has(rawUrlSection)
       ? rawUrlSection
       : null;
     const isTrustedNetworkRole = !!currentRole && /trusted[_\s-]?network/i.test(currentRole);
@@ -371,7 +372,7 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'cluboutreach';
+    let defaultSection = DEFAULT_STAFF_SECTION;
     if (permissionManagedRole) {
       const viewable = getViewableSections();
       const firstViewable = viewable.find(s => s !== 'overview' && s !== 'teamperformance' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
@@ -417,7 +418,15 @@ const Staff = () => {
 
   // Keep URL in sync with section changes from searchParams
   useEffect(() => {
-    const section = searchParams.get('section');
+    const rawSection = searchParams.get('section');
+    // On cold load, ignore stale Team Performance/My Tasks URLs until the
+    // opening-section effect above has replaced them with Club Outreach. If the
+    // user later clicks Team Performance directly, expandedSection already
+    // matches it, so the click still works.
+    if (rawSection && STALE_STAFF_DEFAULTS.has(rawSection) && expandedSection !== rawSection) {
+      return;
+    }
+    const section = rawSection;
     if (section && isStaff && section !== expandedSection) {
       setExpandedSection(section as any);
       const cats = buildCategories();
@@ -570,7 +579,7 @@ const Staff = () => {
         if (updated.length > 0) {
           handleSectionToggle(updated[updated.length - 1]);
         } else {
-          handleSectionToggle('overview');
+          handleSectionToggle(DEFAULT_STAFF_SECTION);
         }
       }
       setTabsVersion(v => v + 1);
@@ -1157,7 +1166,14 @@ const Staff = () => {
     if (!isStaff || permissionsLoading || visibleSectionIds.length === 0) return;
     if (expandedSection && visibleSectionIds.includes(expandedSection)) return;
 
-    const fallbackSection = visibleSectionIds[0];
+    const rawUrlSection = searchParams.get('section');
+    const validUrlSection = rawUrlSection && !STALE_STAFF_DEFAULTS.has(rawUrlSection) && visibleSectionIds.includes(rawUrlSection)
+      ? rawUrlSection
+      : null;
+    const fallbackSection = validUrlSection
+      ?? (visibleSectionIds.includes(DEFAULT_STAFF_SECTION)
+        ? DEFAULT_STAFF_SECTION
+        : visibleSectionIds.find((id) => !STALE_STAFF_DEFAULTS.has(id)) ?? visibleSectionIds[0]);
     const fallbackCategory = categories.find((category) =>
       category.sections.some((section: any) => section.id === fallbackSection)
     )?.id || null;
@@ -1309,8 +1325,9 @@ const Staff = () => {
               if (logoPressTimerRef.current) window.clearTimeout(logoPressTimerRef.current);
               logoPressTimerRef.current = window.setTimeout(() => {
                 logoLongPressFiredRef.current = true;
-                if (expandedSection !== 'overview') {
-                  setExpandedSection('overview');
+                if (expandedSection !== DEFAULT_STAFF_SECTION) {
+                  setExpandedSection(DEFAULT_STAFF_SECTION as any);
+                  setStaffSectionParams({ section: DEFAULT_STAFF_SECTION }, { replace: true });
                 }
               }, 500);
             }}
@@ -1443,9 +1460,9 @@ const Staff = () => {
                               size="icon"
                               className="h-5 w-5 text-muted-foreground hover:text-foreground"
                               onClick={() => {
-                                // Refresh the current tab by toggling away and back
+                                // Refresh the current tab without falling back to Team Performance / My Tasks.
                                 if (expandedSection === tabId) {
-                                  handleSectionToggle('overview');
+                                  setExpandedSection(null);
                                   setTimeout(() => handleSectionToggle(tabId as any), 50);
                                 } else {
                                   handleSectionToggle(tabId as any);
