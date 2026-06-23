@@ -834,6 +834,23 @@ export default function ClubOutreachProposal() {
         </div>
       )}
 
+      {hasMultiple && (
+        <div className="max-w-3xl mx-auto px-6 mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              hapticTap();
+              setSelectedPlayerIdx(null);
+              try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.25em] border border-white/15 text-white/70 hover:border-[#cbb96b]/60 hover:text-white transition"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            {tr("picker.backToPlayers", "Back to all players")}
+          </button>
+        </div>
+      )}
+
       {/* Carousel controls */}
       {filteredPlayers.length > 1 && (
         <div className="max-w-3xl mx-auto px-6 mt-4 flex items-center justify-between gap-3">
