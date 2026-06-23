@@ -304,7 +304,7 @@ export const ClippedActionsPlayer = ({
               <div className="text-white text-sm font-semibold truncate">{title || currentClip.action_type}</div>
               <div className="text-white/70 text-xs truncate flex items-center gap-1.5">
                 <span>{formatMinute(currentClip.minute)}' • {currentClip.action_type}</span>
-                {currentClip.action_score != null && (() => {
+                {!hideScores && currentClip.action_score != null && (() => {
                   const g = getR90Grade(currentClip.action_score);
                   return (
                     <span
@@ -600,7 +600,7 @@ export const ClippedActionsPlayer = ({
                       </span>
                       <span className="text-white/50 w-10">{formatMinute(clip.minute)}'</span>
                       <span className="flex-1 truncate">{toTitleCase(clip.action_type)}</span>
-                      {clip.action_score != null && (() => {
+                      {!hideScores && clip.action_score != null && (() => {
                         const g = getR90Grade(clip.action_score);
                         return (
                           <span
