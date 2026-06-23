@@ -332,6 +332,49 @@ export default function MarketTablesTab() {
     setReloadKey((k) => k + 1);
   };
 
+  const addAllContactsToNetwork = async () => {
+    setAddingToNetwork(true);
+    try {
+      const ids = new Set<string>();
+      filtered.forEach((club) => {
+        const { tdContact, csContact } = getValues(club);
+        const exclude = new Set<string>();
+        if (tdContact) exclude.add(tdContact.id);
+        if (csContact) exclude.add(csContact.id);
+        const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
+        [tdContact, csContact, ...extras].forEach((c) => {
+          if (c && ((c.email && c.email.trim()) || (c.phone && c.phone.trim()))) {
+            ids.add(c.id);
+          }
+        });
+      });
+      if (ids.size === 0) {
+        toast.info("No contacts with email or phone to add");
+        return;
+      }
+      const { data: existing, error: exErr } = await (supabase as any)
+        .from("outreach_relationships")
+        .select("contact_id")
+        .in("contact_id", Array.from(ids));
+      if (exErr) throw exErr;
+      const have = new Set<string>((existing ?? []).map((r: any) => r.contact_id));
+      const toInsert = Array.from(ids).filter((id) => !have.has(id));
+      if (toInsert.length === 0) {
+        toast.success("All contacts are already in Network");
+        return;
+      }
+      const { error: insErr } = await (supabase as any)
+        .from("outreach_relationships")
+        .insert(toInsert.map((contact_id) => ({ contact_id, rapport_level: "cold" })));
+      if (insErr) throw insErr;
+      toast.success(`Added ${toInsert.length} contact${toInsert.length === 1 ? "" : "s"} to Network`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to add contacts to Network");
+    } finally {
+      setAddingToNetwork(false);
+    }
+  };
+
   if (loading) return <div className="text-sm text-muted-foreground">Loading market table…</div>;
 
 
