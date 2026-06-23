@@ -80,6 +80,7 @@ interface PlayerEntry {
   } | null;
   position_slot: string | null;
   fit_recommendation: string | null;
+  situation: string | null;
   sort_order: number;
   stars_url: string | null;
   highlights_url: string | null;
