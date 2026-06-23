@@ -1547,7 +1547,7 @@ function ProposalCard({
 }) {
   const disabled = (!href && !onClick) || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${accentBorder && !disabled ? "border-[#cbb96b]/55 ring-1 ring-[#cbb96b]/35 ring-offset-2 ring-offset-black shadow-[0_0_0_1px_rgba(203,185,107,0.18),0_18px_55px_-28px_rgba(203,185,107,0.75)]" : "border-white/10"} ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${accentBorder && !disabled ? "border-primary/55 ring-1 ring-primary/35 ring-offset-2 ring-offset-background shadow-[0_0_0_1px_rgba(198,163,50,0.18),0_18px_55px_-28px_rgba(198,163,50,0.75)]" : "border-white/10"} ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
       </div>
