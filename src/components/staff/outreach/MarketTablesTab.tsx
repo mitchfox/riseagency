@@ -628,10 +628,7 @@ export default function MarketTablesTab() {
     }
     const saveRequest = (supabase as any)
       .from("market_table_entries")
-      .upsert(payload, { onConflict: "market_table_key,club_id" })
-      .select("club_id, technical_director_name, chief_scout_name")
-      .single();
-    let saved: Entry | null = null;
+      .upsert(payload, { onConflict: "market_table_key,club_id" });
     let error: { message: string } | null = null;
     try {
       const result = await Promise.race([
@@ -640,7 +637,6 @@ export default function MarketTablesTab() {
           window.setTimeout(() => reject(new Error("Save timed out. Please try again.")), 15000);
         }),
       ]);
-      saved = (result.data ?? null) as Entry | null;
       error = result.error ?? null;
     } catch (e: any) {
       error = { message: e?.message ?? "Save failed" };
@@ -650,9 +646,17 @@ export default function MarketTablesTab() {
       toast.error(error.message);
       return false;
     }
-    if (saved) {
-      // Reconcile with whatever's actually in the DB after the partial upsert
-      // (the other column may have been changed by a teammate in parallel).
+    // Reconcile in the background with whatever's actually in the DB after the
+    // partial upsert. This keeps the click feeling instant while still picking
+    // up a teammate's concurrent edit to the other column.
+    void (async () => {
+      const { data: saved } = await (supabase as any)
+        .from("market_table_entries")
+        .select("club_id, technical_director_name, chief_scout_name")
+        .eq("market_table_key", MARKET_TABLE_KEY)
+        .eq("club_id", clubId)
+        .maybeSingle();
+      if (!saved) return;
       setEntries((prev) => ({
         ...prev,
         [clubId]: {
@@ -661,7 +665,7 @@ export default function MarketTablesTab() {
           chief_scout_name: saved.chief_scout_name ?? null,
         },
       }));
-    }
+    })();
     toast.success("Saved", { duration: 1200 });
     return true;
   };
