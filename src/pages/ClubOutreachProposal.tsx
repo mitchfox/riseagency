@@ -2154,31 +2154,31 @@ function MatchByMatchCard({
     categories[0]?.category ||
     "";
 
-  const sorted = useMemo(() => {
-    const base = [...analyses].filter((a) => {
-      if (!excludeAnalysisIds || !excludeAnalysisIds.has(a.id)) return true;
-      const status = (a.visibility_status ?? "").toString().toLowerCase();
-      return status === "clipped" || status === "live" || !!a.has_clips;
-    });
-    return rankGames(base, gameOrder ?? null);
-  }, [analyses, excludeAnalysisIds, gameOrder]);
-
   const [viewMode, setViewMode] = useState<"per90" | "raw">("per90");
   const [openClipsForId, setOpenClipsForId] = useState<string | null>(null);
   const [clipsLoading, setClipsLoading] = useState(false);
   const [clipsForOpen, setClipsForOpen] = useState<any[]>([]);
   const [clipAvailability, setClipAvailability] = useState<Record<string, boolean>>({});
 
+  const sorted = useMemo(() => {
+    const base = [...analyses].filter((a) => {
+      if (!excludeAnalysisIds || !excludeAnalysisIds.has(a.id)) return true;
+      const status = (a.visibility_status ?? "").toString().toLowerCase();
+      return status === "clipped" || status === "live" || !!a.has_clips || !!clipAvailability[a.id];
+    });
+    return rankGames(base, gameOrder ?? null);
+  }, [analyses, excludeAnalysisIds, gameOrder, clipAvailability]);
+
   useEffect(() => {
     let cancelled = false;
-    const ids = sorted.map((a) => a.id).filter(Boolean);
+    const ids = analyses.map((a) => a.id).filter(Boolean);
     if (ids.length === 0) {
       setClipAvailability({});
       return;
     }
     setClipAvailability((prev) => {
       const next: Record<string, boolean> = {};
-      ids.forEach((id) => { next[id] = prev[id] ?? !!sorted.find((a) => a.id === id)?.has_clips; });
+      ids.forEach((id) => { next[id] = prev[id] ?? !!analyses.find((a) => a.id === id)?.has_clips; });
       return next;
     });
     (async () => {
@@ -2197,7 +2197,7 @@ function MatchByMatchCard({
       });
     })();
     return () => { cancelled = true; };
-  }, [sorted]);
+  }, [analyses]);
 
   const hasPlayableReport = (a: any): boolean => {
     if (!a) return false;
