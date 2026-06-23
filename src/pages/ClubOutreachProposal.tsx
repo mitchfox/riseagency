@@ -249,6 +249,7 @@ export default function ClubOutreachProposal() {
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [inlineDataOpen, setInlineDataOpen] = useState(false);
+  const [proofOpen, setProofOpen] = useState(false);
   const [shownAnalysisIds, setShownAnalysisIds] = useState<Set<string>>(new Set());
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
