@@ -89,6 +89,10 @@ interface PlayerEntry {
   first_highlight_url: string | null;
   videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  stars_ordered_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  transfermarkt_url?: string | null;
+  match_by_match_stat_orders?: Record<string, string[]> | null;
+  match_by_match_game_order?: string[] | null;
   top_stats: any | null;
   season_stats: any | null;
   strengths_and_play_style: any | null;
