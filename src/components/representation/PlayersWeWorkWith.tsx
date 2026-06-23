@@ -71,7 +71,7 @@ export const PlayersWeWorkWith = ({
         .or("representation_status.in.(represented,fuel_for_football),category.eq.Fuel For Football")
         .not("image_url", "is", null)
         .order("player_list_order", { ascending: true, nullsFirst: false })
-        .limit(120);
+        .limit(60);
       if (data) {
         const excludedStatuses = new Set(["mandated", "previously_mandated", "prospect", "scouted"]);
         const excludedCategories = new Set(["mandate", "previously mandated", "scouted"]);
@@ -85,23 +85,8 @@ export const PlayersWeWorkWith = ({
             && !excludedNames.has(name);
         });
         setPlayers(filtered);
-        const preloadTargets = filtered.map((player) => player.image_url).filter(Boolean) as string[];
-        const preload = (start = 0) => {
-          preloadTargets.slice(start, start + 8).forEach((src) => {
-            const img = new Image();
-            img.decoding = "async";
-            img.src = src;
-          });
-          if (start + 8 < preloadTargets.length) {
-            window.setTimeout(() => preload(start + 8), 700);
-          }
-        };
-        const w = window as any;
-        if (typeof w.requestIdleCallback === "function") {
-          w.requestIdleCallback(() => preload(), { timeout: 1200 });
-        } else {
-          window.setTimeout(() => preload(), 0);
-        }
+        // Let the browser's lazy-loading handle off-screen images so we
+        // don't kick off a flood of network requests on mount.
       }
     })();
   }, [visible]);
@@ -142,9 +127,9 @@ export const PlayersWeWorkWith = ({
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    loading={i < 32 ? "eager" : "lazy"}
+                    loading={i < 6 ? "eager" : "lazy"}
                     decoding="async"
-                    fetchPriority={i < 16 ? "high" : "auto"}
+                    fetchPriority={i < 4 ? "high" : "auto"}
                     className="h-full w-full object-cover object-top"
                   />
                 ) : null}

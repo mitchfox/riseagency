@@ -820,7 +820,7 @@ const RequestRepresentation = () => {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -50, opacity: 0 }}
                   transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                  className="fixed inset-x-0 top-0 z-40 flex items-center justify-center border-b border-primary/25 bg-black/85 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md"
+                  className="fixed inset-x-0 top-0 z-40 flex items-center justify-center border-b border-primary/25 bg-black/95 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
                 >
                   <RiseLogoShine className="h-7 md:h-9" />
                 </motion.div>
@@ -845,7 +845,7 @@ const RequestRepresentation = () => {
                      <span className="h-px flex-1 bg-primary/45" />
                    </div>
                   {/* Mission, in a contained glass plate */}
-                  <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
+                  <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/80 px-4 py-3 md:max-w-3xl md:px-6 md:py-4">
                     <p
                       className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
                       style={{
@@ -965,7 +965,7 @@ const RequestRepresentation = () => {
         <div className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-md md:max-w-3xl lg:max-w-4xl">
                 {showSlider && groupSiblings.length > 0 && (
-              <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 backdrop-blur-md">
+              <div className="mb-1.5 rounded-2xl border border-border/60 bg-background/95 px-3 py-2">
                 {/* "Back to all" pill — centred above the slider. */}
                 {activeCard && (
                   <div className="mb-2 flex w-full justify-center">
@@ -1564,89 +1564,101 @@ export const DetailView = ({
                        framed by the seam (Canva-style) rather than
                        overlapping it. A soft top-fade mask on the image
                        still blends the crown into the marble. ===== */}
-                {/* Jolon frame — desktop: left diagonal half */}
+                {/* Jolon frame — desktop: left diagonal half. The headshot
+                   is rendered inside a bottom-anchored band that crops
+                   the lower half of the photo (object-top + object-cover)
+                   so the head/shoulders sit flush against the bottom of
+                   the section. */}
                 <div
                   className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
-                  style={{
-                    clipPath: "polygon(0% 0%, 58% 0%, 42% 100%, 0% 100%)",
-                  }}
+                  style={{ clipPath: "polygon(0% 0%, 58% 0%, 42% 100%, 0% 100%)" }}
                 >
-                  <img
-                    src={jolonHeadshotCutout}
-                    alt="Jolon Levene"
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute bottom-0 left-[2%] h-[105%] w-auto object-contain object-bottom"
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[62%] overflow-hidden"
                     style={{
                       WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                       maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                     } as React.CSSProperties}
-                  />
+                  >
+                    <img
+                      src={jolonHeadshotCutout}
+                      alt="Jolon Levene"
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
+                    />
+                  </div>
                 </div>
                 {/* Kuda frame — desktop: right diagonal half */}
                 <div
                   className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
-                  style={{
-                    clipPath: "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)",
-                  }}
+                  style={{ clipPath: "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)" }}
                 >
-                  <img
-                    src={kudaHeadshotCutout}
-                    alt="Kuda Butawo"
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute bottom-0 right-[2%] h-[105%] w-auto object-contain object-bottom"
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[62%] overflow-hidden"
                     style={{
                       WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                       maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                     } as React.CSSProperties}
-                  />
+                  >
+                    <img
+                      src={kudaHeadshotCutout}
+                      alt="Kuda Butawo"
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
+                    />
+                  </div>
                 </div>
                 {/* Jolon frame — mobile: top diagonal half */}
                 <div
                   className="pointer-events-none absolute inset-0 z-[1] md:hidden"
-                  style={{
-                    clipPath: "polygon(0% 0%, 100% 0%, 100% 42%, 0% 58%)",
-                  }}
+                  style={{ clipPath: "polygon(0% 0%, 100% 0%, 100% 42%, 0% 58%)" }}
                 >
-                  <img
-                    src={jolonHeadshotCutout}
-                    alt="Jolon Levene"
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute bottom-0 left-0 h-[95%] w-auto object-contain object-bottom"
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[70%] overflow-hidden"
                     style={{
                       WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                       maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                     } as React.CSSProperties}
-                  />
+                  >
+                    <img
+                      src={jolonHeadshotCutout}
+                      alt="Jolon Levene"
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
+                    />
+                  </div>
                 </div>
                 {/* Kuda frame — mobile: bottom diagonal half */}
                 <div
                   className="pointer-events-none absolute inset-0 z-[1] md:hidden"
-                  style={{
-                    clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)",
-                  }}
+                  style={{ clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)" }}
                 >
-                  <img
-                    src={kudaHeadshotCutout}
-                    alt="Kuda Butawo"
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute bottom-0 right-0 h-[95%] w-auto object-contain object-bottom"
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-[70%] overflow-hidden"
                     style={{
                       WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                       maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 28%, black 78%, black 100%)",
+                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
                     } as React.CSSProperties}
-                  />
+                  >
+                    <img
+                      src={kudaHeadshotCutout}
+                      alt="Kuda Butawo"
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
+                    />
+                  </div>
                 </div>
 
                 {/* ===== Diagonal Rise Gold divider — sits over the seam. */}
