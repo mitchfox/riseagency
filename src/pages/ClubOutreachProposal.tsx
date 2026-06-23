@@ -596,6 +596,8 @@ export default function ClubOutreachProposal() {
               position={current?.player?.position ?? null}
               excludeAnalysisIds={shownAnalysisIds}
               defaultCategory={current?.match_by_match_default_category ?? null}
+              statOrders={current?.match_by_match_stat_orders ?? null}
+              gameOrder={current?.match_by_match_game_order ?? null}
             />
           )}
           {current?.stars_url && (
