@@ -89,10 +89,10 @@ export const PlayersWeWorkWith = ({
             img.src = src;
           });
         };
-        if ("requestIdleCallback" in window) {
+        if (typeof window.requestIdleCallback === "function") {
           window.requestIdleCallback(preload, { timeout: 1200 });
         } else {
-          window.setTimeout(preload, 0);
+          setTimeout(preload, 0);
         }
       }
     })();
