@@ -35,6 +35,43 @@ interface Entry {
 
 const MARKET_TABLE_KEY = "summer-26";
 const CLUB_FETCH_PAGE_SIZE = 1000;
+const BELGIUM_1ST_CLUBS = [
+  "RSC Anderlecht",
+  "Royal Antwerp FC",
+  "SK Beveren",
+  "Cercle Brugge",
+  "Royal Charleroi SC",
+  "Club Brugge KV",
+  "KRC Genk",
+  "KAA Gent",
+  "KV Kortrijk",
+  "RAAL La Louvière",
+  "Lommel SK",
+  "KV Mechelen",
+  "Oud-Heverlee Leuven",
+  "Sint-Truidense VV",
+  "Standard Liège",
+  "Union Saint-Gilloise",
+  "KVC Westerlo",
+  "Zulte Waregem",
+];
+const BELGIUM_2ND_CLUBS = [
+  "Beerschot VA",
+  "Club NXT",
+  "FCV Dender EH",
+  "Francs Borains",
+  "Sporting Hasselt",
+  "KAS Eupen",
+  "Jong Genk",
+  "Jong KAA Gent",
+  "K Lierse SK",
+  "KSC Lokeren",
+  "Patro Eisden Maasmechelen",
+  "RFC Liège",
+  "RSCA Futures",
+  "RFC Seraing",
+  "Royal Excelsior Virton",
+];
 
 const TD_RE = /(technical director|director of football|sporting director|sports director|football director|managing director professional football)/i;
 const CS_RE = /(chief scout|head of recruitment|head scout|scout director)/i;
@@ -59,11 +96,11 @@ const contactMatchesClub = (
   clubName: string,
   country: string | null,
 ): boolean => {
-  if (country && contact.country && contact.country !== country) return false;
   const target = norm(clubName);
   if (!target) return false;
   const cn = norm(contact.club_name);
   if (cn && (cn === target || cn.includes(target) || target.includes(cn))) return true;
+  if (country && contact.country && contact.country !== country) return false;
   // Fallback: tokenised search inside the contact name (many rows embed the club).
   const tokens = clubTokens(clubName);
   if (tokens.length === 0) return false;
@@ -127,6 +164,16 @@ const additionalContactsForClub = (
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
+const mondayOf = (d: Date): string => {
+  const x = new Date(d);
+  const day = x.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  x.setDate(x.getDate() + diff);
+  return x.toISOString().slice(0, 10);
+};
+
+const exactClubKey = (name: string) => norm(name);
+
 const fetchAllClubRows = async (): Promise<ClubRow[]> => {
   const all: ClubRow[] = [];
   for (let from = 0; ; from += CLUB_FETCH_PAGE_SIZE) {
@@ -184,6 +231,12 @@ export default function MarketTablesTab() {
           .select("name, filters");
         if (stratErr) throw stratErr;
 
+        const { data: savedEntryRows, error: savedEntryErr } = await (supabase as any)
+          .from("market_table_entries")
+          .select("club_id, technical_director_name, chief_scout_name")
+          .eq("market_table_key", MARKET_TABLE_KEY);
+        if (savedEntryErr) throw savedEntryErr;
+
         // clubId -> labels from the strategy that references it. First strategy
         // wins so the same club doesn't end up duplicated under two leagues.
         const stratByClub = new Map<
@@ -202,6 +255,14 @@ export default function MarketTablesTab() {
           });
         });
 
+        // A saved market-table entry is also a permanent source of truth. This
+        // stops previously added clubs or contacts disappearing just because a
+        // strategy filter changes later.
+        (savedEntryRows ?? []).forEach((r: any) => {
+          if (!r?.club_id || stratByClub.has(r.club_id)) return;
+          stratByClub.set(r.club_id, { country: null, league: null });
+        });
+
         const clubIds = Array.from(stratByClub.keys());
 
         // Fetch the actual club rows in chunks (Supabase .in() caps at ~1000 ids).
@@ -218,14 +279,49 @@ export default function MarketTablesTab() {
           clubRows.push(...(((data ?? []) as unknown) as ClubRow[]));
         }
 
-        const [{ data: contactRows }, { data: entryRows }] = await Promise.all([
+        const allClubRows = await fetchAllClubRows();
+        const existingClubIds = new Set(clubRows.map((c) => c.id));
+        const exactBelgiumClubNames = new Map(
+          allClubRows
+            .filter((c) => c.country === "Belgium")
+            .map((c) => [exactClubKey(c.club_name), c]),
+        );
+        const addExactBelgiumClubs = (names: string[], level: "1st" | "2nd") => {
+          names.forEach((name) => {
+            const c = exactBelgiumClubNames.get(exactClubKey(name));
+            if (!c) return;
+            // These Belgium lists were provided explicitly by the user, so they
+            // override any broader saved strategy that may have the same club
+            // without a league label.
+            stratByClub.set(c.id, { country: "Belgium", league: level });
+            if (!existingClubIds.has(c.id)) {
+              clubRows.push(c);
+              existingClubIds.add(c.id);
+            }
+          });
+        };
+        addExactBelgiumClubs(BELGIUM_1ST_CLUBS, "1st");
+        addExactBelgiumClubs(BELGIUM_2ND_CLUBS, "2nd");
+
+        // If any saved strategy has filters but no stored IDs, derive the rows
+        // directly from the country + league labels rather than rendering zero.
+        (stratRows ?? []).forEach((s: any) => {
+          const sCountry = ((s?.filters?.country ?? null) as string | null) || null;
+          const sLevel = ((s?.filters?.league_level ?? s?.filters?.league ?? null) as string | null) || null;
+          if (!sCountry || !sLevel || (s?.filters?.club_ids ?? []).length > 0) return;
+          allClubRows.forEach((c) => {
+            const cLevel = c.league_level ?? c.league ?? null;
+            if (c.country !== sCountry || cLevel !== sLevel || existingClubIds.has(c.id)) return;
+            clubRows.push(c);
+            existingClubIds.add(c.id);
+            stratByClub.set(c.id, { country: sCountry, league: sLevel });
+          });
+        });
+
+        const [{ data: contactRows }] = await Promise.all([
           supabase
             .from("club_network_contacts")
             .select("id, name, club_name, position, email, phone, country"),
-          (supabase as any)
-            .from("market_table_entries")
-            .select("club_id, technical_director_name, chief_scout_name")
-            .eq("market_table_key", MARKET_TABLE_KEY),
         ]);
 
         // Overlay the strategy's country + league onto the club record so the
@@ -251,7 +347,7 @@ export default function MarketTablesTab() {
         );
         setContacts((contactRows ?? []) as ContactRow[]);
         const map: Record<string, Entry> = {};
-        (entryRows ?? []).forEach((r: any) => {
+        (savedEntryRows ?? []).forEach((r: any) => {
           map[r.club_id] = {
             club_id: r.club_id,
             technical_director_name: r.technical_director_name,
@@ -299,6 +395,52 @@ export default function MarketTablesTab() {
     const tdName = entry?.technical_director_name ?? tdContact?.name ?? "";
     const csName = entry?.chief_scout_name ?? csContact?.name ?? "";
     return { tdContact, csContact, tdName, csName };
+  };
+
+  const ensureRelationshipShell = async (contactId: string) => {
+    const { data: existing, error: existingErr } = await (supabase as any)
+      .from("outreach_relationships")
+      .select("id")
+      .eq("contact_id", contactId)
+      .maybeSingle();
+    if (existingErr) throw existingErr;
+    if (existing?.id) return;
+    const { error } = await (supabase as any)
+      .from("outreach_relationships")
+      .insert({
+        contact_id: contactId,
+        rapport_level: "cold",
+        nudge_week_start: mondayOf(new Date()),
+        nudge_dates: [],
+      });
+    if (error) throw error;
+  };
+
+  const ensureContactShell = async (club: ClubRow, name: string | null, position: string) => {
+    const clean = (name ?? "").trim();
+    if (!clean) return;
+    const { data: existing, error: existingErr } = await supabase
+      .from("club_network_contacts")
+      .select("id")
+      .eq("name", clean)
+      .eq("club_name", club.club_name)
+      .maybeSingle();
+    if (existingErr) throw existingErr;
+    const contactId = existing?.id ?? (await (async () => {
+      const { data, error } = await supabase
+        .from("club_network_contacts")
+        .insert({
+          name: clean,
+          position,
+          club_name: club.club_name,
+          country: club.country,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    })());
+    await ensureRelationshipShell(contactId);
   };
 
   const persist = async (clubId: string, patch: Partial<Entry>) => {
@@ -356,6 +498,17 @@ export default function MarketTablesTab() {
     );
   };
 
+  const persistAndShell = async (club: ClubRow, role: "td" | "cs", value: string | null) => {
+    if (role === "td") {
+      await persist(club.id, { technical_director_name: value });
+      await ensureContactShell(club, value, "Technical Director");
+    } else {
+      await persist(club.id, { chief_scout_name: value });
+      await ensureContactShell(club, value, "Chief Scout");
+    }
+    setReloadKey((k) => k + 1);
+  };
+
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
     const defaultPos = role === "td" ? "Technical Director" : "Chief Scout";
     setEditing({
@@ -401,9 +554,9 @@ export default function MarketTablesTab() {
       club_name: club.club_name,
       country: club.country,
     };
-    const { error } = existing
-      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id)
-      : await supabase.from("club_network_contacts").insert(payload);
+    const { data: saved, error } = existing
+      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select("id").single()
+      : await supabase.from("club_network_contacts").insert(payload).select("id").single();
     if (error) {
       toast.error(error.message);
       setSavingContact(false);
@@ -414,6 +567,9 @@ export default function MarketTablesTab() {
       await persist(club.id, { technical_director_name: payload.name });
     } else if (role === "cs") {
       await persist(club.id, { chief_scout_name: payload.name });
+    }
+    if (saved?.id) {
+      await ensureRelationshipShell(saved.id);
     }
     toast.success(existing ? "Contact updated" : "Contact added");
     setSavingContact(false);
@@ -556,7 +712,7 @@ export default function MarketTablesTab() {
                       const auto = tdContact?.name ?? null;
                       if (v === existing) return;
                       if (!existing && v === auto) return;
-                      persist(club.id, { technical_director_name: v });
+                      persistAndShell(club, "td", v);
                     }}
                   />
                   {renderContactLinks(tdContact)}
@@ -583,7 +739,7 @@ export default function MarketTablesTab() {
                       const auto = csContact?.name ?? null;
                       if (v === existing) return;
                       if (!existing && v === auto) return;
-                      persist(club.id, { chief_scout_name: v });
+                      persistAndShell(club, "cs", v);
                     }}
                   />
                   {renderContactLinks(csContact)}
@@ -720,7 +876,7 @@ export default function MarketTablesTab() {
                           if (v === existing) return;
                           // If field still equals auto value and nothing was saved, skip writing.
                           if (!existing && v === auto) return;
-                          persist(club.id, { technical_director_name: v });
+                          persistAndShell(club, "td", v);
                         }}
                       />
                       {renderContactLinks(tdContact)}
@@ -746,7 +902,7 @@ export default function MarketTablesTab() {
                           const auto = csContact?.name ?? null;
                           if (v === existing) return;
                           if (!existing && v === auto) return;
-                          persist(club.id, { chief_scout_name: v });
+                          persistAndShell(club, "cs", v);
                         }}
                       />
                       {renderContactLinks(csContact)}
