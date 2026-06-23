@@ -698,13 +698,22 @@ export default function MarketTablesTab() {
                   <tr className="border-t border-border/40 bg-muted/10">
                     <td />
                     <td colSpan={4} className="px-3 py-3">
-                      {extras.length === 0 ? (
-                        <div className="text-xs text-muted-foreground">No additional contacts in the network for this club.</div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
                             Additional contacts
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => openExtraEdit(club, null)}
+                            className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" /> Add additional contact
+                          </button>
+                        </div>
+                        {extras.length === 0 ? (
+                          <div className="text-xs text-muted-foreground">No additional contacts in the network for this club.</div>
+                        ) : (
                           <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
                             {extras.map((c) => (
                               <li key={c.id} className="flex items-center gap-2 text-xs">
@@ -713,11 +722,19 @@ export default function MarketTablesTab() {
                                   <span className="text-muted-foreground">· {c.position}</span>
                                 )}
                                 {renderContactLinks(c)}
+                                <button
+                                  type="button"
+                                  onClick={() => openExtraEdit(club, c)}
+                                  title="Edit contact"
+                                  className="ml-auto text-muted-foreground hover:text-white"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </button>
                               </li>
                             ))}
                           </ul>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
