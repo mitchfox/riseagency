@@ -536,6 +536,9 @@ export default function ClubOutreachManager() {
           <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
+          <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
+            <ProposalVisitorsBell visits={scopedVisits} />
+          </div>
         </div>
       </div>
 
