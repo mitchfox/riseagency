@@ -568,7 +568,7 @@ export default function ClubOutreachManager() {
                   const loc = (latest.location ?? {}) as any;
                   const where = [loc.city, loc.country].filter(Boolean).join(", ") || "Unknown location";
                   return (
-                    <div key={r.id} className="relative">
+                    <div key={r.id} className="group/viewed relative">
                       <div className="absolute -top-2 left-3 z-10 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#cbb96b] text-black text-[10px] font-semibold shadow">
                         <span>{vs.length} view{vs.length === 1 ? "" : "s"}</span>
                         <span className="opacity-70">·</span>
@@ -590,6 +590,7 @@ export default function ClubOutreachManager() {
                         onApprovePending={() => approvePending(r)}
                         onRejectPending={() => rejectPending(r)}
                       />
+                      <ViewedVisitorsExpansion visits={vs} />
                     </div>
                   );
                 })}
