@@ -2488,6 +2488,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       proof_of_representation_path: defaults.proof_path,
       default_fit_recommendation: playerDefaultFit.trim() || null,
       default_position: playerDefaultPosition.trim() || null,
+      default_situation: playerDefaultSituation.trim() || null,
       default_season_data_mode: playerDefaultSeasonMode || null,
       default_season_id: playerDefaultSeasonId,
       default_show_form: playerDefaultShowForm,
