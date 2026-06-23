@@ -28,8 +28,8 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/da
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
-import jolonHeadshotAsset from "@/assets/jolon-headshot.jpeg.asset.json";
-import kudaHeadshotAsset from "@/assets/kuda-headshot.jpeg.asset.json";
+import jolonHeadshotCutout from "@/assets/jolon-headshot-cutout.png";
+import kudaHeadshotCutout from "@/assets/kuda-headshot-cutout.png";
 import ballondorAsset from "@/assets/ballondor.png.asset.json";
 import blackMarbleBg from "@/assets/black-marble.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
