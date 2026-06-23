@@ -1319,9 +1319,12 @@ export type Database = {
           default_show_season_stats: boolean | null
           default_show_strengths: boolean | null
           highlights_url: string | null
+          match_by_match_game_order: Json
+          match_by_match_stat_orders: Json
           player_id: string
           proof_of_representation_path: string | null
           stars_url_override: string | null
+          transfermarkt_url: string | null
           updated_at: string
         }
         Insert: {
@@ -1340,9 +1343,12 @@ export type Database = {
           default_show_season_stats?: boolean | null
           default_show_strengths?: boolean | null
           highlights_url?: string | null
+          match_by_match_game_order?: Json
+          match_by_match_stat_orders?: Json
           player_id: string
           proof_of_representation_path?: string | null
           stars_url_override?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -1361,9 +1367,12 @@ export type Database = {
           default_show_season_stats?: boolean | null
           default_show_strengths?: boolean | null
           highlights_url?: string | null
+          match_by_match_game_order?: Json
+          match_by_match_stat_orders?: Json
           player_id?: string
           proof_of_representation_path?: string | null
           stars_url_override?: string | null
+          transfermarkt_url?: string | null
           updated_at?: string
         }
         Relationships: [
