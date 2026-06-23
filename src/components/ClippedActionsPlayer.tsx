@@ -317,7 +317,7 @@ export const ClippedActionsPlayer = ({
                   );
                 })()}
               </div>
-              {currentClip.action_description && (
+              {!hideScores && currentClip.action_description && (
                 <div className="text-white/85 text-xs leading-snug">
                   <p className="line-clamp-1">{trText(currentClip.action_description)}</p>
                 </div>
@@ -469,7 +469,7 @@ export const ClippedActionsPlayer = ({
                             loading="lazy"
                           />
                         )}
-                        <span className="flex-1 truncate">{trText(clip.action_description) || clip.action_type}</span>
+                        <span className="flex-1 truncate">{hideScores ? (clip.action_type || `Clip ${idx + 1}`) : (trText(clip.action_description) || clip.action_type)}</span>
                         {isActive && (
                           <span className="text-primary text-[10px] font-bold">▶</span>
                         )}
