@@ -244,7 +244,7 @@ function MarketContactSlot({
   placeholder: string;
   links: ReactNode;
   inputClassName: string;
-  onConfirm: (value: string | null) => Promise<void>;
+  onConfirm: (value: string | null) => Promise<boolean | void>;
   onEdit: () => void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -264,8 +264,10 @@ function MarketContactSlot({
     if (!isDirty || saving) return;
     setSaving(true);
     try {
-      await onConfirm(cleanDraft || null);
-      setDraft(cleanDraft);
+      const saved = await onConfirm(cleanDraft || null);
+      if (saved !== false) setDraft(cleanDraft);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
     } finally {
       setSaving(false);
     }
@@ -273,7 +275,7 @@ function MarketContactSlot({
 
   const Icon = showConfirm ? Check : hasSavedContactDetails ? Pencil : UserPlus;
   const buttonTitle = showConfirm
-    ? "Confirm this person in Market Tables and Network"
+    ? "Confirm this person in Market Tables"
     : hasSavedContactDetails
       ? "Show or edit existing contact details"
       : hasSavedName
@@ -626,18 +628,37 @@ export default function MarketTablesTab() {
     if ("chief_scout_name" in patch) {
       payload.chief_scout_name = patch.chief_scout_name ?? null;
     }
-    const { data: saved, error } = await (supabase as any)
+    const saveRequest = (supabase as any)
       .from("market_table_entries")
-      .upsert(payload, { onConflict: "market_table_key,club_id" })
-      .select("club_id, technical_director_name, chief_scout_name")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      return;
+      .upsert(payload, { onConflict: "market_table_key,club_id" });
+    let error: { message: string } | null = null;
+    try {
+      const result = await Promise.race([
+        saveRequest,
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error("Save timed out. Please try again.")), 15000);
+        }),
+      ]);
+      error = result.error ?? null;
+    } catch (e: any) {
+      error = { message: e?.message ?? "Save failed" };
     }
-    if (saved) {
-      // Reconcile with whatever's actually in the DB after the partial upsert
-      // (the other column may have been changed by a teammate in parallel).
+    if (error) {
+      setEntries((prev) => ({ ...prev, [clubId]: current }));
+      toast.error(error.message);
+      return false;
+    }
+    // Reconcile in the background with whatever's actually in the DB after the
+    // partial upsert. This keeps the click feeling instant while still picking
+    // up a teammate's concurrent edit to the other column.
+    void (async () => {
+      const { data: saved } = await (supabase as any)
+        .from("market_table_entries")
+        .select("club_id, technical_director_name, chief_scout_name")
+        .eq("market_table_key", MARKET_TABLE_KEY)
+        .eq("club_id", clubId)
+        .maybeSingle();
+      if (!saved) return;
       setEntries((prev) => ({
         ...prev,
         [clubId]: {
@@ -646,8 +667,9 @@ export default function MarketTablesTab() {
           chief_scout_name: saved.chief_scout_name ?? null,
         },
       }));
-    }
+    })();
     toast.success("Saved", { duration: 1200 });
+    return true;
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
@@ -681,12 +703,9 @@ export default function MarketTablesTab() {
 
   const persistAndShell = async (club: ClubRow, role: "td" | "cs", value: string | null) => {
     if (role === "td") {
-      await persist(club.id, { technical_director_name: value });
-      await ensureContactShell(club, value, "Technical Director");
-    } else {
-      await persist(club.id, { chief_scout_name: value });
-      await ensureContactShell(club, value, "Chief Scout");
+      return persist(club.id, { technical_director_name: value });
     }
+    return persist(club.id, { chief_scout_name: value });
   };
 
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
@@ -726,40 +745,48 @@ export default function MarketTablesTab() {
       return;
     }
     setSavingContact(true);
-    const payload = {
-      name: draft.name.trim(),
-      position: draft.position.trim() || null,
-      email: draft.email.trim() || null,
-      phone: draft.phone.trim() || null,
-      club_name: club.club_name,
-      country: club.country,
-    };
-    const { data: saved, error } = existing
-      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
-      : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
-    if (error) {
-      toast.error(error.message);
+    try {
+      const payload = {
+        name: draft.name.trim(),
+        position: draft.position.trim() || null,
+        email: draft.email.trim() || null,
+        phone: draft.phone.trim() || null,
+        club_name: club.club_name,
+        country: club.country,
+      };
+      const { data: saved, error } = existing
+        ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
+        : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
+      if (role === "td") {
+        const ok = await persist(club.id, { technical_director_name: payload.name });
+        if (!ok) return;
+      } else if (role === "cs") {
+        const ok = await persist(club.id, { chief_scout_name: payload.name });
+        if (!ok) return;
+      }
+      if (saved?.id) {
+        setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
+        void ensureRelationshipShell(saved.id).catch((e: any) => {
+          toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
+        });
+      }
+      toast.success(existing ? "Contact updated" : "Contact added");
+      setEditing(null);
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        next.add(club.id);
+        return next;
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    } finally {
       setSavingContact(false);
-      return;
     }
-    // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
-    if (role === "td") {
-      await persist(club.id, { technical_director_name: payload.name });
-    } else if (role === "cs") {
-      await persist(club.id, { chief_scout_name: payload.name });
-    }
-    if (saved?.id) {
-      await ensureRelationshipShell(saved.id);
-      setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
-    }
-    toast.success(existing ? "Contact updated" : "Contact added");
-    setSavingContact(false);
-    setEditing(null);
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.add(club.id);
-      return next;
-    });
   };
 
   const addAllContactsToNetwork = async () => {
