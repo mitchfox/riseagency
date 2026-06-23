@@ -110,6 +110,8 @@ interface PlayerEntry {
     minutes_played: number | null;
     striker_stats?: Record<string, any> | null;
     fixture_stats?: Record<string, any> | null;
+    visibility_status?: string | null;
+    has_clips?: boolean | null;
   }> | null;
   match_by_match_default_category?: string | null;
 }
