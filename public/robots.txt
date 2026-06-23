@@ -12,6 +12,8 @@ Disallow: /portal/*
 Disallow: /login
 Disallow: /import-program
 Disallow: /replace-program
+Disallow: /representation
+Disallow: /request-representation
 Disallow: /scout-portal
 Disallow: /investors-portal
 
@@ -24,6 +26,8 @@ Disallow: /staff
 Disallow: /staff/*
 Disallow: /portal
 Disallow: /login
+Disallow: /representation
+Disallow: /request-representation
 Disallow: /investors-portal
 
 User-agent: Twitterbot
@@ -32,6 +36,8 @@ Allow: /stars/
 Allow: /news/
 Disallow: /player-list
 Disallow: /staff
+Disallow: /representation
+Disallow: /request-representation
 Disallow: /investors-portal
 
 User-agent: facebookexternalhit
@@ -40,6 +46,8 @@ Allow: /stars/
 Allow: /news/
 Disallow: /player-list
 Disallow: /staff
+Disallow: /representation
+Disallow: /request-representation
 Disallow: /investors-portal
 
 User-agent: *
@@ -54,6 +62,8 @@ Disallow: /portal/*
 Disallow: /login
 Disallow: /import-program
 Disallow: /replace-program
+Disallow: /representation
+Disallow: /request-representation
 Disallow: /scout-portal
 Disallow: /pdf-viewer
 Disallow: /analysis/
