@@ -142,13 +142,25 @@ export default function MarketTablesTab() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // 1) Collect every club_id referenced by current strategies.
+      // 1) Collect every club_id referenced by current strategies, and remember
+      //    each strategy's country + league_level so we can label the club with
+      //    the strategy's league even when club_map_positions has no league row.
       const { data: stratRows } = await (supabase as any)
         .from("club_outreach_strategies")
         .select("filters, defaults");
       const ids = new Set<string>();
+      // clubId -> { country, league_level } from the strategy that references it.
+      const stratByClub = new Map<string, { country: string | null; level: string | null }>();
       (stratRows ?? []).forEach((s: any) => {
-        (s?.filters?.club_ids ?? []).forEach((id: string) => id && ids.add(id));
+        const sCountry = (s?.filters?.country ?? null) as string | null;
+        const sLevel = (s?.filters?.league_level ?? null) as string | null;
+        (s?.filters?.club_ids ?? []).forEach((id: string) => {
+          if (!id) return;
+          ids.add(id);
+          if (!stratByClub.has(id)) {
+            stratByClub.set(id, { country: sCountry, level: sLevel });
+          }
+        });
         (s?.defaults?.extra_clubs ?? []).forEach((ec: any) => {
           if (ec?.id) ids.add(ec.id);
         });
@@ -174,7 +186,20 @@ export default function MarketTablesTab() {
           .eq("market_table_key", MARKET_TABLE_KEY),
       ]);
 
-      setClubs(((clubRows ?? []) as ClubRow[]).sort((a, b) => {
+      // Overlay the strategy's country + league_level so every league referenced
+      // by a strategy is represented in the filters and table, even when the
+      // club_map_positions row is missing the league field.
+      const enriched: ClubRow[] = ((clubRows ?? []) as ClubRow[]).map((c) => {
+        const s = stratByClub.get(c.id);
+        if (!s) return c;
+        return {
+          ...c,
+          country: c.country ?? s.country,
+          league: c.league ?? s.level,
+        };
+      });
+
+      setClubs(enriched.sort((a, b) => {
         const c = (a.country ?? "").localeCompare(b.country ?? "");
         if (c !== 0) return c;
         const l = (a.league ?? "").localeCompare(b.league ?? "");
