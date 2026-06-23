@@ -415,7 +415,9 @@ Deno.serve(async (req) => {
         }
         // Filter by per-link selected_video_ids only for the primary player.
         const isPrimary = e.player_id === primaryPlayerId;
-        const selectedIds: string[] = Array.isArray((link as any).selected_video_ids)
+        const selectedIds: string[] = Array.isArray((e as any).selected_video_ids) && (e as any).selected_video_ids.length > 0
+          ? (e as any).selected_video_ids
+          : Array.isArray((link as any).selected_video_ids)
           ? (link as any).selected_video_ids
           : [];
         let videos = allVideos;
@@ -439,7 +441,13 @@ Deno.serve(async (req) => {
         // Form banner inputs
         const cfg = formCfgByPlayer.get(e.player_id) ?? null;
         const windowSize = cfg?.window_size ?? 5;
-        const allAnalyses = analysesByPlayer.get(e.player_id) ?? [];
+        const seasonIdForPlayer = (e as any).season_id ?? (link as any).season_id ?? null;
+        const bounds = await getSeasonBounds(seasonIdForPlayer);
+        const allAnalyses = (analysesByPlayer.get(e.player_id) ?? []).filter((a: any) => {
+          if (bounds.start && a.analysis_date < bounds.start) return false;
+          if (bounds.end && a.analysis_date > bounds.end) return false;
+          return true;
+        });
         const recentAnalyses = allAnalyses.slice(0, windowSize);
         // Attach the resolved opponent logo to every match row.
         const matchByMatchWithLogos = allAnalyses.map((a: any) => {
@@ -460,6 +468,13 @@ Deno.serve(async (req) => {
           player: p ?? null,
           position_slot: e.position_slot,
           fit_recommendation: e.fit_recommendation,
+          show_form: (e as any).show_form ?? (link as any).show_form ?? false,
+          show_in_numbers: (e as any).show_in_numbers ?? (link as any).show_in_numbers ?? false,
+          show_season_stats: (e as any).show_season_stats ?? (link as any).show_season_stats ?? false,
+          show_strengths: (e as any).show_strengths ?? (link as any).show_strengths ?? false,
+          season_data_mode: (e as any).season_data_mode ?? (link as any).season_data_mode ?? "popup",
+          key_details: (e as any).key_details ?? (link as any).key_details ?? null,
+          section_order: (e as any).section_order ?? (link as any).section_order ?? null,
           situation: ((e as any).situation && String((e as any).situation).trim())
             ? (e as any).situation
             : ((d as any)?.default_situation ?? null),
