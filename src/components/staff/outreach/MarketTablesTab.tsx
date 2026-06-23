@@ -386,6 +386,17 @@ export default function MarketTablesTab() {
           <span className="text-[11px] text-muted-foreground">
             {filtered.length} club{filtered.length === 1 ? "" : "s"}
           </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={addingToNetwork || filtered.length === 0}
+            onClick={addAllContactsToNetwork}
+            className="ml-auto h-8 text-xs gap-1.5"
+          >
+            <Users className="h-3.5 w-3.5" />
+            {addingToNetwork ? "Adding…" : "Add all contacts to Network"}
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
