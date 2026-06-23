@@ -419,11 +419,14 @@ const Staff = () => {
   // Keep URL in sync with section changes from searchParams
   useEffect(() => {
     const rawSection = searchParams.get('section');
-    const section = rawSection && STALE_STAFF_DEFAULTS.has(rawSection) ? DEFAULT_STAFF_SECTION : rawSection;
-    if (rawSection && section !== rawSection && isStaff) {
-      setStaffSectionParams({ section }, { replace: true });
+    // On cold load, ignore stale Team Performance/My Tasks URLs until the
+    // opening-section effect above has replaced them with Club Outreach. If the
+    // user later clicks Team Performance directly, expandedSection already
+    // matches it, so the click still works.
+    if (rawSection && STALE_STAFF_DEFAULTS.has(rawSection) && expandedSection !== rawSection) {
       return;
     }
+    const section = rawSection;
     if (section && isStaff && section !== expandedSection) {
       setExpandedSection(section as any);
       const cats = buildCategories();
