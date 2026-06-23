@@ -28,8 +28,8 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/da
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
-import jolonHeadshotAsset from "@/assets/jolon-headshot.jpeg.asset.json";
-import kudaHeadshotAsset from "@/assets/kuda-headshot.jpeg.asset.json";
+import jolonHeadshotCutout from "@/assets/jolon-headshot-cutout.png";
+import kudaHeadshotCutout from "@/assets/kuda-headshot-cutout.png";
 import ballondorAsset from "@/assets/ballondor.png.asset.json";
 import blackMarbleBg from "@/assets/black-marble.png";
 import whiteMarbleBg from "@/assets/white-marble.png";
@@ -1568,34 +1568,30 @@ export const DetailView = ({
                     the bottom of the card. A soft top-fade mask blends
                     the crown into the marble. */}
                 <img
-                  src={jolonHeadshotAsset.url}
+                  src={jolonHeadshotCutout}
                   alt="Jolon Levene"
                   loading="lazy"
                   decoding="async"
-                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[90%] w-auto object-contain object-top md:h-[110%] md:left-[2%]"
+                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[95%] w-auto object-contain object-bottom md:h-[105%] md:left-[2%]"
                   style={{
-                    clipPath: "inset(0 0 50% 0)",
-                    transform: "translateY(50%)",
                     WebkitMaskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
                     maskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
                   } as React.CSSProperties}
                 />
                 {/* Kuda — right half, black & white, bottom-anchored. */}
                 <img
-                  src={kudaHeadshotAsset.url}
+                  src={kudaHeadshotCutout}
                   alt="Kuda Butawo"
                   loading="lazy"
                   decoding="async"
-                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[90%] w-auto object-contain object-top md:h-[110%] md:right-[2%]"
+                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[95%] w-auto object-contain object-bottom md:h-[105%] md:right-[2%]"
                   style={{
-                    clipPath: "inset(0 0 50% 0)",
-                    transform: "translateY(50%)",
                     WebkitMaskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
                     maskImage:
-                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 28%, black 75%, transparent 100%)",
                   } as React.CSSProperties}
                 />
 
