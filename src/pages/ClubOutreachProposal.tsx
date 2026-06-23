@@ -2217,9 +2217,7 @@ function MatchByMatchCard({
   };
 
   const openClipsForAnalysis = async (analysisId: string) => {
-    setOpenClipsForId(analysisId);
     setClipsLoading(true);
-    setClipsForOpen([]);
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
@@ -2228,15 +2226,22 @@ function MatchByMatchCard({
         .not("video_url", "is", null);
       if (error) throw error;
       // R90 order: highest action_score first; null scores last.
-      const sorted = (data ?? []).slice().sort((a: any, b: any) => {
+      const sortedClips = (data ?? []).slice().sort((a: any, b: any) => {
         const av = typeof a.action_score === "number" ? a.action_score : -Infinity;
         const bv = typeof b.action_score === "number" ? b.action_score : -Infinity;
         return bv - av;
       });
-      setClipsForOpen(sorted);
+      // Only open the dialog once we have clips ready, otherwise the player's
+      // open-effect immediately bails out with a "no valid clips" toast.
+      if (sortedClips.length === 0) {
+        toast.error("No clips available for this match yet.");
+        return;
+      }
+      setClipsForOpen(sortedClips);
+      setOpenClipsForId(analysisId);
     } catch (e) {
       console.error("Failed to load clips", e);
-      setClipsForOpen([]);
+      toast.error("Could not load clips for this match.");
     } finally {
       setClipsLoading(false);
     }
