@@ -719,10 +719,26 @@ export default function ClubOutreachProposal() {
             const playerFitEn = (entry.fit_recommendation ?? "").trim();
             const playerFit = playerFitEn ? trFit(p?.id, playerFitEn) : "";
             const playerAge = p?.age ?? calculateAge(p?.date_of_birth ?? null);
+            const openPlayer = () => {
+              hapticTap();
+              setActiveSlot(null);
+              setActiveIndex(i);
+              setSelectedPlayerIdx(i);
+              try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+            };
             return (
               <div
                 key={p?.id ?? i}
-                className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] overflow-hidden flex flex-col"
+                role="button"
+                tabIndex={0}
+                onClick={openPlayer}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openPlayer();
+                  }
+                }}
+                className="group relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] overflow-hidden flex flex-col cursor-pointer transition-all duration-200 ease-out hover:border-[#cbb96b]/70 hover:scale-[1.015] hover:shadow-[0_10px_40px_-12px_rgba(203,185,107,0.35)] focus-visible:outline-none focus-visible:border-[#cbb96b]/70 focus-visible:scale-[1.015]"
               >
                 <div className="relative aspect-[4/3] bg-black/60 overflow-hidden">
                   {p?.image_url ? (
@@ -756,19 +772,11 @@ export default function ClubOutreachProposal() {
                   <div className="flex-1" />
                 )}
                 <div className="p-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      hapticTap();
-                      setActiveSlot(null);
-                      setActiveIndex(i);
-                      setSelectedPlayerIdx(i);
-                      try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/50 bg-[#cbb96b]/10 hover:bg-[#cbb96b]/20 text-[#cbb96b] transition"
+                  <div
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/50 bg-[#cbb96b]/10 group-hover:bg-[#cbb96b]/20 text-[#cbb96b] transition"
                   >
                     {tr("picker.learnMore", "Learn more")} <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
+                  </div>
                 </div>
               </div>
             );
