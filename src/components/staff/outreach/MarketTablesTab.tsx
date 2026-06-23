@@ -334,6 +334,7 @@ export default function MarketTablesTab() {
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading market table…</div>;
 
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3">
