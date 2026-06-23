@@ -1558,107 +1558,61 @@ export const DetailView = ({
                   />
                 </div>
 
-                {/* ===== Headshot frames — each headshot lives inside a
-                       container clipped to the SAME diagonal polygon as
-                       its background half, so the photo is naturally
-                       framed by the seam (Canva-style) rather than
-                       overlapping it. A soft top-fade mask on the image
-                       still blends the crown into the marble. ===== */}
-                {/* Jolon frame — desktop: left diagonal half. The headshot
-                   is rendered inside a bottom-anchored band that crops
-                   the lower half of the photo (object-top + object-cover)
-                   so the head/shoulders sit flush against the bottom of
-                   the section. */}
+                {/* ===== Headshots — keep each portrait inside its own
+                       diagonal section. The full cutout is pushed down past
+                       the bottom edge, so only the upper half remains visible
+                       and the lower half is cropped by the section. ===== */}
+                {/* Jolon frame — desktop: left diagonal section */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
-                  style={{ clipPath: "polygon(0% 0%, 58% 0%, 42% 100%, 0% 100%)" }}
+                  className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[58%] overflow-hidden md:block"
+                  style={{ clipPath: "polygon(0% 0%, 100% 0%, 72.5% 100%, 0% 100%)" }}
                 >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-[62%] overflow-hidden"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                      maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                    } as React.CSSProperties}
-                  >
-                    <img
-                      src={jolonHeadshotCutout}
-                      alt="Jolon Levene"
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
-                    />
-                  </div>
+                  <img
+                    src={jolonHeadshotCutout}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-[-43%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.58)]"
+                  />
                 </div>
                 {/* Kuda frame — desktop: right diagonal half */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[1] hidden md:block"
-                  style={{ clipPath: "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)" }}
+                  className="pointer-events-none absolute inset-y-0 right-0 z-[1] hidden w-[58%] overflow-hidden md:block"
+                  style={{ clipPath: "polygon(27.5% 0%, 100% 0%, 100% 100%, 0% 100%)" }}
                 >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-[62%] overflow-hidden"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                      maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                    } as React.CSSProperties}
-                  >
-                    <img
-                      src={kudaHeadshotCutout}
-                      alt="Kuda Butawo"
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
-                    />
-                  </div>
+                  <img
+                    src={kudaHeadshotCutout}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-[-43%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.28)]"
+                  />
                 </div>
                 {/* Jolon frame — mobile: top diagonal half */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[1] md:hidden"
-                  style={{ clipPath: "polygon(0% 0%, 100% 0%, 100% 42%, 0% 58%)" }}
+                  className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-[58%] overflow-hidden md:hidden"
+                  style={{ clipPath: "polygon(0% 0%, 100% 0%, 100% 72.5%, 0% 100%)" }}
                 >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-[70%] overflow-hidden"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                      maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                    } as React.CSSProperties}
-                  >
-                    <img
-                      src={jolonHeadshotCutout}
-                      alt="Jolon Levene"
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
-                    />
-                  </div>
+                  <img
+                    src={jolonHeadshotCutout}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-[-45%] left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.58)]"
+                  />
                 </div>
                 {/* Kuda frame — mobile: bottom diagonal half */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[1] md:hidden"
-                  style={{ clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)" }}
+                  className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1] h-[58%] overflow-hidden md:hidden"
+                  style={{ clipPath: "polygon(0% 27.5%, 100% 0%, 100% 100%, 0% 100%)" }}
                 >
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-[70%] overflow-hidden"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                      maskImage:
-                        "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
-                    } as React.CSSProperties}
-                  >
-                    <img
-                      src={kudaHeadshotCutout}
-                      alt="Kuda Butawo"
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-full object-cover object-top"
-                    />
-                  </div>
+                  <img
+                    src={kudaHeadshotCutout}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute bottom-[-45%] left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.28)]"
+                  />
                 </div>
 
                 {/* ===== Diagonal Rise Gold divider — sits over the seam. */}
