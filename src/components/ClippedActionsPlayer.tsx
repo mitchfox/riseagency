@@ -85,6 +85,7 @@ export const ClippedActionsPlayer = ({
   mode = 'report',
   onReorderClip,
   onRemoveClip,
+  hideScores,
 }: ClippedActionsPlayerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressBarRef = useRef<HTMLDivElement>(null);
