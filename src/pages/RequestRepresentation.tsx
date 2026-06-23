@@ -5,7 +5,7 @@ import {
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
-  Trophy, History, UserSquare2,
+  History, UserSquare2,
 } from "lucide-react";
 import { widont } from "@/components/SlantedBox";
 import { SEO } from "@/components/SEO";
@@ -30,6 +30,9 @@ import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
 import jolonHeadshotAsset from "@/assets/jolon-headshot.jpeg.asset.json";
 import kudaHeadshotAsset from "@/assets/kuda-headshot.jpeg.asset.json";
+import ballondorAsset from "@/assets/ballondor.png.asset.json";
+import blackMarbleBg from "@/assets/black-marble.png";
+import whiteMarbleBg from "@/assets/white-marble.png";
 
 export type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
