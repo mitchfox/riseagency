@@ -2143,6 +2143,46 @@ function MatchByMatchCard({
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
   const [viewMode, setViewMode] = useState<"per90" | "raw">("per90");
+  const [openClipsForId, setOpenClipsForId] = useState<string | null>(null);
+  const [clipsLoading, setClipsLoading] = useState(false);
+  const [clipsForOpen, setClipsForOpen] = useState<any[]>([]);
+
+  const hasPlayableReport = (a: any): boolean => {
+    if (!a) return false;
+    const status = (a.visibility_status ?? "").toString().toLowerCase();
+    if (status === "clipped") return true;
+    if (status === "live" && a.has_clips) return true;
+    // Fallback: explicit has_clips flag from the API.
+    return !!a.has_clips;
+  };
+
+  const openClipsForAnalysis = async (analysisId: string) => {
+    setOpenClipsForId(analysisId);
+    setClipsLoading(true);
+    setClipsForOpen([]);
+    try {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("id, action_number, action_type, action_description, video_url, minute, clip_start, clip_end, action_score")
+        .eq("analysis_id", analysisId)
+        .not("video_url", "is", null);
+      if (error) throw error;
+      // R90 order: highest action_score first; null scores last.
+      const sorted = (data ?? []).slice().sort((a: any, b: any) => {
+        const av = typeof a.action_score === "number" ? a.action_score : -Infinity;
+        const bv = typeof b.action_score === "number" ? b.action_score : -Infinity;
+        return bv - av;
+      });
+      setClipsForOpen(sorted);
+    } catch (e) {
+      console.error("Failed to load clips", e);
+      setClipsForOpen([]);
+    } finally {
+      setClipsLoading(false);
+    }
+  };
+
+  const openMatch = openClipsForId ? sorted.find((a) => a.id === openClipsForId) ?? null : null;
 
   const baseKey = (k: string) => k.replace(/_per90$/i, "");
   const isPct = (k: string) => /_pct$|_percentage$/i.test(k);
