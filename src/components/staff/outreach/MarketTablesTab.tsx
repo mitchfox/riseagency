@@ -246,7 +246,11 @@ export default function MarketTablesTab() {
         },
         { onConflict: "market_table_key,club_id" },
       );
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Saved", { duration: 1200 });
+    }
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
@@ -365,7 +369,119 @@ export default function MarketTablesTab() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-x-auto">
+      {/* Mobile: stacked cards. Desktop: full table. */}
+      <div className="md:hidden space-y-2">
+        {filtered.length === 0 && (
+          <div className="rounded-xl border border-border bg-card p-6 text-center text-xs text-muted-foreground">
+            No clubs match. Strategies need clubs added before they show here.
+          </div>
+        )}
+        {filtered.map((club) => {
+          const { tdContact, csContact, tdName, csName } = getValues(club);
+          const exclude = new Set<string>();
+          if (tdContact) exclude.add(tdContact.id);
+          if (csContact) exclude.add(csContact.id);
+          const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
+          const isOpen = expanded.has(club.id);
+          return (
+            <div key={`m-${club.id}`} className="rounded-xl border border-border bg-card p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                {club.image_url ? (
+                  <img src={club.image_url} alt="" className="h-8 w-8 object-contain rounded-sm bg-white/5" />
+                ) : (
+                  <div className="h-8 w-8 rounded-sm bg-muted" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-medium text-sm truncate">{club.club_name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {club.country ?? "—"}{club.league ? ` · ${club.league}` : ""}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Technical Director</Label>
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    defaultValue={tdName}
+                    placeholder="Add name"
+                    className="h-9 text-sm flex-1"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim() || null;
+                      const existing = entries[club.id]?.technical_director_name ?? null;
+                      const auto = tdContact?.name ?? null;
+                      if (v === existing) return;
+                      if (!existing && v === auto) return;
+                      persist(club.id, { technical_director_name: v });
+                    }}
+                  />
+                  {renderContactLinks(tdContact)}
+                  <button
+                    type="button"
+                    onClick={() => openEdit(club, "td", tdContact)}
+                    title={tdContact ? "Edit contact" : "Add contact"}
+                    className="text-muted-foreground hover:text-white p-1.5"
+                  >
+                    {tdContact ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Chief Scout</Label>
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    defaultValue={csName}
+                    placeholder="Add name"
+                    className="h-9 text-sm flex-1"
+                    onBlur={(e) => {
+                      const v = e.target.value.trim() || null;
+                      const existing = entries[club.id]?.chief_scout_name ?? null;
+                      const auto = csContact?.name ?? null;
+                      if (v === existing) return;
+                      if (!existing && v === auto) return;
+                      persist(club.id, { chief_scout_name: v });
+                    }}
+                  />
+                  {renderContactLinks(csContact)}
+                  <button
+                    type="button"
+                    onClick={() => openEdit(club, "cs", csContact)}
+                    title={csContact ? "Edit contact" : "Add contact"}
+                    className="text-muted-foreground hover:text-white p-1.5"
+                  >
+                    {csContact ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {extras.length > 0 && (
+                <div className="pt-1 border-t border-border/40">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(club.id)}
+                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-white"
+                  >
+                    <Users className="h-3 w-3" />
+                    {extras.length} more contact{extras.length === 1 ? "" : "s"}
+                    <ChevronRight className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                  </button>
+                  {isOpen && (
+                    <ul className="mt-2 space-y-1.5">
+                      {extras.map((c) => (
+                        <li key={c.id} className="flex items-center gap-2 text-xs flex-wrap">
+                          <span className="text-white">{c.name}</span>
+                          {c.position && <span className="text-muted-foreground">· {c.position}</span>}
+                          {renderContactLinks(c)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:block rounded-xl border border-border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-[11px] uppercase tracking-wider text-muted-foreground bg-muted/30">
             <tr>

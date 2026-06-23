@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft } from "lucide-react";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft, X as XIcon, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
@@ -249,6 +249,7 @@ export default function ClubOutreachProposal() {
   const [contactsVisible, setContactsVisible] = useState(false);
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [inlineDataOpen, setInlineDataOpen] = useState(false);
+  const [proofOpen, setProofOpen] = useState(false);
   const [shownAnalysisIds, setShownAnalysisIds] = useState<Set<string>>(new Set());
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
@@ -1175,11 +1176,8 @@ export default function ClubOutreachProposal() {
                   />
                 ) : current.proof_of_representation_url ? (
                   <ProposalCard
-                    href={
-                      current.proof_of_representation_url && data.link.short_id && player?.id
-                        ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                        : null
-                    }
+                    href={null}
+                    onClick={() => setProofOpen(true)}
                     icon={<FileBadge2 className="h-6 w-6" />}
                     eyebrow="02"
                     title={tr("card.proofTitle", "Proof of Representation")}
@@ -1187,7 +1185,6 @@ export default function ClubOutreachProposal() {
                     disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
                     openLabel={tr("card.open", "Open")}
                     unavailableLabel={tr("card.unavailable", "Unavailable")}
-                    internal
                   />
                 ) : null)
               )}
@@ -1451,6 +1448,55 @@ export default function ClubOutreachProposal() {
           </div>
         );
       })()}
+
+      {proofOpen && current?.proof_of_representation_url && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-6"
+          onClick={() => setProofOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative w-full max-w-5xl h-[92vh] sm:h-[88vh] rounded-2xl border border-[#cbb96b]/30 bg-[#0a0a0a] shadow-[0_30px_120px_-20px_rgba(203,185,107,0.35)] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-white/10">
+              <FileBadge2 className="h-4 w-4 text-[#cbb96b]" />
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#cbb96b] truncate">
+                {tr("card.proofTitle", "Proof of Representation")}
+                {current?.player?.name ? ` · ${current.player.name}` : ""}
+              </p>
+              <div className="ml-auto flex items-center gap-2">
+                <a
+                  href={current.proof_of_representation_url}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] uppercase tracking-wider border border-[#cbb96b]/40 text-[#cbb96b] hover:bg-[#cbb96b]/10 transition"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {tr("proof.download", "Download")}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setProofOpen(false)}
+                  aria-label={tr("proof.close", "Close")}
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 text-white/80 hover:border-[#cbb96b]/60 hover:text-white transition"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-white">
+              <iframe
+                src={current.proof_of_representation_url}
+                title="Proof of Representation"
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
