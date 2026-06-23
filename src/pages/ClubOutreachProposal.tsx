@@ -622,7 +622,7 @@ export default function ClubOutreachProposal() {
             );
           })()}
           {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
-            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n}")} />
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
           )}
           {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
             <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
@@ -1531,7 +1531,7 @@ export default function ClubOutreachProposal() {
 }
 
 function ProposalCard({
-  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick,
+  href, icon, eyebrow, title, subtitle, disabledLabel, internal, openLabel, unavailableLabel, onClick, accentBorder,
 }: {
   href: string | null;
   icon: React.ReactNode;
@@ -1543,10 +1543,11 @@ function ProposalCard({
   openLabel?: string;
   unavailableLabel?: string;
   onClick?: () => void;
+  accentBorder?: boolean;
 }) {
   const disabled = (!href && !onClick) || !!disabledLabel;
   const inner = (
-    <div className={`relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
+    <div className={`relative h-full rounded-2xl border bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 transition-all duration-300 ${accentBorder && !disabled ? "border-[#cbb96b]/55 ring-1 ring-[#cbb96b]/35 ring-offset-2 ring-offset-black shadow-[0_0_0_1px_rgba(203,185,107,0.18),0_18px_55px_-28px_rgba(203,185,107,0.75)]" : "border-white/10"} ${disabled ? "opacity-50" : "hover:border-[#cbb96b]/60 hover:-translate-y-1 hover:shadow-[0_20px_60px_-20px_rgba(203,185,107,0.45)]"}`}>
       <div className="flex items-start justify-between">
         <div className="h-12 w-12 rounded-xl bg-[#cbb96b]/10 text-[#cbb96b] flex items-center justify-center">{icon}</div>
       </div>
@@ -1852,9 +1853,25 @@ function KeyDetailsCard({
           </a>
         ) : null}
       </div>
-      <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
-        {tiles.map((it, i) => renderTile(it, i))}
-      </div>
+      {count === 5 ? (
+        <>
+          <div className="grid grid-cols-2 gap-2 auto-rows-fr sm:hidden">
+            {tiles.map((it, i) => renderTile(it, i))}
+          </div>
+          <div className="hidden sm:block space-y-2">
+            <div className="grid grid-cols-3 gap-2 auto-rows-fr">
+              {tiles.slice(0, 3).map((it, i) => renderTile(it, i))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 auto-rows-fr max-w-[66.666%] mx-auto">
+              {tiles.slice(3, 5).map((it, i) => renderTile(it, i + 3))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
+          {tiles.map((it, i) => renderTile(it, i))}
+        </div>
+      )}
     </div>
   );
 }
