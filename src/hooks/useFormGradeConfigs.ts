@@ -244,6 +244,20 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'aerialduelswinpct': 'aerial_duel_win_pct',
   'aerialduelswon': 'aerial_duels_won',
   
+  // Per-90 aliases used by the club outreach proposal (Match-by-Match)
+  'accuratelongballsper90': 'long_balls',
+  'accuratecrossesper90': 'crosses_completed',
+  'crossesper90': 'crosses_completed',
+  'longballsper90': 'long_balls',
+  'keypassesper90': 'key_passes',
+  'keypasses': 'key_passes',
+  'duelswonper90': 'duels_won',
+  'aerialswonper90': 'aerial_duels_won',
+  'aerialduelswonper90': 'aerial_duels_won',
+  'clearancesper90': 'clearances',
+  'tackleswonper90': 'tackles_won',
+  'interceptionsper90': 'interceptions',
+
   // Turnovers
   'turnovers': 'turnovers',
   'dispossessed': 'dispossessed',
