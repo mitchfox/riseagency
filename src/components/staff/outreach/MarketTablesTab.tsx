@@ -768,12 +768,10 @@ export default function MarketTablesTab() {
         if (!ok) return;
       }
       if (saved?.id) {
-        try {
-          await ensureRelationshipShell(saved.id);
-        } catch (e: any) {
-          toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
-        }
         setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
+        void ensureRelationshipShell(saved.id).catch((e: any) => {
+          toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
+        });
       }
       toast.success(existing ? "Contact updated" : "Contact added");
       setEditing(null);
