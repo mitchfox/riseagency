@@ -722,8 +722,8 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const activeShowSeasonStats = activeSettingsEntry?.show_season_stats ?? showSeasonStats;
   const activeShowStrengths = activeSettingsEntry?.show_strengths ?? showStrengths;
   const activeSeasonDataMode = activeSettingsEntry?.season_data_mode ?? seasonDataMode;
-  const activeSeasonId = activeSettingsEntry?.season_id ?? null;
-  const activeSelectedVideoIds = Array.isArray(activeSettingsEntry?.selected_video_ids) ? activeSettingsEntry!.selected_video_ids! : [];
+  const activeSeasonId = activeSettingsEntry?.season_id ?? seasonId;
+  const activeSelectedVideoIds = Array.isArray(activeSettingsEntry?.selected_video_ids) ? activeSettingsEntry!.selected_video_ids! : selectedVideoIds;
   const activeKeyDetails = Array.isArray(activeSettingsEntry?.key_details) && activeSettingsEntry!.key_details!.length > 0
     ? normaliseKeyDetails(activeSettingsEntry!.key_details)
     : keyDetails;
