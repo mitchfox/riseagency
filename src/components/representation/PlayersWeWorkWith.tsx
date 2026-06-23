@@ -81,19 +81,22 @@ export const PlayersWeWorkWith = ({
             && !excludedNames.has(name);
         });
         setPlayers(filtered);
-        const preloadTargets = filtered.slice(0, 24).map((player) => player.image_url).filter(Boolean) as string[];
-        const preload = () => {
-          preloadTargets.forEach((src) => {
+        const preloadTargets = filtered.map((player) => player.image_url).filter(Boolean) as string[];
+        const preload = (start = 0) => {
+          preloadTargets.slice(start, start + 8).forEach((src) => {
             const img = new Image();
             img.decoding = "async";
             img.src = src;
           });
+          if (start + 8 < preloadTargets.length) {
+            window.setTimeout(() => preload(start + 8), 700);
+          }
         };
         const w = window as any;
         if (typeof w.requestIdleCallback === "function") {
-          w.requestIdleCallback(preload, { timeout: 1200 });
+          w.requestIdleCallback(() => preload(), { timeout: 1200 });
         } else {
-          window.setTimeout(preload, 0);
+          window.setTimeout(() => preload(), 0);
         }
       }
     })();
@@ -135,9 +138,9 @@ export const PlayersWeWorkWith = ({
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    loading={i < 24 ? "eager" : "lazy"}
+                    loading={i < 32 ? "eager" : "lazy"}
                     decoding="async"
-                    fetchPriority={i < 12 ? "high" : "auto"}
+                    fetchPriority={i < 16 ? "high" : "auto"}
                     className="h-full w-full object-cover object-top"
                   />
                 ) : null}
