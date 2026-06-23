@@ -248,6 +248,7 @@ export default function ClubOutreachProposal() {
   const [heroBlobUrl, setHeroBlobUrl] = useState<string | null>(null);
   const [inlineDataOpen, setInlineDataOpen] = useState(false);
   const [shownAnalysisIds, setShownAnalysisIds] = useState<Set<string>>(new Set());
+  const [selectedPlayerIdx, setSelectedPlayerIdx] = useState<number | null>(null);
   const [heroPrefetchFailed, setHeroPrefetchFailed] = useState(false);
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
@@ -577,7 +578,7 @@ export default function ClubOutreachProposal() {
             return (
               <RemainingVideosCard
                 videos={remaining}
-                title={tr("inline.moreVideos", "More Videos")}
+                title={tr("inline.moreVideos", "Match-By-Match Video")}
               />
             );
           })()}
@@ -626,6 +627,114 @@ export default function ClubOutreachProposal() {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Multi-player picker — when the proposal presents 2+ primary players,
+  // show a card grid (image + fit recommendation + Learn more) before
+  // diving into a single player's full proposal. The alternate_profiles
+  // suggestion list at the bottom of the page is unrelated.
+  if (hasMultiple && selectedPlayerIdx === null) {
+    return (
+      <div className="relative min-h-[100dvh] text-white pb-[max(24px,env(safe-area-inset-bottom))]">
+        <div
+          className="fixed inset-0 -z-10 bg-black"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.85)), url(${blackMarbleBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <header className="relative px-6 pt-[max(20px,env(safe-area-inset-top))] pb-6 text-center border-b border-white/5">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-56"
+            style={{ background: `radial-gradient(ellipse at top, ${clubGlow}38, transparent 65%)` }}
+          />
+          {club?.image_url ? (
+            <img
+              src={club.image_url}
+              alt={club.club_name}
+              onError={(e) => ((e.currentTarget.style.display = "none"))}
+              className="relative mx-auto h-20 sm:h-24 w-auto object-contain"
+              style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
+            />
+          ) : null}
+          <div className="mt-5 flex flex-col items-center gap-2.5">
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
+              {showMandatedHeader
+                ? fillTpl(tr("hdr.presentsBy", "{name} presents"), { name: mandatedAgentName })
+                : tr("hdr.presents", "Rise Football Agency presents")}
+            </p>
+            <h1 className="text-[28px] sm:text-4xl font-semibold leading-[1.1] tracking-tight">
+              {fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })}
+            </h1>
+            {preparedFor && (
+              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+            )}
+          </div>
+        </header>
+        <section className="max-w-5xl mx-auto px-6 mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {data.players.map((entry, i) => {
+            const p = entry.player;
+            const playerFitEn = (entry.fit_recommendation ?? "").trim();
+            const playerFit = playerFitEn ? trFit(p?.id, playerFitEn) : "";
+            const playerAge = p?.age ?? calculateAge(p?.date_of_birth ?? null);
+            return (
+              <div
+                key={p?.id ?? i}
+                className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] overflow-hidden flex flex-col"
+              >
+                <div className="relative aspect-[4/3] bg-black/60 overflow-hidden">
+                  {p?.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-5xl text-white/30">
+                      {p?.name?.[0] ?? "?"}
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                    <h2 className="text-xl font-semibold leading-tight">{p?.name ?? "Player"}</h2>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/65 mt-1">
+                      {[p?.position, playerAge ? `${playerAge}` : null, p?.club].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                </div>
+                {playerFit ? (
+                  <div className="px-5 pt-4 pb-3 flex-1">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">
+                      {tr("fit.title", "Fit & Recommendation")}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/80 whitespace-pre-wrap line-clamp-6">
+                      {playerFit}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex-1" />
+                )}
+                <div className="p-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      hapticTap();
+                      setActiveSlot(null);
+                      setActiveIndex(i);
+                      setSelectedPlayerIdx(i);
+                      try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/50 bg-[#cbb96b]/10 hover:bg-[#cbb96b]/20 text-[#cbb96b] transition"
+                  >
+                    {tr("picker.learnMore", "Learn more")} <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
       </div>
     );
   }
@@ -722,6 +831,23 @@ export default function ClubOutreachProposal() {
               {s}
             </button>
           ))}
+        </div>
+      )}
+
+      {hasMultiple && (
+        <div className="max-w-3xl mx-auto px-6 mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              hapticTap();
+              setSelectedPlayerIdx(null);
+              try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.25em] border border-white/15 text-white/70 hover:border-[#cbb96b]/60 hover:text-white transition"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            {tr("picker.backToPlayers", "Back to all players")}
+          </button>
         </div>
       )}
 
@@ -1489,7 +1615,11 @@ function KeyDetailsCard({
             target="_blank"
             rel="noopener noreferrer"
             title="View on Transfermarkt"
-            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/10 bg-[#0a3853]/30 hover:bg-[#0a3853]/60 hover:border-[#1f7a8c]/60 text-[10px] uppercase tracking-[0.18em] text-white/85 transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1 border border-white/10 bg-[#0a3853]/20 hover:bg-[#0a3853]/45 hover:border-[#1f7a8c]/50 text-[10px] uppercase tracking-[0.18em] text-white/55 hover:text-white/85 opacity-70 hover:opacity-100 transition"
+            style={{
+              clipPath: "polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)",
+              WebkitClipPath: "polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)",
+            }}
           >
             <span
               aria-hidden="true"
@@ -1858,8 +1988,15 @@ function MatchByMatchCard({
     if (raw === null || raw === undefined || raw === "") return false;
     const n = Number(raw);
     if (!Number.isFinite(n)) return false;
-    const mk = normalizeStatKey(key);
-    if (!hasThresholds(mk)) return false;
+    // Try the key directly, then strip the `_per90` suffix so per-90 keys
+    // map back to their base metric configs (e.g. `npxg_per90` → `npxg`).
+    const candidates = [key, key.replace(/_per90$/i, "")];
+    let mk: string | null = null;
+    for (const c of candidates) {
+      const norm = normalizeStatKey(c);
+      if (hasThresholds(norm)) { mk = norm; break; }
+    }
+    if (!mk) return false;
     // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
     const isPct = /_pct$|_percentage$/i.test(key);
     const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
@@ -1876,7 +2013,7 @@ function MatchByMatchCard({
   };
 
   return (
-    <SectionShell title="Match by Match" eyebrow="06">
+    <SectionShell title="Match-By-Match Data" eyebrow="06">
       <Tabs defaultValue={defaultCat}>
         <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
           {categories.map((c) => (
@@ -1981,6 +2118,8 @@ function RemainingVideosCard({
             src={active.videoUrl}
             controls
             playsInline
+            autoPlay
+            muted
             preload="metadata"
             className="absolute inset-0 w-full h-full object-contain"
           />
