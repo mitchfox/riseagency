@@ -479,6 +479,46 @@ export default function MarketTablesTab() {
     })();
   }, []);
 
+  // Live-sync market_table_entries so multiple staff editing the table at the
+  // same time see each other's saves immediately instead of overwriting them
+  // with stale local state on their next save.
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-table-entries-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "market_table_entries",
+          filter: `market_table_key=eq.${MARKET_TABLE_KEY}`,
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (!row?.club_id) return;
+          setEntries((prev) => {
+            if (payload.eventType === "DELETE") {
+              const next = { ...prev };
+              delete next[row.club_id];
+              return next;
+            }
+            return {
+              ...prev,
+              [row.club_id]: {
+                club_id: row.club_id,
+                technical_director_name: row.technical_director_name ?? null,
+                chief_scout_name: row.chief_scout_name ?? null,
+              },
+            };
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const countries = useMemo(() => {
     const set = new Set<string>();
     clubs.forEach((c) => c.country && set.add(c.country));
@@ -574,22 +614,40 @@ export default function MarketTablesTab() {
     };
     const next: Entry = { ...current, ...patch, club_id: clubId };
     setEntries((prev) => ({ ...prev, [clubId]: next }));
-    const { error } = await (supabase as any)
+    // Only send the columns that actually changed so concurrent edits from
+    // other staff on the *other* column don't get clobbered by our stale copy.
+    const payload: Record<string, unknown> = {
+      market_table_key: MARKET_TABLE_KEY,
+      club_id: clubId,
+    };
+    if ("technical_director_name" in patch) {
+      payload.technical_director_name = patch.technical_director_name ?? null;
+    }
+    if ("chief_scout_name" in patch) {
+      payload.chief_scout_name = patch.chief_scout_name ?? null;
+    }
+    const { data: saved, error } = await (supabase as any)
       .from("market_table_entries")
-      .upsert(
-        {
-          market_table_key: MARKET_TABLE_KEY,
-          club_id: clubId,
-          technical_director_name: next.technical_director_name,
-          chief_scout_name: next.chief_scout_name,
-        },
-        { onConflict: "market_table_key,club_id" },
-      );
+      .upsert(payload, { onConflict: "market_table_key,club_id" })
+      .select("club_id, technical_director_name, chief_scout_name")
+      .single();
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Saved", { duration: 1200 });
+      return;
     }
+    if (saved) {
+      // Reconcile with whatever's actually in the DB after the partial upsert
+      // (the other column may have been changed by a teammate in parallel).
+      setEntries((prev) => ({
+        ...prev,
+        [clubId]: {
+          club_id: clubId,
+          technical_director_name: saved.technical_director_name ?? null,
+          chief_scout_name: saved.chief_scout_name ?? null,
+        },
+      }));
+    }
+    toast.success("Saved", { duration: 1200 });
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
