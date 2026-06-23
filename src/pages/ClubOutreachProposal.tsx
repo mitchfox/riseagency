@@ -2334,6 +2334,7 @@ function MatchByMatchCard({
                 <thead>
                   <tr className="bg-white/[0.04] text-white/60">
                     <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
+                    <th className="px-1.5 py-2 font-medium w-9" aria-label="Play"></th>
                     {visibleMetrics.map((m) => (
                       <th key={m.key} className="text-center px-2.5 py-2 font-medium whitespace-nowrap">
                         {m.label}
@@ -2365,6 +2366,19 @@ function MatchByMatchCard({
                             ) : null}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center">
+                        {hasPlayableReport(a) ? (
+                          <button
+                            type="button"
+                            onClick={() => openClipsForAnalysis(a.id)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-full text-[#cbb96b] hover:bg-[#cbb96b]/15 transition"
+                            title="Play video report"
+                            aria-label="Play video report"
+                          >
+                            <PlayCircle className="h-5 w-5" />
+                          </button>
+                        ) : null}
                       </td>
                       {visibleMetrics.map((m) => {
                         const displayValue = getValue(a, m.key, viewMode);
