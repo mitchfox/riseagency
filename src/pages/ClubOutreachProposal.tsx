@@ -2155,7 +2155,11 @@ function MatchByMatchCard({
     "";
 
   const sorted = useMemo(() => {
-    const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
+    const base = [...analyses].filter((a) => {
+      if (!excludeAnalysisIds || !excludeAnalysisIds.has(a.id)) return true;
+      const status = (a.visibility_status ?? "").toString().toLowerCase();
+      return status === "clipped" || status === "live" || !!a.has_clips;
+    });
     return rankGames(base, gameOrder ?? null);
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
