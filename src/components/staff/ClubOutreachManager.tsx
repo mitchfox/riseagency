@@ -826,7 +826,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id")
+      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id, default_selected_video_ids, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
@@ -835,8 +835,25 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // player has one saved on their outreach settings — whether we're editing
     // an existing link or adding the 2nd+ player to a multi-player outreach.
     const playerDefaultFit: string = (defaults?.default_fit_recommendation ?? "").trim();
+    const makeEntry = (sortOrder: number, fit: string): LinkPlayerRow => ({
+      player_id: id,
+      position_slot: presetPosition,
+      fit_recommendation: fit,
+      situation: presetSituation,
+      sort_order: sortOrder,
+      show_form: typeof defaults?.default_show_form === 'boolean' ? defaults.default_show_form : showForm,
+      show_in_numbers: typeof defaults?.default_show_in_numbers === 'boolean' ? defaults.default_show_in_numbers : showInNumbers,
+      show_season_stats: typeof defaults?.default_show_season_stats === 'boolean' ? defaults.default_show_season_stats : showSeasonStats,
+      show_strengths: typeof defaults?.default_show_strengths === 'boolean' ? defaults.default_show_strengths : showStrengths,
+      season_data_mode: (defaults?.default_season_data_mode === 'popup' || defaults?.default_season_data_mode === 'link') ? defaults.default_season_data_mode : seasonDataMode,
+      season_id: (defaults?.default_season_id as string | null) ?? null,
+      selected_video_ids: Array.isArray(defaults?.default_selected_video_ids) ? defaults.default_selected_video_ids : [],
+      key_details: Array.isArray(defaults?.default_key_details) && defaults.default_key_details.length > 0 ? normaliseKeyDetails(defaults.default_key_details) : keyDetails,
+      section_order: Array.isArray(defaults?.default_section_order) && defaults.default_section_order.length > 0 ? normaliseSectionOrder(defaults.default_section_order) : sectionOrder,
+    });
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: playerDefaultFit || (defaultFit ?? ""), situation: presetSituation, sort_order: prev.length }]);
+      setEntries(prev => [...prev, makeEntry(prev.length, playerDefaultFit || (defaultFit ?? ""))]);
+      setActiveSettingsPlayerId(id);
       return;
     }
     // Determine new entries count after adding
@@ -860,7 +877,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       initialFit = playerDefaultFit || (defaultFit ?? "");
     }
     setEntries(prev => {
-      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, situation: presetSituation, sort_order: prev.length }];
+      const next = [...prev, makeEntry(prev.length, initialFit)];
       // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
       if (prev.length === 1) {
         const [first] = prev;
@@ -869,6 +886,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       }
       return next;
     });
+    setActiveSettingsPlayerId(id);
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
