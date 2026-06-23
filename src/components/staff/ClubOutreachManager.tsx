@@ -1839,6 +1839,250 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
   );
 }
 
+// =============================================================
+// Match by Match ordering editor (stat columns + game rows)
+// =============================================================
+const MBM_DEFAULT_STAT_ORDER: Record<string, string[]> = {
+  Possession: [
+    "successful_dribbles_per90","dribble_attempts_per90","dribble_success_pct",
+    "progressive_carries_per90","xt_via_prog_carries_per90","carries_into_final_3rd_per90",
+    "touches_in_opp_box_per90","fouls_drawn_per90",
+  ],
+  Passing: [
+    "assists","xa","key_passes_per90","xt_via_live_passes_per90",
+    "progressive_passes_per90","passes_into_final_3rd_per90","forward_passes_per90",
+    "passes_in_opp_half_per90","passes_in_own_half_per90","accurate_passes_per90",
+    "accurate_long_balls_per90","accurate_crosses_per90","pass_accuracy_pct",
+    "long_ball_accuracy_pct","cross_accuracy_pct",
+  ],
+  Shooting: [
+    "goals","npxg_per90","shots_on_target_per90","shots_on_target_pct",
+    "self_created_shots_per90","total_shots_per90","shots_outside_box_per90","shots_inside_box_per90",
+  ],
+  Defending: [
+    "tackles_won_pct","aerials_won_pct","duels_won_pct","tackles_won_per90",
+    "aerials_won_per90","duels_won_per90","clearances_per90","interceptions_per90",
+  ],
+};
+const MBM_STAT_LABELS: Record<string, string> = {
+  goals: "Goals", assists: "Assists", xg: "xG", xa: "xA",
+  npxg_per90: "npxG /90", xa_per90: "xA /90",
+  key_passes_per90: "Key Passes /90", pass_accuracy_pct: "Pass %",
+  accurate_passes_per90: "Accurate Passes /90", forward_passes_per90: "Forward Passes /90",
+  passes_into_final_3rd_per90: "Passes into Final 3rd /90",
+  progressive_passes_per90: "Progressive Passes /90",
+  passes_in_opp_half_per90: "Passes in Opp Half /90",
+  passes_in_own_half_per90: "Passes in Own Half /90",
+  long_ball_accuracy_pct: "Long Ball %", accurate_long_balls_per90: "Long Balls /90",
+  accurate_crosses_per90: "Crosses /90", cross_accuracy_pct: "Cross %",
+  dribble_success_pct: "Dribble %", successful_dribbles_per90: "Dribbles /90",
+  dribble_attempts_per90: "Dribbles Att. /90",
+  carries_into_final_3rd_per90: "Carries into Final 3rd /90",
+  progressive_carries_per90: "Progressive Carries /90",
+  xt_via_live_passes_per90: "xT (live passes) /90",
+  xt_via_prog_carries_per90: "xT (prog carries) /90",
+  touches_in_opp_box_per90: "Touches in Box /90",
+  fouls_drawn_per90: "Fouls Drawn /90",
+  shots: "Shots", shots_on_target_per90: "Shots on Target /90",
+  shots_on_target_pct: "On Target %",
+  total_shots_per90: "Shots /90",
+  shots_inside_box_per90: "Shots in Box /90",
+  shots_outside_box_per90: "Shots out of Box /90",
+  self_created_shots_per90: "Self-Created Shots /90",
+  tackles_won_per90: "Tackles /90", tackles_won_pct: "Tackles Won %",
+  interceptions_per90: "Interceptions /90", clearances_per90: "Clearances /90",
+  duels_won_pct: "Duels Won %", duels_won_per90: "Duels Won /90",
+  aerials_won_pct: "Aerial Duels Won %", aerials_won_per90: "Aerials Won /90",
+};
+const mbmHumanize = (k: string) =>
+  MBM_STAT_LABELS[k] ??
+  k.replace(/_per90/gi, " /90").replace(/_pct$/i, " %").replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+function ReorderList({ items, onChange, render }: {
+  items: string[];
+  onChange: (next: string[]) => void;
+  render: (id: string) => React.ReactNode;
+}) {
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = items.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      {items.map((id, i) => (
+        <div key={`${id}-${i}`} className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs">
+          <span className="flex-1 truncate">{render(id)}</span>
+          <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+            <ArrowUp className="h-3 w-3" />
+          </button>
+          <button type="button" onClick={() => move(i, 1)} disabled={i === items.length - 1} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+            <ArrowDown className="h-3 w-3" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MatchByMatchOrderEditor({
+  playerId,
+  seasons,
+  statOrders,
+  setStatOrders,
+  gameOrder,
+  setGameOrder,
+}: {
+  playerId: string;
+  seasons: { id: string; name: string }[];
+  statOrders: Record<string, string[]>;
+  setStatOrders: (next: Record<string, string[]>) => void;
+  gameOrder: string[];
+  setGameOrder: (next: string[]) => void;
+}) {
+  const [activeCat, setActiveCat] = useState<string>("Passing");
+  const [seasonId, setSeasonId] = useState<string>("");
+  const [games, setGames] = useState<{ id: string; opponent: string; analysis_date: string }[]>([]);
+
+  const currentOrder = (statOrders[activeCat] && statOrders[activeCat].length > 0)
+    ? statOrders[activeCat]
+    : MBM_DEFAULT_STAT_ORDER[activeCat] ?? [];
+
+  useEffect(() => {
+    if (!playerId) { setGames([]); return; }
+    (async () => {
+      let startDate: string | null = null;
+      let endDate: string | null = null;
+      if (seasonId) {
+        const { data: s } = await supabase
+          .from("player_seasons")
+          .select("start_analysis_id, end_analysis_id")
+          .eq("id", seasonId)
+          .maybeSingle();
+        const ids = [s?.start_analysis_id, s?.end_analysis_id].filter(Boolean) as string[];
+        if (ids.length) {
+          const { data: bounds } = await supabase
+            .from("player_analysis")
+            .select("analysis_date")
+            .in("id", ids);
+          const dates = (bounds ?? []).map((r: any) => r.analysis_date).filter(Boolean).sort();
+          if (dates.length) { startDate = dates[0]; endDate = dates[dates.length - 1]; }
+        }
+      }
+      let q = supabase
+        .from("player_analysis")
+        .select("id, opponent, analysis_date")
+        .eq("player_id", playerId)
+        .or("data_unavailable.is.null,data_unavailable.eq.false")
+        .order("analysis_date", { ascending: false });
+      if (startDate) q = q.gte("analysis_date", startDate);
+      if (endDate) q = q.lte("analysis_date", endDate);
+      const { data } = await q;
+      setGames((data ?? []).map((r: any) => ({ id: r.id, opponent: r.opponent ?? "?", analysis_date: r.analysis_date })));
+    })();
+  }, [playerId, seasonId]);
+
+  const normOpp = (s: string) => (s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+
+  // Ordered preview = games sorted by the saved gameOrder list, then leftover by date desc.
+  const orderedGames = (() => {
+    if (gameOrder.length === 0) return games;
+    const rank = new Map<string, number>();
+    gameOrder.forEach((n, i) => { const k = normOpp(n); if (!rank.has(k)) rank.set(k, i); });
+    return [...games].sort((a, b) => {
+      const ar = rank.get(normOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
+      const br = rank.get(normOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
+      if (ar !== br) return ar - br;
+      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
+    });
+  })();
+
+  const moveGame = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= orderedGames.length) return;
+    const next = orderedGames.slice();
+    [next[i], next[j]] = [next[j], next[i]];
+    setGameOrder(next.map((g) => g.opponent));
+  };
+
+  return (
+    <div className="space-y-4 rounded-md border border-[#cbb96b]/30 bg-[#cbb96b]/[0.04] p-3">
+      <div>
+        <Label>Default — Match by Match stat order</Label>
+        <p className="text-[11px] text-muted-foreground mt-1 mb-2">Reorder which stats appear left-to-right inside each category column on the Match by Match table.</p>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {(["Possession","Passing","Shooting","Defending"] as const).map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCat(cat)}
+              className={`rounded-md border px-3 py-1 text-xs ${activeCat === cat ? "border-[#cbb96b] bg-[#cbb96b]/15 text-foreground" : "border-border bg-background text-muted-foreground hover:border-[#cbb96b]/60"}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <ReorderList
+          items={currentOrder}
+          onChange={(next) => setStatOrders({ ...statOrders, [activeCat]: next })}
+          render={(id) => <span>{mbmHumanize(id)}</span>}
+        />
+        {statOrders[activeCat] && (
+          <button
+            type="button"
+            onClick={() => {
+              const { [activeCat]: _, ...rest } = statOrders;
+              setStatOrders(rest);
+            }}
+            className="mt-2 text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Reset {activeCat} to default order
+          </button>
+        )}
+      </div>
+      <div>
+        <Label>Default — Match by Match game order</Label>
+        <p className="text-[11px] text-muted-foreground mt-1 mb-2">Pick a season to see its games, then reorder them top-to-bottom for how rows appear on the proposal.</p>
+        <Select value={seasonId || "__all__"} onValueChange={(v) => setSeasonId(v === "__all__" ? "" : v)}>
+          <SelectTrigger className="mt-1.5 h-9 text-xs max-w-xs"><SelectValue placeholder="All seasons" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All seasons</SelectItem>
+            {seasons.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="mt-3 space-y-1">
+          {orderedGames.length === 0 && <p className="text-[11px] text-muted-foreground">No games found for this player{seasonId ? " in this season" : ""}.</p>}
+          {orderedGames.map((g, i) => (
+            <div key={g.id} className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs">
+              <span className="text-muted-foreground w-6">{i + 1}.</span>
+              <span className="flex-1 truncate">{g.opponent}</span>
+              <span className="text-muted-foreground text-[10px]">{g.analysis_date}</span>
+              <button type="button" onClick={() => moveGame(i, -1)} disabled={i === 0} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+                <ArrowUp className="h-3 w-3" />
+              </button>
+              <button type="button" onClick={() => moveGame(i, 1)} disabled={i === orderedGames.length - 1} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+                <ArrowDown className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+        {gameOrder.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setGameOrder([])}
+            className="mt-2 text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Reset game order
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const ADDABLE_KEY_DETAIL_KINDS: KeyDetailKind[] = [
   "club",
   "age",
