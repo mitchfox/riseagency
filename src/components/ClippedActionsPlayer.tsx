@@ -12,6 +12,7 @@ import { AddToPlaylistButton } from '@/components/portal/AddToPlaylistButton';
 import { useAutoTranslateStrings } from '@/hooks/useAutoTranslateStrings';
 import { Input } from '@/components/ui/input';
 import { getR90Grade } from '@/lib/gradeCalculations';
+import { heroCropStyle } from '@/lib/videoCropUtils';
 
 interface ClipAction {
   id: string;
@@ -387,6 +388,7 @@ export const ClippedActionsPlayer = ({
               ref={standaloneVideoRef}
               src={currentClip.video_url}
               className="w-full h-full object-contain cursor-pointer"
+              style={heroCropStyle(currentClip.video_url)}
               preload="auto"
               crossOrigin="anonymous"
               muted
@@ -404,6 +406,7 @@ export const ClippedActionsPlayer = ({
               <video
                 ref={player.videoRefCallback}
                 className={`w-full h-full object-contain cursor-pointer transition-opacity ${player.isClipReady ? 'opacity-100' : 'opacity-0'}`}
+                style={heroCropStyle(currentClip.video_url)}
                 preload="metadata"
                 crossOrigin="anonymous"
                 muted
