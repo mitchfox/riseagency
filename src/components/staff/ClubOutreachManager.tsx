@@ -175,7 +175,7 @@ export default function ClubOutreachManager() {
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
       supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name"),
-      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order"),
+      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
     const clubMap = new Map((clubRows ?? []).map((c: any) => [c.id, c]));
