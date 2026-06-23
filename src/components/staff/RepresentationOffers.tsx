@@ -14,6 +14,8 @@ import { FitScoreBadge } from "./recruitment/FitScoreBadge";
 import { TemplatePickerInline } from "./recruitment/TemplatePickerInline";
 import { CreateOfferButton } from "./recruitment/CreateOfferButton";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
+import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
+import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
 
 type OfferPlayer = {
   id: string;
@@ -66,6 +68,7 @@ export const RepresentationOffers = () => {
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
+  const [visits, setVisits] = useState<ProposalVisit[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -84,6 +87,44 @@ export const RepresentationOffers = () => {
 
   useEffect(() => { load(); }, []);
 
+  // Pull non-UK visits to /risewithus/* offer pages and refresh every minute.
+  useEffect(() => {
+    let cancelled = false;
+    const loadVisits = async () => {
+      const { data } = await (supabase as any)
+        .from("site_visits")
+        .select("id, visitor_id, page_path, duration, location, user_agent, referrer, visited_at")
+        .like("page_path", "/risewithus/%")
+        .order("visited_at", { ascending: false })
+        .limit(500);
+      if (cancelled) return;
+      const nonUk = ((data ?? []) as any[]).filter((v) => {
+        const country = (v.location?.country ?? "").toString().toLowerCase();
+        if (!country) return false;
+        return country !== "united kingdom" && country !== "uk" && country !== "gb";
+      });
+      setVisits(nonUk as ProposalVisit[]);
+    };
+    loadVisits();
+    const id = setInterval(loadVisits, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  // slug → visits map (skip the /risewithus/ index and template placeholders)
+  const visitsBySlug = useMemo(() => {
+    const map = new Map<string, ProposalVisit[]>();
+    visits.forEach((v) => {
+      const m = v.page_path.match(/^\/risewithus\/([^/]+)/);
+      if (!m) return;
+      const slug = m[1];
+      if (!slug || slug.startsWith(":")) return;
+      const arr = map.get(slug) ?? [];
+      arr.push(v);
+      map.set(slug, arr);
+    });
+    return map;
+  }, [visits]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return players;
@@ -99,6 +140,29 @@ export const RepresentationOffers = () => {
     filtered.forEach(p => { (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p); });
     return map;
   }, [filtered]);
+
+  // Offers (across all groups in the current filter) that have at least
+  // one non-UK visit. Sorted by most recent visit first.
+  const viewedRows = useMemo(() => {
+    const withVisits = filtered
+      .map((p) => ({ player: p, vs: visitsBySlug.get(slugFor(p.name)) ?? [] }))
+      .filter((x) => x.vs.length > 0);
+    withVisits.sort((a, b) => {
+      const ta = Math.max(...a.vs.map((v) => new Date(v.visited_at).getTime()));
+      const tb = Math.max(...b.vs.map((v) => new Date(v.visited_at).getTime()));
+      return tb - ta;
+    });
+    return withVisits;
+  }, [filtered, visitsBySlug]);
+
+  // Bell scoped to the offers that are currently on screen.
+  const scopedVisits = useMemo(() => {
+    const slugs = new Set(filtered.map((p) => slugFor(p.name)));
+    return visits.filter((v) => {
+      const m = v.page_path.match(/^\/risewithus\/([^/]+)/);
+      return m ? slugs.has(m[1]) : false;
+    });
+  }, [filtered, visits]);
 
   // Auto-expand groups when there's an active search and they contain hits.
   useEffect(() => {
@@ -221,21 +285,54 @@ export const RepresentationOffers = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-            placeholder="Search representation offers..."
+            placeholder="Search player outreach..."
             className="pl-9"
           />
         </div>
         <Button onClick={() => setCreateOpen(true)} className="shrink-0">
           <Plus className="h-4 w-4 mr-1.5" /> Create offer
         </Button>
+        <ProposalVisitorsBell visits={scopedVisits} />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading offers...</div>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="py-10 text-center text-muted-foreground">No representation offers found.</CardContent></Card>
+        <Card><CardContent className="py-10 text-center text-muted-foreground">No player outreach found.</CardContent></Card>
       ) : (
         <div className="space-y-3">
+          {viewedRows.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-3">
+                <h3 className="text-white text-base font-semibold tracking-tight">Viewed</h3>
+                <span className="text-xs text-muted-foreground">{viewedRows.length}</span>
+                <span className="text-[10px] uppercase tracking-wider text-[#cbb96b]/80">Non-UK visitors</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {viewedRows.map(({ player, vs }) => {
+                  const latest = vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b));
+                  const loc = (latest.location ?? {}) as any;
+                  const where = [loc.city, loc.country].filter(Boolean).join(", ") || "Unknown location";
+                  return (
+                    <div key={player.id} className="relative">
+                      <ViewedVisitorsExpansion visits={vs}>
+                        <button
+                          type="button"
+                          className="absolute -top-2 left-3 z-10 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#cbb96b] text-black text-[10px] font-semibold shadow cursor-help hover:bg-[#d9c87a] transition-colors"
+                        >
+                          <span>{vs.length} view{vs.length === 1 ? "" : "s"}</span>
+                          <span className="opacity-70">·</span>
+                          <span className="truncate max-w-[160px]">{where}</span>
+                        </button>
+                      </ViewedVisitorsExpansion>
+                      {renderCard(player)}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {GROUPS.map(g => {
             const items = grouped[g.id] || [];
             if (items.length === 0) return null;
