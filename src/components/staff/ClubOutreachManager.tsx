@@ -2261,8 +2261,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [playerDefaultMbmCategory, setPlayerDefaultMbmCategory] = useState<string>("");
   const [playerStatOrders, setPlayerStatOrders] = useState<Record<string, string[]>>({});
   const [playerGameOrder, setPlayerGameOrder] = useState<string[]>([]);
-  const [playerSeasonGames, setPlayerSeasonGames] = useState<{ id: string; opponent: string; analysis_date: string }[]>([]);
-  const [statOrderSeasonId, setStatOrderSeasonId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [playerQuery, setPlayerQuery] = useState("");
   // Club contacts state
