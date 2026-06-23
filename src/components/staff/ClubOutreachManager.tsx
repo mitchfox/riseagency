@@ -18,6 +18,7 @@ import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
 import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
+import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -140,6 +141,7 @@ export default function ClubOutreachManager() {
   const [rows, setRows] = useState<OutreachRow[]>([]);
   const [players, setPlayers] = useState<PlayerLite[]>([]);
   const [clubs, setClubs] = useState<ClubLite[]>([]);
+  const [visits, setVisits] = useState<ProposalVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [newOpen, setNewOpen] = useState(false);
@@ -206,6 +208,45 @@ export default function ClubOutreachManager() {
 
   useEffect(() => { load(); }, []);
   useEffect(() => { loadTemplates(); loadSettings(); }, []);
+
+  // Load non-UK visitors that hit any club / agent proposal URL.
+  // We do this independently of the main load so it can refresh on its
+  // own cadence and doesn't block the cards rendering.
+  useEffect(() => {
+    let cancelled = false;
+    const loadVisits = async () => {
+      const { data } = await supabase
+        .from("site_visits")
+        .select("id, visitor_id, page_path, duration, location, user_agent, referrer, visited_at")
+        .or("page_path.like./club-proposal/%,page_path.like./clubs/%,page_path.like./agents/%")
+        .order("visited_at", { ascending: false })
+        .limit(500);
+      if (cancelled) return;
+      const nonUk = ((data ?? []) as any[]).filter((v) => {
+        const country = (v.location?.country ?? "").toString().toLowerCase();
+        if (!country) return false; // skip unknown — usually local/private IPs
+        return country !== "united kingdom" && country !== "uk" && country !== "gb";
+      });
+      setVisits(nonUk as ProposalVisit[]);
+    };
+    loadVisits();
+    const interval = setInterval(loadVisits, 60_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  // Map short_id → visits, so we can highlight which proposals have been viewed.
+  const visitsByShortId = useMemo(() => {
+    const map = new Map<string, ProposalVisit[]>();
+    visits.forEach((v) => {
+      const m = v.page_path.match(/^\/(?:club-proposal|clubs|agents)\/([^/]+)/);
+      if (!m) return;
+      const shortId = m[1];
+      const arr = map.get(shortId) ?? [];
+      arr.push(v);
+      map.set(shortId, arr);
+    });
+    return map;
+  }, [visits]);
 
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
 
@@ -320,6 +361,30 @@ export default function ClubOutreachManager() {
     filtered.forEach((r) => { map[r.status]?.push(r) ?? (map.draft.push(r)); });
     return map;
   }, [filtered]);
+
+  // Cards (across all statuses, in the current mode) that have at least
+  // one non-UK visit. Sorted by most recent visit first.
+  const viewedRows = useMemo(() => {
+    const withVisits = filtered
+      .map((r) => ({ row: r, vs: visitsByShortId.get(r.short_id) ?? [] }))
+      .filter((x) => x.vs.length > 0);
+    withVisits.sort((a, b) => {
+      const ta = Math.max(...a.vs.map((v) => new Date(v.visited_at).getTime()));
+      const tb = Math.max(...b.vs.map((v) => new Date(v.visited_at).getTime()));
+      return tb - ta;
+    });
+    return withVisits;
+  }, [filtered, visitsByShortId]);
+
+  // Only visits attached to a current outreach row in this mode count
+  // towards the bell — keeps it scoped to what staff are actually working on.
+  const scopedVisits = useMemo(() => {
+    const shortIds = new Set(filtered.map((r) => r.short_id));
+    return visits.filter((v) => {
+      const m = v.page_path.match(/^\/(?:club-proposal|clubs|agents)\/([^/]+)/);
+      return m ? shortIds.has(m[1]) : false;
+    });
+  }, [filtered, visits]);
 
   const closeSettingsPanel = () => {
     setSettingsOpen(false);
@@ -471,6 +536,9 @@ export default function ClubOutreachManager() {
           <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
+          <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
+            <ProposalVisitorsBell visits={scopedVisits} />
+          </div>
         </div>
       </div>
 
@@ -486,6 +554,48 @@ export default function ClubOutreachManager() {
         </div>
       ) : (
         <div className="space-y-8">
+          {viewedRows.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-3">
+                <h3 className="text-white text-lg font-semibold tracking-tight">Viewed</h3>
+                <span className="text-xs text-muted-foreground">{viewedRows.length}</span>
+                <span className="text-[10px] uppercase tracking-wider text-[#cbb96b]/80">Non-UK visitors</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {viewedRows.map(({ row: r, vs }) => {
+                  const latest = vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b));
+                  const loc = (latest.location ?? {}) as any;
+                  const where = [loc.city, loc.country].filter(Boolean).join(", ") || "Unknown location";
+                  return (
+                    <div key={r.id} className="relative">
+                      <div className="absolute -top-2 left-3 z-10 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#cbb96b] text-black text-[10px] font-semibold shadow">
+                        <span>{vs.length} view{vs.length === 1 ? "" : "s"}</span>
+                        <span className="opacity-70">·</span>
+                        <span className="truncate max-w-[160px]">{where}</span>
+                      </div>
+                      <OutreachCard
+                        row={r}
+                        players={players}
+                        url={proposalUrl(r.short_id, r.target_type)}
+                        externalUrl={externalProposalUrl(r.short_id, r.target_type)}
+                        onOpen={() => openProposalLink(r.short_id, r.target_type, externalProposalUrl(r.short_id, r.target_type))}
+                        onCopy={() => copyLink(r.short_id, r.target_type)}
+                        onEdit={() => openEditPanel(r)}
+                        onLog={() => setLogRow(r)}
+                        onRemove={() => remove(r.id)}
+                        onStatusChange={(s) => setStatus(r.id, s)}
+                        templates={templates}
+                        onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
+                        onApprovePending={() => approvePending(r)}
+                        onRejectPending={() => rejectPending(r)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {STATUS_ORDER.map((status, i) => (
             <section key={status}>
               <div className="flex items-center gap-3 mb-3">
