@@ -6,6 +6,7 @@ import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPla
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
 import { supabase } from "@/integrations/supabase/client";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { toast } from "sonner";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -719,10 +720,26 @@ export default function ClubOutreachProposal() {
             const playerFitEn = (entry.fit_recommendation ?? "").trim();
             const playerFit = playerFitEn ? trFit(p?.id, playerFitEn) : "";
             const playerAge = p?.age ?? calculateAge(p?.date_of_birth ?? null);
+            const openPlayer = () => {
+              hapticTap();
+              setActiveSlot(null);
+              setActiveIndex(i);
+              setSelectedPlayerIdx(i);
+              try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
+            };
             return (
               <div
                 key={p?.id ?? i}
-                className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] overflow-hidden flex flex-col"
+                role="button"
+                tabIndex={0}
+                onClick={openPlayer}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openPlayer();
+                  }
+                }}
+                className="group relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] overflow-hidden flex flex-col cursor-pointer transition-all duration-200 ease-out hover:border-[#cbb96b]/70 hover:scale-[1.015] hover:shadow-[0_10px_40px_-12px_rgba(203,185,107,0.35)] focus-visible:outline-none focus-visible:border-[#cbb96b]/70 focus-visible:scale-[1.015]"
               >
                 <div className="relative aspect-[4/3] bg-black/60 overflow-hidden">
                   {p?.image_url ? (
@@ -756,19 +773,11 @@ export default function ClubOutreachProposal() {
                   <div className="flex-1" />
                 )}
                 <div className="p-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      hapticTap();
-                      setActiveSlot(null);
-                      setActiveIndex(i);
-                      setSelectedPlayerIdx(i);
-                      try { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); } catch {}
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/50 bg-[#cbb96b]/10 hover:bg-[#cbb96b]/20 text-[#cbb96b] transition"
+                  <div
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#cbb96b]/50 bg-[#cbb96b]/10 group-hover:bg-[#cbb96b]/20 text-[#cbb96b] transition"
                   >
                     {tr("picker.learnMore", "Learn more")} <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
+                  </div>
                 </div>
               </div>
             );
@@ -2209,9 +2218,7 @@ function MatchByMatchCard({
   };
 
   const openClipsForAnalysis = async (analysisId: string) => {
-    setOpenClipsForId(analysisId);
     setClipsLoading(true);
-    setClipsForOpen([]);
     try {
       const { data, error } = await supabase
         .from("performance_report_actions")
@@ -2220,15 +2227,22 @@ function MatchByMatchCard({
         .not("video_url", "is", null);
       if (error) throw error;
       // R90 order: highest action_score first; null scores last.
-      const sorted = (data ?? []).slice().sort((a: any, b: any) => {
+      const sortedClips = (data ?? []).slice().sort((a: any, b: any) => {
         const av = typeof a.action_score === "number" ? a.action_score : -Infinity;
         const bv = typeof b.action_score === "number" ? b.action_score : -Infinity;
         return bv - av;
       });
-      setClipsForOpen(sorted);
+      // Only open the dialog once we have clips ready, otherwise the player's
+      // open-effect immediately bails out with a "no valid clips" toast.
+      if (sortedClips.length === 0) {
+        toast.error("No clips available for this match yet.");
+        return;
+      }
+      setClipsForOpen(sortedClips);
+      setOpenClipsForId(analysisId);
     } catch (e) {
       console.error("Failed to load clips", e);
-      setClipsForOpen([]);
+      toast.error("Could not load clips for this match.");
     } finally {
       setClipsLoading(false);
     }
@@ -2260,18 +2274,14 @@ function MatchByMatchCard({
       const n = Number(raw);
       return Number.isFinite(n) ? n : null;
     };
-    if (mode === "raw") {
-      const direct = pick(stats[base]);
-      if (direct !== null) return direct;
-      const fromP90 = pick(stats[p90]);
-      if (fromP90 !== null && mins > 0) return (fromP90 * mins) / 90;
-      return null;
-    }
-    const direct = pick(stats[p90]);
-    if (direct !== null) return direct;
-    const fromRaw = pick(stats[base]);
-    if (fromRaw !== null && mins > 0) return (fromRaw / mins) * 90;
-    return null;
+    // Match-by-match values stored in fixture_stats / striker_stats are RAW
+    // counts for that single game, regardless of whether the key is suffixed
+    // with `_per90`. We compute per-90 here from minutes played.
+    const rawValue = pick(stats[base]) ?? pick(stats[p90]);
+    if (rawValue === null) return null;
+    if (mode === "raw") return rawValue;
+    if (mins <= 0) return null;
+    return (rawValue / mins) * 90;
   };
 
   const fmtVal = (v: number | null, key: string): string => {
@@ -2435,7 +2445,8 @@ function MatchByMatchCard({
                       {visibleMetrics.map((m) => {
                         const displayValue = getValue(a, m.key, viewMode);
                         const per90Value = getValue(a, m.key, "per90");
-                        const g = gradeFor(m.key, per90Value);
+                        // Grade pills are only meaningful in the per-90 view.
+                        const g = viewMode === "per90" ? gradeFor(m.key, per90Value) : null;
                         const pill = pillClass(g);
                         return (
                           <td
