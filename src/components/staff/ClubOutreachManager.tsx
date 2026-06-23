@@ -1203,7 +1203,27 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                         {p?.image_url ? <img src={p.image_url} className="h-10 w-10 rounded-full object-cover" /> : <div className="h-10 w-10 rounded-full bg-muted" />}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold truncate">{p?.name ?? "Unknown"}</div>
-                          <div className="text-[10px] text-muted-foreground">{idx + 1} of {entries.length}</div>
+                          <div className="text-[10px] text-muted-foreground">{idx + 1} of {entries.length}{idx === 0 ? " · shown first" : ""}</div>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            title="Move up"
+                            onClick={() => movePlayer(idx, -1)}
+                            disabled={idx === 0}
+                            className="h-4 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30"
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Move down"
+                            onClick={() => movePlayer(idx, 1)}
+                            disabled={idx === entries.length - 1}
+                            className="h-4 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30"
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </button>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-28">
