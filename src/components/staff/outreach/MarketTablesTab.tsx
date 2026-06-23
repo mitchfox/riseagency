@@ -130,6 +130,7 @@ export default function MarketTablesTab() {
   const [savingContact, setSavingContact] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [addingToNetwork, setAddingToNetwork] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -331,7 +332,51 @@ export default function MarketTablesTab() {
     setReloadKey((k) => k + 1);
   };
 
+  const addAllContactsToNetwork = async () => {
+    setAddingToNetwork(true);
+    try {
+      const ids = new Set<string>();
+      filtered.forEach((club) => {
+        const { tdContact, csContact } = getValues(club);
+        const exclude = new Set<string>();
+        if (tdContact) exclude.add(tdContact.id);
+        if (csContact) exclude.add(csContact.id);
+        const extras = additionalContactsForClub(contacts, club.club_name, club.country, exclude);
+        [tdContact, csContact, ...extras].forEach((c) => {
+          if (c && ((c.email && c.email.trim()) || (c.phone && c.phone.trim()))) {
+            ids.add(c.id);
+          }
+        });
+      });
+      if (ids.size === 0) {
+        toast.info("No contacts with email or phone to add");
+        return;
+      }
+      const { data: existing, error: exErr } = await (supabase as any)
+        .from("outreach_relationships")
+        .select("contact_id")
+        .in("contact_id", Array.from(ids));
+      if (exErr) throw exErr;
+      const have = new Set<string>((existing ?? []).map((r: any) => r.contact_id));
+      const toInsert = Array.from(ids).filter((id) => !have.has(id));
+      if (toInsert.length === 0) {
+        toast.success("All contacts are already in Network");
+        return;
+      }
+      const { error: insErr } = await (supabase as any)
+        .from("outreach_relationships")
+        .insert(toInsert.map((contact_id) => ({ contact_id, rapport_level: "cold" })));
+      if (insErr) throw insErr;
+      toast.success(`Added ${toInsert.length} contact${toInsert.length === 1 ? "" : "s"} to Network`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to add contacts to Network");
+    } finally {
+      setAddingToNetwork(false);
+    }
+  };
+
   if (loading) return <div className="text-sm text-muted-foreground">Loading market table…</div>;
+
 
   return (
     <div className="space-y-4">
@@ -341,6 +386,17 @@ export default function MarketTablesTab() {
           <span className="text-[11px] text-muted-foreground">
             {filtered.length} club{filtered.length === 1 ? "" : "s"}
           </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={addingToNetwork || filtered.length === 0}
+            onClick={addAllContactsToNetwork}
+            className="ml-auto h-8 text-xs gap-1.5"
+          >
+            <Users className="h-3.5 w-3.5" />
+            {addingToNetwork ? "Adding…" : "Add all contacts to Network"}
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">

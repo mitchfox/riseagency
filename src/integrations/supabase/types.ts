@@ -10280,6 +10280,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_section_access: {
+        Args: { _require_edit?: boolean; _section: string; _user_id: string }
+        Returns: boolean
+      }
       list_players_by_portal_logins: {
         Args: never
         Returns: {
