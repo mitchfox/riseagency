@@ -1,9 +1,9 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -195,6 +195,92 @@ type ContactEditState = {
   existing: ContactRow | null;
   draft: { name: string; position: string; email: string; phone: string };
 };
+
+function MarketContactSlot({
+  value,
+  contact,
+  placeholder,
+  links,
+  inputClassName,
+  onConfirm,
+  onEdit,
+}: {
+  value: string;
+  contact: ContactRow | null;
+  placeholder: string;
+  links: ReactNode;
+  inputClassName: string;
+  onConfirm: (value: string | null) => Promise<void>;
+  onEdit: () => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const cleanDraft = draft.trim();
+  const isDirty = cleanDraft !== value.trim();
+  const hasSavedName = value.trim().length > 0;
+  const showConfirm = isDirty;
+
+  const confirm = async () => {
+    if (!isDirty || saving) return;
+    setSaving(true);
+    try {
+      await onConfirm(cleanDraft || null);
+      setDraft(cleanDraft);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const Icon = showConfirm ? Check : contact ? Pencil : UserPlus;
+  const buttonTitle = showConfirm
+    ? "Confirm this person in Market Tables and Network"
+    : contact
+      ? "Show or edit existing contact details"
+      : hasSavedName
+        ? "Add contact details for this person"
+        : "Add contact details";
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        value={draft}
+        placeholder={placeholder}
+        className={inputClassName}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={confirm}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            confirm();
+          }
+        }}
+      />
+      {links}
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={showConfirm ? confirm : onEdit}
+        title={buttonTitle}
+        aria-label={buttonTitle}
+        disabled={saving}
+        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
+          showConfirm
+            ? "border-[#cbb96b] bg-[#cbb96b]/15 text-[#cbb96b] hover:bg-[#cbb96b]/25"
+            : hasSavedName && !contact
+              ? "border-[#cbb96b]/70 text-[#cbb96b] hover:bg-[#cbb96b]/10"
+              : "border-border text-muted-foreground hover:text-white hover:border-[#cbb96b]/60"
+        } ${saving ? "opacity-60" : ""}`}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
 
 export default function MarketTablesTab() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
