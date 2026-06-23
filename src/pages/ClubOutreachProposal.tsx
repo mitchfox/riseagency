@@ -2052,7 +2052,7 @@ function MatchByMatchCard({
     Passing: [
       "assists","xa","key_passes_per90","xt_via_live_passes_per90",
       "progressive_passes_per90","passes_into_final_3rd_per90","forward_passes_per90",
-      "passes_in_opp_half_per90","passes_in_own_half_per90","accurate_passes_per90",
+      "passes_in_opp_half_per90","accurate_passes_per90",
       "accurate_long_balls_per90","accurate_crosses_per90","pass_accuracy_pct",
       "long_ball_accuracy_pct","cross_accuracy_pct",
     ],
