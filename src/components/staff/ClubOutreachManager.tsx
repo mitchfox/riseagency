@@ -2073,19 +2073,23 @@ function MatchByMatchOrderEditor({
         </Select>
         <div className="mt-3 space-y-1">
           {orderedGames.length === 0 && <p className="text-[11px] text-muted-foreground">No games found for this player{seasonId ? " in this season" : ""}.</p>}
-          {orderedGames.map((g, i) => (
-            <div key={g.id} className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs">
-              <span className="text-muted-foreground w-6">{i + 1}.</span>
-              <span className="flex-1 truncate">{g.opponent}</span>
-              <span className="text-muted-foreground text-[10px]">{g.analysis_date}</span>
-              <button type="button" onClick={() => moveGame(i, -1)} disabled={i === 0} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
-                <ArrowUp className="h-3 w-3" />
-              </button>
-              <button type="button" onClick={() => moveGame(i, 1)} disabled={i === orderedGames.length - 1} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
-                <ArrowDown className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={orderedGames.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+              {orderedGames.map((g, i) => (
+                <SortableGameRow
+                  key={g.id}
+                  id={g.id}
+                  index={i}
+                  opponent={g.opponent}
+                  date={g.analysis_date}
+                  isFirst={i === 0}
+                  isLast={i === orderedGames.length - 1}
+                  onUp={() => moveGame(i, -1)}
+                  onDown={() => moveGame(i, 1)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
         {gameOrder.length > 0 && (
           <button
