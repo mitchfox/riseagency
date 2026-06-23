@@ -2256,6 +2256,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null; transfermarkt_url: string }>({ stars_url_override: "", highlights_url: "", proof_path: null, transfermarkt_url: "" });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
+  const [playerDefaultSituation, setPlayerDefaultSituation] = useState<string>("");
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
   const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
