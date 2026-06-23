@@ -123,7 +123,7 @@ export const PlayersWeWorkWith = ({
 
         <div
           className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch"
-          style={{ animationDuration: "260s" }}
+          style={{ animationDuration: "500s" }}
         >
           {loop.map((p, i) => (
             <figure
