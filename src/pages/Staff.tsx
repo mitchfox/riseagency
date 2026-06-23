@@ -363,7 +363,7 @@ const Staff = () => {
     if (permissionManagedRole && permissionsLoading) return;
 
     // Determine the default section based on role permissions
-    let defaultSection = 'teamperformance';
+    let defaultSection = 'cluboutreach';
     if (permissionManagedRole) {
       const viewable = getViewableSections();
       const firstViewable = viewable.find(s => s !== 'overview' && s !== 'teamperformance' && s !== 'dashboard' && s !== 'header_search' && s !== 'header_notifications' && s !== 'header_music' && s !== 'pwainstall')
