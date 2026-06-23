@@ -1544,7 +1544,7 @@ export const DetailView = ({
                     className="absolute inset-0"
                     style={{
                       backgroundImage: `url(${blackMarbleBg})`,
-                      backgroundSize: "cover",
+                      backgroundSize: "100% 100%",
                       backgroundPosition: "center",
                     }}
                   />
@@ -1553,7 +1553,7 @@ export const DetailView = ({
                     className="absolute inset-0"
                     style={{
                       backgroundImage: `url(${whiteMarbleBg})`,
-                      backgroundSize: "cover",
+                      backgroundSize: "100% 100%",
                       backgroundPosition: "center",
                       clipPath:
                         "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)",
@@ -1564,7 +1564,7 @@ export const DetailView = ({
                     className="absolute inset-0 md:hidden"
                     style={{
                       backgroundImage: `url(${whiteMarbleBg})`,
-                      backgroundSize: "cover",
+                      backgroundSize: "100% 100%",
                       backgroundPosition: "center",
                       clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)",
                     }}
@@ -1574,32 +1574,41 @@ export const DetailView = ({
                 {/* ===== Headshots: anchored bottom, cropped at the waist
                        via a top-fading mask so the heads sit high and the
                        diagonal seam blends through them. ===== */}
-                {/* Jolon — left half, colour, bottom-anchored */}
+                {/* Jolon — left half, colour, bottom-anchored.
+                    The image's bottom half is clipped off and the element
+                    is then translated down by 50% of its own height so the
+                    surviving top half (head & shoulders) sits flush with
+                    the bottom of the card. A soft top-fade mask blends
+                    the crown into the marble. */}
                 <img
                   src={jolonHeadshotAsset.url}
                   alt="Jolon Levene"
                   loading="lazy"
                   decoding="async"
-                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[58%] w-auto object-contain object-bottom md:h-[78%] md:left-[2%]"
+                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[90%] w-auto object-contain object-top md:h-[110%] md:left-[2%]"
                   style={{
+                    clipPath: "inset(0 0 50% 0)",
+                    transform: "translateY(50%)",
                     WebkitMaskImage:
-                      "linear-gradient(to top, black 75%, transparent 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
                     maskImage:
-                      "linear-gradient(to top, black 75%, transparent 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
                   } as React.CSSProperties}
                 />
-                {/* Kuda — right half, black & white, bottom-anchored */}
+                {/* Kuda — right half, black & white, bottom-anchored. */}
                 <img
                   src={kudaHeadshotAsset.url}
                   alt="Kuda Butawo"
                   loading="lazy"
                   decoding="async"
-                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[58%] w-auto object-contain object-bottom md:h-[78%] md:right-[2%]"
+                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[90%] w-auto object-contain object-top md:h-[110%] md:right-[2%]"
                   style={{
+                    clipPath: "inset(0 0 50% 0)",
+                    transform: "translateY(50%)",
                     WebkitMaskImage:
-                      "linear-gradient(to top, black 75%, transparent 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
                     maskImage:
-                      "linear-gradient(to top, black 75%, transparent 100%)",
+                      "linear-gradient(to bottom, transparent 0%, black 35%, black 100%)",
                   } as React.CSSProperties}
                 />
 

@@ -468,14 +468,14 @@ export const ClubOutreachManagement = () => {
                                 <button type="button" className="w-full text-left hover:bg-muted/30 transition-colors">
                                   <div className="grid grid-cols-12 gap-3 items-center p-3">
                                     <div className="col-span-3 font-medium truncate">{group.clubName}</div>
-                                    <div className="col-span-3 flex flex-wrap gap-1">
-                                      {group.records.slice(0, 4).map((r) => (
-                                        <Badge key={r.id} variant="outline" className="text-xs">
+                                    <div className="col-span-3 grid grid-cols-3 gap-1">
+                                      {group.records.slice(0, 6).map((r) => (
+                                        <Badge key={r.id} variant="outline" className="text-xs justify-center truncate">
                                           {r.player?.name || "Unknown"}
                                         </Badge>
                                       ))}
-                                      {group.records.length > 4 && (
-                                        <span className="text-xs text-muted-foreground">+{group.records.length - 4}</span>
+                                      {group.records.length > 6 && (
+                                        <span className="text-xs text-muted-foreground self-center">+{group.records.length - 6}</span>
                                       )}
                                     </div>
                                     <div className="col-span-2 text-sm truncate">
