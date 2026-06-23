@@ -2268,18 +2268,14 @@ function MatchByMatchCard({
       const n = Number(raw);
       return Number.isFinite(n) ? n : null;
     };
-    if (mode === "raw") {
-      const direct = pick(stats[base]);
-      if (direct !== null) return direct;
-      const fromP90 = pick(stats[p90]);
-      if (fromP90 !== null && mins > 0) return (fromP90 * mins) / 90;
-      return null;
-    }
-    const direct = pick(stats[p90]);
-    if (direct !== null) return direct;
-    const fromRaw = pick(stats[base]);
-    if (fromRaw !== null && mins > 0) return (fromRaw / mins) * 90;
-    return null;
+    // Match-by-match values stored in fixture_stats / striker_stats are RAW
+    // counts for that single game, regardless of whether the key is suffixed
+    // with `_per90`. We compute per-90 here from minutes played.
+    const rawValue = pick(stats[base]) ?? pick(stats[p90]);
+    if (rawValue === null) return null;
+    if (mode === "raw") return rawValue;
+    if (mins <= 0) return null;
+    return (rawValue / mins) * 90;
   };
 
   const fmtVal = (v: number | null, key: string): string => {
