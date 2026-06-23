@@ -574,22 +574,40 @@ export default function MarketTablesTab() {
     };
     const next: Entry = { ...current, ...patch, club_id: clubId };
     setEntries((prev) => ({ ...prev, [clubId]: next }));
-    const { error } = await (supabase as any)
+    // Only send the columns that actually changed so concurrent edits from
+    // other staff on the *other* column don't get clobbered by our stale copy.
+    const payload: Record<string, unknown> = {
+      market_table_key: MARKET_TABLE_KEY,
+      club_id: clubId,
+    };
+    if ("technical_director_name" in patch) {
+      payload.technical_director_name = patch.technical_director_name ?? null;
+    }
+    if ("chief_scout_name" in patch) {
+      payload.chief_scout_name = patch.chief_scout_name ?? null;
+    }
+    const { data: saved, error } = await (supabase as any)
       .from("market_table_entries")
-      .upsert(
-        {
-          market_table_key: MARKET_TABLE_KEY,
-          club_id: clubId,
-          technical_director_name: next.technical_director_name,
-          chief_scout_name: next.chief_scout_name,
-        },
-        { onConflict: "market_table_key,club_id" },
-      );
+      .upsert(payload, { onConflict: "market_table_key,club_id" })
+      .select("club_id, technical_director_name, chief_scout_name")
+      .single();
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success("Saved", { duration: 1200 });
+      return;
     }
+    if (saved) {
+      // Reconcile with whatever's actually in the DB after the partial upsert
+      // (the other column may have been changed by a teammate in parallel).
+      setEntries((prev) => ({
+        ...prev,
+        [clubId]: {
+          club_id: clubId,
+          technical_director_name: saved.technical_director_name ?? null,
+          chief_scout_name: saved.chief_scout_name ?? null,
+        },
+      }));
+    }
+    toast.success("Saved", { duration: 1200 });
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
