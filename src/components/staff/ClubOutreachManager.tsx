@@ -2347,8 +2347,6 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       setPlayerStatOrders(so2 && typeof so2 === "object" && !Array.isArray(so2) ? so2 : {});
       const go = (data as any)?.match_by_match_game_order;
       setPlayerGameOrder(Array.isArray(go) ? go : []);
-      setStatOrderSeasonId(null);
-      setPlayerSeasonGames([]);
       const { data: seasons } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
