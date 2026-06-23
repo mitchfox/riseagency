@@ -1091,6 +1091,15 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             position_slot: e.position_slot,
             fit_recommendation: e.fit_recommendation,
             situation: (e.situation ?? "").trim() || null,
+            show_form: e.show_form ?? showForm,
+            show_in_numbers: e.show_in_numbers ?? showInNumbers,
+            show_season_stats: e.show_season_stats ?? showSeasonStats,
+            show_strengths: e.show_strengths ?? showStrengths,
+            season_data_mode: e.season_data_mode ?? seasonDataMode,
+            season_id: e.season_id ?? null,
+            selected_video_ids: Array.isArray(e.selected_video_ids) ? e.selected_video_ids : [],
+            key_details: Array.isArray(e.key_details) && e.key_details.length > 0 ? e.key_details : keyDetails,
+            section_order: Array.isArray(e.section_order) && e.section_order.length > 0 ? e.section_order : sectionOrder,
             sort_order: i,
           }));
           const { error: lpErr } = await supabase.from("club_outreach_link_players").insert(rows);
