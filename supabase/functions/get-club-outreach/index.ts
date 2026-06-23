@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -353,15 +353,22 @@ Deno.serve(async (req) => {
         // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
         let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
+        // The inline "More Videos" carousel should mirror the order shown on
+        // the Stars profile, which renders ONLY matchHighlights (not bestClips)
+        // in their saved order. Keep a separate list for that.
+        let starsOrderedVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
         let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
           if (typeof h === "string") h = JSON.parse(h);
           let pool: any[] = [];
+          let starsPool: any[] = [];
           if (Array.isArray(h)) {
             pool = h;
+            starsPool = h;
           } else if (h && typeof h === "object") {
             pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+            starsPool = [...(h.matchHighlights ?? [])];
           }
           allVideos = pool
             .filter((x: any) => x && (x.videoUrl || x.video_url))
@@ -372,8 +379,18 @@ Deno.serve(async (req) => {
               logoUrl: x.logoUrl ?? x.clubLogo ?? null,
               venue: x.venue ?? null,
             }));
+          starsOrderedVideos = starsPool
+            .filter((x: any) => x && (x.videoUrl || x.video_url))
+            .map((x: any) => ({
+              id: String(x.id ?? x.videoUrl ?? x.video_url),
+              name: String(x.name ?? "Highlight"),
+              videoUrl: String(x.videoUrl ?? x.video_url),
+              logoUrl: x.logoUrl ?? x.clubLogo ?? null,
+              venue: x.venue ?? null,
+            }));
         } catch (_) {
           allVideos = [];
+          starsOrderedVideos = [];
         }
         // Filter by per-link selected_video_ids only for the primary player.
         const isPrimary = e.player_id === primaryPlayerId;
@@ -431,6 +448,10 @@ Deno.serve(async (req) => {
           first_highlight_url: firstHighlightUrl,
           videos,
           all_videos: allVideos,
+          stars_ordered_videos: starsOrderedVideos,
+          transfermarkt_url: (d as any)?.transfermarkt_url ?? null,
+          match_by_match_stat_orders: (d as any)?.match_by_match_stat_orders ?? null,
+          match_by_match_game_order: (d as any)?.match_by_match_game_order ?? null,
           top_stats: bioParsed?.topStats ?? null,
           season_stats: bioParsed?.seasonStats ?? null,
           strengths_and_play_style: bioParsed?.strengthsAndPlayStyle ?? null,

@@ -89,6 +89,10 @@ interface PlayerEntry {
   first_highlight_url: string | null;
   videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  stars_ordered_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  transfermarkt_url?: string | null;
+  match_by_match_stat_orders?: Record<string, string[]> | null;
+  match_by_match_game_order?: string[] | null;
   top_stats: any | null;
   season_stats: any | null;
   strengths_and_play_style: any | null;
@@ -556,7 +560,11 @@ export default function ClubOutreachProposal() {
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
           {(() => {
-            const allV = current?.all_videos ?? current?.videos ?? [];
+            // Prefer the stars-profile-ordered list (matchHighlights only,
+            // in saved order) so the inline carousel mirrors what the player's
+            // public Stars profile shows. Fall back to all_videos for older
+            // payloads.
+            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? current?.videos ?? [];
             const shownSet = new Set(
               (current?.videos ?? [])
                 .map((v) => (v?.videoUrl ?? "").split("#")[0])
@@ -588,6 +596,8 @@ export default function ClubOutreachProposal() {
               position={current?.player?.position ?? null}
               excludeAnalysisIds={shownAnalysisIds}
               defaultCategory={current?.match_by_match_default_category ?? null}
+              statOrders={current?.match_by_match_stat_orders ?? null}
+              gameOrder={current?.match_by_match_game_order ?? null}
             />
           )}
           {current?.stars_url && (
@@ -1471,7 +1481,27 @@ function KeyDetailsCard({
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3 overflow-hidden">
-      <h3 className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+      <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-2">
+        <h3 className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{T("key.title", "Key Details")}</h3>
+        {entry.transfermarkt_url ? (
+          <a
+            href={entry.transfermarkt_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on Transfermarkt"
+            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/10 bg-[#0a3853]/30 hover:bg-[#0a3853]/60 hover:border-[#1f7a8c]/60 text-[10px] uppercase tracking-[0.18em] text-white/85 transition"
+          >
+            <span
+              aria-hidden="true"
+              className="inline-flex items-center justify-center h-4 w-4 rounded-sm bg-[#1f7a8c] text-white text-[8px] font-bold leading-none"
+            >
+              TM
+            </span>
+            <span>Transfermarkt</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : null}
+      </div>
       <div className={`grid grid-cols-2 ${desktopCols} gap-2 auto-rows-fr`}>
         {tiles.map((it, i) => renderTile(it, i))}
       </div>
@@ -1687,18 +1717,96 @@ function MatchByMatchCard({
   position,
   excludeAnalysisIds,
   defaultCategory: defaultCategoryProp,
+  statOrders,
+  gameOrder,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
   excludeAnalysisIds?: Set<string>;
   defaultCategory?: string | null;
+  statOrders?: Record<string, string[]> | null;
+  gameOrder?: string[] | null;
 }) {
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
-  const categories = useMemo(
-    () => getMetricCategoriesForPosition(position ?? undefined),
-    [position],
-  );
+  // Outreach-specific Match by Match categories — fixed order driven by
+  // user-defined stat lists. Overridable per-player via statOrders.
+  const STAT_LABELS: Record<string, string> = {
+    goals: "Goals", assists: "Assists",
+    xg: "xG", xa: "xA",
+    npxg_per90: "npxG /90", xa_per90: "xA /90",
+    xGChain_per90: "xG Chain /90",
+    xt_via_live_passes_per90: "xT (live passes) /90",
+    xt_via_prog_carries_per90: "xT (prog carries) /90",
+    shots: "Shots",
+    shots_on_target_per90: "Shots on Target /90",
+    shots_on_target_pct: "On Target %",
+    total_shots_per90: "Shots /90",
+    shots_inside_box_per90: "Shots in Box /90",
+    shots_outside_box_per90: "Shots out of Box /90",
+    self_created_shots_per90: "Self-Created Shots /90",
+    touches_in_opp_box_per90: "Touches in Box /90",
+    key_passes_per90: "Key Passes /90",
+    pass_accuracy_pct: "Pass %",
+    accurate_passes_per90: "Accurate Passes /90",
+    forward_passes_per90: "Forward Passes /90",
+    passes_into_final_3rd_per90: "Passes into Final 3rd /90",
+    progressive_passes_per90: "Progressive Passes /90",
+    passes_in_opp_half_per90: "Passes in Opp Half /90",
+    passes_in_own_half_per90: "Passes in Own Half /90",
+    long_ball_accuracy_pct: "Long Ball %",
+    accurate_long_balls_per90: "Long Balls /90",
+    accurate_crosses_per90: "Crosses /90",
+    cross_accuracy_pct: "Cross %",
+    dribble_success_pct: "Dribble %",
+    successful_dribbles_per90: "Dribbles /90",
+    dribble_attempts_per90: "Dribbles Att. /90",
+    carries_into_final_3rd_per90: "Carries into Final 3rd /90",
+    progressive_carries_per90: "Progressive Carries /90",
+    fouls_drawn_per90: "Fouls Drawn /90",
+    tackles_won_per90: "Tackles /90",
+    tackles_won_pct: "Tackles Won %",
+    interceptions_per90: "Interceptions /90",
+    clearances_per90: "Clearances /90",
+    duels_won_pct: "Duels Won %",
+    duels_won_per90: "Duels Won /90",
+    aerials_won_pct: "Aerial Duels Won %",
+    aerials_won_per90: "Aerials Won /90",
+  };
+  const DEFAULT_CAT_ORDER: Record<string, string[]> = {
+    Possession: [
+      "successful_dribbles_per90","dribble_attempts_per90","dribble_success_pct",
+      "progressive_carries_per90","xt_via_prog_carries_per90","carries_into_final_3rd_per90",
+      "touches_in_opp_box_per90","fouls_drawn_per90",
+    ],
+    Passing: [
+      "assists","xa","key_passes_per90","xt_via_live_passes_per90",
+      "progressive_passes_per90","passes_into_final_3rd_per90","forward_passes_per90",
+      "passes_in_opp_half_per90","passes_in_own_half_per90","accurate_passes_per90",
+      "accurate_long_balls_per90","accurate_crosses_per90","pass_accuracy_pct",
+      "long_ball_accuracy_pct","cross_accuracy_pct",
+    ],
+    Shooting: [
+      "goals","npxg_per90","shots_on_target_per90","shots_on_target_pct",
+      "self_created_shots_per90","total_shots_per90","shots_outside_box_per90","shots_inside_box_per90",
+    ],
+    Defending: [
+      "tackles_won_pct","aerials_won_pct","duels_won_pct","tackles_won_per90",
+      "aerials_won_per90","duels_won_per90","clearances_per90","interceptions_per90",
+    ],
+  };
+  const humanize = (k: string) =>
+    STAT_LABELS[k] ??
+    k.replace(/_per90/gi, " /90").replace(/_pct$/i, " %").replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  const categories = useMemo(() => {
+    const cats = ["Possession", "Passing", "Shooting", "Defending"] as const;
+    return cats.map((cat) => {
+      const override = statOrders?.[cat];
+      const keys = Array.isArray(override) && override.length > 0 ? override : DEFAULT_CAT_ORDER[cat];
+      return { category: cat, metrics: keys.map((k) => ({ key: k, label: humanize(k) })) };
+    });
+  }, [statOrders]);
   const preferred = (defaultCategoryProp ?? "").trim();
   const defaultCat =
     (preferred && categories.find((c) => c.category === preferred)?.category) ||
@@ -1706,15 +1814,30 @@ function MatchByMatchCard({
     categories[0]?.category ||
     "";
 
-  const sorted = useMemo(
-    () =>
-      [...analyses]
-        .filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id))
-        .sort((a, b) =>
-          (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""),
-        ),
-    [analyses, excludeAnalysisIds],
-  );
+  // Normalise opponent names: lowercase, strip accents and non-alphanumerics
+  // so user-provided ordering tolerates "Plzeň" vs "Plzen" etc.
+  const normaliseOpp = (s: string | null | undefined): string =>
+    (s ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+  const sorted = useMemo(() => {
+    const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
+    const order = Array.isArray(gameOrder) ? gameOrder.map(normaliseOpp).filter(Boolean) : [];
+    if (order.length === 0) {
+      return base.sort((a, b) => (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""));
+    }
+    const rank = new Map<string, number>();
+    order.forEach((n, i) => { if (!rank.has(n)) rank.set(n, i); });
+    return base.sort((a, b) => {
+      const ar = rank.get(normaliseOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
+      const br = rank.get(normaliseOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
+      if (ar !== br) return ar - br;
+      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
+    });
+  }, [analyses, excludeAnalysisIds, gameOrder]);
 
   const fmtVal = (raw: any, key: string): string => {
     if (raw === null || raw === undefined || raw === "") return "-";
@@ -1797,10 +1920,11 @@ function MatchByMatchCard({
                             <div className="text-white/90 whitespace-nowrap">
                               {a.opponent || "-"}
                             </div>
-                            <div className="text-white/40 text-[10px] whitespace-nowrap">
-                              {fmtDate(a.analysis_date)}
-                              {a.result ? ` · ${a.result}` : ""}
-                            </div>
+                            {a.result ? (
+                              <div className="text-white/40 text-[10px] whitespace-nowrap">
+                                {a.result}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       </td>
