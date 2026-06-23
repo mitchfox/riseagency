@@ -2412,6 +2412,14 @@ function MatchByMatchCard({
           </TabsContent>
         ))}
       </Tabs>
+      <ClippedActionsPlayer
+        open={!!openClipsForId}
+        onOpenChange={(o) => { if (!o) setOpenClipsForId(null); }}
+        clips={clipsForOpen as any}
+        mode="playlist"
+        hideScores
+        title={openMatch ? `${openMatch.opponent ?? "Match"}${openMatch.result ? ` · ${openMatch.result}` : ""}` : undefined}
+      />
     </SectionShell>
   );
 }
