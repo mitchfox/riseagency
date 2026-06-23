@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { lazyWithRetry as lazy } from "@/lib/lazyWithRetry";
 import { PageLoading, LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
