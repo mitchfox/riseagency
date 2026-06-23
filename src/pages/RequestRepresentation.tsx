@@ -5,7 +5,7 @@ import {
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
-  Trophy,
+  Trophy, History, UserSquare2,
 } from "lucide-react";
 import { widont } from "@/components/SlantedBox";
 import { SEO } from "@/components/SEO";
@@ -28,6 +28,8 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/da
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
+import jolonHeadshotAsset from "@/assets/jolon-headshot.jpeg.asset.json";
+import kudaHeadshotAsset from "@/assets/kuda-headshot.jpeg.asset.json";
 
 export type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
@@ -55,11 +57,12 @@ const POSITION_TO_SCOUTING: Record<PlayerPosition, ScoutingPosition> = {
 /** sessionStorage flag — when present, the cinematic pulse + intro are
  *  skipped so a language reload drops you straight into the page. */
 const INTRO_SEEN_KEY = "rep_intro_seen_v1";
-export type GroupKey = "who" | "how" | "terms";
+export type GroupKey = "who" | "how" | "terms" | "background";
 export type CardKey =
   | "scouting" | "expectations"
   | "performance" | "network" | "brand" | "negotiation"
-  | "fees" | "agreement" | "faqs";
+  | "fees" | "agreement" | "faqs"
+  | "worked_with" | "directors";
 export type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
 const WHATSAPP_URL = "https://wa.me/447508342901";
@@ -131,12 +134,16 @@ export const CARD_META: CardMeta[] = [
   { key: "fees",         title: "Fees",          icon: PoundSterling, subtitle: "Clear from the start",              group: "terms" },
   { key: "agreement",    title: "Agreement",     icon: FileText,      subtitle: "What the relationship covers",      group: "terms" },
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
+  // Our Background
+  { key: "worked_with",  title: "Who We've Worked With", icon: History,      subtitle: "A decade of elite talent",      group: "background" },
+  { key: "directors",    title: "The Directors",         icon: UserSquare2,  subtitle: "Jolon Levene & Kuda Butawo",    group: "background" },
 ];
 
 export const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
   who:   { key: "representation.who_we_select",      fallback: "Who We Select" },
   how:   { key: "representation.how_we_work",        fallback: "How We Work" },
   terms: { key: "representation.what_are_the_terms", fallback: "What Are The Terms" },
+  background: { key: "representation.our_background", fallback: "Our Background" },
 };
 
 export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
@@ -149,6 +156,8 @@ export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }>
   fees:         { key: "representation.fees",         fallback: "Fees" },
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
+  worked_with:  { key: "representation.worked_with_title", fallback: "Who We've Worked With" },
+  directors:    { key: "representation.directors_title",   fallback: "The Directors" },
 };
 
 export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
@@ -161,6 +170,8 @@ export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string
   fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
   agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
+  worked_with:  { key: "representation.worked_with_subtitle",  fallback: "A decade of elite talent" },
+  directors:    { key: "representation.directors_subtitle",    fallback: "Jolon Levene & Kuda Butawo" },
 };
 
 export const formatCardSubtitle = (key: CardKey, text: string) => {
@@ -176,7 +187,7 @@ const scrollToTop = () => {
   document.body.scrollTop = 0;
 };
 
-export const GROUPS: GroupKey[] = ["who", "how", "terms"];
+export const GROUPS: GroupKey[] = ["who", "how", "terms", "background"];
 
 /** Three-letter language label shown next to the map selector flag. */
 const LANG_ABBR: Record<string, string> = {
