@@ -633,6 +633,7 @@ export default function ClubOutreachProposal() {
             <MatchByMatchCard
               analyses={current.match_by_match}
               position={current?.player?.position ?? null}
+              playerId={current?.player?.id ?? null}
               excludeAnalysisIds={shownAnalysisIds}
               defaultCategory={current?.match_by_match_default_category ?? null}
               statOrders={current?.match_by_match_stat_orders ?? null}
