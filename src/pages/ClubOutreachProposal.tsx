@@ -2053,6 +2053,7 @@ function MatchByMatchCard({
   analyses,
   position,
   excludeAnalysisIds,
+  playerId,
   defaultCategory: defaultCategoryProp,
   statOrders,
   gameOrder,
@@ -2060,6 +2061,7 @@ function MatchByMatchCard({
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
   excludeAnalysisIds?: Set<string>;
+  playerId?: string | null;
   defaultCategory?: string | null;
   statOrders?: Record<string, string[]> | null;
   gameOrder?: string[] | null;
