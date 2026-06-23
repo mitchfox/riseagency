@@ -19,6 +19,7 @@ import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab
 import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
+import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
