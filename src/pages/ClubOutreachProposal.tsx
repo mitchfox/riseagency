@@ -254,6 +254,15 @@ export default function ClubOutreachProposal() {
   const [heroPreparing, setHeroPreparing] = useState(true);
   const heroBlobUrlRef = useRef<string | null>(null);
   const heroAutoplayedRef = useRef(false);
+  // Main hero video carousel paging — matches the Stars-profile pattern used
+  // by the inline "Match-By-Match Video" card (logo tiles + arrows when there
+  // are more videos than fit on screen).
+  const [heroCarouselStart, setHeroCarouselStart] = useState(0);
+  const [heroMobileVisibleRows, setHeroMobileVisibleRows] = useState(1);
+  useEffect(() => {
+    setHeroCarouselStart(0);
+    setHeroMobileVisibleRows(1);
+  }, [activeIndex]);
 
   useEffect(() => {
     const node = contactsRef.current;
@@ -952,44 +961,157 @@ export default function ClubOutreachProposal() {
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
           </div>
-          {/* Video carousel - only when the player has more than one highlight */}
-          {(current.videos?.length ?? 0) > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {current.videos!.map((v) => {
-                const isActive = (activeVideoUrl ?? current.first_highlight_url) === v.videoUrl;
-                return (
+          {/* Video carousel — Stars-profile format: logo tiles with arrows when
+              there are more videos than fit on screen. Mirrors the inline
+              "Match-By-Match Video" card. */}
+          {(() => {
+            // Order the proposal videos by the player's Stars-profile sequence
+            // so the buttons appear in the same order the public Stars page
+            // shows them.
+            const ordered = (() => {
+              const stars = current.stars_ordered_videos ?? [];
+              const vids = current.videos ?? [];
+              if (vids.length <= 1) return vids;
+              if (stars.length === 0) return vids;
+              const order = new Map<string, number>();
+              stars.forEach((s, i) => {
+                if (s?.videoUrl) order.set(s.videoUrl.split("#")[0], i);
+              });
+              return [...vids].sort((a, b) => {
+                const ai = order.get((a.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
+                const bi = order.get((b.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
+                return ai - bi;
+              });
+            })();
+            if (ordered.length <= 1) return null;
+            const PAGE = 12;
+            const useCarousel = ordered.length > PAGE;
+            const start = useCarousel
+              ? ((heroCarouselStart % ordered.length) + ordered.length) % ordered.length
+              : 0;
+            const visible = useCarousel
+              ? Array.from({ length: PAGE }, (_, i) => ({
+                  video: ordered[(start + i) % ordered.length],
+                  index: (start + i) % ordered.length,
+                }))
+              : ordered.map((video, index) => ({ video, index }));
+            const activeUrl = (activeVideoUrl ?? current.first_highlight_url) ?? "";
+            const mobileVisibleCount = Math.min(ordered.length, 8 * heroMobileVisibleRows);
+            const mobileRemaining = ordered.length - mobileVisibleCount;
+            return (
+              <>
+                {/* Desktop: row of logo tiles with arrows when paged */}
+                <div className="hidden md:flex mt-3 items-center justify-center gap-2">
+                  {useCarousel && (
+                    <button
+                      type="button"
+                      onClick={() => setHeroCarouselStart((s) => s - PAGE)}
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                      aria-label="Previous logos"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <div className="flex gap-1 md:gap-2">
+                    {visible.map(({ video: v }) => {
+                      const isActive = activeUrl === v.videoUrl;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveVideoUrl(v.videoUrl);
+                            videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                          }}
+                          title={v.name || ""}
+                          className={`relative flex-shrink-0 w-10 h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
+                            isActive ? "border-[#cbb96b] scale-110" : "border-[#cbb96b]/20 hover:border-[#cbb96b]/50"
+                          }`}
+                        >
+                          {v.logoUrl ? (
+                            <img
+                              src={v.logoUrl}
+                              alt=""
+                              onError={(e) => (e.currentTarget.style.display = "none")}
+                              className="w-full h-full object-contain p-0.5"
+                              loading="eager"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Video className="h-3 w-3 text-white/60" />
+                            </div>
+                          )}
+                          {(v.venue === "H" || v.venue === "A") && (
+                            <span className="absolute bottom-0 right-0 leading-none text-[8px] md:text-[9px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
+                              {v.venue}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {useCarousel && (
+                    <button
+                      type="button"
+                      onClick={() => setHeroCarouselStart((s) => s + PAGE)}
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                      aria-label="Next logos"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+                {/* Mobile: 8-per-row logo grid with "See more" expansion */}
+                <div className="md:hidden mt-2 grid grid-cols-8 gap-1.5">
+                  {ordered.slice(0, mobileVisibleCount).map((v) => {
+                    const isActive = activeUrl === v.videoUrl;
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveVideoUrl(v.videoUrl);
+                          videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        }}
+                        title={v.name || ""}
+                        className={`relative aspect-square rounded border transition-all overflow-hidden bg-background/90 ${
+                          isActive ? "border-[#cbb96b] scale-110" : "border-[#cbb96b]/30"
+                        }`}
+                      >
+                        {v.logoUrl ? (
+                          <img
+                            src={v.logoUrl}
+                            alt=""
+                            onError={(e) => (e.currentTarget.style.display = "none")}
+                            className="w-full h-full object-contain p-0.5"
+                            loading="eager"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Video className="h-3 w-3 text-white/60" />
+                          </div>
+                        )}
+                        {(v.venue === "H" || v.venue === "A") && (
+                          <span className="absolute bottom-0 right-0 leading-none text-[8px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
+                            {v.venue}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {mobileRemaining > 0 && (
                   <button
-                    key={v.id}
                     type="button"
-                    onClick={() => {
-                      setActiveVideoUrl(v.videoUrl);
-                      // Scroll the hero back into view on small screens.
-                      videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                    }}
-                    className={`shrink-0 rounded-lg border px-3 py-2 text-left transition-colors ${
-                      isActive
-                        ? "border-[#cbb96b] bg-[#cbb96b]/15"
-                        : "border-white/10 bg-white/[0.03] hover:border-[#cbb96b]/60"
-                    }`}
-                    style={isActive ? { boxShadow: `0 6px 18px -10px ${clubGlow}aa` } : undefined}
+                    onClick={() => setHeroMobileVisibleRows((r) => r + 1)}
+                    className="md:hidden mt-2 w-full text-xs font-bebas uppercase tracking-wider text-[#cbb96b] border border-[#cbb96b]/40 rounded py-1.5 hover:bg-[#cbb96b]/10"
                   >
-                    <div className="flex items-center gap-2">
-                      {v.logoUrl ? (
-                        <img src={v.logoUrl} alt="" className="h-6 w-6 object-contain bg-white/5 rounded" />
-                      ) : (
-                        <div className="h-6 w-6 rounded bg-white/5 flex items-center justify-center">
-                          <Video className="h-3 w-3 text-white/60" />
-                        </div>
-                      )}
-                      <span className="text-[11px] font-medium text-white/85 whitespace-nowrap max-w-[180px] truncate">
-                        {v.name}
-                      </span>
-                    </div>
+                    See more ({mobileRemaining})
                   </button>
-                );
-              })}
-            </div>
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -1930,7 +2052,7 @@ function MatchByMatchCard({
     Passing: [
       "assists","xa","key_passes_per90","xt_via_live_passes_per90",
       "progressive_passes_per90","passes_into_final_3rd_per90","forward_passes_per90",
-      "passes_in_opp_half_per90","passes_in_own_half_per90","accurate_passes_per90",
+      "passes_in_opp_half_per90","accurate_passes_per90",
       "accurate_long_balls_per90","accurate_crosses_per90","pass_accuracy_pct",
       "long_ball_accuracy_pct","cross_accuracy_pct",
     ],
