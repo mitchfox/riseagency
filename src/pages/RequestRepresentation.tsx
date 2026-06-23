@@ -1539,33 +1539,20 @@ export const DetailView = ({
                     seam runs across the card. On mobile the halves stack
                     vertically and the seam is horizontal. */}
                 <div className="pointer-events-none absolute inset-0">
-                  {/* Black marble layer (Jolon side) */}
+                  {/* Solid black backdrop (Jolon side, full card base) */}
+                  <div className="absolute inset-0 bg-black" />
+                  {/* Solid white layer (Kuda side), clipped along the diagonal seam */}
                   <div
-                    className="absolute inset-0"
+                    className="absolute inset-0 hidden bg-white md:block"
                     style={{
-                      backgroundImage: `url(${blackMarbleBg})`,
-                      backgroundSize: "100% 100%",
-                      backgroundPosition: "center",
-                    }}
-                  />
-                  {/* White marble layer (Kuda side), clipped along the diagonal seam */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage: `url(${whiteMarbleBg})`,
-                      backgroundSize: "100% 100%",
-                      backgroundPosition: "center",
                       clipPath:
                         "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)",
                     }}
                   />
-                  {/* Mobile fallback: stacked halves */}
+                  {/* Mobile fallback: stacked halves, white on the bottom (Kuda) */}
                   <div
-                    className="absolute inset-0 md:hidden"
+                    className="absolute inset-0 bg-white md:hidden"
                     style={{
-                      backgroundImage: `url(${whiteMarbleBg})`,
-                      backgroundSize: "100% 100%",
-                      backgroundPosition: "center",
                       clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)",
                     }}
                   />
