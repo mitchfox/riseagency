@@ -35,6 +35,8 @@ interface Entry {
 
 const MARKET_TABLE_KEY = "summer-26";
 const CLUB_FETCH_PAGE_SIZE = 1000;
+const CONTACT_FETCH_PAGE_SIZE = 1000;
+const CONTACT_SELECT = "id, name, club_name, position, email, phone, country";
 const BELGIUM_1ST_CLUBS = [
   "RSC Anderlecht",
   "Royal Antwerp FC",
@@ -118,6 +120,28 @@ const matchContactForClub = (
     (c) => c.position && re.test(c.position) && contactMatchesClub(c, clubName, country),
   ) ?? null;
 
+const matchContactByNameForClub = (
+  contacts: ContactRow[],
+  clubName: string,
+  country: string | null,
+  name: string | null | undefined,
+): ContactRow | null => {
+  const target = norm(name);
+  if (!target) return null;
+  return contacts.find((c) => norm(c.name) === target && contactMatchesClub(c, clubName, country)) ?? null;
+};
+
+const contactHasSavedDetails = (contact: ContactRow | null): boolean =>
+  Boolean(contact?.email?.trim() || contact?.phone?.trim());
+
+const upsertContactRow = (rows: ContactRow[], row: ContactRow): ContactRow[] => {
+  const idx = rows.findIndex((c) => c.id === row.id);
+  if (idx === -1) return [row, ...rows];
+  const next = [...rows];
+  next[idx] = row;
+  return next;
+};
+
 const additionalContactsForClub = (
   contacts: ContactRow[],
   clubName: string,
@@ -184,6 +208,21 @@ const fetchAllClubRows = async (): Promise<ClubRow[]> => {
   return all;
 };
 
+const fetchAllContactRows = async (): Promise<ContactRow[]> => {
+  const all: ContactRow[] = [];
+  for (let from = 0; ; from += CONTACT_FETCH_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("club_network_contacts")
+      .select(CONTACT_SELECT)
+      .order("id")
+      .range(from, from + CONTACT_FETCH_PAGE_SIZE - 1);
+    if (error) throw error;
+    all.push(...(((data ?? []) as unknown) as ContactRow[]));
+    if (!data || data.length < CONTACT_FETCH_PAGE_SIZE) break;
+  }
+  return all;
+};
+
 type ContactEditState = {
   club: ClubRow;
   role: "td" | "cs" | "extra";
@@ -218,6 +257,7 @@ function MarketContactSlot({
   const cleanDraft = draft.trim();
   const isDirty = cleanDraft !== value.trim();
   const hasSavedName = value.trim().length > 0;
+  const hasSavedContactDetails = contactHasSavedDetails(contact);
   const showConfirm = isDirty;
 
   const confirm = async () => {
@@ -231,10 +271,10 @@ function MarketContactSlot({
     }
   };
 
-  const Icon = showConfirm ? Check : contact ? Pencil : UserPlus;
+  const Icon = showConfirm ? Check : hasSavedContactDetails ? Pencil : UserPlus;
   const buttonTitle = showConfirm
     ? "Confirm this person in Market Tables and Network"
-    : contact
+    : hasSavedContactDetails
       ? "Show or edit existing contact details"
       : hasSavedName
         ? "Add contact details for this person"
@@ -247,7 +287,6 @@ function MarketContactSlot({
         placeholder={placeholder}
         className={inputClassName}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={confirm}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -266,9 +305,9 @@ function MarketContactSlot({
         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
           showConfirm
             ? "border-risegold bg-risegold/15 text-risegold hover:bg-risegold/25"
-            : hasSavedName && !contact
+            : hasSavedName && !hasSavedContactDetails
               ? "border-risegold/70 text-risegold hover:bg-risegold/10"
-              : "border-border text-muted-foreground hover:text-white hover:border-[#cbb96b]/60"
+              : "border-border text-muted-foreground hover:text-white hover:border-risegold/60"
         } ${saving ? "opacity-60" : ""}`}
       >
         <Icon className="h-3.5 w-3.5" />
@@ -287,7 +326,6 @@ export default function MarketTablesTab() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ContactEditState | null>(null);
   const [savingContact, setSavingContact] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingToNetwork, setAddingToNetwork] = useState(false);
 
@@ -399,11 +437,7 @@ export default function MarketTablesTab() {
           });
         });
 
-        const [{ data: contactRows }] = await Promise.all([
-          supabase
-            .from("club_network_contacts")
-            .select("id, name, club_name, position, email, phone, country"),
-        ]);
+        const contactRows = await fetchAllContactRows();
 
         // Overlay the strategy's country + league onto the club record so the
         // filters always reflect the strategy the club was saved under, even
@@ -426,7 +460,7 @@ export default function MarketTablesTab() {
             return a.club_name.localeCompare(b.club_name);
           }),
         );
-        setContacts((contactRows ?? []) as ContactRow[]);
+        setContacts(contactRows);
         const map: Record<string, Entry> = {};
         (savedEntryRows ?? []).forEach((r: any) => {
           map[r.club_id] = {
@@ -443,7 +477,7 @@ export default function MarketTablesTab() {
         setLoading(false);
       }
     })();
-  }, [reloadKey]);
+  }, []);
 
   const countries = useMemo(() => {
     const set = new Set<string>();
@@ -471,10 +505,16 @@ export default function MarketTablesTab() {
 
   const getValues = (club: ClubRow) => {
     const entry = entries[club.id];
-    const tdContact = matchContactForClub(contacts, club.club_name, club.country, TD_RE);
-    const csContact = matchContactForClub(contacts, club.club_name, club.country, CS_RE);
-    const tdName = entry?.technical_director_name ?? tdContact?.name ?? "";
-    const csName = entry?.chief_scout_name ?? csContact?.name ?? "";
+    const tdRoleContact = matchContactForClub(contacts, club.club_name, club.country, TD_RE);
+    const csRoleContact = matchContactForClub(contacts, club.club_name, club.country, CS_RE);
+    const tdName = entry?.technical_director_name ?? tdRoleContact?.name ?? "";
+    const csName = entry?.chief_scout_name ?? csRoleContact?.name ?? "";
+    const tdContact = tdName
+      ? matchContactByNameForClub(contacts, club.club_name, club.country, tdName)
+      : tdRoleContact;
+    const csContact = csName
+      ? matchContactByNameForClub(contacts, club.club_name, club.country, csName)
+      : csRoleContact;
     return { tdContact, csContact, tdName, csName };
   };
 
@@ -499,15 +539,15 @@ export default function MarketTablesTab() {
 
   const ensureContactShell = async (club: ClubRow, name: string | null, position: string) => {
     const clean = (name ?? "").trim();
-    if (!clean) return;
+    if (!clean) return null;
     const { data: existing, error: existingErr } = await supabase
       .from("club_network_contacts")
-      .select("id")
+      .select(CONTACT_SELECT)
       .eq("name", clean)
       .eq("club_name", club.club_name)
       .maybeSingle();
     if (existingErr) throw existingErr;
-    const contactId = existing?.id ?? (await (async () => {
+    const contact = existing ?? (await (async () => {
       const { data, error } = await supabase
         .from("club_network_contacts")
         .insert({
@@ -516,12 +556,14 @@ export default function MarketTablesTab() {
           club_name: club.club_name,
           country: club.country,
         })
-        .select("id")
+        .select(CONTACT_SELECT)
         .single();
       if (error) throw error;
-      return data.id;
+      return data;
     })());
-    await ensureRelationshipShell(contactId);
+    await ensureRelationshipShell(contact.id);
+    setContacts((prev) => upsertContactRow(prev, contact as ContactRow));
+    return contact as ContactRow;
   };
 
   const persist = async (clubId: string, patch: Partial<Entry>) => {
@@ -587,7 +629,6 @@ export default function MarketTablesTab() {
       await persist(club.id, { chief_scout_name: value });
       await ensureContactShell(club, value, "Chief Scout");
     }
-    setReloadKey((k) => k + 1);
   };
 
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
@@ -636,8 +677,8 @@ export default function MarketTablesTab() {
       country: club.country,
     };
     const { data: saved, error } = existing
-      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select("id").single()
-      : await supabase.from("club_network_contacts").insert(payload).select("id").single();
+      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
+      : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
     if (error) {
       toast.error(error.message);
       setSavingContact(false);
@@ -651,11 +692,16 @@ export default function MarketTablesTab() {
     }
     if (saved?.id) {
       await ensureRelationshipShell(saved.id);
+      setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
     }
     toast.success(existing ? "Contact updated" : "Contact added");
     setSavingContact(false);
     setEditing(null);
-    setReloadKey((k) => k + 1);
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.add(club.id);
+      return next;
+    });
   };
 
   const addAllContactsToNetwork = async () => {
@@ -818,7 +864,7 @@ export default function MarketTablesTab() {
                   <button
                     type="button"
                     onClick={() => openExtraEdit(club, null)}
-                    className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                    className="inline-flex items-center gap-1 text-[11px] text-risegold hover:text-foreground"
                   >
                     <UserPlus className="h-3 w-3" /> Add
                   </button>
@@ -949,7 +995,7 @@ export default function MarketTablesTab() {
                           <button
                             type="button"
                             onClick={() => openExtraEdit(club, null)}
-                            className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                            className="inline-flex items-center gap-1 text-[11px] text-risegold hover:text-foreground"
                           >
                             <UserPlus className="h-3.5 w-3.5" /> Add additional contact
                           </button>
@@ -992,7 +1038,7 @@ export default function MarketTablesTab() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editing?.existing ? "Edit contact" : "Add contact"} — {editing?.club.club_name}
+              {contactHasSavedDetails(editing?.existing ?? null) ? "Edit contact details" : "Add contact details"} — {editing?.club.club_name}
             </DialogTitle>
           </DialogHeader>
           {editing && (
