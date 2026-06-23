@@ -1176,11 +1176,8 @@ export default function ClubOutreachProposal() {
                   />
                 ) : current.proof_of_representation_url ? (
                   <ProposalCard
-                    href={
-                      current.proof_of_representation_url && data.link.short_id && player?.id
-                        ? `/club-proposal/${data.link.short_id}/proof/${player.id}`
-                        : null
-                    }
+                    href={null}
+                    onClick={() => setProofOpen(true)}
                     icon={<FileBadge2 className="h-6 w-6" />}
                     eyebrow="02"
                     title={tr("card.proofTitle", "Proof of Representation")}
@@ -1188,7 +1185,6 @@ export default function ClubOutreachProposal() {
                     disabledLabel={current.proof_of_representation_url ? undefined : tr("card.availableOnRequest", "Available on request")}
                     openLabel={tr("card.open", "Open")}
                     unavailableLabel={tr("card.unavailable", "Unavailable")}
-                    internal
                   />
                 ) : null)
               )}
