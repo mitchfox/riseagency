@@ -739,40 +739,50 @@ export default function MarketTablesTab() {
       return;
     }
     setSavingContact(true);
-    const payload = {
-      name: draft.name.trim(),
-      position: draft.position.trim() || null,
-      email: draft.email.trim() || null,
-      phone: draft.phone.trim() || null,
-      club_name: club.club_name,
-      country: club.country,
-    };
-    const { data: saved, error } = existing
-      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
-      : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
-    if (error) {
-      toast.error(error.message);
+    try {
+      const payload = {
+        name: draft.name.trim(),
+        position: draft.position.trim() || null,
+        email: draft.email.trim() || null,
+        phone: draft.phone.trim() || null,
+        club_name: club.club_name,
+        country: club.country,
+      };
+      const { data: saved, error } = existing
+        ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
+        : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
+      if (role === "td") {
+        const ok = await persist(club.id, { technical_director_name: payload.name });
+        if (!ok) return;
+      } else if (role === "cs") {
+        const ok = await persist(club.id, { chief_scout_name: payload.name });
+        if (!ok) return;
+      }
+      if (saved?.id) {
+        try {
+          await ensureRelationshipShell(saved.id);
+        } catch (e: any) {
+          toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
+        }
+        setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
+      }
+      toast.success(existing ? "Contact updated" : "Contact added");
+      setEditing(null);
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        next.add(club.id);
+        return next;
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    } finally {
       setSavingContact(false);
-      return;
     }
-    // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
-    if (role === "td") {
-      await persist(club.id, { technical_director_name: payload.name });
-    } else if (role === "cs") {
-      await persist(club.id, { chief_scout_name: payload.name });
-    }
-    if (saved?.id) {
-      await ensureRelationshipShell(saved.id);
-      setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
-    }
-    toast.success(existing ? "Contact updated" : "Contact added");
-    setSavingContact(false);
-    setEditing(null);
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      next.add(club.id);
-      return next;
-    });
   };
 
   const addAllContactsToNetwork = async () => {
