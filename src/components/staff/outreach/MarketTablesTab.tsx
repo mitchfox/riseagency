@@ -266,6 +266,8 @@ function MarketContactSlot({
     try {
       const saved = await onConfirm(cleanDraft || null);
       if (saved !== false) setDraft(cleanDraft);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
     } finally {
       setSaving(false);
     }
