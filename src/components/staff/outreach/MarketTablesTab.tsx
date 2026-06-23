@@ -438,11 +438,7 @@ export default function MarketTablesTab() {
           });
         });
 
-        const [{ data: contactRows }] = await Promise.all([
-          supabase
-            .from("club_network_contacts")
-            .select("id, name, club_name, position, email, phone, country"),
-        ]);
+        const contactRows = await fetchAllContactRows();
 
         // Overlay the strategy's country + league onto the club record so the
         // filters always reflect the strategy the club was saved under, even
@@ -465,7 +461,7 @@ export default function MarketTablesTab() {
             return a.club_name.localeCompare(b.club_name);
           }),
         );
-        setContacts((contactRows ?? []) as ContactRow[]);
+        setContacts(contactRows);
         const map: Record<string, Entry> = {};
         (savedEntryRows ?? []).forEach((r: any) => {
           map[r.club_id] = {
@@ -510,10 +506,12 @@ export default function MarketTablesTab() {
 
   const getValues = (club: ClubRow) => {
     const entry = entries[club.id];
-    const tdContact = matchContactForClub(contacts, club.club_name, club.country, TD_RE);
-    const csContact = matchContactForClub(contacts, club.club_name, club.country, CS_RE);
-    const tdName = entry?.technical_director_name ?? tdContact?.name ?? "";
-    const csName = entry?.chief_scout_name ?? csContact?.name ?? "";
+    const tdRoleContact = matchContactForClub(contacts, club.club_name, club.country, TD_RE);
+    const csRoleContact = matchContactForClub(contacts, club.club_name, club.country, CS_RE);
+    const tdName = entry?.technical_director_name ?? tdRoleContact?.name ?? "";
+    const csName = entry?.chief_scout_name ?? csRoleContact?.name ?? "";
+    const tdContact = matchContactByNameForClub(contacts, club.club_name, club.country, tdName) ?? tdRoleContact;
+    const csContact = matchContactByNameForClub(contacts, club.club_name, club.country, csName) ?? csRoleContact;
     return { tdContact, csContact, tdName, csName };
   };
 
@@ -538,15 +536,15 @@ export default function MarketTablesTab() {
 
   const ensureContactShell = async (club: ClubRow, name: string | null, position: string) => {
     const clean = (name ?? "").trim();
-    if (!clean) return;
+    if (!clean) return null;
     const { data: existing, error: existingErr } = await supabase
       .from("club_network_contacts")
-      .select("id")
+      .select(CONTACT_SELECT)
       .eq("name", clean)
       .eq("club_name", club.club_name)
       .maybeSingle();
     if (existingErr) throw existingErr;
-    const contactId = existing?.id ?? (await (async () => {
+    const contact = existing ?? (await (async () => {
       const { data, error } = await supabase
         .from("club_network_contacts")
         .insert({
@@ -555,12 +553,14 @@ export default function MarketTablesTab() {
           club_name: club.club_name,
           country: club.country,
         })
-        .select("id")
+        .select(CONTACT_SELECT)
         .single();
       if (error) throw error;
-      return data.id;
+      return data;
     })());
-    await ensureRelationshipShell(contactId);
+    await ensureRelationshipShell(contact.id);
+    setContacts((prev) => upsertContactRow(prev, contact as ContactRow));
+    return contact as ContactRow;
   };
 
   const persist = async (clubId: string, patch: Partial<Entry>) => {
@@ -626,7 +626,6 @@ export default function MarketTablesTab() {
       await persist(club.id, { chief_scout_name: value });
       await ensureContactShell(club, value, "Chief Scout");
     }
-    setReloadKey((k) => k + 1);
   };
 
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
@@ -675,8 +674,8 @@ export default function MarketTablesTab() {
       country: club.country,
     };
     const { data: saved, error } = existing
-      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select("id").single()
-      : await supabase.from("club_network_contacts").insert(payload).select("id").single();
+      ? await supabase.from("club_network_contacts").update(payload).eq("id", existing.id).select(CONTACT_SELECT).single()
+      : await supabase.from("club_network_contacts").insert(payload).select(CONTACT_SELECT).single();
     if (error) {
       toast.error(error.message);
       setSavingContact(false);
@@ -690,11 +689,16 @@ export default function MarketTablesTab() {
     }
     if (saved?.id) {
       await ensureRelationshipShell(saved.id);
+      setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
     }
     toast.success(existing ? "Contact updated" : "Contact added");
     setSavingContact(false);
     setEditing(null);
-    setReloadKey((k) => k + 1);
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.add(club.id);
+      return next;
+    });
   };
 
   const addAllContactsToNetwork = async () => {
