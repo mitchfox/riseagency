@@ -560,7 +560,11 @@ export default function ClubOutreachProposal() {
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 space-y-5">
           {(() => {
-            const allV = current?.all_videos ?? current?.videos ?? [];
+            // Prefer the stars-profile-ordered list (matchHighlights only,
+            // in saved order) so the inline carousel mirrors what the player's
+            // public Stars profile shows. Fall back to all_videos for older
+            // payloads.
+            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? current?.videos ?? [];
             const shownSet = new Set(
               (current?.videos ?? [])
                 .map((v) => (v?.videoUrl ?? "").split("#")[0])
