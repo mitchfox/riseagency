@@ -549,30 +549,49 @@ export default function MarketTablesTab() {
                   </button>
                 </div>
               </div>
-              {extras.length > 0 && (
-                <div className="pt-1 border-t border-border/40">
+              <div className="pt-1 border-t border-border/40">
+                <div className="flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => toggleExpanded(club.id)}
                     className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-white"
                   >
                     <Users className="h-3 w-3" />
-                    {extras.length} more contact{extras.length === 1 ? "" : "s"}
+                    {extras.length} additional contact{extras.length === 1 ? "" : "s"}
                     <ChevronRight className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                   </button>
-                  {isOpen && (
+                  <button
+                    type="button"
+                    onClick={() => openExtraEdit(club, null)}
+                    className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                  >
+                    <UserPlus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+                {isOpen && (
+                  extras.length === 0 ? (
+                    <p className="mt-2 text-[11px] text-muted-foreground">No additional contacts in the network for this club.</p>
+                  ) : (
                     <ul className="mt-2 space-y-1.5">
                       {extras.map((c) => (
                         <li key={c.id} className="flex items-center gap-2 text-xs flex-wrap">
                           <span className="text-white">{c.name}</span>
                           {c.position && <span className="text-muted-foreground">· {c.position}</span>}
                           {renderContactLinks(c)}
+                          <button
+                            type="button"
+                            onClick={() => openExtraEdit(club, c)}
+                            title="Edit contact"
+                            className="ml-auto text-muted-foreground hover:text-white"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           );
         })}
