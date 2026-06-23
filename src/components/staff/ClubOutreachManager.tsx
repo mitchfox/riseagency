@@ -329,8 +329,7 @@ export default function ClubOutreachManager() {
 
   const scrollPanelToTop = () => {
     requestAnimationFrame(() => {
-      const mainScroller = document.querySelector('main');
-      if (mainScroller) mainScroller.scrollTo({ top: 0, behavior: 'smooth' });
+      document.querySelectorAll('main').forEach((scroller) => scroller.scrollTo({ top: 0, behavior: 'smooth' }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
       rootRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     });
