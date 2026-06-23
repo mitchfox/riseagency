@@ -1662,13 +1662,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <AccordionItem value="keydetails" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Key detail tiles</AccordionTrigger>
               <AccordionContent className="pb-3">
-                <KeyDetailsBuilder items={keyDetails} onChange={setKeyDetails} />
+                <KeyDetailsBuilder items={activeKeyDetails} onChange={(next) => patchPlayerSettings({ key_details: next })} />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="sectionorder" className="border border-border rounded-md bg-background/40 px-3">
               <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Section order</AccordionTrigger>
               <AccordionContent className="pb-3">
-                <SectionOrderBuilder order={sectionOrder} onChange={setSectionOrder} />
+                <SectionOrderBuilder order={activeSectionOrder} onChange={(next) => patchPlayerSettings({ section_order: next })} />
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="mandate" className="border border-[#cbb96b]/40 rounded-md bg-[#cbb96b]/[0.06] px-3">
