@@ -691,7 +691,7 @@ export default function ClubOutreachProposal() {
               {fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })}
             </h1>
             {preparedFor && (
-              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
             )}
           </div>
         </header>
@@ -829,7 +829,7 @@ export default function ClubOutreachProposal() {
               : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
           {preparedFor && (
-            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
@@ -2269,12 +2269,29 @@ function MatchByMatchCard({
         </div>
         {categories.map((c) => (
           <TabsContent key={c.category} value={c.category} className="mt-3">
+            {(() => {
+            const visibleMetrics = c.metrics.filter((m) =>
+              sorted.some((a) => {
+                const v = getValue(a, m.key, "per90");
+                if (v !== null && v !== 0) return true;
+                const r = getValue(a, m.key, "raw");
+                return r !== null && r !== 0;
+              })
+            );
+            if (visibleMetrics.length === 0) {
+              return (
+                <div className="rounded-lg border border-white/10 px-3 py-4 text-center text-[11px] text-white/40">
+                  No data available.
+                </div>
+              );
+            }
+            return (
             <div className="overflow-x-auto rounded-lg border border-white/10">
               <table className="w-full text-[11px] min-w-[640px]">
                 <thead>
                   <tr className="bg-white/[0.04] text-white/60">
                     <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
-                    {c.metrics.map((m) => (
+                    {visibleMetrics.map((m) => (
                       <th key={m.key} className="text-center px-2.5 py-2 font-medium whitespace-nowrap">
                         {m.label}
                       </th>
@@ -2306,7 +2323,7 @@ function MatchByMatchCard({
                           </div>
                         </div>
                       </td>
-                      {c.metrics.map((m) => {
+                      {visibleMetrics.map((m) => {
                         const displayValue = getValue(a, m.key, viewMode);
                         const per90Value = getValue(a, m.key, "per90");
                         const g = gradeFor(m.key, per90Value);
@@ -2333,6 +2350,8 @@ function MatchByMatchCard({
                 </tbody>
               </table>
             </div>
+            );
+            })()}
           </TabsContent>
         ))}
       </Tabs>
