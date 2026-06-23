@@ -79,6 +79,8 @@ function countCompletions(log: string[] | null, since: Date): number {
 
 const hasCompletionSince = (log: string[] | null | undefined, since: Date): boolean => countCompletions(log || null, since) > 0;
 
+const getCompletionCount = (log: string[] | null | undefined): number => log?.filter(Boolean).length ?? 0;
+
 interface ScheduleTaskItem {
   id: string;
   post_type: string;
@@ -801,9 +803,15 @@ export const StaffAccountabilityOverview = ({ isAdmin, userId }: { isAdmin: bool
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Log</p>
           <div className="flex flex-wrap gap-2">
-            {memberTasks.filter(t => t.is_recurring && !t.completed).map(task => (
+            {memberTasks
+              .filter(t => t.is_recurring && !t.completed)
+              .sort((a, b) => getCompletionCount(b.completion_log) - getCompletionCount(a.completion_log) || a.title.localeCompare(b.title))
+              .map(task => (
               <Button key={task.id} variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => handleLogCompletion(task.id)}>
                 <CheckCircle2 className="h-3 w-3" /> {task.title}
+                <span className="ml-1 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {getCompletionCount(task.completion_log)}
+                </span>
               </Button>
             ))}
           </div>
