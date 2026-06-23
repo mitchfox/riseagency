@@ -902,12 +902,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   // Whenever the primary player changes, fetch their highlights so the staff
   // can pick which ones appear in the proposal carousel.
   const primaryPlayerId = entries[0]?.player_id ?? null;
+  const settingsPlayerId = activeSettingsEntry?.player_id ?? primaryPlayerId;
   useEffect(() => {
     // Load the primary player's named seasons so the staff can scope the
     // proposal's data to one of them. Reset selection when the player
     // changes unless we already pre-seeded it from defaults.
     let cancelled = false;
-    if (!primaryPlayerId) {
+    if (!settingsPlayerId) {
       setPlayerSeasons([]);
       return;
     }
@@ -915,24 +916,24 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       const { data } = await supabase
         .from("player_seasons")
         .select("id, name, sort_order")
-        .eq("player_id", primaryPlayerId)
+        .eq("player_id", settingsPlayerId)
         .order("sort_order", { ascending: true })
         .order("name", { ascending: true });
       if (cancelled) return;
       setPlayerSeasons((data ?? []) as { id: string; name: string }[]);
       // If the currently picked seasonId belongs to a different player,
       // drop it.
-      if (seasonId && !(data ?? []).some((s: any) => s.id === seasonId)) {
-        setSeasonId(null);
+      if (activeSettingsEntry?.season_id && !(data ?? []).some((s: any) => s.id === activeSettingsEntry.season_id)) {
+        patchPlayerSettings({ season_id: null });
       }
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryPlayerId]);
+  }, [settingsPlayerId]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!primaryPlayerId) {
+    if (!settingsPlayerId) {
       setPrimaryVideos([]);
       return;
     }
@@ -941,7 +942,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       const { data, error } = await supabase
         .from("players")
         .select("highlights")
-        .eq("id", primaryPlayerId)
+        .eq("id", settingsPlayerId)
         .maybeSingle();
       if (cancelled) return;
       setLoadingPrimaryVideos(false);
@@ -964,23 +965,23 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       setPrimaryVideos(list);
       // Seed selection from per-player default when this is a fresh outreach
       // and the user hasn't yet picked anything for this player.
-      if (!editing && selectedVideoIds.length === 0) {
+      if (!editing && activeSettingsEntry && activeSelectedVideoIds.length === 0) {
         const { data: defs } = await (supabase as any)
           .from("club_outreach_player_defaults")
           .select("default_selected_video_ids, default_alternate_profile_link_ids, default_alternate_profiles_blurb, default_show_form, default_show_in_numbers, default_show_season_stats, default_show_strengths, default_section_order, default_key_details")
-          .eq("player_id", primaryPlayerId)
+          .eq("player_id", settingsPlayerId)
           .maybeSingle();
         const def = Array.isArray(defs?.default_selected_video_ids) ? defs.default_selected_video_ids : [];
         if (def.length > 0 && !cancelled) {
-          setSelectedVideoIds(def);
+          patchPlayerSettings({ selected_video_ids: def });
         } else if (!cancelled) {
           // Fall back to the global default video selection mode.
           if (defaultVideoMode === 'first' && list.length > 0) {
-            setSelectedVideoIds([list[0].id]);
+            patchPlayerSettings({ selected_video_ids: [list[0].id] });
           } else if (defaultVideoMode === 'custom') {
             // Custom mode: leave empty as a signal "all", staff picks manually.
             // We intentionally don't pre-tick anything.
-            setSelectedVideoIds([]);
+            patchPlayerSettings({ selected_video_ids: [] });
           }
           // 'all' → leave [] (renderer treats empty as "show all").
         }
@@ -988,22 +989,24 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         if (altDef.length > 0 && !cancelled && altLinkIds.length === 0) setAltLinkIds(altDef);
         if (defs?.default_alternate_profiles_blurb && !cancelled && !altBlurb) setAltBlurb(defs.default_alternate_profiles_blurb);
         if (!cancelled) {
-          if (typeof defs?.default_show_form === 'boolean') setShowForm(defs.default_show_form);
-          if (typeof defs?.default_show_in_numbers === 'boolean') setShowInNumbers(defs.default_show_in_numbers);
-          if (typeof defs?.default_show_season_stats === 'boolean') setShowSeasonStats(defs.default_show_season_stats);
-          if (typeof defs?.default_show_strengths === 'boolean') setShowStrengths(defs.default_show_strengths);
+          const patch: Partial<LinkPlayerRow> = {};
+          if (typeof defs?.default_show_form === 'boolean') patch.show_form = defs.default_show_form;
+          if (typeof defs?.default_show_in_numbers === 'boolean') patch.show_in_numbers = defs.default_show_in_numbers;
+          if (typeof defs?.default_show_season_stats === 'boolean') patch.show_season_stats = defs.default_show_season_stats;
+          if (typeof defs?.default_show_strengths === 'boolean') patch.show_strengths = defs.default_show_strengths;
           if (Array.isArray(defs?.default_section_order) && defs.default_section_order.length > 0) {
-            setSectionOrder(normaliseSectionOrder(defs.default_section_order));
+            patch.section_order = normaliseSectionOrder(defs.default_section_order);
           }
           if (Array.isArray(defs?.default_key_details) && defs.default_key_details.length > 0) {
-            setKeyDetails(normaliseKeyDetails(defs.default_key_details));
+            patch.key_details = normaliseKeyDetails(defs.default_key_details);
           }
+          if (Object.keys(patch).length > 0) patchPlayerSettings(patch);
         }
       }
     })();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryPlayerId]);
+  }, [settingsPlayerId]);
 
   const savePlayerPositionDefault = async (playerId: string, position: string | null) => {
     if (!position) {
