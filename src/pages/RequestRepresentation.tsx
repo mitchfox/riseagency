@@ -5,7 +5,7 @@ import {
   Gauge, Users, Sparkles, PoundSterling, FileText, Target, Search,
   ExternalLink, HelpCircle, Activity, Brain, Zap, Crosshair,
   Dumbbell, Apple, Cpu, Heart, Globe2,
-  Trophy,
+  Trophy, History, UserSquare2,
 } from "lucide-react";
 import { widont } from "@/components/SlantedBox";
 import { SEO } from "@/components/SEO";
@@ -28,6 +28,8 @@ import { SCOUTING_POSITIONS, POSITION_SKILLS, type ScoutingPosition } from "@/da
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import { trackRepresentationVisitor } from "@/lib/representationVisitorTracker";
 import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
+import jolonHeadshotAsset from "@/assets/jolon-headshot.jpeg.asset.json";
+import kudaHeadshotAsset from "@/assets/kuda-headshot.jpeg.asset.json";
 
 export type AgeGroup = null | "under18" | "over18";
 type PlayerPosition = "GK" | "LB" | "LCB" | "RCB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "CF";
@@ -55,11 +57,12 @@ const POSITION_TO_SCOUTING: Record<PlayerPosition, ScoutingPosition> = {
 /** sessionStorage flag — when present, the cinematic pulse + intro are
  *  skipped so a language reload drops you straight into the page. */
 const INTRO_SEEN_KEY = "rep_intro_seen_v1";
-export type GroupKey = "who" | "how" | "terms";
+export type GroupKey = "who" | "how" | "terms" | "background";
 export type CardKey =
   | "scouting" | "expectations"
   | "performance" | "network" | "brand" | "negotiation"
-  | "fees" | "agreement" | "faqs";
+  | "fees" | "agreement" | "faqs"
+  | "worked_with" | "directors";
 export type PerformanceSub = "analysis" | "actions" | "sps" | "nutrition" | "technique" | "psychology" | "portal";
 
 const WHATSAPP_URL = "https://wa.me/447508342901";
@@ -131,12 +134,16 @@ export const CARD_META: CardMeta[] = [
   { key: "fees",         title: "Fees",          icon: PoundSterling, subtitle: "Clear from the start",              group: "terms" },
   { key: "agreement",    title: "Agreement",     icon: FileText,      subtitle: "What the relationship covers",      group: "terms" },
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
+  // Our Background
+  { key: "worked_with",  title: "Who We've Worked With", icon: History,      subtitle: "A decade of elite talent",      group: "background" },
+  { key: "directors",    title: "The Directors",         icon: UserSquare2,  subtitle: "Jolon Levene & Kuda Butawo",    group: "background" },
 ];
 
 export const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
   who:   { key: "representation.who_we_select",      fallback: "Who We Select" },
   how:   { key: "representation.how_we_work",        fallback: "How We Work" },
   terms: { key: "representation.what_are_the_terms", fallback: "What Are The Terms" },
+  background: { key: "representation.our_background", fallback: "Our Background" },
 };
 
 export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
@@ -149,6 +156,8 @@ export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }>
   fees:         { key: "representation.fees",         fallback: "Fees" },
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
+  worked_with:  { key: "representation.worked_with_title", fallback: "Who We've Worked With" },
+  directors:    { key: "representation.directors_title",   fallback: "The Directors" },
 };
 
 export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
@@ -161,6 +170,8 @@ export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string
   fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
   agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
+  worked_with:  { key: "representation.worked_with_subtitle",  fallback: "A decade of elite talent" },
+  directors:    { key: "representation.directors_subtitle",    fallback: "Jolon Levene & Kuda Butawo" },
 };
 
 export const formatCardSubtitle = (key: CardKey, text: string) => {
@@ -176,7 +187,7 @@ const scrollToTop = () => {
   document.body.scrollTop = 0;
 };
 
-export const GROUPS: GroupKey[] = ["who", "how", "terms"];
+export const GROUPS: GroupKey[] = ["who", "how", "terms", "background"];
 
 /** Three-letter language label shown next to the map selector flag. */
 const LANG_ABBR: Record<string, string> = {
@@ -894,89 +905,6 @@ const RequestRepresentation = () => {
                 );
               })}
 
-              {/* Our Background — two presentation cards sitting after
-                  the "What Are The Terms" group: a "Who we've worked
-                  with" card wrapping the live players carousel, and a
-                  "The Directors" card with the founder bios. */}
-              <div className="scroll-mt-[88px] md:scroll-mt-[96px]">
-                <SectionDivider label={t("representation.our_background", "Our Background")} />
-                <div className="grid gap-4 md:gap-5 md:grid-cols-2">
-                  {/* Card 1 — Who we've worked with + carousel */}
-                  <div
-                    className="relative overflow-hidden rise-slant-card-lg border border-border/60"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.16),transparent_55%)]" />
-                    <div className="relative px-5 py-6 md:px-7 md:py-7">
-                      <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-                        {t("representation.our_background_eyebrow", "Our Background")}
-                      </p>
-                      <h3 className="mt-2 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-3xl">
-                        {t("representation.worked_with_title", "Who we've worked with")}
-                      </h3>
-                      <p
-                        className="mt-3 text-[13.5px] leading-relaxed text-foreground/85 md:text-[15px]"
-                        style={{ textWrap: "pretty" } as React.CSSProperties}
-                      >
-                        {widont(t(
-                          "representation.worked_with_body",
-                          "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football. Now we RISE more holistically with our players combining exclusive representation with elite performance training.",
-                        ))}
-                      </p>
-                      <div className="mt-5 -mx-5 md:-mx-7">
-                        <PlayersWeWorkWith bare />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 2 — The Directors */}
-                  <div
-                    className="relative overflow-hidden rise-slant-card-lg border border-border/60"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,hsl(var(--gold)/0.16),transparent_55%)]" />
-                    <div className="relative px-5 py-6 md:px-7 md:py-7">
-                      <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-                        {t("representation.our_background_eyebrow", "Our Background")}
-                      </p>
-                      <h3 className="mt-2 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-3xl">
-                        {t("representation.directors_title", "The Directors")}
-                      </h3>
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <p className="font-bebas text-lg uppercase tracking-[0.08em] text-foreground md:text-xl">
-                            {t("representation.director_jolon_name", "Jolon Levene")}
-                          </p>
-                          <p
-                            className="mt-1.5 text-[13px] leading-relaxed text-foreground/85 md:text-[14.5px]"
-                            style={{ textWrap: "pretty" } as React.CSSProperties}
-                          >
-                            {widont(t(
-                              "representation.director_jolon_bio",
-                              "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
-                            ))}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="font-bebas text-lg uppercase tracking-[0.08em] text-foreground md:text-xl">
-                            {t("representation.director_kuda_name", "Kuda Butawo")}
-                          </p>
-                          <p
-                            className="mt-1.5 text-[13px] leading-relaxed text-foreground/85 md:text-[14.5px]"
-                            style={{ textWrap: "pretty" } as React.CSSProperties}
-                          >
-                            {widont(t(
-                              "representation.director_kuda_bio",
-                              "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
-                            ))}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Ballon d'Or vision — placed at the bottom, after the
                   grouped tile sections (including FAQs), so it closes
                   the page with the ambition statement. */}
@@ -1554,6 +1482,138 @@ export const DetailView = ({
                   {point.startsWith("representation.") ? t(point, point) : point}
                 </motion.div>
               ))}
+            </div>
+          )}
+
+          {/* Who we've worked with — body copy + live carousel */}
+          {activeCard === "worked_with" && (
+            <div className="space-y-4">
+              <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                <p
+                  className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                  style={{ textWrap: "pretty" } as React.CSSProperties}
+                >
+                  {widont(t(
+                    "representation.worked_with_body",
+                    "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football. Now we RISE more holistically with our players combining exclusive representation with elite performance training.",
+                  ))}
+                </p>
+              </div>
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                <PlayersWeWorkWith bare />
+              </div>
+            </div>
+          )}
+
+          {/* The Directors — split card, marble halves, diagonal gold divider */}
+          {activeCard === "directors" && (
+            <div
+              className="relative overflow-hidden rise-slant-card-lg border border-border/60"
+              style={solidBlackSectionStyle}
+            >
+              <div className="grid md:grid-cols-2">
+                {/* Jolon — black marble side, colour photo */}
+                <div
+                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
+                  style={{
+                    backgroundImage: "url('/black-marble.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+                  <img
+                    src={jolonHeadshotAsset.url}
+                    alt="Jolon Levene"
+                    loading="lazy"
+                    decoding="async"
+                    className="pointer-events-none absolute bottom-0 right-0 h-[88%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      WebkitMaskComposite: "source-in",
+                      maskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      maskComposite: "intersect",
+                    } as React.CSSProperties}
+                  />
+                  <div className="relative">
+                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+                      {t("representation.director_role_founder", "Founder")}
+                    </p>
+                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-foreground md:text-3xl">
+                      {t("representation.director_jolon_name", "Jolon Levene")}
+                    </p>
+                    <p
+                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-foreground/90 md:text-[14.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.director_jolon_bio",
+                        "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
+                      ))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Kuda — white marble side, B&W photo */}
+                <div
+                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
+                  style={{
+                    backgroundImage: "url('/white-marble.png')",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-white/10 to-white/40" />
+                  <img
+                    src={kudaHeadshotAsset.url}
+                    alt="Kuda Butawo"
+                    loading="lazy"
+                    decoding="async"
+                    className="pointer-events-none absolute bottom-0 right-0 h-[92%] w-auto object-contain object-bottom"
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      WebkitMaskComposite: "source-in",
+                      maskImage:
+                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
+                      maskComposite: "intersect",
+                    } as React.CSSProperties}
+                  />
+                  <div className="relative">
+                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-[hsl(var(--gold))] md:text-[12px]">
+                      {t("representation.director_role_director", "Director")}
+                    </p>
+                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-black md:text-3xl">
+                      {t("representation.director_kuda_name", "Kuda Butawo")}
+                    </p>
+                    <p
+                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-black/85 md:text-[14.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.director_kuda_bio",
+                        "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
+                      ))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diagonal Rise Gold divider between the two halves */}
+              <div className="pointer-events-none absolute inset-0 hidden md:block">
+                <div
+                  className="absolute top-0 bottom-0 left-1/2 w-[3px] -translate-x-1/2 bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
+                  style={{ transform: "translateX(-50%) skewX(-9deg)" }}
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 md:hidden">
+                <div
+                  className="mx-auto h-[3px] w-[88%] bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
+                  style={{ transform: "skewY(-3deg)" }}
+                />
+              </div>
             </div>
           )}
         </div>

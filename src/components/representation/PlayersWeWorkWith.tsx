@@ -61,10 +61,15 @@ export const PlayersWeWorkWith = ({
       const { data } = await supabase
         .from("players")
         .select("id, name, image_url, position, club, representation_status, player_list_order")
-        .eq("representation_status", "fuel_for_football")
+        .in("representation_status", [
+          "represented",
+          "fuel_for_football",
+          "previously_mandated",
+          "other",
+        ])
         .not("image_url", "is", null)
         .order("player_list_order", { ascending: true, nullsFirst: false })
-        .limit(24);
+        .limit(120);
       if (data) setPlayers(data as RepPlayer[]);
     })();
   }, [visible]);
