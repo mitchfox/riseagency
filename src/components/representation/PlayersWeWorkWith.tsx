@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RepPlayer {
@@ -27,26 +27,47 @@ export const PlayersWeWorkWith = ({
   subtitle = "A small group of players we genuinely believe can reach the very top — and back all the way.",
 }: Props) => {
   const [players, setPlayers] = useState<RepPlayer[]>([]);
+  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const node = sectionRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     (async () => {
       const { data } = await supabase
         .from("players")
         .select("id, name, image_url, position, club, representation_status, player_list_order")
-        .in("representation_status", ["represented", "mandated", "previously_mandated"])
+        .eq("representation_status", "fuel_for_football")
         .not("image_url", "is", null)
         .order("player_list_order", { ascending: true, nullsFirst: false })
-        .limit(30);
+        .limit(24);
       if (data) setPlayers(data as RepPlayer[]);
     })();
-  }, []);
+  }, [visible]);
 
-  if (players.length === 0) return null;
-
-  const loop = [...players, ...players];
+  const loop = players.length > 0 ? [...players, ...players] : [];
 
   return (
-    <section className="relative overflow-hidden py-10 md:py-14">
+    <section ref={sectionRef} className="relative overflow-hidden py-10 md:py-14">
       <div className="mx-auto max-w-4xl px-4 text-center mb-6 md:mb-8">
         <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
           {eyebrow}
@@ -63,7 +84,21 @@ export const PlayersWeWorkWith = ({
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent md:w-32" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent md:w-32" />
 
-        <div className="flex w-max animate-marquee gap-4 md:gap-6">
+        <div className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch">
+          {/* Intro card — sits in the marquee loop so it cycles past with the players */}
+          {[0, 1].map((dup) => (
+            <aside
+              key={`intro-${dup}`}
+              className="flex w-[260px] shrink-0 flex-col justify-center rounded-2xl border border-primary/40 bg-card/60 px-5 py-5 shadow-[0_0_24px_hsl(var(--gold)/0.18)] md:w-[320px]"
+            >
+              <p className="font-bebas text-[10px] uppercase tracking-[0.32em] text-primary md:text-[11px]">
+                Performance Specialists
+              </p>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85 md:text-[13.5px]">
+                We work with a select group of players through Fuel For Football, our performance programme built around the very best — sharpening their game, protecting their bodies and backing every step of the journey.
+              </p>
+            </aside>
+          ))}
           {loop.map((p, i) => (
             <figure
               key={`${p.id}-${i}`}
@@ -75,6 +110,7 @@ export const PlayersWeWorkWith = ({
                     src={p.image_url}
                     alt={p.name}
                     loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover object-top"
                   />
                 ) : null}
