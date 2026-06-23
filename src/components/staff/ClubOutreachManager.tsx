@@ -53,7 +53,7 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
-interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; sort_order: number; }
+interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; situation: string | null; sort_order: number; }
 interface OutreachRow {
   id: string;
   short_id: string;
