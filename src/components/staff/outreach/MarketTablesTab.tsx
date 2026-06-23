@@ -270,9 +270,9 @@ function MarketContactSlot({
         disabled={saving}
         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
           showConfirm
-            ? "border-[#cbb96b] bg-[#cbb96b]/15 text-[#cbb96b] hover:bg-[#cbb96b]/25"
+            ? "border-risegold bg-risegold/15 text-risegold hover:bg-risegold/25"
             : hasSavedName && !contact
-              ? "border-[#cbb96b]/70 text-[#cbb96b] hover:bg-[#cbb96b]/10"
+              ? "border-risegold/70 text-risegold hover:bg-risegold/10"
               : "border-border text-muted-foreground hover:text-white hover:border-[#cbb96b]/60"
         } ${saving ? "opacity-60" : ""}`}
       >
