@@ -864,7 +864,7 @@ export default function MarketTablesTab() {
                   <button
                     type="button"
                     onClick={() => openExtraEdit(club, null)}
-                    className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                    className="inline-flex items-center gap-1 text-[11px] text-risegold hover:text-foreground"
                   >
                     <UserPlus className="h-3 w-3" /> Add
                   </button>
@@ -995,7 +995,7 @@ export default function MarketTablesTab() {
                           <button
                             type="button"
                             onClick={() => openExtraEdit(club, null)}
-                            className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                            className="inline-flex items-center gap-1 text-[11px] text-risegold hover:text-foreground"
                           >
                             <UserPlus className="h-3.5 w-3.5" /> Add additional contact
                           </button>
