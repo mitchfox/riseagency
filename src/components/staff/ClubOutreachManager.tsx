@@ -2765,14 +2765,17 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
   const autoStars = selectedPlayer ? `https://risefootballagency.com/stars/${slugify(selectedPlayer.name)}` : "";
 
+  if (!open) return null;
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Club Outreach Settings</DialogTitle>
-          <DialogDescription>Agency WhatsApp and per-player defaults reused on every proposal.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-8">
+    <div className="rounded-2xl border border-border bg-card mb-6 p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-lg font-semibold">Club Outreach Settings</h3>
+          <p className="text-sm text-muted-foreground mt-1">Agency WhatsApp and per-player defaults reused on every proposal.</p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="h-4 w-4" /></Button>
+      </div>
+      <div className="space-y-8">
           <section>
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4 text-[#cbb96b]" />
