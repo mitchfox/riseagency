@@ -246,7 +246,11 @@ export default function MarketTablesTab() {
         },
         { onConflict: "market_table_key,club_id" },
       );
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Saved", { duration: 1200 });
+    }
   };
 
   const renderContactLinks = (c: ContactRow | null) => {
