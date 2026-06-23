@@ -539,6 +539,13 @@ export default function ClubOutreachProposal() {
   const clubWaUrl = clubPhone ? `https://wa.me/${clubPhone}` : null;
 
   const hasMultiple = data.players.length > 1;
+  const showFormForCurrent = current.show_form ?? data.link.show_form;
+  const showInNumbersForCurrent = current.show_in_numbers ?? data.link.show_in_numbers;
+  const showSeasonStatsForCurrent = current.show_season_stats ?? data.link.show_season_stats;
+  const showStrengthsForCurrent = current.show_strengths ?? data.link.show_strengths;
+  const seasonDataModeForCurrent = current.season_data_mode ?? data.link.season_data_mode;
+  const keyDetailsForCurrent = normaliseKeyDetails(current.key_details ?? data.link.key_details);
+  const sectionOrderForCurrent = normaliseSectionOrder(current.section_order ?? data.link.section_order);
   const fitTextEn = (current.fit_recommendation ?? "").trim();
   const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
   const situationText = (current.situation ?? "").trim();
