@@ -1900,10 +1900,11 @@ function MatchByMatchCard({
                             <div className="text-white/90 whitespace-nowrap">
                               {a.opponent || "-"}
                             </div>
-                            <div className="text-white/40 text-[10px] whitespace-nowrap">
-                              {fmtDate(a.analysis_date)}
-                              {a.result ? ` · ${a.result}` : ""}
-                            </div>
+                            {a.result ? (
+                              <div className="text-white/40 text-[10px] whitespace-nowrap">
+                                {a.result}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       </td>
