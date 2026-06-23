@@ -353,15 +353,22 @@ Deno.serve(async (req) => {
         // Parse the player's Stars highlights + bio for first video, club logo and section data
         let firstHighlightUrl: string | null = null;
         let allVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
+        // The inline "More Videos" carousel should mirror the order shown on
+        // the Stars profile, which renders ONLY matchHighlights (not bestClips)
+        // in their saved order. Keep a separate list for that.
+        let starsOrderedVideos: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[] = [];
         let bioParsed: any = null;
         try {
           let h: any = p?.highlights ?? null;
           if (typeof h === "string") h = JSON.parse(h);
           let pool: any[] = [];
+          let starsPool: any[] = [];
           if (Array.isArray(h)) {
             pool = h;
+            starsPool = h;
           } else if (h && typeof h === "object") {
             pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+            starsPool = [...(h.matchHighlights ?? [])];
           }
           allVideos = pool
             .filter((x: any) => x && (x.videoUrl || x.video_url))
@@ -372,8 +379,18 @@ Deno.serve(async (req) => {
               logoUrl: x.logoUrl ?? x.clubLogo ?? null,
               venue: x.venue ?? null,
             }));
+          starsOrderedVideos = starsPool
+            .filter((x: any) => x && (x.videoUrl || x.video_url))
+            .map((x: any) => ({
+              id: String(x.id ?? x.videoUrl ?? x.video_url),
+              name: String(x.name ?? "Highlight"),
+              videoUrl: String(x.videoUrl ?? x.video_url),
+              logoUrl: x.logoUrl ?? x.clubLogo ?? null,
+              venue: x.venue ?? null,
+            }));
         } catch (_) {
           allVideos = [];
+          starsOrderedVideos = [];
         }
         // Filter by per-link selected_video_ids only for the primary player.
         const isPrimary = e.player_id === primaryPlayerId;
