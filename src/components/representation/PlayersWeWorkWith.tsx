@@ -7,6 +7,8 @@ interface RepPlayer {
   image_url: string | null;
   position: string | null;
   club: string | null;
+  representation_status?: string | null;
+  category?: string | null;
 }
 
 interface Props {
@@ -20,10 +22,11 @@ interface Props {
 }
 
 /**
- * Rolling marquee of represented and mandated players for the
+ * Rolling marquee of worked-with and represented players for the
  * public representation / rise-with-us pages. Pulls live data from
- * the players table and excludes scouted / Fuel For Football per the
- * global exclusion rules.
+ * the players table and limits this view to current RISE represented
+ * players plus Fuel For Football performance-work players, excluding
+ * mandate, previously mandated, prospect and scouted records.
  */
 export const PlayersWeWorkWith = ({
   eyebrow = "Our Players",
@@ -32,10 +35,14 @@ export const PlayersWeWorkWith = ({
   bare = false,
 }: Props) => {
   const [players, setPlayers] = useState<RepPlayer[]>([]);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(bare);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (bare) {
+      setVisible(true);
+      return;
+    }
     if (typeof IntersectionObserver === "undefined") {
       setVisible(true);
       return;
@@ -53,23 +60,49 @@ export const PlayersWeWorkWith = ({
     );
     io.observe(node);
     return () => io.disconnect();
-  }, []);
+  }, [bare]);
 
   useEffect(() => {
     if (!visible) return;
     (async () => {
       const { data } = await supabase
         .from("players")
-        .select("id, name, image_url, position, club, representation_status, player_list_order")
-        .in("representation_status", [
-          "represented",
-          "fuel_for_football",
-          "other",
-        ])
+        .select("id, name, image_url, position, club, representation_status, category, player_list_order")
+        .or("representation_status.in.(represented,fuel_for_football),category.eq.Fuel For Football")
         .not("image_url", "is", null)
         .order("player_list_order", { ascending: true, nullsFirst: false })
         .limit(120);
-      if (data) setPlayers(data as RepPlayer[]);
+      if (data) {
+        const excludedStatuses = new Set(["mandated", "previously_mandated", "prospect", "scouted"]);
+        const excludedCategories = new Set(["mandate", "previously mandated", "scouted"]);
+        const excludedNames = new Set(["cristiano ronaldo", "joe bloggs"]);
+        const filtered = (data as RepPlayer[]).filter((player) => {
+          const status = (player.representation_status || "").trim().toLowerCase();
+          const category = (player.category || "").trim().toLowerCase();
+          const name = (player.name || "").trim().toLowerCase();
+          return !excludedStatuses.has(status)
+            && !excludedCategories.has(category)
+            && !excludedNames.has(name);
+        });
+        setPlayers(filtered);
+        const preloadTargets = filtered.map((player) => player.image_url).filter(Boolean) as string[];
+        const preload = (start = 0) => {
+          preloadTargets.slice(start, start + 8).forEach((src) => {
+            const img = new Image();
+            img.decoding = "async";
+            img.src = src;
+          });
+          if (start + 8 < preloadTargets.length) {
+            window.setTimeout(() => preload(start + 8), 700);
+          }
+        };
+        const w = window as any;
+        if (typeof w.requestIdleCallback === "function") {
+          w.requestIdleCallback(() => preload(), { timeout: 1200 });
+        } else {
+          window.setTimeout(() => preload(), 0);
+        }
+      }
     })();
   }, [visible]);
 
@@ -97,7 +130,7 @@ export const PlayersWeWorkWith = ({
 
         <div
           className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch"
-          style={{ animationDuration: "100s" }}
+          style={{ animationDuration: "500s" }}
         >
           {loop.map((p, i) => (
             <figure
@@ -109,8 +142,9 @@ export const PlayersWeWorkWith = ({
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    loading="lazy"
+                    loading={i < 32 ? "eager" : "lazy"}
                     decoding="async"
+                    fetchPriority={i < 16 ? "high" : "auto"}
                     className="h-full w-full object-cover object-top"
                   />
                 ) : null}

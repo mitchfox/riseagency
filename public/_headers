@@ -7,6 +7,42 @@
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/representation
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/request-representation
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/representacion
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/representacao
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/vertretung
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/rappresentanza
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/reprezentacja
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/zastoupeni
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/predstavitelstvo
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/temsil
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/zastupanje
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/representasjon
+  X-Robots-Tag: noindex, nofollow, noarchive
+
 # Cache static assets aggressively
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable

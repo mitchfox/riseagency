@@ -138,8 +138,8 @@ export const CARD_META: CardMeta[] = [
   { key: "agreement",    title: "Agreement",     icon: FileText,      subtitle: "What the relationship covers",      group: "terms" },
   { key: "faqs",         title: "FAQs",          icon: HelpCircle,    subtitle: "Quick answers before you reach out", group: "terms" },
   // Our Background
-  { key: "worked_with",  title: "Who We've Worked With", icon: History,      subtitle: "A decade of elite talent",      group: "background" },
-  { key: "directors",    title: "The Directors",         icon: UserSquare2,  subtitle: "Jolon Levene & Kuda Butawo",    group: "background" },
+  { key: "worked_with",  title: "Who We've Worked With", icon: History,      subtitle: "A decade of elite talent development", group: "background" },
+  { key: "directors",    title: "Our Background",        icon: UserSquare2,  subtitle: "Meet our Directors",                group: "background" },
 ];
 
 export const GROUP_LABELS: Record<GroupKey, { key: string; fallback: string }> = {
@@ -160,7 +160,7 @@ export const CARD_TITLE_KEYS: Record<CardKey, { key: string; fallback: string }>
   agreement:    { key: "representation.agreement",    fallback: "Agreement" },
   faqs:         { key: "representation.faqs",         fallback: "FAQs" },
   worked_with:  { key: "representation.worked_with_title", fallback: "Who We've Worked With" },
-  directors:    { key: "representation.directors_title",   fallback: "The Directors" },
+  directors:    { key: "representation.directors_title",   fallback: "Our Background" },
 };
 
 export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string }> = {
@@ -173,8 +173,8 @@ export const CARD_SUBTITLE_KEYS: Record<CardKey, { key: string; fallback: string
   fees:         { key: "representation.fees_subtitle",         fallback: "Clear from the start" },
   agreement:    { key: "representation.agreement_subtitle",    fallback: "What the relationship covers" },
   faqs:         { key: "representation.faqs_subtitle",         fallback: "Quick answers before you reach out" },
-  worked_with:  { key: "representation.worked_with_subtitle",  fallback: "A decade of elite talent" },
-  directors:    { key: "representation.directors_subtitle",    fallback: "Jolon Levene & Kuda Butawo" },
+  worked_with:  { key: "representation.worked_with_subtitle",  fallback: "A decade of elite talent development" },
+  directors:    { key: "representation.directors_subtitle",    fallback: "Meet our Directors" },
 };
 
 export const formatCardSubtitle = (key: CardKey, text: string) => {
@@ -525,6 +525,7 @@ const RequestRepresentation = () => {
           "representation.seo_desc",
           "Realise your potential with RISE: proper analysis, real club introductions and clear standards. See exactly what representation looks like for your age and position.",
         )}
+        noindex
       />
 
       {/* Page music. Starts the moment the page mounts so the RISE
@@ -1495,6 +1496,9 @@ export const DetailView = ({
           {/* Who we've worked with — body copy + live carousel */}
           {activeCard === "worked_with" && (
             <div className="space-y-4">
+              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                <PlayersWeWorkWith bare />
+              </div>
               <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
                 <p
                   className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
@@ -1502,12 +1506,18 @@ export const DetailView = ({
                 >
                   {widont(t(
                     "representation.worked_with_body",
-                    "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football. Now we RISE more holistically with our players combining exclusive representation with elite performance training.",
+                    "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
                   ))}
                 </p>
-              </div>
-              <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
-                <PlayersWeWorkWith bare />
+                <p
+                  className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
+                  style={{ textWrap: "pretty" } as React.CSSProperties}
+                >
+                  {widont(t(
+                    "representation.worked_with_context",
+                    "The names shown reflect Fuel For Football performance work alongside current RISE represented players. It is not a claim that every player is now represented by RISE or has a direct relationship with RISE. Our future is to bring that same performance depth into a complete representation model for the players we work with next.",
+                  ))}
+                </p>
               </div>
             </div>
           )}
