@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
             // count.
             let q = supabase
               .from("player_analysis")
-              .select("id, player_id, analysis_date, opponent, club_logo_url, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable")
+              .select("id, player_id, analysis_date, opponent, club_logo_url, opponent_logo_url, result, r90_score, striker_stats, fixture_stats, minutes_played, data_unavailable, visibility_status")
               .in("player_id", playerIds)
               .or("data_unavailable.is.null,data_unavailable.eq.false")
               .order("analysis_date", { ascending: false });
@@ -291,6 +291,21 @@ Deno.serve(async (req) => {
       arr.push(r);
       analysesByPlayer.set(r.player_id, arr);
     });
+
+    // Determine which analyses have at least one clipped action with a video.
+    // Used by the proposal Match-by-Match table to show a Play button.
+    const analysisIdsForClips = (formAnalyses ?? []).map((a: any) => a.id).filter(Boolean);
+    const analysesWithClips = new Set<string>();
+    if (analysisIdsForClips.length) {
+      const { data: clipRows } = await supabase
+        .from("performance_report_actions")
+        .select("analysis_id")
+        .in("analysis_id", analysisIdsForClips)
+        .not("video_url", "is", null);
+      (clipRows ?? []).forEach((r: any) => {
+        if (r?.analysis_id) analysesWithClips.add(r.analysis_id);
+      });
+    }
 
     // Resolve each player's CURRENT club logo via club_map_positions (case-insensitive).
     const uniqueClubNames = Array.from(
@@ -428,6 +443,7 @@ Deno.serve(async (req) => {
           return {
             ...a,
             opponent_logo: a.club_logo_url ?? a.opponent_logo_url ?? op?.image_url ?? null,
+            has_clips: analysesWithClips.has(a.id),
           };
         });
         // Per-player default Match by Match category lives on the outreach

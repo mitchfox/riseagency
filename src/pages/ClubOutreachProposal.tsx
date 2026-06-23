@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft, X as XIcon, Download } from "lucide-react";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft, X as XIcon, Download, PlayCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
 import { supabase } from "@/integrations/supabase/client";
+import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
@@ -110,6 +111,8 @@ interface PlayerEntry {
     minutes_played: number | null;
     striker_stats?: Record<string, any> | null;
     fixture_stats?: Record<string, any> | null;
+    visibility_status?: string | null;
+    has_clips?: boolean | null;
   }> | null;
   match_by_match_default_category?: string | null;
 }
@@ -2140,6 +2143,46 @@ function MatchByMatchCard({
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
   const [viewMode, setViewMode] = useState<"per90" | "raw">("per90");
+  const [openClipsForId, setOpenClipsForId] = useState<string | null>(null);
+  const [clipsLoading, setClipsLoading] = useState(false);
+  const [clipsForOpen, setClipsForOpen] = useState<any[]>([]);
+
+  const hasPlayableReport = (a: any): boolean => {
+    if (!a) return false;
+    const status = (a.visibility_status ?? "").toString().toLowerCase();
+    if (status === "clipped") return true;
+    if (status === "live" && a.has_clips) return true;
+    // Fallback: explicit has_clips flag from the API.
+    return !!a.has_clips;
+  };
+
+  const openClipsForAnalysis = async (analysisId: string) => {
+    setOpenClipsForId(analysisId);
+    setClipsLoading(true);
+    setClipsForOpen([]);
+    try {
+      const { data, error } = await supabase
+        .from("performance_report_actions")
+        .select("id, action_number, action_type, action_description, video_url, minute, clip_start, clip_end, action_score")
+        .eq("analysis_id", analysisId)
+        .not("video_url", "is", null);
+      if (error) throw error;
+      // R90 order: highest action_score first; null scores last.
+      const sorted = (data ?? []).slice().sort((a: any, b: any) => {
+        const av = typeof a.action_score === "number" ? a.action_score : -Infinity;
+        const bv = typeof b.action_score === "number" ? b.action_score : -Infinity;
+        return bv - av;
+      });
+      setClipsForOpen(sorted);
+    } catch (e) {
+      console.error("Failed to load clips", e);
+      setClipsForOpen([]);
+    } finally {
+      setClipsLoading(false);
+    }
+  };
+
+  const openMatch = openClipsForId ? sorted.find((a) => a.id === openClipsForId) ?? null : null;
 
   const baseKey = (k: string) => k.replace(/_per90$/i, "");
   const isPct = (k: string) => /_pct$|_percentage$/i.test(k);
@@ -2291,6 +2334,7 @@ function MatchByMatchCard({
                 <thead>
                   <tr className="bg-white/[0.04] text-white/60">
                     <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
+                    <th className="px-1.5 py-2 font-medium w-9" aria-label="Play"></th>
                     {visibleMetrics.map((m) => (
                       <th key={m.key} className="text-center px-2.5 py-2 font-medium whitespace-nowrap">
                         {m.label}
@@ -2322,6 +2366,19 @@ function MatchByMatchCard({
                             ) : null}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center">
+                        {hasPlayableReport(a) ? (
+                          <button
+                            type="button"
+                            onClick={() => openClipsForAnalysis(a.id)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-full text-[#cbb96b] hover:bg-[#cbb96b]/15 transition"
+                            title="Play video report"
+                            aria-label="Play video report"
+                          >
+                            <PlayCircle className="h-5 w-5" />
+                          </button>
+                        ) : null}
                       </td>
                       {visibleMetrics.map((m) => {
                         const displayValue = getValue(a, m.key, viewMode);
@@ -2355,6 +2412,14 @@ function MatchByMatchCard({
           </TabsContent>
         ))}
       </Tabs>
+      <ClippedActionsPlayer
+        open={!!openClipsForId}
+        onOpenChange={(o) => { if (!o) setOpenClipsForId(null); }}
+        clips={clipsForOpen as any}
+        mode="playlist"
+        hideScores
+        title={openMatch ? `${openMatch.opponent ?? "Match"}${openMatch.result ? ` · ${openMatch.result}` : ""}` : undefined}
+      />
     </SectionShell>
   );
 }
