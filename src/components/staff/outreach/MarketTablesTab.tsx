@@ -34,6 +34,7 @@ interface Entry {
 }
 
 const MARKET_TABLE_KEY = "summer-26";
+const CLUB_FETCH_PAGE_SIZE = 1000;
 
 const TD_RE = /(technical director|director of football|sporting director|sports director|football director|managing director professional football)/i;
 const CS_RE = /(chief scout|head of recruitment|head scout|scout director)/i;
@@ -126,6 +127,21 @@ const additionalContactsForClub = (
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
+const fetchAllClubRows = async (): Promise<ClubRow[]> => {
+  const all: ClubRow[] = [];
+  for (let from = 0; ; from += CLUB_FETCH_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("club_map_positions")
+      .select("id, club_name, country, league, league_level, image_url")
+      .order("club_name")
+      .range(from, from + CLUB_FETCH_PAGE_SIZE - 1);
+    if (error) throw error;
+    all.push(...(((data ?? []) as unknown) as ClubRow[]));
+    if (!data || data.length < CLUB_FETCH_PAGE_SIZE) break;
+  }
+  return all;
+};
+
 type ContactEditState = {
   club: ClubRow;
   role: "td" | "cs" | "extra";
@@ -157,70 +173,72 @@ export default function MarketTablesTab() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Market Tables must always be the full club database, not just clubs that
-      // happen to be referenced by strategies. Fetch every club directly, then
-      // overlay strategy labels where saved filters carry a more precise league.
-      const { data: stratRows } = await (supabase as any)
-        .from("club_outreach_strategies")
-        .select("filters, defaults");
-      // clubId -> { country, league_level } from the strategy that references it.
-      const stratByClub = new Map<string, { country: string | null; level: string | null }>();
-      (stratRows ?? []).forEach((s: any) => {
-        const sCountry = (s?.filters?.country ?? null) as string | null;
-        const sLevel = (s?.filters?.league_level ?? null) as string | null;
-        (s?.filters?.club_ids ?? []).forEach((id: string) => {
-          if (!id) return;
-          if (!stratByClub.has(id)) {
-            stratByClub.set(id, { country: sCountry, level: sLevel });
-          }
+      try {
+        // Market Tables must always be the full club database, not just clubs that
+        // happen to be referenced by strategies. Fetch every club directly, then
+        // overlay strategy labels where saved filters carry a more precise league.
+        const { data: stratRows } = await (supabase as any)
+          .from("club_outreach_strategies")
+          .select("filters, defaults");
+        // clubId -> { country, league_level } from the strategy that references it.
+        const stratByClub = new Map<string, { country: string | null; level: string | null }>();
+        (stratRows ?? []).forEach((s: any) => {
+          const sCountry = (s?.filters?.country ?? null) as string | null;
+          const sLevel = (s?.filters?.league_level ?? null) as string | null;
+          (s?.filters?.club_ids ?? []).forEach((id: string) => {
+            if (!id) return;
+            if (!stratByClub.has(id)) {
+              stratByClub.set(id, { country: sCountry, level: sLevel });
+            }
+          });
         });
-      });
 
-      const [{ data: clubRows }, { data: contactRows }, { data: entryRows }] = await Promise.all([
-        supabase
-          .from("club_map_positions")
-          .select("id, club_name, country, league, league_level, image_url")
-          .order("club_name"),
-        supabase
-          .from("club_network_contacts")
-          .select("id, name, club_name, position, email, phone, country"),
-        (supabase as any)
-          .from("market_table_entries")
-          .select("club_id, technical_director_name, chief_scout_name")
-          .eq("market_table_key", MARKET_TABLE_KEY),
-      ]);
+        const [clubRows, { data: contactRows }, { data: entryRows }] = await Promise.all([
+          fetchAllClubRows(),
+          supabase
+            .from("club_network_contacts")
+            .select("id, name, club_name, position, email, phone, country"),
+          (supabase as any)
+            .from("market_table_entries")
+            .select("club_id, technical_director_name, chief_scout_name")
+            .eq("market_table_key", MARKET_TABLE_KEY),
+        ]);
 
-      // Overlay the strategy's country + league_level so every league referenced
-      // by a strategy is represented in the filters and table, even when the
-      // club_map_positions row is missing the league field.
-      const enriched: ClubRow[] = ((clubRows ?? []) as ClubRow[]).map((c) => {
-        const s = stratByClub.get(c.id);
-        if (!s) return c;
-        return {
-          ...c,
-          country: c.country ?? s.country,
-          league: c.league ?? c.league_level ?? s.level,
-        };
-      });
+        // Overlay the strategy's country + league_level so every league referenced
+        // by a strategy is represented in the filters and table, even when the
+        // club_map_positions row is missing the league field.
+        const enriched: ClubRow[] = ((clubRows ?? []) as ClubRow[]).map((c) => {
+          const s = stratByClub.get(c.id);
+          return {
+            ...c,
+            country: c.country ?? s?.country ?? null,
+            league: c.league ?? c.league_level ?? s?.level ?? null,
+          };
+        });
 
-      setClubs(enriched.sort((a, b) => {
-        const c = (a.country ?? "").localeCompare(b.country ?? "");
-        if (c !== 0) return c;
-        const l = (a.league ?? "").localeCompare(b.league ?? "");
-        if (l !== 0) return l;
-        return a.club_name.localeCompare(b.club_name);
-      }));
-      setContacts((contactRows ?? []) as ContactRow[]);
-      const map: Record<string, Entry> = {};
-      (entryRows ?? []).forEach((r: any) => {
-        map[r.club_id] = {
-          club_id: r.club_id,
-          technical_director_name: r.technical_director_name,
-          chief_scout_name: r.chief_scout_name,
-        };
-      });
-      setEntries(map);
-      setLoading(false);
+        setClubs(enriched.sort((a, b) => {
+          const c = (a.country ?? "").localeCompare(b.country ?? "");
+          if (c !== 0) return c;
+          const l = (a.league ?? "").localeCompare(b.league ?? "");
+          if (l !== 0) return l;
+          return a.club_name.localeCompare(b.club_name);
+        }));
+        setContacts((contactRows ?? []) as ContactRow[]);
+        const map: Record<string, Entry> = {};
+        (entryRows ?? []).forEach((r: any) => {
+          map[r.club_id] = {
+            club_id: r.club_id,
+            technical_director_name: r.technical_director_name,
+            chief_scout_name: r.chief_scout_name,
+          };
+        });
+        setEntries(map);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Failed to load market tables");
+        setClubs([]);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [reloadKey]);
 
