@@ -281,7 +281,7 @@ export default function ClubOutreachManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex w-full sm:w-auto sm:inline-flex overflow-x-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
+      <div className="grid grid-cols-2 sm:inline-flex sm:w-auto sm:flex w-full rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'outreach', label: 'Outreach' },
           { v: 'strategy', label: 'Strategy' },
@@ -292,7 +292,7 @@ export default function ClubOutreachManager() {
             key={t.v}
             type="button"
             onClick={() => setTopTab(t.v)}
-            className={`flex-1 sm:flex-none whitespace-nowrap px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-wider rounded-md transition ${
+            className={`w-full sm:w-auto whitespace-nowrap text-center px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-wider rounded-md transition ${
               topTab === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -309,7 +309,7 @@ export default function ClubOutreachManager() {
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>
-      <div className="inline-flex rounded-lg border border-border bg-muted/30 p-1">
+      <div className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'club', label: 'Club Outreach' },
           { v: 'agent', label: 'Agent Outreach' },
@@ -318,7 +318,7 @@ export default function ClubOutreachManager() {
             key={t.v}
             type="button"
             onClick={() => setMode(t.v)}
-            className={`px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
+            className={`w-full sm:w-auto text-center px-4 py-1.5 text-xs uppercase tracking-wider rounded-md transition ${
               mode === t.v ? 'bg-[#cbb96b] text-black font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -326,16 +326,16 @@ export default function ClubOutreachManager() {
           </button>
         ))}
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 items-stretch text-center sm:text-left">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+        <div className="grid grid-cols-2 sm:flex gap-2">
+          <Button onClick={() => setNewOpen(true)} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
-          <Button variant="outline" onClick={() => setSettingsOpen(true)}>
+          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
         </div>
