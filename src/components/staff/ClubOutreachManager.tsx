@@ -2008,11 +2008,10 @@ function CommunicationsDialog({ open, onClose, outreach, players }: { open: bool
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="flex justify-end mt-6 pt-4 border-t border-border">
+        <Button variant="outline" onClick={onClose}>Close</Button>
+      </div>
+    </div>
   );
 }
 
