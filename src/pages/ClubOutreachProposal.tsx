@@ -1950,7 +1950,7 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
   // Lay 5 items out as 3+2 centred; otherwise one even row.
   const useSplit = items.length === 5;
   const cols = Math.min(items.length, 4);
-  const formTitle = (titleTemplate ?? "Form · Last {n}").replace("{n}", String(cfg.window_size));
+  const formTitle = (titleTemplate ?? "Form · Last {n} games").replace("{n}", String(cfg.window_size));
   return (
     <SectionShell title={formTitle} eyebrow="04">
       {useSplit ? (
