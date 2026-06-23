@@ -1877,7 +1877,7 @@ function MatchByMatchCard({
   };
 
   return (
-    <SectionShell title="Match by Match" eyebrow="06">
+    <SectionShell title="Match-By-Match Data" eyebrow="06">
       <Tabs defaultValue={defaultCat}>
         <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
           {categories.map((c) => (
