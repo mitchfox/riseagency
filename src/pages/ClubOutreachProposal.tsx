@@ -1490,7 +1490,11 @@ function KeyDetailsCard({
             target="_blank"
             rel="noopener noreferrer"
             title="View on Transfermarkt"
-            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-white/10 bg-[#0a3853]/30 hover:bg-[#0a3853]/60 hover:border-[#1f7a8c]/60 text-[10px] uppercase tracking-[0.18em] text-white/85 transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1 border border-white/10 bg-[#0a3853]/20 hover:bg-[#0a3853]/45 hover:border-[#1f7a8c]/50 text-[10px] uppercase tracking-[0.18em] text-white/55 hover:text-white/85 opacity-70 hover:opacity-100 transition"
+            style={{
+              clipPath: "polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)",
+              WebkitClipPath: "polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px)",
+            }}
           >
             <span
               aria-hidden="true"
