@@ -1105,6 +1105,7 @@ export type Database = {
           link_id: string
           player_id: string
           position_slot: string | null
+          situation: string | null
           sort_order: number
           updated_at: string
         }
@@ -1115,6 +1116,7 @@ export type Database = {
           link_id: string
           player_id: string
           position_slot?: string | null
+          situation?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1125,6 +1127,7 @@ export type Database = {
           link_id?: string
           player_id?: string
           position_slot?: string | null
+          situation?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1318,6 +1321,7 @@ export type Database = {
           default_show_in_numbers: boolean | null
           default_show_season_stats: boolean | null
           default_show_strengths: boolean | null
+          default_situation: string | null
           highlights_url: string | null
           match_by_match_game_order: Json
           match_by_match_stat_orders: Json
@@ -1342,6 +1346,7 @@ export type Database = {
           default_show_in_numbers?: boolean | null
           default_show_season_stats?: boolean | null
           default_show_strengths?: boolean | null
+          default_situation?: string | null
           highlights_url?: string | null
           match_by_match_game_order?: Json
           match_by_match_stat_orders?: Json
@@ -1366,6 +1371,7 @@ export type Database = {
           default_show_in_numbers?: boolean | null
           default_show_season_stats?: boolean | null
           default_show_strengths?: boolean | null
+          default_situation?: string | null
           highlights_url?: string | null
           match_by_match_game_order?: Json
           match_by_match_stat_orders?: Json

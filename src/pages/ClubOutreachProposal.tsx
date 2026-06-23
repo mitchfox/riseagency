@@ -80,6 +80,7 @@ interface PlayerEntry {
   } | null;
   position_slot: string | null;
   fit_recommendation: string | null;
+  situation: string | null;
   sort_order: number;
   stars_url: string | null;
   highlights_url: string | null;
@@ -303,11 +304,19 @@ export default function ClubOutreachProposal() {
   const slots = useMemo(() => {
     if (!data) return [] as string[];
     const set = new Set<string>();
+    // Only surface the position chips when there are 3+ primary players AND
+    // at least two of them share the same slot — otherwise the chips are
+    // noise and the "Back to all players" button is enough.
+    if (data.players.length < 3) return [];
+    const counts = new Map<string, number>();
     data.players.forEach((e) => {
       const s = (e.position_slot ?? "").trim();
-      if (s && s.toLowerCase() !== "all") set.add(s);
+      if (!s || s.toLowerCase() === "all") return;
+      counts.set(s, (counts.get(s) ?? 0) + 1);
+      set.add(s);
     });
-    return Array.from(set);
+    const hasDuplicateSlot = Array.from(counts.values()).some((n) => n >= 2);
+    return hasDuplicateSlot ? Array.from(set) : [];
   }, [data]);
 
   const filteredPlayers = useMemo(() => {
@@ -511,6 +520,7 @@ export default function ClubOutreachProposal() {
   const hasMultiple = data.players.length > 1;
   const fitTextEn = (current.fit_recommendation ?? "").trim();
   const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
+  const situationText = (current.situation ?? "").trim();
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
   const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -992,6 +1002,14 @@ export default function ClubOutreachProposal() {
               <div className="rounded-2xl border border-[#cbb96b]/30 bg-gradient-to-br from-[#cbb96b]/[0.08] to-white/[0.02] p-5">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("fit.title", "Fit & Recommendation")}</p>
                 <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{fitText}</p>
+              </div>
+            </section>
+          ) : null,
+          situation: () => situationText ? (
+            <section key="situation" className="max-w-3xl mx-auto px-6 mt-4">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("situation.title", "Situation")}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{situationText}</p>
               </div>
             </section>
           ) : null,

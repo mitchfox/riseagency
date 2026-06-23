@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
 
     const { data: linkPlayers } = await supabase
       .from("club_outreach_link_players")
-      .select("player_id, position_slot, fit_recommendation, sort_order")
+      .select("player_id, position_slot, fit_recommendation, situation, sort_order")
       .eq("link_id", link.id)
       .order("sort_order", { ascending: true });
 
@@ -199,6 +199,7 @@ Deno.serve(async (req) => {
           player_id: link.player_id,
           position_slot: null,
           fit_recommendation: link.fit_recommendation,
+          situation: null,
           sort_order: 0,
         },
       ];
@@ -218,7 +219,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order, default_situation"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
@@ -438,6 +439,9 @@ Deno.serve(async (req) => {
           player: p ?? null,
           position_slot: e.position_slot,
           fit_recommendation: e.fit_recommendation,
+          situation: ((e as any).situation && String((e as any).situation).trim())
+            ? (e as any).situation
+            : ((d as any)?.default_situation ?? null),
           sort_order: e.sort_order,
           stars_url: starsUrl,
           highlights_url: d?.highlights_url ?? null,

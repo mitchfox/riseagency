@@ -53,7 +53,7 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
-interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; sort_order: number; }
+interface LinkPlayerRow { player_id: string; position_slot: string | null; fit_recommendation: string | null; situation: string | null; sort_order: number; }
 interface OutreachRow {
   id: string;
   short_id: string;
@@ -156,7 +156,7 @@ export default function ClubOutreachManager() {
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
       supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name"),
-      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, sort_order"),
+      supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
     const clubMap = new Map((clubRows ?? []).map((c: any) => [c.id, c]));
@@ -749,12 +749,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_position, default_season_data_mode, default_season_id")
+      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
+    const presetSituation: string = (defaults?.default_situation ?? "").trim();
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", sort_order: prev.length }]);
+      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", situation: presetSituation, sort_order: prev.length }]);
       return;
     }
     // Determine new entries count after adding
@@ -776,7 +777,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       initialFit = defaultFit ?? "";
     }
     setEntries(prev => {
-      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, sort_order: prev.length }];
+      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, situation: presetSituation, sort_order: prev.length }];
       // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
       if (prev.length === 1) {
         const [first] = prev;
@@ -977,6 +978,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             player_id: e.player_id,
             position_slot: e.position_slot,
             fit_recommendation: e.fit_recommendation,
+            situation: (e.situation ?? "").trim() || null,
             sort_order: i,
           }));
           const { error: lpErr } = await supabase.from("club_outreach_link_players").insert(rows);
@@ -1190,6 +1192,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
                         placeholder={`Why ${p?.name?.split(" ")[0] ?? "this player"} fits this club — playing style, role, why now.`}
                         value={e.fit_recommendation ?? ""}
                         onChange={(ev) => updateEntry(e.player_id, { fit_recommendation: ev.target.value })}
+                      />
+                      <Textarea
+                        rows={3}
+                        className="mt-2 text-sm"
+                        placeholder={`Situation for ${p?.name?.split(" ")[0] ?? "this player"} — contract status, availability, transfer context.`}
+                        value={e.situation ?? ""}
+                        onChange={(ev) => updateEntry(e.player_id, { situation: ev.target.value })}
                       />
                     </div>
                   );
@@ -2247,6 +2256,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
   const [defaults, setDefaults] = useState<{ stars_url_override: string; highlights_url: string; proof_path: string | null; transfermarkt_url: string }>({ stars_url_override: "", highlights_url: "", proof_path: null, transfermarkt_url: "" });
   const [playerDefaultFit, setPlayerDefaultFit] = useState<string>("");
   const [playerDefaultPosition, setPlayerDefaultPosition] = useState<string>("");
+  const [playerDefaultSituation, setPlayerDefaultSituation] = useState<string>("");
   const [playerDefaultSeasonMode, setPlayerDefaultSeasonMode] = useState<'popup' | 'link' | ''>('');
   const [playerDefaultSeasonId, setPlayerDefaultSeasonId] = useState<string | null>(null);
   const [playerSeasonsForDefaults, setPlayerSeasonsForDefaults] = useState<{ id: string; name: string }[]>([]);
@@ -2329,6 +2339,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
+      setPlayerDefaultSituation((data as any)?.default_situation ?? "");
       const sm = (data as any)?.default_season_data_mode;
       setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
       setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
@@ -2477,6 +2488,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       proof_of_representation_path: defaults.proof_path,
       default_fit_recommendation: playerDefaultFit.trim() || null,
       default_position: playerDefaultPosition.trim() || null,
+      default_situation: playerDefaultSituation.trim() || null,
       default_season_data_mode: playerDefaultSeasonMode || null,
       default_season_id: playerDefaultSeasonId,
       default_show_form: playerDefaultShowForm,
@@ -2806,6 +2818,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Label className="flex items-center gap-2"><FileEdit className="h-3.5 w-3.5" /> Default fit / recommendation (single-player only)</Label>
                   <p className="text-[11px] text-muted-foreground mt-1">Used when this player is the only one on an outreach. If two or more players are attached, the general default applies instead.</p>
                   <Textarea rows={4} className="mt-1.5" value={playerDefaultFit} onChange={(e) => setPlayerDefaultFit(e.target.value)} placeholder="Tailored fit note for this player when sent solo to a club." />
+                </div>
+                <div>
+                  <Label className="flex items-center gap-2"><FileEdit className="h-3.5 w-3.5" /> Default situation</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Auto-fills the Situation card on this player's proposals. Editable per outreach and overrides this default when set.</p>
+                  <Textarea rows={4} className="mt-1.5" value={playerDefaultSituation} onChange={(e) => setPlayerDefaultSituation(e.target.value)} placeholder="Current contract status, availability, transfer context — anything a club needs to know." />
                 </div>
                 <div>
                   <Label>Default position slot</Label>
