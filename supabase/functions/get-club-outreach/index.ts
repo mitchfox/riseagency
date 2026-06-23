@@ -413,15 +413,15 @@ Deno.serve(async (req) => {
           allVideos = [];
           starsOrderedVideos = [];
         }
-        // Filter by per-link selected_video_ids only for the primary player.
-        const isPrimary = e.player_id === primaryPlayerId;
+        // Filter by this outreach player's selected_video_ids, falling back to
+        // the legacy link-level selection for old links.
         const selectedIds: string[] = Array.isArray((e as any).selected_video_ids) && (e as any).selected_video_ids.length > 0
           ? (e as any).selected_video_ids
           : Array.isArray((link as any).selected_video_ids)
           ? (link as any).selected_video_ids
           : [];
         let videos = allVideos;
-        if (isPrimary && selectedIds.length > 0) {
+        if (selectedIds.length > 0) {
           const set = new Set(selectedIds);
           const filtered = allVideos.filter((v) => set.has(v.id));
           if (filtered.length > 0) videos = filtered;
