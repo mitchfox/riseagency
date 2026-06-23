@@ -113,7 +113,7 @@ const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}
 
 type ContactEditState = {
   club: ClubRow;
-  role: "td" | "cs";
+  role: "td" | "cs" | "extra";
   existing: ContactRow | null;
   draft: { name: string; position: string; email: string; phone: string };
 };
@@ -323,6 +323,20 @@ export default function MarketTablesTab() {
     });
   };
 
+  const openExtraEdit = (club: ClubRow, existing: ContactRow | null) => {
+    setEditing({
+      club,
+      role: "extra",
+      existing,
+      draft: {
+        name: existing?.name ?? "",
+        position: existing?.position ?? "",
+        email: existing?.email ?? "",
+        phone: existing?.phone ?? "",
+      },
+    });
+  };
+
   const saveContact = async () => {
     if (!editing) return;
     const { club, role, existing, draft } = editing;
@@ -347,10 +361,12 @@ export default function MarketTablesTab() {
       setSavingContact(false);
       return;
     }
-    // Also persist the name into the market table entry so it sticks.
-    await persist(club.id, role === "td"
-      ? { technical_director_name: payload.name }
-      : { chief_scout_name: payload.name });
+    // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
+    if (role === "td") {
+      await persist(club.id, { technical_director_name: payload.name });
+    } else if (role === "cs") {
+      await persist(club.id, { chief_scout_name: payload.name });
+    }
     toast.success(existing ? "Contact updated" : "Contact added");
     setSavingContact(false);
     setEditing(null);
