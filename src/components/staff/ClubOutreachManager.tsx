@@ -570,7 +570,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
           title="Open link in browser"
           onClick={(e) => {
             e.preventDefault();
-            openExternalUrl(externalUrl);
+            onOpen();
           }}
         >
           <ExternalLink className="h-3.5 w-3.5" />
