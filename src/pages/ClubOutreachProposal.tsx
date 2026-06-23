@@ -1005,6 +1005,14 @@ export default function ClubOutreachProposal() {
               </div>
             </section>
           ) : null,
+          situation: () => situationText ? (
+            <section key="situation" className="max-w-3xl mx-auto px-6 mt-4">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("situation.title", "Situation")}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{situationText}</p>
+              </div>
+            </section>
+          ) : null,
           cards: () => (
             <section key="cards" className={`max-w-3xl mx-auto px-6 mt-6 grid grid-cols-1 gap-4 ${data.link.target_type === 'agent' ? '' : 'sm:grid-cols-2'}`}>
               <ProposalCard
