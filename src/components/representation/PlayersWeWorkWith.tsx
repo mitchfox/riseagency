@@ -64,7 +64,6 @@ export const PlayersWeWorkWith = ({
         .in("representation_status", [
           "represented",
           "fuel_for_football",
-          "previously_mandated",
           "other",
         ])
         .not("image_url", "is", null)
@@ -96,7 +95,10 @@ export const PlayersWeWorkWith = ({
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-black to-transparent md:w-20" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black to-transparent md:w-20" />
 
-        <div className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch">
+        <div
+          className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch"
+          style={{ animationDuration: "100s" }}
+        >
           {loop.map((p, i) => (
             <figure
               key={`${p.id}-${i}`}
