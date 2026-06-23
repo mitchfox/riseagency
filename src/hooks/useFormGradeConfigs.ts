@@ -250,7 +250,6 @@ export const METRIC_KEY_MAP: Record<string, string> = {
   'crossesper90': 'crosses_completed',
   'longballsper90': 'long_balls',
   'keypassesper90': 'key_passes',
-  'keypasses': 'key_passes',
   'duelswonper90': 'duels_won',
   'aerialswonper90': 'aerial_duels_won',
   'aerialduelswonper90': 'aerial_duels_won',
