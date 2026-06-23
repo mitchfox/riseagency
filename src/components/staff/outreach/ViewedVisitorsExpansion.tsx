@@ -25,6 +25,7 @@ const pageLabel = (p: string) => {
   if (p.includes("/proof/")) return "Proof of Representation page";
   if (p.match(/\/(club-proposal|clubs)\//)) return "Proposal page";
   if (p.match(/\/agents\//)) return "Agent proposal page";
+  if (p.match(/\/risewithus\//)) return "Player offer page";
   return p;
 };
 
