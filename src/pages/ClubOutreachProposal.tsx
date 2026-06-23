@@ -900,6 +900,41 @@ export default function ClubOutreachProposal() {
       {/* Hero - first Stars highlight video, falls back to player image */}
       {(current.first_highlight_url || player?.image_url) && (
         <div className="max-w-3xl mx-auto px-6 mt-6">
+          {(() => {
+            // Order the proposal videos by the player's Stars-profile sequence
+            // so the buttons appear in the same order the public Stars page
+            // shows them.
+            const orderedHero = (() => {
+              const stars = current.stars_ordered_videos ?? [];
+              const vids = current.videos ?? [];
+              if (vids.length <= 1) return vids;
+              if (stars.length === 0) return vids;
+              const order = new Map<string, number>();
+              stars.forEach((s, i) => {
+                if (s?.videoUrl) order.set(s.videoUrl.split("#")[0], i);
+              });
+              return [...vids].sort((a, b) => {
+                const ai = order.get((a.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
+                const bi = order.get((b.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
+                return ai - bi;
+              });
+            })();
+            const PAGE = 12;
+            const useCarousel = orderedHero.length > PAGE;
+            const start = useCarousel
+              ? ((heroCarouselStart % orderedHero.length) + orderedHero.length) % orderedHero.length
+              : 0;
+            const visible = useCarousel
+              ? Array.from({ length: PAGE }, (_, i) => ({
+                  video: orderedHero[(start + i) % orderedHero.length],
+                  index: (start + i) % orderedHero.length,
+                }))
+              : orderedHero.map((video, index) => ({ video, index }));
+            const activeUrl = (activeVideoUrl ?? current.first_highlight_url) ?? "";
+            const mobileVisibleCount = Math.min(orderedHero.length, 8 * heroMobileVisibleRows);
+            const mobileRemaining = orderedHero.length - mobileVisibleCount;
+            return (
+          <>
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-white/10 bg-black">
             {current.first_highlight_url ? (
               <>
@@ -956,114 +991,80 @@ export default function ClubOutreachProposal() {
                   </p>
                   </div>
                 )}
+                {orderedHero.length > 1 && (
+                  <div className="hidden md:block absolute bottom-[39px] left-1/2 -translate-x-1/2 z-10 w-full px-2 pointer-events-none">
+                    <div className="relative flex items-center justify-center gap-2">
+                      {useCarousel && (
+                        <button
+                          type="button"
+                          onClick={() => setHeroCarouselStart((s) => s - PAGE)}
+                          className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                          aria-label="Previous logos"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                      )}
+                      <div className="flex gap-1 md:gap-2 pointer-events-auto">
+                        {visible.map(({ video: v }) => {
+                          const isActive = activeUrl === v.videoUrl;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveVideoUrl(v.videoUrl);
+                                videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                              }}
+                              title={v.name || ""}
+                              className={`relative flex-shrink-0 w-10 h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
+                                isActive ? "border-[#cbb96b] scale-110" : "border-[#cbb96b]/20 hover:border-[#cbb96b]/50"
+                              }`}
+                            >
+                              {v.logoUrl ? (
+                                <img
+                                  src={v.logoUrl}
+                                  alt=""
+                                  onError={(e) => (e.currentTarget.style.display = "none")}
+                                  className="w-full h-full object-contain p-0.5"
+                                  loading="eager"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Video className="h-3 w-3 text-white/60" />
+                                </div>
+                              )}
+                              {(v.venue === "H" || v.venue === "A") && (
+                                <span className="absolute bottom-0 right-0 leading-none text-[8px] md:text-[9px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
+                                  {v.venue}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {useCarousel && (
+                        <button
+                          type="button"
+                          onClick={() => setHeroCarouselStart((s) => s + PAGE)}
+                          className="pointer-events-auto flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
+                          aria-label="Next logos"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <img src={player!.image_url!} alt={player?.name ?? ""} className="w-full h-full object-cover" />
             )}
           </div>
-          {/* Video carousel — Stars-profile format: logo tiles with arrows when
-              there are more videos than fit on screen. Mirrors the inline
-              "Match-By-Match Video" card. */}
-          {(() => {
-            // Order the proposal videos by the player's Stars-profile sequence
-            // so the buttons appear in the same order the public Stars page
-            // shows them.
-            const ordered = (() => {
-              const stars = current.stars_ordered_videos ?? [];
-              const vids = current.videos ?? [];
-              if (vids.length <= 1) return vids;
-              if (stars.length === 0) return vids;
-              const order = new Map<string, number>();
-              stars.forEach((s, i) => {
-                if (s?.videoUrl) order.set(s.videoUrl.split("#")[0], i);
-              });
-              return [...vids].sort((a, b) => {
-                const ai = order.get((a.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
-                const bi = order.get((b.videoUrl ?? "").split("#")[0]) ?? Number.POSITIVE_INFINITY;
-                return ai - bi;
-              });
-            })();
-            if (ordered.length <= 1) return null;
-            const PAGE = 12;
-            const useCarousel = ordered.length > PAGE;
-            const start = useCarousel
-              ? ((heroCarouselStart % ordered.length) + ordered.length) % ordered.length
-              : 0;
-            const visible = useCarousel
-              ? Array.from({ length: PAGE }, (_, i) => ({
-                  video: ordered[(start + i) % ordered.length],
-                  index: (start + i) % ordered.length,
-                }))
-              : ordered.map((video, index) => ({ video, index }));
-            const activeUrl = (activeVideoUrl ?? current.first_highlight_url) ?? "";
-            const mobileVisibleCount = Math.min(ordered.length, 8 * heroMobileVisibleRows);
-            const mobileRemaining = ordered.length - mobileVisibleCount;
-            return (
-              <>
-                {/* Desktop: row of logo tiles with arrows when paged */}
-                <div className="hidden md:flex mt-3 items-center justify-center gap-2">
-                  {useCarousel && (
-                    <button
-                      type="button"
-                      onClick={() => setHeroCarouselStart((s) => s - PAGE)}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
-                      aria-label="Previous logos"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                  )}
-                  <div className="flex gap-1 md:gap-2">
-                    {visible.map(({ video: v }) => {
-                      const isActive = activeUrl === v.videoUrl;
-                      return (
-                        <button
-                          key={v.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveVideoUrl(v.videoUrl);
-                            videoRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                          }}
-                          title={v.name || ""}
-                          className={`relative flex-shrink-0 w-10 h-10 rounded border transition-all overflow-hidden bg-background/90 backdrop-blur-sm ${
-                            isActive ? "border-[#cbb96b] scale-110" : "border-[#cbb96b]/20 hover:border-[#cbb96b]/50"
-                          }`}
-                        >
-                          {v.logoUrl ? (
-                            <img
-                              src={v.logoUrl}
-                              alt=""
-                              onError={(e) => (e.currentTarget.style.display = "none")}
-                              className="w-full h-full object-contain p-0.5"
-                              loading="eager"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Video className="h-3 w-3 text-white/60" />
-                            </div>
-                          )}
-                          {(v.venue === "H" || v.venue === "A") && (
-                            <span className="absolute bottom-0 right-0 leading-none text-[8px] md:text-[9px] font-bebas font-bold text-[#cbb96b] bg-black/70 px-[2px] rounded-tl">
-                              {v.venue}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {useCarousel && (
-                    <button
-                      type="button"
-                      onClick={() => setHeroCarouselStart((s) => s + PAGE)}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-[#cbb96b]/20 hover:bg-[#cbb96b]/30 border border-[#cbb96b]/40 flex items-center justify-center text-white transition-colors"
-                      aria-label="Next logos"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-                {/* Mobile: 8-per-row logo grid with "See more" expansion */}
-                <div className="md:hidden mt-2 grid grid-cols-8 gap-1.5">
-                  {ordered.slice(0, mobileVisibleCount).map((v) => {
+          {/* Mobile: 8-per-row logo grid with "See more" expansion */}
+          {orderedHero.length > 1 && (
+            <>
+              <div className="md:hidden mt-2 grid grid-cols-8 gap-1.5">
+                {orderedHero.slice(0, mobileVisibleCount).map((v) => {
                     const isActive = activeUrl === v.videoUrl;
                     return (
                       <button
@@ -1099,8 +1100,8 @@ export default function ClubOutreachProposal() {
                       </button>
                     );
                   })}
-                </div>
-                {mobileRemaining > 0 && (
+              </div>
+              {mobileRemaining > 0 && (
                   <button
                     type="button"
                     onClick={() => setHeroMobileVisibleRows((r) => r + 1)}
@@ -1108,8 +1109,10 @@ export default function ClubOutreachProposal() {
                   >
                     See more ({mobileRemaining})
                   </button>
-                )}
-              </>
+              )}
+            </>
+          )}
+          </>
             );
           })()}
         </div>
