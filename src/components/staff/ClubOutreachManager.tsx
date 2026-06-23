@@ -1998,27 +1998,32 @@ function MatchByMatchOrderEditor({
     })();
   }, [playerId, seasonId]);
 
-  const normOpp = (s: string) => (s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  // Ordered preview uses the shared ranker so duplicate fixtures (same
+  // opponent twice in a season) each claim their own slot — that's what was
+  // making the top rows look "jammed".
+  const orderedGames = rankGames(games, gameOrder);
 
-  // Ordered preview = games sorted by the saved gameOrder list, then leftover by date desc.
-  const orderedGames = (() => {
-    if (gameOrder.length === 0) return games;
-    const rank = new Map<string, number>();
-    gameOrder.forEach((n, i) => { const k = normOpp(n); if (!rank.has(k)) rank.set(k, i); });
-    return [...games].sort((a, b) => {
-      const ar = rank.get(normOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
-      const br = rank.get(normOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
-      if (ar !== br) return ar - br;
-      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
-    });
-  })();
+  const commitOrder = (next: typeof orderedGames) => {
+    setGameOrder(next.map((g) => gameOrderToken(g)));
+  };
 
   const moveGame = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= orderedGames.length) return;
-    const next = orderedGames.slice();
-    [next[i], next[j]] = [next[j], next[i]];
-    setGameOrder(next.map((g) => g.opponent));
+    commitOrder(arrayMove(orderedGames, i, j));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = orderedGames.findIndex((g) => g.id === active.id);
+    const to = orderedGames.findIndex((g) => g.id === over.id);
+    if (from < 0 || to < 0) return;
+    commitOrder(arrayMove(orderedGames, from, to));
   };
 
   return (
