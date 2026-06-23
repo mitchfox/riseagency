@@ -978,6 +978,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             player_id: e.player_id,
             position_slot: e.position_slot,
             fit_recommendation: e.fit_recommendation,
+            situation: (e.situation ?? "").trim() || null,
             sort_order: i,
           }));
           const { error: lpErr } = await supabase.from("club_outreach_link_players").insert(rows);
