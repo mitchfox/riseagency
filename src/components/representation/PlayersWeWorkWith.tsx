@@ -7,6 +7,8 @@ interface RepPlayer {
   image_url: string | null;
   position: string | null;
   club: string | null;
+  representation_status?: string | null;
+  category?: string | null;
 }
 
 interface Props {
@@ -22,8 +24,9 @@ interface Props {
 /**
  * Rolling marquee of represented and mandated players for the
  * public representation / rise-with-us pages. Pulls live data from
- * the players table and excludes scouted / Fuel For Football per the
- * global exclusion rules.
+ * the players table and limits this view to current RISE represented
+ * players plus Fuel For Football performance-work players, excluding
+ * mandate, previously mandated, prospect and scouted records.
  */
 export const PlayersWeWorkWith = ({
   eyebrow = "Our Players",
@@ -60,16 +63,38 @@ export const PlayersWeWorkWith = ({
     (async () => {
       const { data } = await supabase
         .from("players")
-        .select("id, name, image_url, position, club, representation_status, player_list_order")
-        .in("representation_status", [
-          "represented",
-          "fuel_for_football",
-          "other",
-        ])
+        .select("id, name, image_url, position, club, representation_status, category, player_list_order")
+        .or("representation_status.in.(represented,fuel_for_football),category.eq.Fuel For Football")
         .not("image_url", "is", null)
         .order("player_list_order", { ascending: true, nullsFirst: false })
         .limit(120);
-      if (data) setPlayers(data as RepPlayer[]);
+      if (data) {
+        const excludedStatuses = new Set(["mandated", "previously_mandated", "prospect", "scouted"]);
+        const excludedCategories = new Set(["mandate", "previously mandated", "scouted"]);
+        const excludedNames = new Set(["cristiano ronaldo", "joe bloggs"]);
+        const filtered = (data as RepPlayer[]).filter((player) => {
+          const status = (player.representation_status || "").trim().toLowerCase();
+          const category = (player.category || "").trim().toLowerCase();
+          const name = (player.name || "").trim().toLowerCase();
+          return !excludedStatuses.has(status)
+            && !excludedCategories.has(category)
+            && !excludedNames.has(name);
+        });
+        setPlayers(filtered);
+        const preloadTargets = filtered.slice(0, 24).map((player) => player.image_url).filter(Boolean) as string[];
+        const preload = () => {
+          preloadTargets.forEach((src) => {
+            const img = new Image();
+            img.decoding = "async";
+            img.src = src;
+          });
+        };
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(preload, { timeout: 1200 });
+        } else {
+          window.setTimeout(preload, 0);
+        }
+      }
     })();
   }, [visible]);
 
@@ -97,7 +122,7 @@ export const PlayersWeWorkWith = ({
 
         <div
           className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch"
-          style={{ animationDuration: "100s" }}
+          style={{ animationDuration: "260s" }}
         >
           {loop.map((p, i) => (
             <figure
@@ -109,8 +134,9 @@ export const PlayersWeWorkWith = ({
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    loading="lazy"
+                    loading={i < 24 ? "eager" : "lazy"}
                     decoding="async"
+                    fetchPriority={i < 12 ? "high" : "auto"}
                     className="h-full w-full object-cover object-top"
                   />
                 ) : null}
