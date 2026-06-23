@@ -1402,13 +1402,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
               <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Pull these sections through from {activeSettingsPlayer?.name?.split(" ")[0] ?? "this player"}'s Stars profile.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {[
-                  { v: activeShowForm, patch: { show_form: !activeShowForm }, label: "Form" },
-                  { v: activeShowInNumbers, patch: { show_in_numbers: !activeShowInNumbers }, label: "In Numbers" },
-                  { v: activeShowSeasonStats, patch: { show_season_stats: !activeShowSeasonStats }, label: "Season stats" },
-                  { v: activeShowStrengths, patch: { show_strengths: !activeShowStrengths }, label: "Strengths / Play style" },
+                  { v: activeShowForm, key: "show_form" as const, label: "Form" },
+                  { v: activeShowInNumbers, key: "show_in_numbers" as const, label: "In Numbers" },
+                  { v: activeShowSeasonStats, key: "show_season_stats" as const, label: "Season stats" },
+                  { v: activeShowStrengths, key: "show_strengths" as const, label: "Strengths / Play style" },
                 ].map((opt) => (
                   <label key={opt.label} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs cursor-pointer hover:border-[#cbb96b]/60">
-                    <Checkbox checked={opt.v} onCheckedChange={(c) => patchPlayerSettings({ [Object.keys(opt.patch)[0]]: !!c } as Partial<LinkPlayerRow>)} />
+                    <Checkbox checked={opt.v} onCheckedChange={(c) => patchPlayerSettings({ [opt.key]: !!c } as Partial<LinkPlayerRow>)} />
                     <span>{opt.label}</span>
                   </label>
                 ))}
