@@ -35,10 +35,14 @@ export const PlayersWeWorkWith = ({
   bare = false,
 }: Props) => {
   const [players, setPlayers] = useState<RepPlayer[]>([]);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(bare);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (bare) {
+      setVisible(true);
+      return;
+    }
     if (typeof IntersectionObserver === "undefined") {
       setVisible(true);
       return;
@@ -56,7 +60,7 @@ export const PlayersWeWorkWith = ({
     );
     io.observe(node);
     return () => io.disconnect();
-  }, []);
+  }, [bare]);
 
   useEffect(() => {
     if (!visible) return;
