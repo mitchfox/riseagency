@@ -1982,6 +1982,8 @@ function RemainingVideosCard({
             src={active.videoUrl}
             controls
             playsInline
+            autoPlay
+            muted
             preload="metadata"
             className="absolute inset-0 w-full h-full object-contain"
           />
