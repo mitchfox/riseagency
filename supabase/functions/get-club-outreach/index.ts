@@ -241,26 +241,26 @@ Deno.serve(async (req) => {
         seasonBoundsCache.set(seasonId, (async () => {
           let seasonStartDate: string | null = null;
           let seasonEndDate: string | null = null;
-      const { data: season } = await supabase
-        .from("player_seasons")
-        .select("start_analysis_id, end_analysis_id")
+          const { data: season } = await supabase
+            .from("player_seasons")
+            .select("start_analysis_id, end_analysis_id")
             .eq("id", seasonId)
-        .maybeSingle();
-      const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
-      if (ids.length) {
-        const { data: bounds } = await supabase
-          .from("player_analysis")
-          .select("id, analysis_date")
-          .in("id", ids);
-        const dates = (bounds ?? [])
-          .map((r: any) => r.analysis_date as string | null)
-          .filter(Boolean)
-          .sort();
-        if (dates.length > 0) {
-          seasonStartDate = dates[0];
-          seasonEndDate = dates[dates.length - 1];
-        }
-      }
+            .maybeSingle();
+          const ids = [season?.start_analysis_id, season?.end_analysis_id].filter(Boolean) as string[];
+          if (ids.length) {
+            const { data: bounds } = await supabase
+              .from("player_analysis")
+              .select("id, analysis_date")
+              .in("id", ids);
+            const dates = (bounds ?? [])
+              .map((r: any) => r.analysis_date as string | null)
+              .filter(Boolean)
+              .sort();
+            if (dates.length > 0) {
+              seasonStartDate = dates[0];
+              seasonEndDate = dates[dates.length - 1];
+            }
+          }
           return { start: seasonStartDate, end: seasonEndDate };
         })());
       }
