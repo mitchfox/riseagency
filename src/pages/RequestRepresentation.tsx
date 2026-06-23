@@ -1512,114 +1512,156 @@ export const DetailView = ({
             </div>
           )}
 
-          {/* The Directors — split card, marble halves, diagonal gold divider */}
+          {/* The Directors — split card. Black marble (Jolon) bleeds into
+              white marble (Kuda) along a diagonal clip-path, with both
+              headshots anchored at the bottom and cropped at the waist so
+              the faces sit high and the copy reads cleanly above them.
+              A diagonal Rise Gold divider runs through the seam. */}
           {activeCard === "directors" && (
             <div
               className="relative overflow-hidden rise-slant-card-lg border border-border/60"
               style={solidBlackSectionStyle}
             >
-              <div className="grid md:grid-cols-2">
-                {/* Jolon — black marble side, colour photo */}
-                <div
-                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
-                  style={{
-                    backgroundImage: "url('/black-marble.png')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
-                  <img
-                    src={jolonHeadshotAsset.url}
-                    alt="Jolon Levene"
-                    loading="lazy"
-                    decoding="async"
-                    className="pointer-events-none absolute bottom-0 right-0 h-[88%] w-auto object-contain object-bottom"
+              <div className="relative grid min-h-[640px] md:min-h-[720px] md:grid-cols-2">
+                {/* ===== Backgrounds: diagonal marble split (desktop) =====
+                    On desktop the black marble fills the left half and the
+                    white marble the right, with a diagonal clip-path so the
+                    seam runs across the card. On mobile the halves stack
+                    vertically and the seam is horizontal. */}
+                <div className="pointer-events-none absolute inset-0">
+                  {/* Black marble layer (Jolon side) */}
+                  <div
+                    className="absolute inset-0"
                     style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
-                      WebkitMaskComposite: "source-in",
-                      maskImage:
-                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
-                      maskComposite: "intersect",
-                    } as React.CSSProperties}
+                      backgroundImage: `url(${blackMarbleBg})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
                   />
-                  <div className="relative">
-                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-                      {t("representation.director_role_founder", "Founder")}
-                    </p>
-                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-foreground md:text-3xl">
-                      {t("representation.director_jolon_name", "Jolon Levene")}
-                    </p>
-                    <p
-                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-foreground/90 md:text-[14.5px]"
-                      style={{ textWrap: "pretty" } as React.CSSProperties}
-                    >
-                      {widont(t(
-                        "representation.director_jolon_bio",
-                        "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
-                      ))}
-                    </p>
-                  </div>
+                  {/* White marble layer (Kuda side), clipped along the diagonal seam */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `url(${whiteMarbleBg})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      clipPath:
+                        "polygon(58% 0%, 100% 0%, 100% 100%, 42% 100%)",
+                    }}
+                  />
+                  {/* Mobile fallback: stacked halves */}
+                  <div
+                    className="absolute inset-0 md:hidden"
+                    style={{
+                      backgroundImage: `url(${whiteMarbleBg})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      clipPath: "polygon(0% 58%, 100% 42%, 100% 100%, 0% 100%)",
+                    }}
+                  />
                 </div>
 
-                {/* Kuda — white marble side, B&W photo */}
-                <div
-                  className="relative min-h-[420px] overflow-hidden p-5 md:min-h-[520px] md:p-7"
+                {/* ===== Headshots: anchored bottom, cropped at the waist
+                       via a top-fading mask so the heads sit high and the
+                       diagonal seam blends through them. ===== */}
+                {/* Jolon — left half, colour, bottom-anchored */}
+                <img
+                  src={jolonHeadshotAsset.url}
+                  alt="Jolon Levene"
+                  loading="lazy"
+                  decoding="async"
+                  className="pointer-events-none absolute bottom-0 left-0 z-[1] h-[58%] w-auto object-contain object-bottom md:h-[78%] md:left-[2%]"
                   style={{
-                    backgroundImage: "url('/white-marble.png')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-white/10 to-white/40" />
-                  <img
-                    src={kudaHeadshotAsset.url}
-                    alt="Kuda Butawo"
-                    loading="lazy"
-                    decoding="async"
-                    className="pointer-events-none absolute bottom-0 right-0 h-[92%] w-auto object-contain object-bottom"
-                    style={{
-                      WebkitMaskImage:
-                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
-                      WebkitMaskComposite: "source-in",
-                      maskImage:
-                        "linear-gradient(to top, black 55%, transparent 100%), linear-gradient(to left, black 70%, transparent 100%)",
-                      maskComposite: "intersect",
-                    } as React.CSSProperties}
-                  />
-                  <div className="relative">
-                    <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-[hsl(var(--gold))] md:text-[12px]">
-                      {t("representation.director_role_director", "Director")}
-                    </p>
-                    <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-black md:text-3xl">
-                      {t("representation.director_kuda_name", "Kuda Butawo")}
-                    </p>
-                    <p
-                      className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-black/85 md:text-[14.5px]"
-                      style={{ textWrap: "pretty" } as React.CSSProperties}
-                    >
-                      {widont(t(
-                        "representation.director_kuda_bio",
-                        "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
-                      ))}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    WebkitMaskImage:
+                      "linear-gradient(to top, black 75%, transparent 100%)",
+                    maskImage:
+                      "linear-gradient(to top, black 75%, transparent 100%)",
+                  } as React.CSSProperties}
+                />
+                {/* Kuda — right half, black & white, bottom-anchored */}
+                <img
+                  src={kudaHeadshotAsset.url}
+                  alt="Kuda Butawo"
+                  loading="lazy"
+                  decoding="async"
+                  className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[58%] w-auto object-contain object-bottom md:h-[78%] md:right-[2%]"
+                  style={{
+                    WebkitMaskImage:
+                      "linear-gradient(to top, black 75%, transparent 100%)",
+                    maskImage:
+                      "linear-gradient(to top, black 75%, transparent 100%)",
+                  } as React.CSSProperties}
+                />
 
-              {/* Diagonal Rise Gold divider between the two halves */}
-              <div className="pointer-events-none absolute inset-0 hidden md:block">
-                <div
-                  className="absolute top-0 bottom-0 left-1/2 w-[3px] -translate-x-1/2 bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
-                  style={{ transform: "translateX(-50%) skewX(-9deg)" }}
-                />
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 md:hidden">
-                <div
-                  className="mx-auto h-[3px] w-[88%] bg-[hsl(var(--gold))] shadow-[0_0_18px_hsl(var(--gold)/0.55)]"
-                  style={{ transform: "skewY(-3deg)" }}
-                />
+                {/* ===== Diagonal Rise Gold divider — sits over the seam. */}
+                <svg
+                  className="pointer-events-none absolute inset-0 z-[2] hidden h-full w-full md:block"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <line
+                    x1="58" y1="0" x2="42" y2="100"
+                    stroke="hsl(var(--gold))"
+                    strokeWidth="0.45"
+                    style={{ filter: "drop-shadow(0 0 6px hsl(var(--gold)/0.55))" }}
+                  />
+                </svg>
+                <svg
+                  className="pointer-events-none absolute inset-0 z-[2] h-full w-full md:hidden"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <line
+                    x1="0" y1="58" x2="100" y2="42"
+                    stroke="hsl(var(--gold))"
+                    strokeWidth="0.7"
+                    style={{ filter: "drop-shadow(0 0 6px hsl(var(--gold)/0.55))" }}
+                  />
+                </svg>
+
+                {/* ===== Copy blocks ===== */}
+                {/* Jolon copy — top-left, white text over black marble */}
+                <div className="relative z-[3] p-5 md:p-7">
+                  <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+                    {t("representation.director_role_ceo", "CEO")}
+                  </p>
+                  <p
+                    className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-foreground md:text-3xl"
+                    style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" } as React.CSSProperties}
+                  >
+                    {t("representation.director_jolon_name", "Jolon Levene")}
+                  </p>
+                  <p
+                    className="mt-3 max-w-[22rem] text-[13px] leading-relaxed text-foreground/90 md:text-[14.5px]"
+                    style={{ textWrap: "pretty", textShadow: "0 1px 6px rgba(0,0,0,0.65)" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.director_jolon_bio",
+                      "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
+                    ))}
+                  </p>
+                </div>
+
+                {/* Kuda copy — top-right, right-aligned, black text over white marble */}
+                <div className="relative z-[3] p-5 text-right md:p-7">
+                  <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-[hsl(var(--gold))] md:text-[12px]">
+                    {t("representation.director_role_coo", "COO")}
+                  </p>
+                  <p className="mt-1 font-bebas text-2xl uppercase leading-[1.05] tracking-[0.08em] text-black md:text-3xl">
+                    {t("representation.director_kuda_name", "Kuda Butawo")}
+                  </p>
+                  <p
+                    className="ml-auto mt-3 max-w-[22rem] text-[13px] leading-relaxed text-black/85 md:text-[14.5px]"
+                    style={{ textWrap: "pretty" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.director_kuda_bio",
+                      "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
+                    ))}
+                  </p>
+                </div>
               </div>
             </div>
           )}
