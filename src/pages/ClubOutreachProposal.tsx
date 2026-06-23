@@ -2139,38 +2139,68 @@ function MatchByMatchCard({
     return rankGames(base, gameOrder ?? null);
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
-  const fmtVal = (raw: any, key: string): string => {
-    if (raw === null || raw === undefined || raw === "") return "-";
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return String(raw);
-    if (/_pct$|_percentage$/i.test(key)) return `${n.toFixed(0)}%`;
-    if (Number.isInteger(n)) return n.toString();
-    return n.toFixed(2);
-  };
+  const [viewMode, setViewMode] = useState<"per90" | "raw">("per90");
 
-  const getVal = (a: any, key: string): any => {
-    if (a?.fixture_stats && a.fixture_stats[key] != null) return a.fixture_stats[key];
-    if (a?.striker_stats && a.striker_stats[key] != null) return a.striker_stats[key];
+  const baseKey = (k: string) => k.replace(/_per90$/i, "");
+  const isPct = (k: string) => /_pct$|_percentage$/i.test(k);
+
+  const readStats = (a: any) => ({
+    ...((a?.fixture_stats as Record<string, any>) || {}),
+    ...((a?.striker_stats as Record<string, any>) || {}),
+  });
+
+  const getValue = (a: any, key: string, mode: "per90" | "raw"): number | null => {
+    const stats = readStats(a);
+    if (isPct(key)) {
+      const v = stats[key] ?? stats[baseKey(key)];
+      if (v === null || v === undefined || v === "") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+    const base = baseKey(key);
+    const p90 = `${base}_per90`;
+    const mins = Number(a?.minutes_played) || 0;
+    const pick = (raw: any) => {
+      if (raw === null || raw === undefined || raw === "") return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    };
+    if (mode === "raw") {
+      const direct = pick(stats[base]);
+      if (direct !== null) return direct;
+      const fromP90 = pick(stats[p90]);
+      if (fromP90 !== null && mins > 0) return (fromP90 * mins) / 90;
+      return null;
+    }
+    const direct = pick(stats[p90]);
+    if (direct !== null) return direct;
+    const fromRaw = pick(stats[base]);
+    if (fromRaw !== null && mins > 0) return (fromRaw / mins) * 90;
     return null;
   };
 
-  const gradeFor = (raw: any, key: string, mins: number | null): string | null => {
-    if (raw === null || raw === undefined || raw === "") return null;
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return null;
-    // Try the key directly, then strip the `_per90` suffix so per-90 keys
-    // map back to their base metric configs (e.g. `npxg_per90` → `npxg`).
-    const candidates = [key, key.replace(/_per90$/i, "")];
+  const fmtVal = (v: number | null, key: string): string => {
+    if (v === null || !Number.isFinite(v)) return "-";
+    if (isPct(key)) {
+      if (v === 0) return "-";
+      return `${v.toFixed(0)}%`;
+    }
+    // Treat anything that rounds to zero as a dash for counts/rates.
+    const rounded = Number.isInteger(v) ? v : Number(v.toFixed(2));
+    if (rounded === 0) return "-";
+    return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+  };
+
+  const gradeFor = (key: string, per90Value: number | null): string | null => {
+    if (per90Value === null || !Number.isFinite(per90Value)) return null;
+    const candidates = [key, baseKey(key)];
     let mk: string | null = null;
     for (const c of candidates) {
       const norm = normalizeStatKey(c);
       if (hasThresholds(norm)) { mk = norm; break; }
     }
     if (!mk) return null;
-    // Form thresholds are per-90; scale single-match counts to per-90 unless already a %.
-    const isPct = /_pct$|_percentage$/i.test(key);
-    const scaled = isPct || !mins || mins <= 0 ? n : (n / mins) * 90;
-    const g = getGradeForScore(mk, scaled).grade;
+    const g = getGradeForScore(mk, per90Value).grade;
     return STRONG_GRADES.has(g) ? g : null;
   };
 
@@ -2208,17 +2238,35 @@ function MatchByMatchCard({
   return (
     <SectionShell title="Match-By-Match Data" eyebrow="06">
       <Tabs defaultValue={defaultCat}>
-        <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
-          {categories.map((c) => (
-            <TabsTrigger
-              key={c.category}
-              value={c.category}
-              className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
-            >
-              {c.category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-2">
+          <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
+            {categories.map((c) => (
+              <TabsTrigger
+                key={c.category}
+                value={c.category}
+                className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
+              >
+                {c.category}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="ml-auto inline-flex rounded-md border border-white/10 bg-white/[0.04] p-0.5 text-[11px]">
+            {(["per90", "raw"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setViewMode(m)}
+                className={`px-2.5 py-1 rounded transition-colors ${
+                  viewMode === m
+                    ? "bg-[#cbb96b]/20 text-[#cbb96b]"
+                    : "text-white/60 hover:text-white/80"
+                }`}
+              >
+                {m === "per90" ? "Per 90" : "Raw"}
+              </button>
+            ))}
+          </div>
+        </div>
         {categories.map((c) => (
           <TabsContent key={c.category} value={c.category} className="mt-3">
             <div className="overflow-x-auto rounded-lg border border-white/10">
@@ -2259,7 +2307,9 @@ function MatchByMatchCard({
                         </div>
                       </td>
                       {c.metrics.map((m) => {
-                        const g = gradeFor(getVal(a, m.key), m.key, a.minutes_played ?? null);
+                        const displayValue = getValue(a, m.key, viewMode);
+                        const per90Value = getValue(a, m.key, "per90");
+                        const g = gradeFor(m.key, per90Value);
                         const pill = pillClass(g);
                         return (
                           <td
@@ -2268,11 +2318,11 @@ function MatchByMatchCard({
                           >
                             {pill ? (
                               <span className={`inline-block rounded-full px-2.5 py-0.5 ${pill}`}>
-                                {fmtVal(getVal(a, m.key), m.key)}
+                                {fmtVal(displayValue, m.key)}
                               </span>
                             ) : (
                               <span className="text-white/80">
-                                {fmtVal(getVal(a, m.key), m.key)}
+                                {fmtVal(displayValue, m.key)}
                               </span>
                             )}
                           </td>
