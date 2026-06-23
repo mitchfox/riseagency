@@ -520,6 +520,7 @@ export default function ClubOutreachProposal() {
   const hasMultiple = data.players.length > 1;
   const fitTextEn = (current.fit_recommendation ?? "").trim();
   const fitText = fitTextEn ? trFit(current.player?.id, fitTextEn) : "";
+  const situationText = (current.situation ?? "").trim();
   const age = player?.age ?? calculateAge(player?.date_of_birth ?? null);
   const firstName = (player?.name ?? "").trim().split(/\s+/)[0] || "the player";
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
