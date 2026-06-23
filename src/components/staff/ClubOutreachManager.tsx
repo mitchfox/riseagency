@@ -395,6 +395,7 @@ export default function ClubOutreachManager() {
                       players={players}
                       url={proposalUrl(r.short_id, r.target_type)}
                       externalUrl={externalProposalUrl(r.short_id, r.target_type)}
+                      onOpen={() => openProposalLink(r.short_id, r.target_type, externalProposalUrl(r.short_id, r.target_type))}
                       onCopy={() => copyLink(r.short_id, r.target_type)}
                       onEdit={() => setEditRow(r)}
                       onLog={() => setLogRow(r)}
