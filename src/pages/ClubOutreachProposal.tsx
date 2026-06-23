@@ -578,7 +578,7 @@ export default function ClubOutreachProposal() {
             return (
               <RemainingVideosCard
                 videos={remaining}
-                title={tr("inline.moreVideos", "More Videos")}
+                title={tr("inline.moreVideos", "Match-By-Match Video")}
               />
             );
           })()}
