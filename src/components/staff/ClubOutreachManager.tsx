@@ -785,8 +785,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
     const presetSituation: string = (defaults?.default_situation ?? "").trim();
+    // Per-player default fit recommendation should ALWAYS pre-fill when the
+    // player has one saved on their outreach settings — whether we're editing
+    // an existing link or adding the 2nd+ player to a multi-player outreach.
+    const playerDefaultFit: string = (defaults?.default_fit_recommendation ?? "").trim();
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", situation: presetSituation, sort_order: prev.length }]);
+      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: playerDefaultFit || (defaultFit ?? ""), situation: presetSituation, sort_order: prev.length }]);
       return;
     }
     // Determine new entries count after adding
@@ -794,7 +798,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     let initialFit = "";
     if (willBeSingle) {
       // Single-player outreach: prefer that player's per-player default
-      initialFit = (defaults?.default_fit_recommendation ?? "").trim() || (defaultFit ?? "");
+      initialFit = playerDefaultFit || (defaultFit ?? "");
       // Seed the season-data display mode from the player default on the
       // very first add — once a second player joins we leave whatever the
       // user picked alone.
@@ -805,7 +809,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         setSeasonId(defaults.default_season_id as string);
       }
     } else {
-      initialFit = defaultFit ?? "";
+      // Multi-player outreach: prefer the new player's own default; fall back
+      // to the generic default if they haven't got one saved.
+      initialFit = playerDefaultFit || (defaultFit ?? "");
     }
     setEntries(prev => {
       const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, situation: presetSituation, sort_order: prev.length }];
