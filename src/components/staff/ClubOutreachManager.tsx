@@ -687,6 +687,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     editing?.section_order ? normaliseSectionOrder(editing.section_order) : DEFAULT_SECTION_ORDER
   );
   const [entries, setEntries] = useState<LinkPlayerRow[]>(editing?.link_players ?? []);
+  const [activeSettingsPlayerId, setActiveSettingsPlayerId] = useState<string>(editing?.link_players?.[0]?.player_id ?? "");
   const [saving, setSaving] = useState(false);
   const [language, setLanguage] = useState<string>(editing?.language ?? "en");
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -699,6 +700,36 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
   const selectedIds = new Set(entries.map(e => e.player_id));
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
+  const activeSettingsEntry = entries.find((e) => e.player_id === activeSettingsPlayerId) ?? entries[0] ?? null;
+  const activeSettingsPlayer = activeSettingsEntry ? playerById.get(activeSettingsEntry.player_id) : null;
+
+  useEffect(() => {
+    if (entries.length === 0) {
+      setActiveSettingsPlayerId("");
+      return;
+    }
+    if (!entries.some((e) => e.player_id === activeSettingsPlayerId)) {
+      setActiveSettingsPlayerId(entries[0].player_id);
+    }
+  }, [entries, activeSettingsPlayerId]);
+
+  const patchPlayerSettings = (patch: Partial<LinkPlayerRow>) => {
+    if (!activeSettingsEntry) return;
+    updateEntry(activeSettingsEntry.player_id, patch);
+  };
+  const activeShowForm = activeSettingsEntry?.show_form ?? showForm;
+  const activeShowInNumbers = activeSettingsEntry?.show_in_numbers ?? showInNumbers;
+  const activeShowSeasonStats = activeSettingsEntry?.show_season_stats ?? showSeasonStats;
+  const activeShowStrengths = activeSettingsEntry?.show_strengths ?? showStrengths;
+  const activeSeasonDataMode = activeSettingsEntry?.season_data_mode ?? seasonDataMode;
+  const activeSeasonId = activeSettingsEntry?.season_id ?? null;
+  const activeSelectedVideoIds = Array.isArray(activeSettingsEntry?.selected_video_ids) ? activeSettingsEntry!.selected_video_ids! : [];
+  const activeKeyDetails = Array.isArray(activeSettingsEntry?.key_details) && activeSettingsEntry!.key_details!.length > 0
+    ? normaliseKeyDetails(activeSettingsEntry!.key_details)
+    : keyDetails;
+  const activeSectionOrder = Array.isArray(activeSettingsEntry?.section_order) && activeSettingsEntry!.section_order!.length > 0
+    ? normaliseSectionOrder(activeSettingsEntry!.section_order)
+    : sectionOrder;
 
   const filteredPlayers = useMemo(() => {
     const n = playerQuery.trim().toLowerCase();
