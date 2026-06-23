@@ -820,6 +820,14 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   };
   const removePlayer = (id: string) => setEntries(prev => prev.filter(e => e.player_id !== id).map((e, i) => ({ ...e, sort_order: i })));
   const updateEntry = (id: string, patch: Partial<LinkPlayerRow>) => setEntries(prev => prev.map(e => e.player_id === id ? { ...e, ...patch } : e));
+  const movePlayer = (idx: number, dir: -1 | 1) =>
+    setEntries(prev => {
+      const j = idx + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = prev.slice();
+      [next[idx], next[j]] = [next[j], next[idx]];
+      return next.map((e, i) => ({ ...e, sort_order: i }));
+    });
 
   // Whenever the primary player changes, fetch their highlights so the staff
   // can pick which ones appear in the proposal carousel.
