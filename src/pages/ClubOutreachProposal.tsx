@@ -865,7 +865,7 @@ export default function ClubOutreachProposal() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.25em] border border-white/15 text-white/70 hover:border-[#cbb96b]/60 hover:text-white transition"
           >
             <ArrowLeft className="h-3 w-3" />
-            {tr("picker.backToPlayers", "Back to all players")}
+            {tr("picker.backToPlayers", "Back to all players offered")}
           </button>
         </div>
       )}
