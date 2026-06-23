@@ -439,6 +439,9 @@ Deno.serve(async (req) => {
           player: p ?? null,
           position_slot: e.position_slot,
           fit_recommendation: e.fit_recommendation,
+          situation: ((e as any).situation && String((e as any).situation).trim())
+            ? (e as any).situation
+            : ((d as any)?.default_situation ?? null),
           sort_order: e.sort_order,
           stars_url: starsUrl,
           highlights_url: d?.highlights_url ?? null,
