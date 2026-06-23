@@ -1038,7 +1038,7 @@ export default function MarketTablesTab() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editing?.existing ? "Edit contact" : "Add contact"} — {editing?.club.club_name}
+              {contactHasSavedDetails(editing?.existing ?? null) ? "Edit contact details" : "Add contact details"} — {editing?.club.club_name}
             </DialogTitle>
           </DialogHeader>
           {editing && (
