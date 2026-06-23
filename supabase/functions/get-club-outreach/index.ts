@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("club_outreach_player_defaults")
             .select(
-              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category"
+              "player_id, stars_url_override, highlights_url, proof_of_representation_path, default_match_by_match_category, transfermarkt_url, match_by_match_stat_orders, match_by_match_game_order"
             )
             .in("player_id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
