@@ -691,7 +691,7 @@ export default function ClubOutreachProposal() {
               {fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })}
             </h1>
             {preparedFor && (
-              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
             )}
           </div>
         </header>
@@ -829,7 +829,7 @@ export default function ClubOutreachProposal() {
               : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
           {preparedFor && (
-            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.for", "For")} <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
           )}
         </div>
       </header>
