@@ -8,7 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { rankGames, gameOrderToken } from "@/lib/matchByMatchOrder";
 import { toast } from "sonner";
 import { openExternalUrl } from "@/utils/openExternalUrl";
 import OutreachStrategyTab from "@/components/staff/outreach/OutreachStrategyTab";
@@ -1994,27 +1998,32 @@ function MatchByMatchOrderEditor({
     })();
   }, [playerId, seasonId]);
 
-  const normOpp = (s: string) => (s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  // Ordered preview uses the shared ranker so duplicate fixtures (same
+  // opponent twice in a season) each claim their own slot — that's what was
+  // making the top rows look "jammed".
+  const orderedGames = rankGames(games, gameOrder);
 
-  // Ordered preview = games sorted by the saved gameOrder list, then leftover by date desc.
-  const orderedGames = (() => {
-    if (gameOrder.length === 0) return games;
-    const rank = new Map<string, number>();
-    gameOrder.forEach((n, i) => { const k = normOpp(n); if (!rank.has(k)) rank.set(k, i); });
-    return [...games].sort((a, b) => {
-      const ar = rank.get(normOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
-      const br = rank.get(normOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
-      if (ar !== br) return ar - br;
-      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
-    });
-  })();
+  const commitOrder = (next: typeof orderedGames) => {
+    setGameOrder(next.map((g) => gameOrderToken(g)));
+  };
 
   const moveGame = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= orderedGames.length) return;
-    const next = orderedGames.slice();
-    [next[i], next[j]] = [next[j], next[i]];
-    setGameOrder(next.map((g) => g.opponent));
+    commitOrder(arrayMove(orderedGames, i, j));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = orderedGames.findIndex((g) => g.id === active.id);
+    const to = orderedGames.findIndex((g) => g.id === over.id);
+    if (from < 0 || to < 0) return;
+    commitOrder(arrayMove(orderedGames, from, to));
   };
 
   return (
@@ -2064,19 +2073,23 @@ function MatchByMatchOrderEditor({
         </Select>
         <div className="mt-3 space-y-1">
           {orderedGames.length === 0 && <p className="text-[11px] text-muted-foreground">No games found for this player{seasonId ? " in this season" : ""}.</p>}
-          {orderedGames.map((g, i) => (
-            <div key={g.id} className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs">
-              <span className="text-muted-foreground w-6">{i + 1}.</span>
-              <span className="flex-1 truncate">{g.opponent}</span>
-              <span className="text-muted-foreground text-[10px]">{g.analysis_date}</span>
-              <button type="button" onClick={() => moveGame(i, -1)} disabled={i === 0} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
-                <ArrowUp className="h-3 w-3" />
-              </button>
-              <button type="button" onClick={() => moveGame(i, 1)} disabled={i === orderedGames.length - 1} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
-                <ArrowDown className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={orderedGames.map((g) => g.id)} strategy={verticalListSortingStrategy}>
+              {orderedGames.map((g, i) => (
+                <SortableGameRow
+                  key={g.id}
+                  id={g.id}
+                  index={i}
+                  opponent={g.opponent}
+                  date={g.analysis_date}
+                  isFirst={i === 0}
+                  isLast={i === orderedGames.length - 1}
+                  onUp={() => moveGame(i, -1)}
+                  onDown={() => moveGame(i, 1)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
         {gameOrder.length > 0 && (
           <button
@@ -2088,6 +2101,59 @@ function MatchByMatchOrderEditor({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function SortableGameRow({
+  id,
+  index,
+  opponent,
+  date,
+  isFirst,
+  isLast,
+  onUp,
+  onDown,
+}: {
+  id: string;
+  index: number;
+  opponent: string | null;
+  date: string | null;
+  isFirst: boolean;
+  isLast: boolean;
+  onUp: () => void;
+  onDown: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1.5 text-xs"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-0.5"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <span className="text-muted-foreground w-6">{index + 1}.</span>
+      <span className="flex-1 truncate">{opponent ?? "?"}</span>
+      <span className="text-muted-foreground text-[10px]">{date}</span>
+      <button type="button" onClick={onUp} disabled={isFirst} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+        <ArrowUp className="h-3 w-3" />
+      </button>
+      <button type="button" onClick={onDown} disabled={isLast} className="h-6 w-6 inline-flex items-center justify-center rounded border border-border hover:border-[#cbb96b]/60 disabled:opacity-30">
+        <ArrowDown className="h-3 w-3" />
+      </button>
     </div>
   );
 }

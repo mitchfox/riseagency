@@ -9,6 +9,7 @@ import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
+import { rankGames } from "@/lib/matchByMatchOrder";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -865,7 +866,7 @@ export default function ClubOutreachProposal() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.25em] border border-white/15 text-white/70 hover:border-[#cbb96b]/60 hover:text-white transition"
           >
             <ArrowLeft className="h-3 w-3" />
-            {tr("picker.backToPlayers", "Back to all players")}
+            {tr("picker.backToPlayers", "Back to all players offered")}
           </button>
         </div>
       )}
@@ -2087,29 +2088,9 @@ function MatchByMatchCard({
     categories[0]?.category ||
     "";
 
-  // Normalise opponent names: lowercase, strip accents and non-alphanumerics
-  // so user-provided ordering tolerates "Plzeň" vs "Plzen" etc.
-  const normaliseOpp = (s: string | null | undefined): string =>
-    (s ?? "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
-
   const sorted = useMemo(() => {
     const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
-    const order = Array.isArray(gameOrder) ? gameOrder.map(normaliseOpp).filter(Boolean) : [];
-    if (order.length === 0) {
-      return base.sort((a, b) => (b.analysis_date ?? "").localeCompare(a.analysis_date ?? ""));
-    }
-    const rank = new Map<string, number>();
-    order.forEach((n, i) => { if (!rank.has(n)) rank.set(n, i); });
-    return base.sort((a, b) => {
-      const ar = rank.get(normaliseOpp(a.opponent)) ?? Number.POSITIVE_INFINITY;
-      const br = rank.get(normaliseOpp(b.opponent)) ?? Number.POSITIVE_INFINITY;
-      if (ar !== br) return ar - br;
-      return (b.analysis_date ?? "").localeCompare(a.analysis_date ?? "");
-    });
+    return rankGames(base, gameOrder ?? null);
   }, [analyses, excludeAnalysisIds, gameOrder]);
 
   const fmtVal = (raw: any, key: string): string => {
