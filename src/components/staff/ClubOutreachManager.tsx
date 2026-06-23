@@ -749,12 +749,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     // of editing / single-vs-multi state.
     const { data: defaults } = await (supabase as any)
       .from("club_outreach_player_defaults")
-      .select("default_fit_recommendation, default_position, default_season_data_mode, default_season_id")
+      .select("default_fit_recommendation, default_situation, default_position, default_season_data_mode, default_season_id")
       .eq("player_id", id)
       .maybeSingle();
     const presetPosition: string | null = defaults?.default_position ?? null;
+    const presetSituation: string = (defaults?.default_situation ?? "").trim();
     if (editing) {
-      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", sort_order: prev.length }]);
+      setEntries(prev => [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: "", situation: presetSituation, sort_order: prev.length }]);
       return;
     }
     // Determine new entries count after adding
@@ -776,7 +777,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       initialFit = defaultFit ?? "";
     }
     setEntries(prev => {
-      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, sort_order: prev.length }];
+      const next = [...prev, { player_id: id, position_slot: presetPosition, fit_recommendation: initialFit, situation: presetSituation, sort_order: prev.length }];
       // If we crossed from 1 → 2 players, swap the first entry's player-default fit to the general default (only if it still equals the prior player default & user hasn't edited).
       if (prev.length === 1) {
         const [first] = prev;
