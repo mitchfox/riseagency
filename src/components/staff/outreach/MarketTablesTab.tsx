@@ -34,6 +34,7 @@ interface Entry {
 }
 
 const MARKET_TABLE_KEY = "summer-26";
+const PAGE_SIZE = 50;
 const CLUB_FETCH_PAGE_SIZE = 1000;
 const CONTACT_FETCH_PAGE_SIZE = 1000;
 const CONTACT_SELECT = "id, name, club_name, position, email, phone, country";
@@ -330,6 +331,7 @@ export default function MarketTablesTab() {
   const [savingContact, setSavingContact] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingToNetwork, setAddingToNetwork] = useState(false);
+  const [page, setPage] = useState(1);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -544,6 +546,18 @@ export default function MarketTablesTab() {
       return true;
     });
   }, [clubs, country, league, search]);
+
+  // Reset to first page whenever the active filter / search changes so the
+  // user always sees the start of the new result set.
+  useEffect(() => {
+    setPage(1);
+  }, [country, league, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const pageEnd = pageStart + PAGE_SIZE;
+  const paged = useMemo(() => filtered.slice(pageStart, pageEnd), [filtered, pageStart, pageEnd]);
 
   const getValues = (club: ClubRow) => {
     const entry = entries[club.id];
@@ -841,7 +855,9 @@ export default function MarketTablesTab() {
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold text-white mr-2">Summer '26</h3>
           <span className="text-[11px] text-muted-foreground">
-            {filtered.length} club{filtered.length === 1 ? "" : "s"}
+            {filtered.length === 0
+              ? "0 clubs"
+              : `Showing ${pageStart + 1}–${Math.min(pageEnd, filtered.length)} of ${filtered.length}`}
           </span>
           <Button
             type="button"
@@ -889,7 +905,7 @@ export default function MarketTablesTab() {
             No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
           </div>
         )}
-        {filtered.map((club) => {
+        {paged.map((club) => {
           const { tdContact, csContact, tdName, csName } = getValues(club);
           const exclude = new Set<string>();
           if (tdContact) exclude.add(tdContact.id);
@@ -1000,7 +1016,7 @@ export default function MarketTablesTab() {
                 No clubs match this filter. Adjust the country / league above, or add the clubs to a saved Strategy first.
               </td></tr>
             )}
-            {filtered.map((club) => {
+            {paged.map((club) => {
               const { tdContact, csContact, tdName, csName } = getValues(club);
               const exclude = new Set<string>();
               if (tdContact) exclude.add(tdContact.id);
@@ -1118,6 +1134,56 @@ export default function MarketTablesTab() {
           </tbody>
         </table>
       </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 text-xs">
+          <span className="text-muted-foreground">
+            Page {safePage} of {totalPages} · {filtered.length} clubs
+          </span>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              disabled={safePage <= 1}
+              onClick={() => setPage(1)}
+            >
+              First
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage(totalPages)}
+            >
+              Last
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl">
