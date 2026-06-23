@@ -509,8 +509,12 @@ export default function MarketTablesTab() {
     const csRoleContact = matchContactForClub(contacts, club.club_name, club.country, CS_RE);
     const tdName = entry?.technical_director_name ?? tdRoleContact?.name ?? "";
     const csName = entry?.chief_scout_name ?? csRoleContact?.name ?? "";
-    const tdContact = matchContactByNameForClub(contacts, club.club_name, club.country, tdName) ?? tdRoleContact;
-    const csContact = matchContactByNameForClub(contacts, club.club_name, club.country, csName) ?? csRoleContact;
+    const tdContact = tdName
+      ? matchContactByNameForClub(contacts, club.club_name, club.country, tdName)
+      : tdRoleContact;
+    const csContact = csName
+      ? matchContactByNameForClub(contacts, club.club_name, club.country, csName)
+      : csRoleContact;
     return { tdContact, csContact, tdName, csName };
   };
 
