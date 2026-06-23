@@ -2339,6 +2339,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       });
       setPlayerDefaultFit((data as any)?.default_fit_recommendation ?? "");
       setPlayerDefaultPosition((data as any)?.default_position ?? "");
+      setPlayerDefaultSituation((data as any)?.default_situation ?? "");
       const sm = (data as any)?.default_season_data_mode;
       setPlayerDefaultSeasonMode(sm === 'popup' || sm === 'link' ? sm : '');
       setPlayerDefaultSeasonId((data as any)?.default_season_id ?? null);
