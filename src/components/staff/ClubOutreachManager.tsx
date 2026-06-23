@@ -2247,6 +2247,9 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
       default_section_order: playerDefaultSectionOrder,
       default_selected_video_ids: playerDefaultSelectedVideoIds,
       default_match_by_match_category: playerDefaultMbmCategory.trim() || null,
+      transfermarkt_url: defaults.transfermarkt_url.trim() || null,
+      match_by_match_stat_orders: playerStatOrders ?? {},
+      match_by_match_game_order: playerGameOrder ?? [],
       updated_at: new Date().toISOString(),
     });
     if (error) return toast.error(error.message);
@@ -2266,6 +2269,7 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         stars_url_override: defaults.stars_url_override.trim() || null,
         highlights_url: defaults.highlights_url.trim() || null,
         proof_of_representation_path: path,
+        transfermarkt_url: defaults.transfermarkt_url.trim() || null,
         updated_at: new Date().toISOString(),
       });
       toast.success("Proof of Representation uploaded");
