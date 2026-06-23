@@ -390,12 +390,12 @@ const Staff = () => {
       }
     } catch {}
 
-    // Determine which section to show
-    const savedActive = localStorage.getItem('staff_active_tab');
-    const savedActiveValid = savedActive && (!permissionManagedRole || canView(savedActive));
+    // Determine which section to show.
+    // Always default to cluboutreach on initial load when no URL section is given,
+    // regardless of which tab was last active in the previous session.
     const section = urlSection && (!permissionManagedRole || canView(urlSection))
       ? urlSection
-      : (!isTrustedNetworkRole ? defaultSection : (savedActiveValid ? savedActive : defaultSection));
+      : defaultSection;
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     setExpandedSection(finalSection as any);
