@@ -2820,6 +2820,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Textarea rows={4} className="mt-1.5" value={playerDefaultFit} onChange={(e) => setPlayerDefaultFit(e.target.value)} placeholder="Tailored fit note for this player when sent solo to a club." />
                 </div>
                 <div>
+                  <Label className="flex items-center gap-2"><FileEdit className="h-3.5 w-3.5" /> Default situation</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Auto-fills the Situation card on this player's proposals. Editable per outreach and overrides this default when set.</p>
+                  <Textarea rows={4} className="mt-1.5" value={playerDefaultSituation} onChange={(e) => setPlayerDefaultSituation(e.target.value)} placeholder="Current contract status, availability, transfer context — anything a club needs to know." />
+                </div>
+                <div>
                   <Label>Default position slot</Label>
                   <p className="text-[11px] text-muted-foreground mt-1">Auto-fills the position dropdown when this player is added to an outreach.</p>
                   <Select value={playerDefaultPosition || "__none__"} onValueChange={(v) => setPlayerDefaultPosition(v === "__none__" ? "" : v)}>
