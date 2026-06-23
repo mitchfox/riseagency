@@ -1146,22 +1146,25 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     }
   };
 
+  if (!open) return null;
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+    <div className="rounded-2xl border border-border bg-card mb-6 p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-lg font-semibold">
             {editing
               ? (isAgent ? "Edit Agent Outreach" : "Edit Club Outreach")
               : (isAgent ? "New Agent Outreach" : "New Club Outreach")}
-          </DialogTitle>
-          <DialogDescription>
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
             {isAgent
               ? "Build a personalised proposal for an agent. Add one or many players, each with their own position and fit note."
               : "Build a personalised proposal for a club. Add one or many players, each with their own position and fit note."}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6">
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="h-4 w-4" /></Button>
+      </div>
+      <div className="space-y-6">
           {isAgent ? (
             <div className="space-y-3">
               <div>
@@ -1801,14 +1804,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <p className="text-[11px] text-muted-foreground">Club contact details live in <b>Settings → Club contacts</b> and are shared across every outreach for that club.</p>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
-            {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6 pt-4 border-t border-border">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+          {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
