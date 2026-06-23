@@ -1532,7 +1532,7 @@ export const DetailView = ({
               className="relative overflow-hidden rise-slant-card-lg border border-border/60"
               style={solidBlackSectionStyle}
             >
-              <div className="relative grid min-h-[640px] md:min-h-[720px] md:grid-cols-2">
+              <div className="relative grid min-h-[480px] md:min-h-[520px] md:grid-cols-2">
                 {/* ===== Backgrounds: diagonal marble split (desktop) =====
                     On desktop the black marble fills the left half and the
                     white marble the right, with a diagonal clip-path so the
@@ -1562,7 +1562,10 @@ export const DetailView = ({
                        diagonal section. The full cutout is pushed down past
                        the bottom edge, so only the upper half remains visible
                        and the lower half is cropped by the section. ===== */}
-                {/* Jolon frame — desktop: left diagonal section */}
+                {/* Jolon frame — desktop: left diagonal section. Head & shoulders
+                    sit at the top of the section so the bio card (rendered above
+                    on a higher z-index) overlaps the body and only the head pops
+                    out over the top edge of the card. */}
                 <div
                   className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[58%] overflow-hidden md:block"
                   style={{ clipPath: "polygon(0% 0%, 100% 0%, 72.5% 100%, 0% 100%)" }}
@@ -1572,7 +1575,7 @@ export const DetailView = ({
                     alt="Jolon Levene"
                     loading="lazy"
                     decoding="async"
-                    className="absolute bottom-[-43%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.58)]"
+                    className="absolute top-0 left-1/2 h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.58)]"
                   />
                 </div>
                 {/* Kuda frame — desktop: right diagonal half */}
@@ -1585,7 +1588,7 @@ export const DetailView = ({
                     alt="Kuda Butawo"
                     loading="lazy"
                     decoding="async"
-                    className="absolute bottom-[-43%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.28)]"
+                    className="absolute top-0 left-1/2 h-[78%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_20px_44px_rgba(0,0,0,0.28)]"
                   />
                 </div>
                 {/* Jolon frame — mobile: top diagonal half */}
@@ -1598,7 +1601,7 @@ export const DetailView = ({
                     alt="Jolon Levene"
                     loading="lazy"
                     decoding="async"
-                    className="absolute bottom-[-45%] left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.58)]"
+                    className="absolute top-0 left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.58)]"
                   />
                 </div>
                 {/* Kuda frame — mobile: bottom diagonal half */}
@@ -1611,7 +1614,7 @@ export const DetailView = ({
                     alt="Kuda Butawo"
                     loading="lazy"
                     decoding="async"
-                    className="absolute bottom-[-45%] left-1/2 h-[96%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.28)]"
+                    className="absolute top-[6%] left-1/2 h-[88%] w-auto max-w-none -translate-x-1/2 object-contain object-top drop-shadow-[0_18px_38px_rgba(0,0,0,0.28)]"
                   />
                 </div>
 
@@ -1644,9 +1647,9 @@ export const DetailView = ({
                 </svg>
 
                 {/* ===== Copy blocks ===== */}
-                {/* Jolon copy — top-left, white text over black marble plate */}
+                {/* Jolon copy — sits low so head pops out the top, black marble plate */}
                 <div
-                  className="relative z-[3] m-4 self-start overflow-hidden rounded-2xl border border-white/10 p-5 md:m-6 md:p-6"
+                  className="relative z-[3] mx-4 mb-4 mt-[44%] self-end overflow-hidden rounded-2xl border border-white/10 p-5 md:mx-6 md:mb-6 md:mt-[28%] md:p-6"
                   style={{
                     backgroundImage: `url(${blackMarbleBg})`,
                     backgroundSize: "cover",
@@ -1674,9 +1677,9 @@ export const DetailView = ({
                   </p>
                 </div>
 
-                {/* Kuda copy — top-right, right-aligned, black text over white marble plate */}
+                {/* Kuda copy — sits low so head pops out the top, white marble plate */}
                 <div
-                  className="relative z-[3] m-4 self-start overflow-hidden rounded-2xl border border-black/10 p-5 text-right md:m-6 md:p-6 md:justify-self-end"
+                  className="relative z-[3] mx-4 mb-4 mt-[44%] self-end overflow-hidden rounded-2xl border border-black/10 p-5 text-right md:mx-6 md:mb-6 md:mt-[28%] md:p-6 md:justify-self-end"
                   style={{
                     backgroundImage: `url(${whiteMarbleBg})`,
                     backgroundSize: "cover",
