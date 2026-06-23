@@ -73,6 +73,7 @@ export const KEY_DETAIL_LABELS: Record<KeyDetailKind, string> = {
 
 export type ProposalSectionKey =
   | "fit"
+  | "situation"
   | "cards"
   | "form"
   | "in_numbers"
@@ -81,6 +82,7 @@ export type ProposalSectionKey =
 
 export const DEFAULT_SECTION_ORDER: ProposalSectionKey[] = [
   "fit",
+  "situation",
   "cards",
   "form",
   "in_numbers",
@@ -90,6 +92,7 @@ export const DEFAULT_SECTION_ORDER: ProposalSectionKey[] = [
 
 export const SECTION_LABELS: Record<ProposalSectionKey, string> = {
   fit: "Fit & Recommendation",
+  situation: "Situation",
   cards: "Video & Data / Proof cards",
   form: "Form",
   in_numbers: "In Numbers",
