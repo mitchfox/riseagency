@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,6 +136,7 @@ const OUTREACH_LANGUAGES: { code: string; label: string }[] = [
 ];
 
 export default function ClubOutreachManager() {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [rows, setRows] = useState<OutreachRow[]>([]);
   const [players, setPlayers] = useState<PlayerLite[]>([]);
   const [clubs, setClubs] = useState<ClubLite[]>([]);
@@ -326,9 +327,36 @@ export default function ClubOutreachManager() {
     loadSettings();
   };
 
+  const scrollPanelToTop = () => {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('main').forEach((scroller) => scroller.scrollTo({ top: 0, behavior: 'smooth' }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      rootRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  };
+
+  const openNewPanel = () => {
+    setNewOpen(true);
+    scrollPanelToTop();
+  };
+
+  const openSettingsPanel = () => {
+    setSettingsOpen(true);
+    scrollPanelToTop();
+  };
+
+  const openEditPanel = (row: OutreachRow) => {
+    setEditRow(row);
+    scrollPanelToTop();
+  };
+
+  useEffect(() => {
+    if (newOpen || editRow || settingsOpen) scrollPanelToTop();
+  }, [newOpen, editRow?.id, settingsOpen]);
+
   if (newOpen) {
     return (
-      <div className="space-y-4">
+      <div ref={rootRef} className="space-y-4">
         <Button variant="outline" onClick={() => setNewOpen(false)} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Outreach
         </Button>
@@ -351,7 +379,7 @@ export default function ClubOutreachManager() {
 
   if (editRow) {
     return (
-      <div className="space-y-4">
+      <div ref={rootRef} className="space-y-4">
         <Button variant="outline" onClick={() => setEditRow(null)} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Outreach
         </Button>
@@ -375,7 +403,7 @@ export default function ClubOutreachManager() {
 
   if (settingsOpen) {
     return (
-      <div className="space-y-4">
+      <div ref={rootRef} className="space-y-4">
         <Button variant="outline" onClick={closeSettingsPanel} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Outreach
         </Button>
@@ -385,7 +413,7 @@ export default function ClubOutreachManager() {
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={rootRef} className="space-y-4">
       <div className="grid grid-cols-2 sm:inline-flex sm:w-auto sm:flex w-full rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'outreach', label: 'Outreach' },
@@ -437,10 +465,10 @@ export default function ClubOutreachManager() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
-          <Button onClick={() => { setNewOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
+          <Button onClick={openNewPanel} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
           </Button>
-          <Button variant="outline" onClick={() => { setSettingsOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
         </div>
@@ -478,7 +506,7 @@ export default function ClubOutreachManager() {
                       externalUrl={externalProposalUrl(r.short_id, r.target_type)}
                       onOpen={() => openProposalLink(r.short_id, r.target_type, externalProposalUrl(r.short_id, r.target_type))}
                       onCopy={() => copyLink(r.short_id, r.target_type)}
-                      onEdit={() => { setEditRow(r); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      onEdit={() => openEditPanel(r)}
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}

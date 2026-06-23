@@ -1,9 +1,9 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -195,6 +195,92 @@ type ContactEditState = {
   existing: ContactRow | null;
   draft: { name: string; position: string; email: string; phone: string };
 };
+
+function MarketContactSlot({
+  value,
+  contact,
+  placeholder,
+  links,
+  inputClassName,
+  onConfirm,
+  onEdit,
+}: {
+  value: string;
+  contact: ContactRow | null;
+  placeholder: string;
+  links: ReactNode;
+  inputClassName: string;
+  onConfirm: (value: string | null) => Promise<void>;
+  onEdit: () => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const cleanDraft = draft.trim();
+  const isDirty = cleanDraft !== value.trim();
+  const hasSavedName = value.trim().length > 0;
+  const showConfirm = isDirty;
+
+  const confirm = async () => {
+    if (!isDirty || saving) return;
+    setSaving(true);
+    try {
+      await onConfirm(cleanDraft || null);
+      setDraft(cleanDraft);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const Icon = showConfirm ? Check : contact ? Pencil : UserPlus;
+  const buttonTitle = showConfirm
+    ? "Confirm this person in Market Tables and Network"
+    : contact
+      ? "Show or edit existing contact details"
+      : hasSavedName
+        ? "Add contact details for this person"
+        : "Add contact details";
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        value={draft}
+        placeholder={placeholder}
+        className={inputClassName}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={confirm}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            confirm();
+          }
+        }}
+      />
+      {links}
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={showConfirm ? confirm : onEdit}
+        title={buttonTitle}
+        aria-label={buttonTitle}
+        disabled={saving}
+        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
+          showConfirm
+            ? "border-risegold bg-risegold/15 text-risegold hover:bg-risegold/25"
+            : hasSavedName && !contact
+              ? "border-risegold/70 text-risegold hover:bg-risegold/10"
+              : "border-border text-muted-foreground hover:text-white hover:border-[#cbb96b]/60"
+        } ${saving ? "opacity-60" : ""}`}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
 
 export default function MarketTablesTab() {
   const [clubs, setClubs] = useState<ClubRow[]>([]);
@@ -701,57 +787,27 @@ export default function MarketTablesTab() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Technical Director</Label>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    defaultValue={tdName}
-                    placeholder="Add name"
-                    className="h-9 text-sm flex-1"
-                    onBlur={(e) => {
-                      const v = e.target.value.trim() || null;
-                      const existing = entries[club.id]?.technical_director_name ?? null;
-                      const auto = tdContact?.name ?? null;
-                      if (v === existing) return;
-                      if (!existing && v === auto) return;
-                      persistAndShell(club, "td", v);
-                    }}
-                  />
-                  {renderContactLinks(tdContact)}
-                  <button
-                    type="button"
-                    onClick={() => openEdit(club, "td", tdContact)}
-                    title={tdContact ? "Edit contact" : "Add contact"}
-                    className="text-muted-foreground hover:text-white p-1.5"
-                  >
-                    {tdContact ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  </button>
-                </div>
+                <MarketContactSlot
+                  value={tdName}
+                  contact={tdContact}
+                  placeholder="Add name"
+                  inputClassName="h-9 text-sm flex-1"
+                  links={renderContactLinks(tdContact)}
+                  onConfirm={(v) => persistAndShell(club, "td", v)}
+                  onEdit={() => openEdit(club, "td", tdContact)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Chief Scout</Label>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    defaultValue={csName}
-                    placeholder="Add name"
-                    className="h-9 text-sm flex-1"
-                    onBlur={(e) => {
-                      const v = e.target.value.trim() || null;
-                      const existing = entries[club.id]?.chief_scout_name ?? null;
-                      const auto = csContact?.name ?? null;
-                      if (v === existing) return;
-                      if (!existing && v === auto) return;
-                      persistAndShell(club, "cs", v);
-                    }}
-                  />
-                  {renderContactLinks(csContact)}
-                  <button
-                    type="button"
-                    onClick={() => openEdit(club, "cs", csContact)}
-                    title={csContact ? "Edit contact" : "Add contact"}
-                    className="text-muted-foreground hover:text-white p-1.5"
-                  >
-                    {csContact ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  </button>
-                </div>
+                <MarketContactSlot
+                  value={csName}
+                  contact={csContact}
+                  placeholder="Add name"
+                  inputClassName="h-9 text-sm flex-1"
+                  links={renderContactLinks(csContact)}
+                  onConfirm={(v) => persistAndShell(club, "cs", v)}
+                  onEdit={() => openEdit(club, "cs", csContact)}
+                />
               </div>
               <div className="pt-1 border-t border-border/40">
                 <div className="flex items-center justify-between gap-2">
@@ -864,57 +920,26 @@ export default function MarketTablesTab() {
                     <div className="opacity-80">{club.league ?? ""}</div>
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1">
-                      <Input
-                        defaultValue={tdName}
-                        placeholder="Add name"
-                        className="h-8 text-sm min-w-[160px]"
-                        onBlur={(e) => {
-                          const v = e.target.value.trim() || null;
-                          const existing = entries[club.id]?.technical_director_name ?? null;
-                          const auto = tdContact?.name ?? null;
-                          if (v === existing) return;
-                          // If field still equals auto value and nothing was saved, skip writing.
-                          if (!existing && v === auto) return;
-                          persistAndShell(club, "td", v);
-                        }}
-                      />
-                      {renderContactLinks(tdContact)}
-                      <button
-                        type="button"
-                        onClick={() => openEdit(club, "td", tdContact)}
-                        title={tdContact ? "Edit contact" : "Add contact"}
-                        className="ml-1 text-muted-foreground hover:text-white"
-                      >
-                        {tdContact ? <Pencil className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
+                    <MarketContactSlot
+                      value={tdName}
+                      contact={tdContact}
+                      placeholder="Add name"
+                      inputClassName="h-8 text-sm min-w-[160px]"
+                      links={renderContactLinks(tdContact)}
+                      onConfirm={(v) => persistAndShell(club, "td", v)}
+                      onEdit={() => openEdit(club, "td", tdContact)}
+                    />
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1">
-                      <Input
-                        defaultValue={csName}
-                        placeholder="Add name"
-                        className="h-8 text-sm min-w-[160px]"
-                        onBlur={(e) => {
-                          const v = e.target.value.trim() || null;
-                          const existing = entries[club.id]?.chief_scout_name ?? null;
-                          const auto = csContact?.name ?? null;
-                          if (v === existing) return;
-                          if (!existing && v === auto) return;
-                          persistAndShell(club, "cs", v);
-                        }}
-                      />
-                      {renderContactLinks(csContact)}
-                      <button
-                        type="button"
-                        onClick={() => openEdit(club, "cs", csContact)}
-                        title={csContact ? "Edit contact" : "Add contact"}
-                        className="ml-1 text-muted-foreground hover:text-white"
-                      >
-                        {csContact ? <Pencil className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
+                    <MarketContactSlot
+                      value={csName}
+                      contact={csContact}
+                      placeholder="Add name"
+                      inputClassName="h-8 text-sm min-w-[160px]"
+                      links={renderContactLinks(csContact)}
+                      onConfirm={(v) => persistAndShell(club, "cs", v)}
+                      onEdit={() => openEdit(club, "cs", csContact)}
+                    />
                   </td>
                 </tr>
                 {isOpen && (
