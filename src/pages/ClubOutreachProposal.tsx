@@ -2088,15 +2088,6 @@ function MatchByMatchCard({
     categories[0]?.category ||
     "";
 
-  // Normalise opponent names: lowercase, strip accents and non-alphanumerics
-  // so user-provided ordering tolerates "Plzeň" vs "Plzen" etc.
-  const normaliseOpp = (s: string | null | undefined): string =>
-    (s ?? "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
-
   const sorted = useMemo(() => {
     const base = [...analyses].filter((a) => !excludeAnalysisIds || !excludeAnalysisIds.has(a.id));
     return rankGames(base, gameOrder ?? null);
