@@ -92,6 +92,20 @@ const additionalContactsForClub = (
       if (c.position && TD_RE.test(c.position)) return false;
       if (c.position && CS_RE.test(c.position)) return false;
       if (c.position && /\b(player|agent)\b/i.test(c.position)) return false;
+      // Skip placeholder rows where the contact's name is essentially just the
+      // club name (no real person attached) and there is no role or contact
+      // info to display.
+      const nameNorm = norm(c.name);
+      const clubNorm = norm(clubName);
+      const isNameJustClub =
+        nameNorm.length > 0 &&
+        clubNorm.length > 0 &&
+        (nameNorm === clubNorm || nameNorm.includes(clubNorm) || clubNorm.includes(nameNorm));
+      const hasDetails =
+        (c.position && c.position.trim().length > 0) ||
+        (c.email && c.email.trim().length > 0) ||
+        (c.phone && c.phone.trim().length > 0);
+      if (isNameJustClub && !hasDetails) return false;
       return true;
     })
     .sort((a, b) => {
