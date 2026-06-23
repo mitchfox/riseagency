@@ -28,6 +28,15 @@
       ]
     },
     {
+      "source": "/(representation|request-representation|representacion|representacao|vertretung|rappresentanza|reprezentacja|zastoupeni|predstavitelstvo|temsil|zastupanje|representasjon)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
