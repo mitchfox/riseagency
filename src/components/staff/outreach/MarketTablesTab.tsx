@@ -479,6 +479,46 @@ export default function MarketTablesTab() {
     })();
   }, []);
 
+  // Live-sync market_table_entries so multiple staff editing the table at the
+  // same time see each other's saves immediately instead of overwriting them
+  // with stale local state on their next save.
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-table-entries-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "market_table_entries",
+          filter: `market_table_key=eq.${MARKET_TABLE_KEY}`,
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (!row?.club_id) return;
+          setEntries((prev) => {
+            if (payload.eventType === "DELETE") {
+              const next = { ...prev };
+              delete next[row.club_id];
+              return next;
+            }
+            return {
+              ...prev,
+              [row.club_id]: {
+                club_id: row.club_id,
+                technical_director_name: row.technical_director_name ?? null,
+                chief_scout_name: row.chief_scout_name ?? null,
+              },
+            };
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const countries = useMemo(() => {
     const set = new Set<string>();
     clubs.forEach((c) => c.country && set.add(c.country));
