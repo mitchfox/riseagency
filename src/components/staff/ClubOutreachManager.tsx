@@ -2701,6 +2701,14 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                     </SelectContent>
                   </Select>
                 </div>
+                <MatchByMatchOrderEditor
+                  playerId={selectedPlayerId}
+                  seasons={playerSeasonsForDefaults}
+                  statOrders={playerStatOrders}
+                  setStatOrders={setPlayerStatOrders}
+                  gameOrder={playerGameOrder}
+                  setGameOrder={setPlayerGameOrder}
+                />
                 <div className="flex justify-end">
                   <Button onClick={saveDefaults} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">Save defaults</Button>
                 </div>
