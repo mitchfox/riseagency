@@ -84,6 +84,13 @@ interface PlayerEntry {
   fit_recommendation: string | null;
   situation: string | null;
   sort_order: number;
+  show_form?: boolean | null;
+  show_in_numbers?: boolean | null;
+  show_season_stats?: boolean | null;
+  show_strengths?: boolean | null;
+  season_data_mode?: 'popup' | 'link' | null;
+  key_details?: KeyDetailItem[] | null;
+  section_order?: ProposalSectionKey[] | null;
   stars_url: string | null;
   highlights_url: string | null;
   proof_of_representation_url: string | null;
