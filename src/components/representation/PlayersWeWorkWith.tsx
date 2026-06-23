@@ -13,6 +13,10 @@ interface Props {
   eyebrow?: string;
   title?: string;
   subtitle?: string;
+  /** When true the component renders only the rolling marquee — no
+   *  heading/intro/subtitle. Used when the carousel sits inside a
+   *  parent card that already provides the framing copy. */
+  bare?: boolean;
 }
 
 /**
@@ -23,8 +27,9 @@ interface Props {
  */
 export const PlayersWeWorkWith = ({
   eyebrow = "Our Players",
-  title = "Who We Work With",
-  subtitle = "A small group of players we genuinely believe can reach the very top — and back all the way.",
+  title = "Who we've worked with",
+  subtitle = "A small group of players we genuinely believe can reach the very top, and back all the way.",
+  bare = false,
 }: Props) => {
   const [players, setPlayers] = useState<RepPlayer[]>([]);
   const [visible, setVisible] = useState(false);
@@ -67,7 +72,8 @@ export const PlayersWeWorkWith = ({
   const loop = players.length > 0 ? [...players, ...players] : [];
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-10 md:py-14">
+    <section ref={sectionRef} className={`relative overflow-hidden ${bare ? "py-2" : "py-10 md:py-14"}`}>
+      {!bare && (
       <div className="mx-auto max-w-4xl px-4 text-center mb-6 md:mb-8">
         <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
           {eyebrow}
@@ -79,26 +85,13 @@ export const PlayersWeWorkWith = ({
           {subtitle}
         </p>
       </div>
+      )}
 
       <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent md:w-32" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent md:w-32" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-black to-transparent md:w-20" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black to-transparent md:w-20" />
 
         <div className="flex w-max animate-marquee gap-4 md:gap-6 items-stretch">
-          {/* Intro card — sits in the marquee loop so it cycles past with the players */}
-          {[0, 1].map((dup) => (
-            <aside
-              key={`intro-${dup}`}
-              className="flex w-[260px] shrink-0 flex-col justify-center rounded-2xl border border-primary/40 bg-card/60 px-5 py-5 shadow-[0_0_24px_hsl(var(--gold)/0.18)] md:w-[320px]"
-            >
-              <p className="font-bebas text-[10px] uppercase tracking-[0.32em] text-primary md:text-[11px]">
-                Performance Specialists
-              </p>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85 md:text-[13.5px]">
-                We work with a select group of players through Fuel For Football, our performance programme built around the very best — sharpening their game, protecting their bodies and backing every step of the journey.
-              </p>
-            </aside>
-          ))}
           {loop.map((p, i) => (
             <figure
               key={`${p.id}-${i}`}
