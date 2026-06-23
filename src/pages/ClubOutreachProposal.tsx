@@ -6,6 +6,7 @@ import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPla
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
 import { supabase } from "@/integrations/supabase/client";
 import { ClippedActionsPlayer } from "@/components/ClippedActionsPlayer";
+import { toast } from "sonner";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
