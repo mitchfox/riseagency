@@ -130,6 +130,7 @@ export default function MarketTablesTab() {
   const [savingContact, setSavingContact] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [addingToNetwork, setAddingToNetwork] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
