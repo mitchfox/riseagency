@@ -2558,6 +2558,11 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
                   <Input className="mt-1.5" placeholder="Paste the highlights URL" value={defaults.highlights_url} onChange={(e) => setDefaults(d => ({ ...d, highlights_url: e.target.value }))} />
                 </div>
                 <div>
+                  <Label className="flex items-center gap-2"><ExternalLink className="h-3.5 w-3.5" /> Transfermarkt profile URL</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">Shown as a small Transfermarkt button next to Key Details on this player's proposal.</p>
+                  <Input className="mt-1.5" placeholder="https://www.transfermarkt.com/..." value={defaults.transfermarkt_url} onChange={(e) => setDefaults(d => ({ ...d, transfermarkt_url: e.target.value }))} />
+                </div>
+                <div>
                   <Label className="flex items-center gap-2"><FileEdit className="h-3.5 w-3.5" /> Default fit / recommendation (single-player only)</Label>
                   <p className="text-[11px] text-muted-foreground mt-1">Used when this player is the only one on an outreach. If two or more players are attached, the general default applies instead.</p>
                   <Textarea rows={4} className="mt-1.5" value={playerDefaultFit} onChange={(e) => setPlayerDefaultFit(e.target.value)} placeholder="Tailored fit note for this player when sent solo to a club." />
