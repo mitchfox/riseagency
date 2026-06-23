@@ -178,6 +178,11 @@ const STAFF_BASE_ROLES = ['admin', 'staff', 'marketeer'] as const;
 const DEFAULT_STAFF_SECTION = 'cluboutreach';
 const STALE_STAFF_DEFAULTS = new Set(['teamperformance', 'overview', 'dashboard']);
 
+const normaliseOpeningStaffSection = (section: string | null | undefined) => {
+  if (!section) return DEFAULT_STAFF_SECTION;
+  return STALE_STAFF_DEFAULTS.has(section) ? DEFAULT_STAFF_SECTION : section;
+};
+
 const getPrimaryStaffRole = (roles: string[]) => {
   if (roles.includes('admin')) return 'admin';
 
@@ -222,6 +227,7 @@ const Staff = () => {
   }, [isDay]);
   const logoPressTimerRef = useRef<number | null>(null);
   const logoLongPressFiredRef = useRef(false);
+  const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
   
   // Role permissions from database
@@ -355,6 +361,34 @@ const Staff = () => {
     setSearchParams(nextParams, options);
   };
 
+  useEffect(() => {
+    // Staff must open on Club Outreach every fresh load. Old local state and old
+    // links kept forcing Team Performance back in before auth finished resolving.
+    try {
+      const rawSection = new URLSearchParams(window.location.search).get('section');
+      const openingSection = normaliseOpeningStaffSection(rawSection);
+      if (rawSection !== openingSection) {
+        const nextParams = createStaffSearchParams({ section: openingSection });
+        setSearchParams(nextParams, { replace: true });
+      }
+
+      const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      const cleanedTabs = savedTabs.filter((tab) => !STALE_STAFF_DEFAULTS.has(tab));
+      if (cleanedTabs[0] !== DEFAULT_STAFF_SECTION) {
+        localStorage.setItem('staff_open_tabs', JSON.stringify([DEFAULT_STAFF_SECTION, ...cleanedTabs.filter((tab) => tab !== DEFAULT_STAFF_SECTION)].slice(0, 12)));
+        setTabsVersion(v => v + 1);
+      }
+      if (STALE_STAFF_DEFAULTS.has(localStorage.getItem('staff_active_tab') || '')) {
+        localStorage.setItem('staff_active_tab', DEFAULT_STAFF_SECTION);
+      }
+      if (STALE_STAFF_DEFAULTS.has(localStorage.getItem('staff_active_tab_prev') || '')) {
+        localStorage.setItem('staff_active_tab_prev', DEFAULT_STAFF_SECTION);
+      }
+    } catch {}
+  // Run once only, before staff auth effects can restore stale tabs.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Restore tabs and active section from localStorage / URL on mount
   useEffect(() => {
     if (!isStaff) return;
@@ -362,7 +396,7 @@ const Staff = () => {
     // The user has repeatedly asked that Club Outreach is the opening section.
     // Stale links / localStorage values keep forcing teamperformance/overview,
     // so on initial mount we ignore those two and fall through to the default.
-    const urlSection = rawUrlSection && !STALE_STAFF_DEFAULTS.has(rawUrlSection)
+    const urlSection = initialStaffSectionResolvedRef.current && rawUrlSection && !STALE_STAFF_DEFAULTS.has(rawUrlSection)
       ? rawUrlSection
       : null;
     const isTrustedNetworkRole = !!currentRole && /trusted[_\s-]?network/i.test(currentRole);
@@ -407,8 +441,16 @@ const Staff = () => {
       : defaultSection;
     // Validate that the role can actually view this section
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
+    initialStaffSectionResolvedRef.current = true;
     setExpandedSection(finalSection as any);
     setStaffSectionParams({ section: finalSection }, { replace: true });
+    try {
+      localStorage.setItem('staff_active_tab', finalSection);
+      const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
+      const cleanedTabs = savedTabs.filter((tab) => !STALE_STAFF_DEFAULTS.has(tab) && tab !== finalSection);
+      localStorage.setItem('staff_open_tabs', JSON.stringify([finalSection, ...cleanedTabs].slice(0, 12)));
+      setTabsVersion(v => v + 1);
+    } catch {}
 
     // Expand parent category
     const cats = buildCategories();
