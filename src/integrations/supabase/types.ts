@@ -1102,9 +1102,18 @@ export type Database = {
           created_at: string
           fit_recommendation: string | null
           id: string
+          key_details: Json | null
           link_id: string
           player_id: string
           position_slot: string | null
+          season_data_mode: string | null
+          season_id: string | null
+          section_order: Json | null
+          selected_video_ids: string[]
+          show_form: boolean | null
+          show_in_numbers: boolean | null
+          show_season_stats: boolean | null
+          show_strengths: boolean | null
           situation: string | null
           sort_order: number
           updated_at: string
@@ -1113,9 +1122,18 @@ export type Database = {
           created_at?: string
           fit_recommendation?: string | null
           id?: string
+          key_details?: Json | null
           link_id: string
           player_id: string
           position_slot?: string | null
+          season_data_mode?: string | null
+          season_id?: string | null
+          section_order?: Json | null
+          selected_video_ids?: string[]
+          show_form?: boolean | null
+          show_in_numbers?: boolean | null
+          show_season_stats?: boolean | null
+          show_strengths?: boolean | null
           situation?: string | null
           sort_order?: number
           updated_at?: string
@@ -1124,9 +1142,18 @@ export type Database = {
           created_at?: string
           fit_recommendation?: string | null
           id?: string
+          key_details?: Json | null
           link_id?: string
           player_id?: string
           position_slot?: string | null
+          season_data_mode?: string | null
+          season_id?: string | null
+          section_order?: Json | null
+          selected_video_ids?: string[]
+          show_form?: boolean | null
+          show_in_numbers?: boolean | null
+          show_season_stats?: boolean | null
+          show_strengths?: boolean | null
           situation?: string | null
           sort_order?: number
           updated_at?: string
@@ -1137,6 +1164,13 @@ export type Database = {
             columns: ["link_id"]
             isOneToOne: false
             referencedRelation: "club_outreach_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_outreach_link_players_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "player_seasons"
             referencedColumns: ["id"]
           },
         ]
