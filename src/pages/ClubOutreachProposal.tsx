@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft } from "lucide-react";
+import { Loader2, Video, FileBadge2, ExternalLink, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize2, ArrowLeft, X as XIcon, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMetricCategoriesForPosition } from "@/components/staff/ComparisonPlayerData";
 import { useFormGradeConfigs, normalizeStatKey } from "@/hooks/useFormGradeConfigs";
