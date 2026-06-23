@@ -113,7 +113,7 @@ const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}
 
 type ContactEditState = {
   club: ClubRow;
-  role: "td" | "cs";
+  role: "td" | "cs" | "extra";
   existing: ContactRow | null;
   draft: { name: string; position: string; email: string; phone: string };
 };
@@ -323,6 +323,20 @@ export default function MarketTablesTab() {
     });
   };
 
+  const openExtraEdit = (club: ClubRow, existing: ContactRow | null) => {
+    setEditing({
+      club,
+      role: "extra",
+      existing,
+      draft: {
+        name: existing?.name ?? "",
+        position: existing?.position ?? "",
+        email: existing?.email ?? "",
+        phone: existing?.phone ?? "",
+      },
+    });
+  };
+
   const saveContact = async () => {
     if (!editing) return;
     const { club, role, existing, draft } = editing;
@@ -347,10 +361,12 @@ export default function MarketTablesTab() {
       setSavingContact(false);
       return;
     }
-    // Also persist the name into the market table entry so it sticks.
-    await persist(club.id, role === "td"
-      ? { technical_director_name: payload.name }
-      : { chief_scout_name: payload.name });
+    // For TD / Chief Scout slots, also persist the name into the market table entry so it sticks.
+    if (role === "td") {
+      await persist(club.id, { technical_director_name: payload.name });
+    } else if (role === "cs") {
+      await persist(club.id, { chief_scout_name: payload.name });
+    }
     toast.success(existing ? "Contact updated" : "Contact added");
     setSavingContact(false);
     setEditing(null);
@@ -533,30 +549,49 @@ export default function MarketTablesTab() {
                   </button>
                 </div>
               </div>
-              {extras.length > 0 && (
-                <div className="pt-1 border-t border-border/40">
+              <div className="pt-1 border-t border-border/40">
+                <div className="flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => toggleExpanded(club.id)}
                     className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-white"
                   >
                     <Users className="h-3 w-3" />
-                    {extras.length} more contact{extras.length === 1 ? "" : "s"}
+                    {extras.length} additional contact{extras.length === 1 ? "" : "s"}
                     <ChevronRight className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                   </button>
-                  {isOpen && (
+                  <button
+                    type="button"
+                    onClick={() => openExtraEdit(club, null)}
+                    className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                  >
+                    <UserPlus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+                {isOpen && (
+                  extras.length === 0 ? (
+                    <p className="mt-2 text-[11px] text-muted-foreground">No additional contacts in the network for this club.</p>
+                  ) : (
                     <ul className="mt-2 space-y-1.5">
                       {extras.map((c) => (
                         <li key={c.id} className="flex items-center gap-2 text-xs flex-wrap">
                           <span className="text-white">{c.name}</span>
                           {c.position && <span className="text-muted-foreground">· {c.position}</span>}
                           {renderContactLinks(c)}
+                          <button
+                            type="button"
+                            onClick={() => openExtraEdit(club, c)}
+                            title="Edit contact"
+                            className="ml-auto text-muted-foreground hover:text-white"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           );
         })}
@@ -682,13 +717,22 @@ export default function MarketTablesTab() {
                   <tr className="border-t border-border/40 bg-muted/10">
                     <td />
                     <td colSpan={4} className="px-3 py-3">
-                      {extras.length === 0 ? (
-                        <div className="text-xs text-muted-foreground">No additional contacts in the network for this club.</div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
                             Additional contacts
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => openExtraEdit(club, null)}
+                            className="inline-flex items-center gap-1 text-[11px] text-[#cbb96b] hover:text-white"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" /> Add additional contact
+                          </button>
+                        </div>
+                        {extras.length === 0 ? (
+                          <div className="text-xs text-muted-foreground">No additional contacts in the network for this club.</div>
+                        ) : (
                           <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
                             {extras.map((c) => (
                               <li key={c.id} className="flex items-center gap-2 text-xs">
@@ -697,11 +741,19 @@ export default function MarketTablesTab() {
                                   <span className="text-muted-foreground">· {c.position}</span>
                                 )}
                                 {renderContactLinks(c)}
+                                <button
+                                  type="button"
+                                  onClick={() => openExtraEdit(club, c)}
+                                  title="Edit contact"
+                                  className="ml-auto text-muted-foreground hover:text-white"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </button>
                               </li>
                             ))}
                           </ul>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
