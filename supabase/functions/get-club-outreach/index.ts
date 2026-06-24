@@ -232,6 +232,83 @@ Deno.serve(async (req) => {
       (defaultsRows ?? []).map((d: any) => [d.player_id, d])
     );
 
+    // Resolve a Key Club Contact per attached player based on each player's
+    // own current club, so multi-player proposals don't show the first
+    // player's club contact next to the others.
+    const perPlayerContactByPlayerId = new Map<string, any>();
+    {
+      const playerClubNames = Array.from(new Set(
+        (playerRows ?? [])
+          .map((p: any) => (p?.club ?? "").toString().trim())
+          .filter(Boolean)
+      ));
+      const clubIdByLowerName = new Map<string, string>();
+      if (playerClubNames.length > 0) {
+        const { data: clubMatches } = await supabase
+          .from("club_map_positions")
+          .select("id, club_name")
+          .in("club_name", playerClubNames);
+        (clubMatches ?? []).forEach((c: any) => {
+          if (c?.club_name) clubIdByLowerName.set(String(c.club_name).toLowerCase().trim(), c.id);
+        });
+        // Fallback: case-insensitive ilike for any names not matched above
+        for (const name of playerClubNames) {
+          if (clubIdByLowerName.has(name.toLowerCase())) continue;
+          const { data: m } = await supabase
+            .from("club_map_positions")
+            .select("id, club_name")
+            .ilike("club_name", name)
+            .limit(1)
+            .maybeSingle();
+          if (m?.id) clubIdByLowerName.set(name.toLowerCase(), m.id);
+        }
+      }
+      const contactClubIds = Array.from(new Set(Array.from(clubIdByLowerName.values())));
+      const contactByClubId = new Map<string, any>();
+      if (contactClubIds.length > 0) {
+        const { data: contacts } = await supabase
+          .from("club_outreach_club_contacts")
+          .select("club_id, contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, transfermarkt_url")
+          .in("club_id", contactClubIds);
+        (contacts ?? []).forEach((c: any) => {
+          if (c?.club_id && !contactByClubId.has(c.club_id)) contactByClubId.set(c.club_id, c);
+        });
+      }
+      // Resolve each contact's own club display info
+      const ownClubIds = Array.from(new Set(
+        Array.from(contactByClubId.values())
+          .map((c: any) => c?.contact_club_id)
+          .filter(Boolean)
+      ));
+      const ownClubById = new Map<string, any>();
+      if (ownClubIds.length > 0) {
+        const { data: ownClubs } = await supabase
+          .from("club_map_positions")
+          .select("id, club_name, image_url, country")
+          .in("id", ownClubIds);
+        (ownClubs ?? []).forEach((c: any) => ownClubById.set(c.id, c));
+      }
+      (playerRows ?? []).forEach((p: any) => {
+        const key = (p?.club ?? "").toString().toLowerCase().trim();
+        const clubId = key ? clubIdByLowerName.get(key) : null;
+        const c = clubId ? contactByClubId.get(clubId) : null;
+        if (c) {
+          const ownClub = c.contact_club_id ? ownClubById.get(c.contact_club_id) : null;
+          perPlayerContactByPlayerId.set(p.id, {
+            contact_name: c.contact_name ?? null,
+            contact_role: c.contact_role ?? null,
+            contact_phone: c.contact_phone ?? null,
+            contact_accent: c.contact_accent ?? null,
+            contact_image_url: c.contact_image_url ?? null,
+            contact_club_id: c.contact_club_id ?? null,
+            transfermarkt_url: c.transfermarkt_url ?? null,
+            contact_club_name: ownClub?.club_name ?? null,
+            contact_club_logo_url: ownClub?.image_url ?? null,
+          });
+        }
+      });
+    }
+
     // Form configs + recent analyses for the optional Form banner. Season
     // windows are now resolved per player attached to the outreach.
     const seasonBoundsCache = new Map<string, Promise<{ start: string | null; end: string | null }>>();
@@ -520,6 +597,7 @@ Deno.serve(async (req) => {
           form_analyses: recentAnalyses,
           match_by_match: matchByMatchWithLogos,
           match_by_match_default_category: defaultMbmCategory,
+          club_contact: perPlayerContactByPlayerId.get(e.player_id) ?? null,
         };
       })
     );
