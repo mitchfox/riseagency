@@ -414,17 +414,26 @@ Deno.serve(async (req) => {
           starsOrderedVideos = [];
         }
         // Filter by this outreach player's selected_video_ids, falling back to
-        // the legacy link-level selection for old links.
-        const selectedIds: string[] = Array.isArray((e as any).selected_video_ids) && (e as any).selected_video_ids.length > 0
-          ? (e as any).selected_video_ids
-          : Array.isArray((link as any).selected_video_ids)
-          ? (link as any).selected_video_ids
-          : [];
+        // the legacy link-level selection for old links, then to the player's
+        // saved per-player default selection on club_outreach_player_defaults
+        // so a default chosen for "this player" applies to every outreach.
+        const entrySel = Array.isArray((e as any).selected_video_ids) ? (e as any).selected_video_ids : [];
+        const linkSel = Array.isArray((link as any).selected_video_ids) ? (link as any).selected_video_ids : [];
+        const defaultSel = Array.isArray((d as any)?.default_selected_video_ids) ? (d as any).default_selected_video_ids : [];
+        const selectedIds: string[] = entrySel.length > 0
+          ? entrySel
+          : linkSel.length > 0
+          ? linkSel
+          : defaultSel;
         let videos = allVideos;
+        let videosExplicitlySelected = false;
         if (selectedIds.length > 0) {
           const set = new Set(selectedIds);
           const filtered = allVideos.filter((v) => set.has(v.id));
-          if (filtered.length > 0) videos = filtered;
+          if (filtered.length > 0) {
+            videos = filtered;
+            videosExplicitlySelected = true;
+          }
         }
         firstHighlightUrl = videos[0]?.videoUrl ?? null;
         try {
@@ -491,6 +500,7 @@ Deno.serve(async (req) => {
           videos,
           all_videos: allVideos,
           stars_ordered_videos: starsOrderedVideos,
+          videos_explicitly_selected: videosExplicitlySelected,
           transfermarkt_url: (d as any)?.transfermarkt_url ?? null,
           match_by_match_stat_orders: (d as any)?.match_by_match_stat_orders ?? null,
           match_by_match_game_order: (d as any)?.match_by_match_game_order ?? null,
