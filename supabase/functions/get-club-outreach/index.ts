@@ -384,11 +384,14 @@ Deno.serve(async (req) => {
           if (typeof h === "string") h = JSON.parse(h);
           let pool: any[] = [];
           let starsPool: any[] = [];
+          // Only ever surface matchHighlights — those are the videos that
+          // appear on the player's public Stars profile. bestClips are an
+          // internal pool and must never leak into outreach proposals.
           if (Array.isArray(h)) {
             pool = h;
             starsPool = h;
           } else if (h && typeof h === "object") {
-            pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+            pool = [...(h.matchHighlights ?? [])];
             starsPool = [...(h.matchHighlights ?? [])];
           }
           allVideos = pool
