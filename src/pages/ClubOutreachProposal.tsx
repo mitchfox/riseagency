@@ -1387,11 +1387,10 @@ export default function ClubOutreachProposal() {
           </a>
         )}
         {data.link.target_type !== 'agent' && (() => {
-          // Build a per-player list of Key Club Contacts so multi-player
-          // proposals show each player's own club contact instead of
-          // inheriting the first attached player's. Dedupe by phone||name.
+          // Show ONLY the currently displayed player's club contact. In a
+          // multi-player proposal the bottom CTA sits inside that player's
+          // section, so other players' club contacts must not appear here.
           type ContactItem = {
-            firstName: string;
             name: string;
             role: string | null;
             phone: string;
@@ -1399,54 +1398,43 @@ export default function ClubOutreachProposal() {
             image: string | null;
             clubName: string | null;
           };
-          const items: ContactItem[] = [];
-          const seen = new Set<string>();
-          data.players.forEach((entry) => {
-            const cc = entry.club_contact;
-            const name = cc?.contact_name ?? null;
-            const phoneRaw = cc?.contact_phone ?? null;
-            if (!name || !phoneRaw) return;
-            const phone = phoneRaw.replace(/[^0-9]/g, "");
-            if (!phone) return;
-            const key = `${phone}|${name.toLowerCase()}`;
-            if (seen.has(key)) return;
-            seen.add(key);
-            items.push({
-              firstName: (entry.player?.name ?? "").trim().split(/\s+/)[0] || "",
-              name,
-              role: cc?.contact_role ?? null,
-              phone,
-              accent: cc?.contact_accent ?? null,
-              image: cc?.contact_image_url ?? null,
-              clubName: cc?.contact_club_name ?? null,
-            });
-          });
-          // Fall back to the link-level contact when no per-player contact
-          // resolved (legacy proposals).
-          if (items.length === 0 && clubWaUrl && clubContactName) {
-            items.push({
-              firstName: "",
+          const cc = current?.club_contact ?? null;
+          let item: ContactItem | null = null;
+          if (cc?.contact_name && cc?.contact_phone) {
+            const phone = cc.contact_phone.replace(/[^0-9]/g, "");
+            if (phone) {
+              item = {
+                name: cc.contact_name,
+                role: cc.contact_role ?? null,
+                phone,
+                accent: cc.contact_accent ?? null,
+                image: cc.contact_image_url ?? null,
+                clubName: cc.contact_club_name ?? null,
+              };
+            }
+          }
+          // Legacy fallback: only when the active player has no resolved
+          // contact AND this is a single-player proposal, fall back to the
+          // link-level contact fields.
+          if (!item && data.players.length === 1 && clubWaUrl && clubContactName) {
+            item = {
               name: clubContactName,
               role: clubContactRole,
               phone: clubPhone,
               accent: clubContactAccent,
               image: clubContactImage,
               clubName: clubContactClubName,
-            });
+            };
           }
-          if (items.length === 0) return null;
-          const showFirstName = items.length > 1;
-          return items.map((it) => {
+          if (!item) return null;
+          return [item].map((it) => {
             const href = `https://wa.me/${it.phone}`;
             const accent = it.accent;
             const useAccent = !!accent && /^#?[0-9a-fA-F]{3,6}$/.test(accent);
             const bg = useAccent ? (accent!.startsWith("#") ? accent! : `#${accent}`) : null;
             const fg = bg ? readableTextOn(bg) : "#fff";
             const subOpacity = fg === "#000" ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
-            const labelBase = tr("contact.waClubContact", "WhatsApp Key Club Contact");
-            const label = showFirstName && it.firstName
-              ? labelBase.replace("WhatsApp ", `WhatsApp ${it.firstName}'s `).replace("Key Club Contact", "Key Club Contact")
-              : labelBase;
+            const label = tr("contact.waClubContact", "WhatsApp Key Club Contact");
             return (
               <a
                 key={`${it.phone}-${it.name}`}
