@@ -2804,9 +2804,10 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
         .maybeSingle();
       let h: any = (playerRow as any)?.highlights ?? null;
       try { if (typeof h === "string") h = JSON.parse(h); } catch (_) { h = null; }
+      // Only matchHighlights — same set rendered on the Stars profile.
       let pool: any[] = [];
       if (Array.isArray(h)) pool = h;
-      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? [])];
       setPlayerDefaultVideos(pool
         .filter((x: any) => x && (x.videoUrl || x.video_url))
         .map((x: any) => ({ id: String(x.id ?? x.videoUrl ?? x.video_url), name: String(x.name ?? "Highlight") })));
