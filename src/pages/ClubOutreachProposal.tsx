@@ -126,6 +126,17 @@ interface PlayerEntry {
   match_by_match_default_category?: string | null;
 }
 
+interface PlayerClubContact {
+  contact_name: string | null;
+  contact_role: string | null;
+  contact_phone: string | null;
+  contact_accent: string | null;
+  contact_image_url: string | null;
+  contact_club_name?: string | null;
+  contact_club_logo_url?: string | null;
+  transfermarkt_url?: string | null;
+}
+
 interface Payload {
   link: {
     id: string;
