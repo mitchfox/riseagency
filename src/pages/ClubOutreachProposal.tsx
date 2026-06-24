@@ -125,6 +125,7 @@ interface PlayerEntry {
   }> | null;
   match_by_match_default_category?: string | null;
 }
+// (PlayerClubContact defined above)
 
 interface PlayerClubContact {
   contact_name: string | null;
