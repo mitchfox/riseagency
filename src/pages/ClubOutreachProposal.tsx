@@ -101,6 +101,7 @@ interface PlayerEntry {
   videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   all_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
   stars_ordered_videos?: { id: string; name: string; videoUrl: string; logoUrl: string | null; venue?: string | null }[];
+  videos_explicitly_selected?: boolean;
   transfermarkt_url?: string | null;
   match_by_match_stat_orders?: Record<string, string[]> | null;
   match_by_match_game_order?: string[] | null;
@@ -604,6 +605,10 @@ export default function ClubOutreachProposal() {
             // in saved order) so the inline carousel mirrors what the player's
             // public Stars profile shows. Fall back to all_videos for older
             // payloads.
+            // If staff have explicitly picked a video selection for this
+            // player, treat that as the full set — don't surface the rest as
+            // "more videos".
+            if (current?.videos_explicitly_selected) return null;
             const allV = current?.stars_ordered_videos ?? current?.all_videos ?? current?.videos ?? [];
             const shownSet = new Set(
               (current?.videos ?? [])
