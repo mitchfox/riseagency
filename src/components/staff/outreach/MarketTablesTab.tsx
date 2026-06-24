@@ -7,6 +7,8 @@ import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Use
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
+import { Plus } from "lucide-react";
 
 interface ClubRow {
   id: string;
@@ -332,6 +334,7 @@ export default function MarketTablesTab() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
+  const [addTeamOpen, setAddTeamOpen] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -895,6 +898,15 @@ export default function MarketTablesTab() {
               {leagues.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="sm:w-auto h-9 gap-1.5"
+            onClick={() => setAddTeamOpen(true)}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add team
+          </Button>
         </div>
       </div>
 
