@@ -124,6 +124,7 @@ interface PlayerEntry {
     has_clips?: boolean | null;
   }> | null;
   match_by_match_default_category?: string | null;
+  club_contact?: PlayerClubContact | null;
 }
 
 interface PlayerClubContact {
