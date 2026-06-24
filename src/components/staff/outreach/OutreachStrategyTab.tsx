@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ChevronRight, ChevronDown, Search, Wand2, Save, Plus, X, Check } from "lucide-react";
+import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; league: string | null; league_level: string | null; image_url: string | null; }
@@ -60,6 +61,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const [expandedStrategyId, setExpandedStrategyId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [addClubQuery, setAddClubQuery] = useState<Record<string, string>>({});
+  const [addTeamOpen, setAddTeamOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -634,6 +636,15 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
               className="pl-8 h-9"
             />
           </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 w-full sm:w-auto"
+            onClick={() => setAddTeamOpen(true)}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add team
+          </Button>
 
           <div className="max-h-[20rem] sm:max-h-[28rem] overflow-y-auto border border-border rounded-md bg-background/40">
             {tree.length === 0 && (
@@ -729,6 +740,30 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         </div>
       </div>
       )}
+      <AddTeamDialog
+        open={addTeamOpen}
+        onOpenChange={setAddTeamOpen}
+        defaultCountry={filterCountry || null}
+        defaultLeague={filterLeague || filterLeagueLevel || null}
+        onCreated={(team: AddedTeam) => {
+          setClubs((prev) => [
+            ...prev,
+            {
+              id: team.id,
+              club_name: team.club_name,
+              country: team.country,
+              league: team.league,
+              league_level: team.league_level,
+              image_url: team.image_url,
+            } as ClubLite,
+          ].sort((a, b) => a.club_name.localeCompare(b.club_name)));
+          setSelectedClubIds((prev) => {
+            const n = new Set(prev);
+            n.add(team.id);
+            return n;
+          });
+        }}
+      />
     </div>
   );
 }

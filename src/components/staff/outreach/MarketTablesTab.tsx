@@ -7,6 +7,8 @@ import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Use
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
+import { Plus } from "lucide-react";
 
 interface ClubRow {
   id: string;
@@ -332,6 +334,7 @@ export default function MarketTablesTab() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
+  const [addTeamOpen, setAddTeamOpen] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -895,6 +898,15 @@ export default function MarketTablesTab() {
               {leagues.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="sm:w-auto h-9 gap-1.5"
+            onClick={() => setAddTeamOpen(true)}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add team
+          </Button>
         </div>
       </div>
 
@@ -1237,6 +1249,44 @@ export default function MarketTablesTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AddTeamDialog
+        open={addTeamOpen}
+        onOpenChange={setAddTeamOpen}
+        defaultCountry={country !== "all" ? country : null}
+        defaultLeague={league !== "all" ? league : null}
+        onCreated={async (team: AddedTeam) => {
+          // Insert a market_table_entries row so the new club shows up on this
+          // table immediately, then push the enriched row into local state.
+          try {
+            await (supabase as any)
+              .from("market_table_entries")
+              .upsert(
+                {
+                  market_table_key: MARKET_TABLE_KEY,
+                  club_id: team.id,
+                  technical_director_name: null,
+                  chief_scout_name: null,
+                },
+                { onConflict: "market_table_key,club_id" },
+              );
+          } catch (_) { /* ignore — club still gets added to the local list */ }
+          setClubs((prev) => [
+            ...prev,
+            {
+              id: team.id,
+              club_name: team.club_name,
+              country: team.country,
+              league: team.league ?? team.league_level ?? null,
+              league_level: team.league_level,
+              image_url: team.image_url,
+            } as ClubRow,
+          ].sort((a, b) => {
+            const c = (a.country ?? "").localeCompare(b.country ?? "");
+            if (c !== 0) return c;
+            return a.club_name.localeCompare(b.club_name);
+          }));
+        }}
+      />
     </div>
   );
 }
