@@ -1150,9 +1150,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       }
       let h: any = (data as any)?.highlights ?? null;
       try { if (typeof h === "string") h = JSON.parse(h); } catch (_) { h = null; }
+      // Mirror the player's public Stars profile, which renders ONLY
+      // matchHighlights (not bestClips). Staff pick from the same set.
       let pool: any[] = [];
       if (Array.isArray(h)) pool = h;
-      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? []), ...(h.bestClips ?? [])];
+      else if (h && typeof h === "object") pool = [...(h.matchHighlights ?? [])];
       const list = pool
         .filter((x: any) => x && (x.videoUrl || x.video_url))
         .map((x: any) => ({
