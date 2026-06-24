@@ -597,6 +597,7 @@ Deno.serve(async (req) => {
           form_analyses: recentAnalyses,
           match_by_match: matchByMatchWithLogos,
           match_by_match_default_category: defaultMbmCategory,
+          club_contact: perPlayerContactByPlayerId.get(e.player_id) ?? null,
         };
       })
     );
