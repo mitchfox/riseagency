@@ -1150,6 +1150,15 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
+              <Button
+                onClick={exportCurrentTable}
+                disabled={isExporting || loading}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isExporting ? 'Exporting…' : 'Export CSV'}
+              </Button>
               {!isAdmin && (
                 <div className="text-sm text-muted-foreground">View Only</div>
               )}
