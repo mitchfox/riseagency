@@ -1028,6 +1028,74 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
     }
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportCurrentTable = async () => {
+    setIsExporting(true);
+    try {
+      const tableName = activeTab === 'coaching_concepts' ? 'coaching_analysis' : activeTab;
+      let query: any = supabase.from(tableName as any).select('*');
+
+      if (activeTab === 'coaching_exercises') {
+        if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
+        if (selectedMuscleGroup !== 'all') query = query.contains('tags', [selectedMuscleGroup]);
+      } else if (activeTab === 'coaching_drills') {
+        if (selectedPosition !== 'all') query = query.contains('tags', [selectedPosition]);
+        if (selectedSkill !== 'all') query = query.contains('tags', [selectedSkill]);
+      } else if (activeTab === 'r90_ratings') {
+        if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
+      } else if (activeTab === 'coaching_analysis') {
+        query = query.or('analysis_type.is.null,analysis_type.neq.concept');
+        if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
+      } else if (activeTab === 'coaching_concepts') {
+        query = query.eq('analysis_type', 'concept');
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      if (rows.length === 0) {
+        toast.message('Nothing to export');
+        return;
+      }
+
+      const headerSet = new Set<string>();
+      rows.forEach((row) => {
+        Object.keys(row || {}).forEach((k) => headerSet.add(k));
+      });
+      const headers: string[] = Array.from(headerSet);
+
+      const escape = (val: any) => {
+        if (val == null) return '';
+        const str = typeof val === 'object' ? JSON.stringify(val) : String(val);
+        if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+        return str;
+      };
+
+      const csv = [
+        headers.join(','),
+        ...rows.map((row) => headers.map((h) => escape(row[h])).join(',')),
+      ].join('\n');
+
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `${activeTab}-${stamp}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rows.length} row${rows.length === 1 ? '' : 's'}`);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      toast.error('Failed to export: ' + (err?.message || 'unknown error'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1082,6 +1150,15 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
             ) : (
               <>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-end gap-4">
+              <Button
+                onClick={exportCurrentTable}
+                disabled={isExporting || loading}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isExporting ? 'Exporting…' : 'Export CSV'}
+              </Button>
               {!isAdmin && (
                 <div className="text-sm text-muted-foreground">View Only</div>
               )}
