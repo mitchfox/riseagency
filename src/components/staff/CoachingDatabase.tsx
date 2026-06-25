@@ -1059,12 +1059,11 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
         return;
       }
 
-      const headers = Array.from(
-        rows.reduce((set: Set<string>, row) => {
-          Object.keys(row || {}).forEach((k) => set.add(k));
-          return set;
-        }, new Set<string>())
-      );
+      const headerSet = new Set<string>();
+      rows.forEach((row) => {
+        Object.keys(row || {}).forEach((k) => headerSet.add(k));
+      });
+      const headers: string[] = Array.from(headerSet);
 
       const escape = (val: any) => {
         if (val == null) return '';
