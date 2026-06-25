@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft, Files } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -309,6 +309,43 @@ export default function ClubOutreachManager() {
     const { error } = await supabase.from("club_outreach_links").update({ archived_at: new Date().toISOString() }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Archived");
+    load();
+  };
+
+  const duplicate = async (id: string) => {
+    const { data: src, error: e1 } = await supabase
+      .from("club_outreach_links")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (e1 || !src) return toast.error(e1?.message || "Source not found");
+    const { id: _id, short_id: _sid, created_at: _c, updated_at: _u, created_by: _cb, ...rest } = src as any;
+    const newShort = makeShortId();
+    const { data: inserted, error: e2 } = await (supabase as any)
+      .from("club_outreach_links")
+      .insert({
+        ...rest,
+        short_id: newShort,
+        archived_at: null,
+        status: "draft",
+        is_pending_strategy_draft: false,
+      })
+      .select("id")
+      .single();
+    if (e2 || !inserted) return toast.error(e2?.message || "Duplicate failed");
+    const { data: lps } = await supabase
+      .from("club_outreach_link_players")
+      .select("*")
+      .eq("link_id", id);
+    if (lps && lps.length) {
+      const newRows = lps.map(({ id: _i, link_id: _l, created_at: _c2, updated_at: _u2, ...r }: any) => ({
+        ...r,
+        link_id: inserted.id,
+      }));
+      const { error: e3 } = await (supabase as any).from("club_outreach_link_players").insert(newRows);
+      if (e3) return toast.error(e3.message);
+    }
+    toast.success("Duplicated as draft");
     load();
   };
 
