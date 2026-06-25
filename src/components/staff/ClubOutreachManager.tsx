@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft, Files } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -312,6 +312,43 @@ export default function ClubOutreachManager() {
     load();
   };
 
+  const duplicate = async (id: string) => {
+    const { data: src, error: e1 } = await supabase
+      .from("club_outreach_links")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (e1 || !src) return toast.error(e1?.message || "Source not found");
+    const { id: _id, short_id: _sid, created_at: _c, updated_at: _u, created_by: _cb, ...rest } = src as any;
+    const newShort = makeShortId();
+    const { data: inserted, error: e2 } = await (supabase as any)
+      .from("club_outreach_links")
+      .insert({
+        ...rest,
+        short_id: newShort,
+        archived_at: null,
+        status: "draft",
+        is_pending_strategy_draft: false,
+      })
+      .select("id")
+      .single();
+    if (e2 || !inserted) return toast.error(e2?.message || "Duplicate failed");
+    const { data: lps } = await supabase
+      .from("club_outreach_link_players")
+      .select("*")
+      .eq("link_id", id);
+    if (lps && lps.length) {
+      const newRows = lps.map(({ id: _i, link_id: _l, created_at: _c2, updated_at: _u2, ...r }: any) => ({
+        ...r,
+        link_id: inserted.id,
+      }));
+      const { error: e3 } = await (supabase as any).from("club_outreach_link_players").insert(newRows);
+      if (e3) return toast.error(e3.message);
+    }
+    toast.success("Duplicated as draft");
+    load();
+  };
+
   const updateShortId = async (id: string, currentShort: string, nextRaw: string): Promise<boolean> => {
     const next = slugifyShortId(nextRaw);
     if (!next) { toast.error("URL ending can't be empty"); return false; }
@@ -589,6 +626,7 @@ export default function ClubOutreachManager() {
                         onEdit={() => openEditPanel(r)}
                         onLog={() => setLogRow(r)}
                         onRemove={() => remove(r.id)}
+                        onDuplicate={() => duplicate(r.id)}
                         onStatusChange={(s) => setStatus(r.id, s)}
                         templates={templates}
                         onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
@@ -624,6 +662,7 @@ export default function ClubOutreachManager() {
                       onEdit={() => openEditPanel(r)}
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
+                      onDuplicate={() => duplicate(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}
                       templates={templates}
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
@@ -647,7 +686,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
+function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onDuplicate, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onDuplicate: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -777,7 +816,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
         </div>
       )}
       <StatusToggle status={row.status} onChange={onStatusChange} />
-      <div className="mt-3 grid grid-cols-5 gap-2">
+      <div className="mt-3 grid grid-cols-6 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
         <Button
           size="sm"
@@ -800,6 +839,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
           <Building2 className="h-3.5 w-3.5" />
         </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
+        <Button size="sm" variant="outline" onClick={onDuplicate} title="Duplicate outreach"><Files className="h-3.5 w-3.5" /></Button>
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
     </div>
