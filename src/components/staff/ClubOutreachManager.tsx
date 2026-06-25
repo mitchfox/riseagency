@@ -626,6 +626,7 @@ export default function ClubOutreachManager() {
                         onEdit={() => openEditPanel(r)}
                         onLog={() => setLogRow(r)}
                         onRemove={() => remove(r.id)}
+                        onDuplicate={() => duplicate(r.id)}
                         onStatusChange={(s) => setStatus(r.id, s)}
                         templates={templates}
                         onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
@@ -661,6 +662,7 @@ export default function ClubOutreachManager() {
                       onEdit={() => openEditPanel(r)}
                       onLog={() => setLogRow(r)}
                       onRemove={() => remove(r.id)}
+                      onDuplicate={() => duplicate(r.id)}
                       onStatusChange={(s) => setStatus(r.id, s)}
                       templates={templates}
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
@@ -684,7 +686,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
+function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onDuplicate, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onDuplicate: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -814,7 +816,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
         </div>
       )}
       <StatusToggle status={row.status} onChange={onStatusChange} />
-      <div className="mt-3 grid grid-cols-5 gap-2">
+      <div className="mt-3 grid grid-cols-6 gap-2">
         <Button size="sm" variant="outline" onClick={onCopy} title="Copy link"><Copy className="h-3.5 w-3.5" /></Button>
         <Button
           size="sm"
@@ -837,6 +839,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
           <Building2 className="h-3.5 w-3.5" />
         </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
+        <Button size="sm" variant="outline" onClick={onDuplicate} title="Duplicate outreach"><Files className="h-3.5 w-3.5" /></Button>
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
     </div>
