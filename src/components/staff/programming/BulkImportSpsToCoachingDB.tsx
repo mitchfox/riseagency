@@ -22,6 +22,39 @@ const str = (v: any) => {
   const s = String(v).trim();
   return s === "" || s === "-" ? null : s;
 };
+const hasMeaningfulValue = (v: any): boolean => {
+  if (v === null || v === undefined) return false;
+  if (typeof v === "string") return !!str(v);
+  if (typeof v === "number") return Number.isFinite(v);
+  if (typeof v === "boolean") return true;
+  if (Array.isArray(v)) return v.some(hasMeaningfulValue);
+  if (typeof v === "object") return Object.values(v).some(hasMeaningfulValue);
+  return false;
+};
+const DETAIL_KEYS = [
+  "description", "content", "repetitions", "reps", "sets", "load", "recoveryTime", "recovery_time",
+  "rest_time", "videoUrl", "video_url", "notes", "staffNotes", "setup", "equipment",
+  "players_required", "diagram", "attachments",
+];
+const hasDetail = (row: any) => DETAIL_KEYS.some((key) => hasMeaningfulValue(row?.[key]));
+const flattenExercisePayload = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  return Object.values(payload).flatMap((value: any) => {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === "object") return flattenExercisePayload(value);
+    return [];
+  });
+};
+const sessionPayloadHasDetail = (payload: any) => flattenExercisePayload(payload).some(hasDetail);
+const technicalProgrammeHasDetail = (sessions: any[]) => sessions.some((session) =>
+  (Array.isArray(session?.drills) ? session.drills : []).some((drill: any) =>
+    hasDetail(drill) || (Array.isArray(drill?.variations) ? drill.variations : []).some(hasDetail)
+  )
+);
+const spsProgrammeHasDetail = (sessions: any[]) => sessions.some((session) => sessionPayloadHasDetail(session?.exercises));
+type ImportResult = { inserted: number; hydrated: number };
+const changedTotal = (r: ImportResult) => r.inserted + r.hydrated;
 const weeksFromDates = (start: any, end: any): number | null => {
   if (!start || !end) return null;
   const ms = new Date(end).getTime() - new Date(start).getTime();
@@ -103,8 +136,7 @@ type ExerciseRow = {
   category: string;
 };
 
-const isExerciseShell = (r: any) =>
-  !str(r?.description) && !str(r?.reps) && !r?.sets && !str(r?.load) && !str(r?.video_url) && !str(r?.content);
+const isExerciseShell = (r: any) => !hasDetail(r);
 
 const importExercises = async (source: Source) => {
   const cat = categoryFor(source);
@@ -202,6 +234,7 @@ const importExercises = async (source: Source) => {
   const toInsert: ExerciseRow[] = [];
   const toUpdate: { id: string; patch: Partial<ExerciseRow> }[] = [];
   for (const [key, row] of harvested) {
+    if (!hasDetail(row)) continue;
     const ex = existingByKey.get(key);
     if (!ex) { toInsert.push(row); continue; }
     if (!isExerciseShell(ex)) continue; // preserve real entries
@@ -216,25 +249,23 @@ const importExercises = async (source: Source) => {
     if (Object.keys(patch).length) toUpdate.push({ id: ex.id, patch });
   }
 
-  let changed = 0;
+  const result: ImportResult = { inserted: 0, hydrated: 0 };
   if (toInsert.length) {
     const { error } = await supabase.from("coaching_exercises").insert(toInsert as any);
     if (error) throw error;
-    changed += toInsert.length;
+    result.inserted += toInsert.length;
   }
   for (const u of toUpdate) {
     const { error } = await supabase.from("coaching_exercises").update(u.patch as any).eq("id", u.id);
     if (error) throw error;
-    changed += 1;
+    result.hydrated += 1;
   }
-  return changed;
+  return result;
 };
 
 // ---- Session harvest ----------------------------------------------------
 const isSessionShell = (r: any) => {
-  const ex = r?.exercises;
-  if (!Array.isArray(ex)) return true;
-  return ex.length === 0;
+  return !sessionPayloadHasDetail(r?.exercises);
 };
 
 const importSessions = async (source: Source) => {
@@ -342,6 +373,7 @@ const importSessions = async (source: Source) => {
   const toInsert: any[] = [];
   const toUpdate: { id: string; patch: any }[] = [];
   for (const [key, row] of harvested) {
+    if (!sessionPayloadHasDetail(row.exercises)) continue;
     const ex = existingByKey.get(key);
     if (!ex) { toInsert.push({ ...row, category: cat }); continue; }
     if (!isSessionShell(ex)) continue;
@@ -350,26 +382,27 @@ const importSessions = async (source: Source) => {
     if (!ex.description && row.description) patch.description = row.description;
     toUpdate.push({ id: ex.id, patch });
   }
-  let changed = 0;
+  const result: ImportResult = { inserted: 0, hydrated: 0 };
   if (toInsert.length) {
     const { error } = await supabase.from("coaching_sessions").insert(toInsert as any);
     if (error) throw error;
-    changed += toInsert.length;
+    result.inserted += toInsert.length;
   }
   for (const u of toUpdate) {
     const { error } = await supabase.from("coaching_sessions").update(u.patch).eq("id", u.id);
     if (error) throw error;
-    changed += 1;
+    result.hydrated += 1;
   }
-  return changed;
+  return result;
 };
 
 // ---- Programme harvest --------------------------------------------------
 const programmeAttachmentKey = (source: Source) => source === "sps" ? "sps_sessions" : "technical_sessions";
 const isProgrammeShell = (r: any, key: string) => {
   const att = r?.attachments;
-  const hasPayload = att && typeof att === "object" && Array.isArray(att[key]) && att[key].length > 0;
-  return !hasPayload;
+  const payload = att && typeof att === "object" && Array.isArray(att[key]) ? att[key] : [];
+  const hasPayloadDetail = key === "sps_sessions" ? spsProgrammeHasDetail(payload) : technicalProgrammeHasDetail(payload);
+  return !hasPayloadDetail;
 };
 
 const importProgrammes = async (source: Source) => {
@@ -523,7 +556,8 @@ const importProgrammes = async (source: Source) => {
   const toInsert: any[] = [];
   const toUpdate: { id: string; patch: any }[] = [];
   for (const [key, p] of harvested) {
-    if (!p.payload.length) continue; // don't write empty shells
+    const hasPayloadDetail = source === "sps" ? spsProgrammeHasDetail(p.payload) : technicalProgrammeHasDetail(p.payload);
+    if (!hasPayloadDetail) continue; // don't write empty shells
     const att = { [attKey]: p.payload };
     const ex = existingByKey.get(key);
     if (!ex) {
@@ -545,18 +579,18 @@ const importProgrammes = async (source: Source) => {
     toUpdate.push({ id: ex.id, patch });
   }
 
-  let changed = 0;
+  const result: ImportResult = { inserted: 0, hydrated: 0 };
   if (toInsert.length) {
     const { error } = await supabase.from("coaching_programmes").insert(toInsert as any);
     if (error) throw error;
-    changed += toInsert.length;
+    result.inserted += toInsert.length;
   }
   for (const u of toUpdate) {
     const { error } = await supabase.from("coaching_programmes").update(u.patch).eq("id", u.id);
     if (error) throw error;
-    changed += 1;
+    result.hydrated += 1;
   }
-  return changed;
+  return result;
 };
 
 interface Props {
@@ -567,13 +601,18 @@ export const BulkImportSpsToCoachingDB = ({ source = "sps" }: Props) => {
   const [busy, setBusy] = useState<string | null>(null);
   const label = source === "technical" ? "Technical" : "SPS";
 
-  const run = async (kind: string, key: string, fn: () => Promise<number>) => {
+  const run = async (kind: string, key: string, fn: () => Promise<ImportResult>) => {
     if (busy) return;
     if (!confirm(`Import all ${label} ${kind.toLowerCase()} into the coaching database? Existing rich entries are left untouched; empty shells from previous imports get filled in.`)) return;
     setBusy(key);
     try {
-      const n = await fn();
-      toast.success(n ? `Imported/updated ${n} ${label} ${kind.toLowerCase()}` : `No ${label} ${kind.toLowerCase()} needed importing`);
+      const result = await fn();
+      const n = changedTotal(result);
+      if (n) {
+        toast.success(`${label} ${kind.toLowerCase()}: ${result.inserted} added, ${result.hydrated} hydrated`);
+      } else {
+        toast.info(`All matching ${label} ${kind.toLowerCase()} already have usable data`);
+      }
     } catch (e: any) {
       toast.error(e?.message || `Failed to import ${kind.toLowerCase()}`);
     } finally {
