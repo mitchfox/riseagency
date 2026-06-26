@@ -1118,11 +1118,23 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — images and short clips — rotate one at a time
-          on the final RISE logo beat with a crossfade between beats. Videos
-          play muted + looped while on screen. */}
-      {phase === 3 && extraIntro.length > 0 && (() => {
-        const frame = getIntroImageFrames(1)[0];
+      {/* Uploaded intro media — drifts in and out of either side of the
+          screen throughout the cinematic, never centred over the logo
+          or text. Videos play muted + looped while on screen. */}
+      {extraIntro.length > 0 && (() => {
+        const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  left: "5%",  rotate: "-5deg" } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  right: "5%", rotate: "5deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", left: "4%",  rotate: "3deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", right: "4%", rotate: "-3deg" } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", left: "6%",  rotate: "4deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", right: "6%", rotate: "-4deg" } },
+        ];
+        // Alternate left vs right on every change; vary the row.
+        const leftFrames  = [sideFrames[0], sideFrames[2], sideFrames[4]];
+        const rightFrames = [sideFrames[1], sideFrames[3], sideFrames[5]];
+        const pool = sideTick % 2 === 0 ? leftFrames : rightFrames;
+        const frame = pool[Math.floor(sideTick / 2) % pool.length];
         const m = extraIntro[introIdx % extraIntro.length];
         const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
         return (
@@ -1130,7 +1142,7 @@ const IntroCinematic = ({
             <AnimatePresence mode="wait">
               {m.kind === "video" ? (
                 <motion.video
-                  key={m.url}
+                  key={`${m.url}-${sideTick}`}
                   src={m.url}
                   className={commonClass}
                   style={frame.style}
@@ -1138,11 +1150,11 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 />
               ) : (
                 <motion.img
-                  key={m.url}
+                  key={`${m.url}-${sideTick}`}
                   src={m.url}
                   alt=""
                   className={commonClass}
@@ -1150,7 +1162,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 />
               )}
             </AnimatePresence>
