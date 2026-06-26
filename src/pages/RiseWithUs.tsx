@@ -1311,10 +1311,7 @@ const RiseWithUs = () => {
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
-  // Inline-card dialogs (matching the Representation page pattern where
-  // "Who we've worked with" and "Why Rise" are revealed only by tapping
-  // a card, not shown on the main hub view).
-  const [workedWithOpen, setWorkedWithOpen] = useState(false);
+  // The vision block is revealed only by tapping its bottom card, not shown inline.
   const [whyRiseOpen, setWhyRiseOpen] = useState(false);
   // Fallback profile image for the final "Next Step" screen — when the
   // player has no `image_url` saved, we look up the first image they have
@@ -1414,6 +1411,9 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
+  const shouldShowDatabaseCard =
+    settings.show_database_card === true
+    || (settings.show_database_card == null && (fitScore ?? 0) >= 60);
   // Build the intro pool from the new intro_media list (kind=image|video,
   // show=true, position in intro/both). Fall back to legacy section_images
   // when the player hasn't been migrated yet so we never go blank.
@@ -1521,51 +1521,6 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* "Who we've worked with" and "Why Rise" intentionally
-                    live inside their own cards (revealed via dialog) —
-                    matching the Representation page treatment so neither
-                    is shown inline on the main hub view. */}
-                <section className="my-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:my-8 md:gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setWorkedWithOpen(true)}
-                    className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-4 text-left md:p-5"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.10),transparent_60%)]" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
-                          {ot("worked_with_eyebrow", "Our background")}
-                        </p>
-                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
-                          {ot("worked_with_card", "Who we've worked with")}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWhyRiseOpen(true)}
-                    className="group relative overflow-hidden rounded-[1.45rem] border border-primary/50 p-4 text-left md:p-5"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,hsl(var(--gold)/0.18),transparent_60%)]" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
-                          {ot("vision_eyebrow_card", "Our vision")}
-                        </p>
-                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
-                          {ot("why_rise_card", "Why Rise?")}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
-                    </div>
-                  </button>
-                </section>
-
                 {/* Pillar boxes — pathway, HQ, training methodology,
                     performance team, parent's role (U18 only),
                     multilingual support. */}
@@ -1574,24 +1529,6 @@ const RiseWithUs = () => {
                 {/* "Our Stars" / hub media strip removed per request — the
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
-
-                {/* Scouting database snapshot — shows the prospect they're tracked
-                    in our database with neighbouring rows blurred. Auto-shows when
-                    fit_score >= 60, or when staff have toggled it on. */}
-                {(settings.show_database_card === true
-                  || (settings.show_database_card == null && (fitScore ?? 0) >= 60)) && (
-                  <ScoutingDatabaseCard
-                    playerId={player.id}
-                    playerName={player.name}
-                    position={player.position}
-                    club={player.club}
-                    nationality={player.nationality}
-                    imageUrl={player.image_url}
-                    fitScore={fitScore}
-                    lang={lang}
-                    t={t}
-                  />
-                )}
 
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
@@ -1644,8 +1581,41 @@ const RiseWithUs = () => {
                 })}
 
                 {/* BallonDorVisionCard is now revealed via the "Why Rise?"
-                    card dialog above, so the hub doesn't end with the
-                    inline vision block. */}
+                    card below, so the full vision content never appears inline. */}
+                <div className="scroll-mt-[88px] md:scroll-mt-[96px]">
+                  <div className="my-6 flex items-center gap-3 md:my-8">
+                    <div className="h-[1px] flex-1 bg-primary/40" />
+                    <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
+                      {ot("vision_eyebrow_card", "Our Vision")}
+                    </span>
+                    <div className="h-[1px] flex-1 bg-primary/40" />
+                  </div>
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setWhyRiseOpen(true)}
+                    className="group relative mx-auto block w-full max-w-md overflow-hidden rounded-[1.45rem] border border-primary/50 p-3 text-center md:max-w-lg md:p-5"
+                    style={solidBlackSectionStyle}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.14),transparent_60%)]" />
+                    <div className="relative flex min-h-[140px] flex-col items-center justify-center gap-3 md:min-h-[200px] md:gap-4 lg:min-h-[220px]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-14 md:w-14">
+                        <Trophy className="h-5 w-5 text-primary md:h-6 md:w-6" />
+                      </div>
+                      <div>
+                        <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">
+                          {ot("why_rise_card", "Why Rise?")}
+                        </p>
+                        <p className="mx-auto mt-1.5 max-w-[11.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:text-xs">
+                          {ot("vision_subtitle_card", "A future built with the best")}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.button>
+                </div>
               </div>
 
               {/* Persistent: Explore Player Portal */}
@@ -1680,6 +1650,19 @@ const RiseWithUs = () => {
                 recommendedScoutingPosition={null}
                 onBack={onDetailBack}
                 playerLang={playerLang}
+                extraScoutingContent={shouldShowDatabaseCard ? (
+                  <ScoutingDatabaseCard
+                    playerId={player.id}
+                    playerName={player.name}
+                    position={player.position}
+                    club={player.club}
+                    nationality={player.nationality}
+                    imageUrl={player.image_url}
+                    fitScore={fitScore}
+                    lang={lang}
+                    t={t}
+                  />
+                ) : null}
               />
 
               {/* Scoped slider + back-to-all + next button */}
@@ -1793,7 +1776,7 @@ const RiseWithUs = () => {
                     <Button
                       size="lg"
                       onClick={() => setMeetingOpen(true)}
-                      className="font-bebas uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="border border-primary bg-primary font-bebas uppercase tracking-wider text-primary-foreground shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:bg-primary/90 hover:text-primary-foreground"
                     >
                       <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
@@ -1850,43 +1833,6 @@ const RiseWithUs = () => {
             player={player}
             lang={lang}
           />
-
-          {/* Who we've worked with — same content as the inline section
-              used to be, now revealed via the hub card. */}
-          <Dialog open={workedWithOpen} onOpenChange={setWorkedWithOpen}>
-            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
-              <DialogHeader>
-                <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
-                  {t("representation.worked_with_title", "Who we've worked with")}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
-                  <PlayersWeWorkWith bare />
-                </div>
-                <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
-                  <p
-                    className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
-                    style={{ textWrap: "pretty" } as React.CSSProperties}
-                  >
-                    {widont(t(
-                      "representation.worked_with_body",
-                      "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
-                    ))}
-                  </p>
-                  <p
-                    className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
-                    style={{ textWrap: "pretty" } as React.CSSProperties}
-                  >
-                    {widont(t(
-                      "representation.worked_with_context",
-                      "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
-                    ))}
-                  </p>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
 
           {/* Why Rise — the Ballon d'Or vision card, revealed via the hub
               card rather than rendered inline at the bottom. */}
