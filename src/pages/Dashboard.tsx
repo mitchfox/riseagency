@@ -258,6 +258,13 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programs, hasTechnicalPrograms]);
 
+  // Keep the SPS card accordion in sync with the selected programming pill
+  // so the right section is open by default when the tab is first shown.
+  useEffect(() => {
+    if (programmingMode === "schedule") setAccordionValue(['schedule']);
+    else if (programmingMode === "sps") setAccordionValue(['overview', 'sessions']);
+  }, [programmingMode]);
+
   // Track portal tab views for staff notifications
   useEffect(() => {
     if (!playerData?.id) return;
