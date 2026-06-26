@@ -9,6 +9,8 @@ export interface SearchSuggestionSource {
   label: string;
   /** Secondary line in the dropdown (e.g. club, position) */
   sublabel?: string | null;
+  /** Optional opaque payload returned to the parent when this suggestion is picked. */
+  payload?: any;
 }
 
 interface Props {
@@ -22,6 +24,12 @@ interface Props {
   className?: string;
   /** Max number of suggestions to show. Defaults to 8. */
   maxSuggestions?: number;
+  /**
+   * When provided, clicking a suggestion (or pressing Enter on a highlighted one)
+   * invokes this handler INSTEAD of committing the text as a filter. Useful when
+   * the suggestions represent entities (players, clubs) that should open directly.
+   */
+  onSuggestionSelect?: (suggestion: SearchSuggestionSource) => void;
 }
 
 /**
@@ -39,6 +47,7 @@ export const SearchWithSuggestions = ({
   placeholder = "Search...",
   className,
   maxSuggestions = 8,
+  onSuggestionSelect,
 }: Props) => {
   const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
@@ -120,7 +129,14 @@ export const SearchWithSuggestions = ({
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (open && activeIndex >= 0 && suggestions[activeIndex]) {
-        commit(suggestions[activeIndex].label);
+        const picked = suggestions[activeIndex];
+        if (onSuggestionSelect) {
+          setOpen(false);
+          setActiveIndex(-1);
+          onSuggestionSelect(picked);
+        } else {
+          commit(picked.label);
+        }
       } else {
         commit(draft);
       }
@@ -178,7 +194,16 @@ export const SearchWithSuggestions = ({
             <button
               key={`${s.label}-${i}`}
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); commit(s.label); }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                if (onSuggestionSelect) {
+                  setOpen(false);
+                  setActiveIndex(-1);
+                  onSuggestionSelect(s);
+                } else {
+                  commit(s.label);
+                }
+              }}
               onMouseEnter={() => setActiveIndex(i)}
               className={cn(
                 "w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex flex-col",
