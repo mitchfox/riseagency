@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DrillDiagramView, DrillDiagram } from "@/components/staff/programming/DrillDiagramEditor";
+import { Button } from "@/components/ui/button";
+import { getSessionColor } from "@/lib/sessionColors";
 
 interface Variation {
   id: string; label: string; description: string | null;
@@ -59,7 +61,7 @@ const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?:
 
 const TableBodyCell = ({ children, name, last, indent }: { children: React.ReactNode; name?: boolean; last?: boolean; indent?: boolean }) => (
   <div
-    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : "italic"} ${last ? "" : "border-r-2 border-white"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-center text-center") : "justify-center text-center"} break-words`}
+    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : "italic"} ${last ? "" : "border-r-2 border-white"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-center text-center") : "justify-center text-center"} whitespace-normal break-words`}
     style={
       name
         ? { backgroundColor: indent ? "hsl(45, 30%, 88%)" : "hsl(45, 40%, 80%)", color: "hsl(0, 0%, 0%)" }
@@ -107,7 +109,7 @@ const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill |
             <TableBodyCell name indent={row.kind === "variation"}>
               {row.kind === "variation" ? `↳ ${row.name}` : row.name}
             </TableBodyCell>
-            <TableBodyCell>{row.reps ? `${row.reps}${row.reps_per_side ? " ea" : ""}` : "-"}</TableBodyCell>
+            <TableBodyCell>{row.reps ? `${row.reps}${row.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
             <TableBodyCell>{row.sets || "-"}</TableBodyCell>
             <TableBodyCell>{row.load || "-"}</TableBodyCell>
             <TableBodyCell last>{row.recovery_time || "-"}</TableBodyCell>
@@ -123,6 +125,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
   const [sessions, setSessions] = useState<Record<string, Session[]>>({});
   const [loading, setLoading] = useState(true);
   const [openDetail, setOpenDetail] = useState<{ drill: Drill | Variation; parent?: Drill } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!playerId) { setLoading(false); return; }
@@ -164,37 +167,78 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
   if (loading) return <p className="text-sm text-muted-foreground">Loading technical programmes…</p>;
   if (!programs.length) return <p className="text-sm text-muted-foreground">No technical programmes yet.</p>;
 
+  // Only show the current programme (fallback to first)
+  const activeProgram = programs.find(p => p.is_current) || programs[0];
+  const programSessions = (sessions[activeProgram.id] || []).filter(s => s.drills && s.drills.length > 0);
+  const currentSession =
+    programSessions.find(s => s.id === selectedSessionId) ||
+    programSessions[0];
+
   return (
     <div className="space-y-6">
-      {programs.map(p => (
-        <Card key={p.id} className={p.is_current ? "border-primary" : ""}>
-          <CardHeader marble>
+      <Card className="border-primary">
+        <CardHeader marble>
             <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="font-bebas uppercase tracking-wider text-2xl">{p.program_name}</CardTitle>
-              {p.is_current && <Badge className="bg-primary">Current</Badge>}
-              {p.phase_name && <span className="text-sm text-muted-foreground">{p.phase_name}</span>}
-              {p.phase_dates && <span className="text-sm text-muted-foreground">{p.phase_dates}</span>}
+              <CardTitle className="font-bebas uppercase tracking-wider text-2xl">{activeProgram.program_name}</CardTitle>
+              <Badge className="bg-primary">Current</Badge>
+              {activeProgram.phase_name && <span className="text-sm text-muted-foreground">{activeProgram.phase_name}</span>}
+              {activeProgram.phase_dates && <span className="text-sm text-muted-foreground">{activeProgram.phase_dates}</span>}
             </div>
-            {p.overview_text && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{p.overview_text}</p>}
-          </CardHeader>
-          <CardContent className="space-y-6 pt-6">
-            {(sessions[p.id] || []).map(s => (
-              <div key={s.id} className="space-y-3 bg-black/40 rounded-xl p-3 md:p-4">
-                <div className="flex items-baseline gap-2">
-                  <Badge variant="outline" className="border-[hsl(43,49%,61%)] text-[hsl(43,49%,61%)]">{s.session_key}</Badge>
-                  <h3 className="font-bebas uppercase tracking-wider text-xl">{s.title || `Session ${s.session_key}`}</h3>
-                </div>
-                {s.description && <p className="text-sm text-white/70 whitespace-pre-wrap">{s.description}</p>}
-                {s.drills.length > 0 ? (
-                  <SessionTable drills={s.drills} onOpen={(drill, parent) => setOpenDetail({ drill, parent })} />
-                ) : (
-                  <p className="text-xs text-white/50 italic">No drills yet.</p>
-                )}
+            {activeProgram.overview_text && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{activeProgram.overview_text}</p>}
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          {programSessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No sessions yet.</p>
+          ) : (
+            <>
+              {/* Session selector buttons (colour-coded like SPS) */}
+              <div
+                className="grid gap-2"
+                style={{ gridTemplateColumns: `repeat(${Math.min(programSessions.length, 4)}, minmax(0, 1fr))` }}
+              >
+                {programSessions.map(s => {
+                  const colors = getSessionColor(s.session_key);
+                  const isActive = currentSession?.id === s.id;
+                  return (
+                    <Button
+                      key={s.id}
+                      onClick={() => setSelectedSessionId(s.id)}
+                      className="font-bebas uppercase text-sm"
+                      style={{
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        opacity: isActive ? 1 : 0.7,
+                        border: isActive ? "2px solid white" : "none",
+                      }}
+                    >
+                      Session {s.session_key}
+                    </Button>
+                  );
+                })}
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
+
+              {currentSession && (
+                <div className="space-y-3 bg-black/40 rounded-xl p-3 md:p-4">
+                  {(currentSession.title || currentSession.description) && (
+                    <div>
+                      {currentSession.title && (
+                        <h3 className="font-bebas uppercase tracking-wider text-xl">{currentSession.title}</h3>
+                      )}
+                      {currentSession.description && (
+                        <p className="text-sm text-white/70 whitespace-pre-wrap mt-1">{currentSession.description}</p>
+                      )}
+                    </div>
+                  )}
+                  <SessionTable
+                    drills={currentSession.drills}
+                    onOpen={(drill, parent) => setOpenDetail({ drill, parent })}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={!!openDetail} onOpenChange={(o) => !o && setOpenDetail(null)}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
