@@ -1474,17 +1474,36 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* Item 9 — dedicated Ballon d'Or vision card sits
-                    above the pillar grid and the Stars showcase. */}
-                <BallonDorVisionCard
-                  lang={lang}
-                  firstName={firstName}
-                  onBookMeeting={() => setMeetingOpen(true)}
-                  t={t}
-                />
-
-                {/* Players we've worked with — represented + mandated, live from DB. */}
-                <PlayersWeWorkWith />
+                {/* Players we've worked with — same treatment as the
+                    Representation page: live carousel inside a slanted
+                    card, followed by the background paragraph and the
+                    Fuel For Football context disclaimer. Sharing the
+                    same translation keys keeps both pages in sync. */}
+                <section className="my-6 md:my-8 space-y-4">
+                  <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                    <PlayersWeWorkWith bare />
+                  </div>
+                  <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                    <p
+                      className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.worked_with_body",
+                        "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
+                      ))}
+                    </p>
+                    <p
+                      className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.worked_with_context",
+                        "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
+                      ))}
+                    </p>
+                  </div>
+                </section>
 
                 {/* Pillar boxes — pathway, HQ, training methodology,
                     performance team, parent's role (U18 only),
@@ -1586,6 +1605,17 @@ const RiseWithUs = () => {
                     </div>
                   );
                 })}
+
+                {/* Why not you? — the Ballon d'Or vision card sits at the
+                    very bottom of the hub, after every section group, so
+                    it closes the page with the ambition statement and CTA.
+                    Mirrors the placement used on the Representation page. */}
+                <BallonDorVisionCard
+                  lang={lang}
+                  firstName={firstName}
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
               </div>
 
               {/* Persistent: Explore Player Portal */}
