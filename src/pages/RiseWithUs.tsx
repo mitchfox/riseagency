@@ -34,6 +34,7 @@ import {
 import { type ScoutingPosition } from "@/data/scoutingSkills";
 import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
+import riseLogoWhiteHQ from "@/assets/RISEWhiteHQ.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 import ballondorAsset from "@/assets/ballondor.png.asset.json";
 
@@ -223,7 +224,7 @@ const offerT = (lang: string, key: string, fallback: string): string => {
 };
 
 /* ============== AUTO-POSITION RESOLUTION ============== */
-/** Map normalised position abbreviations (GK, CB, LW, …) to the
+/** Map normalised position abbreviations (GK, CB, LW, etc.) to the
  *  broader scouting groupings used by the Scouting card. Mirrors
  *  POSITION_TO_SCOUTING in RequestRepresentation.tsx. */
 const ABBR_TO_SCOUTING: Record<string, ScoutingPosition> = {
@@ -295,7 +296,7 @@ const PILLARS: Pillar[] = [
     titleKey: "rwu_perf_team_title", titleFallback: "Performance Team Provision",
     bodyKey:  "rwu_perf_team_body",
     bodyFallback:
-      "Full Premier League level support — analysis, S&C, nutrition, sports psychology, technique — wrapped around you, working off one shared plan, not a list of disconnected freelancers.",
+      "Full Premier League level support across analysis, S&C, nutrition, sports psychology and technique, wrapped around you through one shared plan, not a list of disconnected freelancers.",
   },
   {
     key: "parent",
@@ -386,20 +387,11 @@ const PillarsSection = ({
   );
 };
 
-/* ============== BALLON D'OR VISION CARD ==============
- * Item 9 — dedicated full-width vision card sitting above the
- * pillar grid on the Rise With Us hub. Carries the urgency without
- * leaning on a "FOMO" badge — the framing does the work. CTA opens
- * the existing meeting booker dialog.
- */
+/* ============== BALLON D'OR VISION CARD ============== */
 const BallonDorVisionCard = ({
-  lang,
-  firstName,
   onBookMeeting,
   t,
 }: {
-  lang: string;
-  firstName: string;
   onBookMeeting: () => void;
   t: (key: string, fallback: string) => string;
 }) => {
@@ -408,8 +400,8 @@ const BallonDorVisionCard = ({
     "Only The Best.",
   );
   const body = t(
-    "vision.body",
-    `We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, ${firstName}, reach out to better understand how we can realise potential together.`,
+    "vision.body_anon",
+    "We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, reach out to better understand how we can realise potential together.",
   );
   const urgency = "";
   const cta = t("vision.cta", "Let's Meet");
@@ -480,16 +472,12 @@ const BallonDorVisionCard = ({
 const WhyRiseDetailView = ({
   lang,
   ageGroup,
-  firstName,
   onBack,
-  onBookMeeting,
   t,
 }: {
   lang: string;
   ageGroup: "under18" | "over18";
-  firstName: string;
   onBack: () => void;
-  onBookMeeting: () => void;
   t: (key: string, fallback: string) => string;
 }) => (
   <motion.section
@@ -515,12 +503,6 @@ const WhyRiseDetailView = ({
         eyebrow={offerT(lang, "vision_subtitle_card", "A future built with the best")}
       />
       <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
-      <BallonDorVisionCard
-        lang={lang}
-        firstName={firstName}
-        onBookMeeting={onBookMeeting}
-        t={t}
-      />
     </div>
   </motion.section>
 );
@@ -601,7 +583,7 @@ const MeetingBookerDialog = ({
       await insertStaffNotification({
         eventType: "proposal_meeting_request",
         title: `Meeting requested: ${player.name}`,
-        body: `${player.name} (${whatsapp.trim()}) — ${preferredDates.trim() || "no dates"} · ${labelFor(timeOfDay)}`,
+        body: `${player.name} (${whatsapp.trim()}) | ${preferredDates.trim() || "no dates"} | ${labelFor(timeOfDay)}`,
         eventData: {
           player_id: player.id,
           player_name: player.name,
@@ -624,7 +606,7 @@ const MeetingBookerDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
+      <DialogContent className="max-w-3xl border border-primary/30 !bg-black text-foreground shadow-[0_0_60px_-20px_hsl(var(--gold)/0.65)]">
         {!done ? (
           <>
             <DialogHeader>
@@ -655,7 +637,7 @@ const MeetingBookerDialog = ({
                 <Input
                   type="tel"
                   inputMode="tel"
-                  placeholder="+44 7…"
+                  placeholder="+44 7"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
                 />
@@ -697,7 +679,7 @@ const MeetingBookerDialog = ({
                 </label>
                 <Textarea
                   rows={3}
-                  placeholder={offerT(lang, "rwu_meet_note_ph", "Family present, language preference, questions…")}
+                  placeholder={offerT(lang, "rwu_meet_note_ph", "Family present, language preference, questions")}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
@@ -718,7 +700,7 @@ const MeetingBookerDialog = ({
                 className="font-bebas uppercase tracking-[0.2em] bg-primary text-primary-foreground hover:bg-primary/90 px-6"
               >
                 {submitting
-                  ? offerT(lang, "rwu_meet_sending", "Sending…")
+                  ? offerT(lang, "rwu_meet_sending", "Sending...")
                   : offerT(lang, "rwu_meet_submit", "Send Request")}
               </Button>
             </div>
@@ -753,7 +735,7 @@ const MeetingBookerDialog = ({
   );
 };
 
-/* ============== STARS SHOWCASE (Why Us — videos + best players) ==============
+/* ============== STARS SHOWCASE (Why Us: videos and best players) ==============
  * Item A1, A4, A5, A6 from the proposal backlog:
  * - multiple video clips, "Stars" style carousel (homepage_videos)
  * - best-quality player images alongside the videos (visible_on_stars_page)
@@ -1041,10 +1023,7 @@ const IntroCinematic = ({
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
-  // Carousel of curated intro media — runs throughout the intro (every
-  // phase), not just the final beat. Each beat picks a fresh image and
-  // alternates between left-anchored and right-anchored frames so the
-  // imagery visibly drifts side-to-side as the cinematic plays.
+  // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
   useEffect(() => {
@@ -1111,7 +1090,7 @@ const IntroCinematic = ({
         transition={{ duration: 24, ease: "linear", repeat: Infinity }}
       />
 
-      {/* Floating gold embers — drift upward across every phase to give the
+      {/* Floating gold embers drift upward across every phase to give the
           intro a constant sense of motion without distracting from the text. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
         {Array.from({ length: 28 }).map((_, i) => {
@@ -1169,54 +1148,46 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — drifts in and out of either side of the
-          screen throughout the cinematic, never centred over the logo
-          or text. Videos play muted + looped while on screen. */}
+      {/* Uploaded intro media appears one at a time in the outer corners.
+          It is hidden on narrow screens rather than risk crossing text. */}
       {extraIntro.length > 0 && (() => {
         const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  left: "5%",  rotate: "-5deg" } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  right: "5%", rotate: "5deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", left: "4%",  rotate: "3deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", right: "4%", rotate: "-3deg" } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", left: "6%",  rotate: "4deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", right: "6%", rotate: "-4deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", left: "3%", rotate: "-4deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", right: "3%", rotate: "4deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", left: "4%", rotate: "3deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", right: "4%", rotate: "-3deg" } },
         ];
-        // Show several images at once when available, split across both sides
-        // of the screen and rotating every few seconds.
-        const visibleCount = Math.min(extraIntro.length, 4);
+        const m = extraIntro[introIdx % extraIntro.length];
+        const frame = sideFrames[sideTick % sideFrames.length];
+        const commonClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
             <AnimatePresence>
-              {Array.from({ length: visibleCount }).map((_, slot) => {
-                const m = extraIntro[(introIdx + slot) % extraIntro.length];
-                const frame = sideFrames[(sideTick + slot * 2) % sideFrames.length];
-                const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
-                return m.kind === "video" ? (
-                  <motion.video
-                    key={`${m.url}-${sideTick}-${slot}`}
-                    src={m.url}
-                    className={commonClass}
-                    style={frame.style}
-                    autoPlay muted loop playsInline
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 0.86, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.03 }}
-                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                ) : (
-                  <motion.img
-                    key={`${m.url}-${sideTick}-${slot}`}
-                    src={m.url}
-                    alt=""
-                    className={commonClass}
-                    style={frame.style}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 0.86, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.03 }}
-                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                );
-              })}
+              {m.kind === "video" ? (
+                <motion.video
+                  key={`${m.url}-${sideTick}`}
+                  src={m.url}
+                  className={commonClass}
+                  style={frame.style}
+                  autoPlay muted loop playsInline
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 0.82, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                />
+              ) : (
+                <motion.img
+                  key={`${m.url}-${sideTick}`}
+                  src={m.url}
+                  alt=""
+                  className={commonClass}
+                  style={frame.style}
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 0.82, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                />
+              )}
             </AnimatePresence>
           </div>
         );
@@ -1314,7 +1285,7 @@ const IntroCinematic = ({
                   transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.img
-                  src={riseLogoWhite} alt="RISE"
+                  src={riseLogoWhiteHQ} alt="RISE"
                   className="relative h-24 sm:h-32 md:h-40 w-auto"
                   initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
                   animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.85))" }}
@@ -1359,7 +1330,7 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
-  // Fallback profile image for the final "Next Step" screen — when the
+  // Fallback profile image for the final "Next Step" screen when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
   // circle. Independent of any auto-promote upload flow.
@@ -1415,7 +1386,7 @@ const RiseWithUs = () => {
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
           show_database_card: sData?.show_database_card ?? null,
         });
-        // NOTE: We do NOT call switchLanguage here — it would redirect to a
+        // NOTE: We do NOT call switchLanguage here. It would redirect to a
         // different language subdomain on production and break the offer
         // URL. Imported representation card content uses the current site
         // language; offer-specific strings use the player's portal_language
@@ -1426,7 +1397,7 @@ const RiseWithUs = () => {
   }, [slug, isPickerMode]);
 
   // Pull a marketing-gallery photo if the player has no profile picture
-  // yet — used as the fallback avatar on the closing screen.
+  // yet. Used as the fallback avatar on the closing screen.
   useEffect(() => {
     let alive = true;
     if (!player || player.image_url) { setFinalFallbackImage(null); return; }
@@ -1493,7 +1464,7 @@ const RiseWithUs = () => {
   });
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
-  // Hub Why-Us strip — items the staff flagged as hub or both.
+  // Hub Why-Us strip, using items the staff flagged as hub or both.
   const hubMedia: Array<{ kind: "image" | "video"; url: string }> =
     settings.intro_media
       .filter((m) => m.show && (m.position === "hub" || m.position === "both"))
@@ -1567,7 +1538,7 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* "Our Stars" / hub media strip removed per request — the
+                {/* "Our Stars" / hub media strip removed per request. The
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
 
@@ -1621,8 +1592,6 @@ const RiseWithUs = () => {
                   );
                 })}
 
-                {/* BallonDorVisionCard is now revealed via the "Why Rise?"
-                    card below, so the full vision content never appears inline. */}
                 <div className="mt-8 scroll-mt-[88px] md:mt-10 md:scroll-mt-[96px]">
                   <motion.button
                     type="button"
@@ -1653,6 +1622,11 @@ const RiseWithUs = () => {
                     </div>
                   </motion.button>
                 </div>
+
+                <BallonDorVisionCard
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
               </div>
 
               {/* Persistent: Explore Player Portal */}
@@ -1753,9 +1727,7 @@ const RiseWithUs = () => {
             <WhyRiseDetailView
               lang={lang}
               ageGroup={ageGroup}
-              firstName={firstName}
               onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
-              onBookMeeting={() => setMeetingOpen(true)}
               t={t}
             />
           )}
