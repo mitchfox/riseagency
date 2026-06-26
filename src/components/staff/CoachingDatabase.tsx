@@ -1479,6 +1479,27 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
 
             {/* Filters - Show based on table type */}
             {activeTab !== 'coaching_aphorisms' && activeTab !== 'tactical_schemes' && (
+              <>
+              {(activeTab === 'coaching_exercises' || activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[
+                    { key: 'all', label: 'All sources' },
+                    { key: 'Strength, Power & Speed', label: 'SPS' },
+                    { key: 'Technical', label: 'Technical' },
+                    { key: 'Nutrition', label: 'Nutrition' },
+                  ].map(s => (
+                    <Button
+                      key={s.key}
+                      type="button"
+                      size="sm"
+                      variant={selectedCategory === s.key ? 'default' : 'outline'}
+                      onClick={() => setSelectedCategory(s.key)}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <StaffSearchInput
                   value=""
@@ -1610,6 +1631,7 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
                   </>
                 )}
               </div>
+              </>
             )}
 
             {/* PDF Upload Progress */}
