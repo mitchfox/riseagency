@@ -1559,19 +1559,6 @@ const RiseWithUs = () => {
                       </h1>
                       <span className="h-px flex-1 bg-primary/45" />
                     </div>
-                    <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
-                      <p
-                        className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
-                        style={{
-                          textWrap: "pretty",
-                          hyphens: "none",
-                          wordBreak: "normal",
-                          overflowWrap: "normal",
-                        } as React.CSSProperties}
-                      >
-                        {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
-                      </p>
-                    </div>
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
