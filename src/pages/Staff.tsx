@@ -229,6 +229,19 @@ const Staff = () => {
   const logoLongPressFiredRef = useRef(false);
   const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
+
+  // Track which keep-alive sections have been visited so we can hide/show without unmounting
+  const [keepAliveSections, setKeepAliveSections] = useState<{ cluboutreach: boolean; markettables: boolean }>({
+    cluboutreach: false,
+    markettables: false,
+  });
+  useEffect(() => {
+    if (expandedSection === 'cluboutreach' || expandedSection === 'markettables') {
+      setKeepAliveSections((prev) =>
+        prev[expandedSection] ? prev : { ...prev, [expandedSection]: true }
+      );
+    }
+  }, [expandedSection]);
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
