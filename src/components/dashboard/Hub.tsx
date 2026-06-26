@@ -487,6 +487,26 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
     return days;
   }, []);
 
+  // For each day in rolling7Days, resolve the weekly_schedule entry whose
+  // week_start_date contains that date. This makes the Hub strip correctly
+  // spill into next week's schedule when today is near the end of the week.
+  const scheduleByDay = React.useMemo(() => {
+    const schedules = (currentProgram?.weekly_schedules || []) as any[];
+    const map: Record<string, any> = {};
+    rolling7Days.forEach((d) => {
+      const match = schedules.find((s) => {
+        if (!s?.week_start_date) return false;
+        try {
+          const ws = parseISO(s.week_start_date);
+          const we = addDays(ws, 6);
+          return isWithinInterval(d.date, { start: ws, end: we });
+        } catch { return false; }
+      });
+      map[d.dayName + '_' + format(d.date, 'yyyy-MM-dd')] = match || currentSchedule || null;
+    });
+    return map;
+  }, [currentProgram, rolling7Days, currentSchedule]);
+
   // Session color mapping
   const getSessionColor = (sessionKey: string) => {
     const key = sessionKey.toUpperCase();
@@ -626,11 +646,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               
                 {/* Day Cells - Rolling 7 days from today */}
                 {rolling7Days.map((dayInfo, index) => {
-                  const sessionValue = currentSchedule[dayInfo.dayName] || '';
-                  const teamSessionValue = currentSchedule[`${dayInfo.dayName}Team`] || '';
+                  const daySchedule = scheduleByDay[dayInfo.dayName + '_' + format(dayInfo.date, 'yyyy-MM-dd')] || currentSchedule;
+                  const sessionValue = daySchedule?.[dayInfo.dayName] || '';
+                  const teamSessionValue = daySchedule?.[`${dayInfo.dayName}Team`] || '';
                   const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                   const dayImageKey = `${dayInfo.dayName}Image`;
-                  const clubLogoUrl = currentSchedule[dayImageKey];
+                  const clubLogoUrl = daySchedule?.[dayImageKey];
                   
                   // Check if it's a clickable session (A-H)
                   const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);

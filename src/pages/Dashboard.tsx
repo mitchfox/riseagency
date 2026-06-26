@@ -3655,7 +3655,16 @@ const Dashboard = () => {
                                                
                                                {/* Table Rows */}
                                                <div className="space-y-1 md:space-y-2">
-                                              {program.weekly_schedules.map((week: any, idx: number) => (
+                                              {program.weekly_schedules
+                                                .filter((week: any) => {
+                                                  if (!week?.week_start_date) return true;
+                                                  try {
+                                                    const ws = parseISO(week.week_start_date);
+                                                    const currentMon = startOfWeek(new Date(), { weekStartsOn: 1 });
+                                                    return ws >= currentMon;
+                                                  } catch { return true; }
+                                                })
+                                                .map((week: any, idx: number) => (
                                                 <div 
                                                   key={idx}
                                                   className="grid grid-cols-8 gap-1 md:gap-2"
