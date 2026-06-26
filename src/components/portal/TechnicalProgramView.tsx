@@ -73,20 +73,6 @@ const TableBodyCell = ({ children, name, last, indent }: { children: React.React
 );
 
 const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill | Variation, parent?: Drill) => void }) => {
-  const rows: { row: DrillRow; click: () => void }[] = [];
-  drills.forEach(d => {
-    rows.push({
-      row: { kind: "drill", id: d.id, drillId: d.id, name: d.name, reps: d.reps, sets: d.sets, reps_per_side: d.reps_per_side, load: d.load, recovery_time: d.recovery_time },
-      click: () => onOpen(d),
-    });
-    d.variations.forEach(v => {
-      rows.push({
-        row: { kind: "variation", id: v.id, drillId: d.id, name: v.label, reps: v.reps, sets: v.sets, reps_per_side: v.reps_per_side, load: v.load, recovery_time: v.recovery_time },
-        click: () => onOpen(v, d),
-      });
-    });
-  });
-
   return (
     <div className="border-2 border-white rounded-lg overflow-hidden">
       <div className="grid grid-cols-5 gap-0 text-xs md:text-base">
@@ -100,19 +86,45 @@ const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill |
         </TableHeaderCell>
       </div>
       <div>
-        {rows.map(({ row, click }) => (
+        {drills.map((d, di) => (
           <div
-            key={row.id}
-            onClick={click}
-            className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
+            key={d.id}
+            className={`border-t-2 border-white ${d.variations.length > 0 ? "border-l-4 border-l-[hsl(43,49%,61%)]" : ""}`}
           >
-            <TableBodyCell name indent={row.kind === "variation"}>
-              {row.kind === "variation" ? `↳ ${row.name}` : row.name}
-            </TableBodyCell>
-            <TableBodyCell>{row.reps ? `${row.reps}${row.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
-            <TableBodyCell>{row.sets || "-"}</TableBodyCell>
-            <TableBodyCell>{row.load || "-"}</TableBodyCell>
-            <TableBodyCell last>{row.recovery_time || "-"}</TableBodyCell>
+            {/* Parent drill row */}
+            <div
+              onClick={() => onOpen(d)}
+              className="grid grid-cols-5 gap-0 cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
+            >
+              <TableBodyCell name>{d.name}</TableBodyCell>
+              <TableBodyCell>{d.reps ? `${d.reps}${d.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
+              <TableBodyCell>{d.sets || "-"}</TableBodyCell>
+              <TableBodyCell>{d.load || "-"}</TableBodyCell>
+              <TableBodyCell last>{d.recovery_time || "-"}</TableBodyCell>
+            </div>
+            {/* Variations grouped visually under the parent */}
+            {d.variations.length > 0 && (
+              <div className="bg-[hsl(45,30%,92%)] pl-3 md:pl-6 pr-2 pb-2 pt-1 border-t border-dashed border-black/20">
+                <div className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-black/60 mb-1 pl-1">
+                  Variations of {d.name}
+                </div>
+                <div className="rounded-md overflow-hidden border border-black/10">
+                  {d.variations.map((v, vi) => (
+                    <div
+                      key={v.id}
+                      onClick={() => onOpen(v, d)}
+                      className={`grid grid-cols-5 gap-0 cursor-pointer hover:opacity-80 transition-opacity min-h-[50px] md:min-h-[60px] ${vi > 0 ? "border-t border-white" : ""}`}
+                    >
+                      <TableBodyCell name indent>↳ {v.label}</TableBodyCell>
+                      <TableBodyCell>{v.reps ? `${v.reps}${v.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
+                      <TableBodyCell>{v.sets || "-"}</TableBodyCell>
+                      <TableBodyCell>{v.load || "-"}</TableBodyCell>
+                      <TableBodyCell last>{v.recovery_time || "-"}</TableBodyCell>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
