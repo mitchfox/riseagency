@@ -392,11 +392,30 @@ export const RepresentationOffers = () => {
           <DialogHeader><DialogTitle>Create representation offer</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Adds a new prospect player record and copies the offer link to your clipboard. If the player is already in the database use the search box on the page instead.
+              Start typing a name — if we already have the player in the database, pick them to autofill their details. Otherwise carry on typing a new name to create a fresh prospect record.
             </p>
             <div>
               <Label className="text-xs">Player name *</Label>
-              <Input value={newPlayer.name} onChange={e => setNewPlayer({ ...newPlayer, name: e.target.value })} />
+              <SearchWithSuggestions
+                value={newPlayer.name}
+                onCommit={(v) => setNewPlayer(p => ({ ...p, name: v }))}
+                placeholder="Type a player's name..."
+                sources={allPlayers.map(p => ({
+                  label: p.name,
+                  sublabel: [p.position, p.club, p.nationality].filter(Boolean).join(" • ") || null,
+                  payload: p,
+                }))}
+                onSuggestionSelect={(s) => {
+                  const p = s.payload as typeof allPlayers[number];
+                  setNewPlayer({
+                    name: p.name || "",
+                    position: p.position || "",
+                    nationality: p.nationality || "",
+                    club: p.club || "",
+                    date_of_birth: p.date_of_birth || "",
+                  });
+                }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
