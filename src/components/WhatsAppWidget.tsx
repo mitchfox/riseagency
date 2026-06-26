@@ -20,7 +20,7 @@ export const WhatsAppWidget = () => {
         <MessageCircle className="w-6 h-6 text-black" />
       </div>
       <span
-        className={`font-bebas uppercase tracking-wider text-sm pr-5 transition-all duration-300 overflow-hidden whitespace-nowrap text-black ${
+        className={`font-bebas uppercase tracking-wider text-sm pr-5 transition-all duration-300 overflow-hidden whitespace-nowrap text-black group-hover:text-black ${
           isHovered ? "max-w-48 opacity-100" : "max-w-0 opacity-0 pr-0"
         }`}
       >
