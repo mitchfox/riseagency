@@ -1850,6 +1850,56 @@ const RiseWithUs = () => {
             player={player}
             lang={lang}
           />
+
+          {/* Who we've worked with — same content as the inline section
+              used to be, now revealed via the hub card. */}
+          <Dialog open={workedWithOpen} onOpenChange={setWorkedWithOpen}>
+            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
+              <DialogHeader>
+                <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
+                  {t("representation.worked_with_title", "Who we've worked with")}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                  <PlayersWeWorkWith bare />
+                </div>
+                <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                  <p
+                    className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                    style={{ textWrap: "pretty" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.worked_with_body",
+                      "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
+                    ))}
+                  </p>
+                  <p
+                    className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
+                    style={{ textWrap: "pretty" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.worked_with_context",
+                      "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
+                    ))}
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Why Rise — the Ballon d'Or vision card, revealed via the hub
+              card rather than rendered inline at the bottom. */}
+          <Dialog open={whyRiseOpen} onOpenChange={setWhyRiseOpen}>
+            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97 p-0">
+              <BallonDorVisionCard
+                lang={lang}
+                firstName={firstName}
+                onBookMeeting={() => { setWhyRiseOpen(false); setMeetingOpen(true); }}
+                t={t}
+              />
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
