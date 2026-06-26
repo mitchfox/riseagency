@@ -37,7 +37,7 @@ const weeksBetween = (start: string | null, end: string | null) => {
 
 export const TechnicalSection = () => {
   const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.technical.selectedPlayer", "all");
+  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.selectedPlayer", "all");
   const [programs, setPrograms] = useState<Program[]>([]);
   const [openProgram, setOpenProgram] = useState<string | null>(null);
   const [saveDialog, setSaveDialog] = useState<{ open: boolean; programId: string | null; programName: string; phase: string | null }>({

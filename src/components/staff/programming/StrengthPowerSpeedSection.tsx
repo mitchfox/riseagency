@@ -20,7 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const StrengthPowerSpeedSection = () => {
-  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.sps.selectedPlayer", "all");
+  const [selectedPlayer, setSelectedPlayer] = usePersistedState<string>("programming.selectedPlayer", "all");
   const [players, setPlayers] = useState<{ id: string; name: string; position: string; representation_status: string }[]>([]);
   const [playerPrograms, setPlayerPrograms] = useState<any[]>([]);
 
