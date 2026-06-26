@@ -1382,6 +1382,24 @@ const RiseWithUs = () => {
     })();
   }, [slug, isPickerMode]);
 
+  // Pull a marketing-gallery photo if the player has no profile picture
+  // yet — used as the fallback avatar on the closing screen.
+  useEffect(() => {
+    let alive = true;
+    if (!player || player.image_url) { setFinalFallbackImage(null); return; }
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("marketing_gallery")
+        .select("file_url")
+        .eq("player_id", player.id)
+        .eq("file_type", "image")
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (alive && data && data[0]?.file_url) setFinalFallbackImage(data[0].file_url as string);
+    })();
+    return () => { alive = false; };
+  }, [player?.id, player?.image_url]);
+
   // ageGroup defaults to over18 (most prospects). Card content uses this
   // to switch the under18/over18 specific copy in fees/agreement/expectations.
   const ageGroup: Exclude<AgeGroup, null> = settings.rise_with_us_under18 ? "under18" : "over18";
