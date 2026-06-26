@@ -247,6 +247,19 @@ const Dashboard = () => {
     })();
   }, [playerData?.id]);
 
+  // Auto-correct the programming mode so it always matches what the player
+  // actually has — prevents the SPS panel sitting blank when the saved tab
+  // is the empty one.
+  useEffect(() => {
+    const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
+    if (hasTechnicalPrograms && !hasSps && programmingMode !== "technical") {
+      setProgrammingMode("technical");
+    } else if (!hasTechnicalPrograms && hasSps && programmingMode !== "sps") {
+      setProgrammingMode("sps");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programs, hasTechnicalPrograms]);
+
   // Track portal tab views for staff notifications
   useEffect(() => {
     if (!playerData?.id) return;
