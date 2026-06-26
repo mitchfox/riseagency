@@ -37,6 +37,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const [clubs, setClubs] = useState<ClubLite[]>([]);
   const [strategies, setStrategies] = useState<StrategyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [autoTickedClubIds, setAutoTickedClubIds] = useState<Set<string>>(new Set());
 
   const [name, setName] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
@@ -66,12 +67,26 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: clubRows }, { data: stratRows }] = await Promise.all([
+      const [{ data: clubRows }, { data: stratRows }, { data: sentLinkRows }, { data: visitRows }] = await Promise.all([
         supabase.from("club_map_positions").select("id, club_name, country, league, league_level, image_url").order("club_name"),
         (supabase as any).from("club_outreach_strategies").select("*").order("created_at", { ascending: false }),
+        supabase.from("club_outreach_links").select("id, club_id, status, target_type").eq("target_type", "club").eq("status", "sent"),
+        supabase.from("club_outreach_visits").select("outreach_id"),
       ]);
       setClubs((clubRows ?? []) as ClubLite[]);
       setStrategies((stratRows ?? []) as StrategyRow[]);
+      const auto = new Set<string>();
+      (sentLinkRows ?? []).forEach((r: any) => { if (r.club_id) auto.add(r.club_id); });
+      const visitedIds = new Set<string>((visitRows ?? []).map((v: any) => v.outreach_id).filter(Boolean));
+      if (visitedIds.size) {
+        const { data: visitedLinks } = await supabase
+          .from("club_outreach_links")
+          .select("id, club_id, target_type")
+          .in("id", Array.from(visitedIds))
+          .eq("target_type", "club");
+        (visitedLinks ?? []).forEach((r: any) => { if (r.club_id) auto.add(r.club_id); });
+      }
+      setAutoTickedClubIds(auto);
       setLoading(false);
     })();
   }, []);
