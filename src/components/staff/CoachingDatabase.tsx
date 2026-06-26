@@ -1053,6 +1053,8 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
         if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
       } else if (activeTab === 'coaching_concepts') {
         query = query.eq('analysis_type', 'concept');
+      } else if (activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') {
+        if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
       }
 
       const { data, error } = await query;
