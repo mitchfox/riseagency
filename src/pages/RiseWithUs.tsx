@@ -1769,9 +1769,9 @@ const RiseWithUs = () => {
                   <div className="flex items-center justify-center gap-4 sm:gap-6">
                     <img src={riseLogoWhite} alt="RISE" className="h-10 sm:h-14 w-auto" />
                     <X className="h-5 w-5 sm:h-7 sm:w-7 text-foreground/85" strokeWidth={2.5} />
-                    {player.image_url ? (
+                    {(player.image_url || finalFallbackImage) ? (
                       <img
-                        src={player.image_url}
+                        src={player.image_url || finalFallbackImage!}
                         alt={player.name}
                         className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover object-top border-2 border-primary/60 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.6)]"
                       />
@@ -1795,9 +1795,9 @@ const RiseWithUs = () => {
                       onClick={() => setMeetingOpen(true)}
                       className="font-bebas uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Set Up Our Meeting")}
+                      <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
-                    <Button asChild size="lg" variant="outline" className="font-bebas uppercase tracking-wider border-[#25D366]/60 text-[#25D366] hover:bg-[#25D366]/10">
+                    <Button asChild size="lg" className="font-bebas uppercase tracking-wider border border-[#25D366] bg-[#25D366] text-white hover:bg-[#1ebe57] hover:text-white">
                       <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                         <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
                       </a>
