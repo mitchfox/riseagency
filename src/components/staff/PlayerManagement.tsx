@@ -3021,6 +3021,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                             file_url: publicUrl,
                                             file_type: 'image',
                                             category: 'players',
+                                            player_id: selectedPlayer.id,
                                           }]);
                                         
                                         if (dbError) throw dbError;
@@ -3031,6 +3032,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         }));
 
                                         toast.success(`Successfully uploaded ${file.name}`);
+                                        return publicUrl;
                                       } catch (error) {
                                         console.error(`Error uploading ${file.name}:`, error);
                                         setUploadProgress(prev => ({
@@ -3038,10 +3040,18 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                           [file.name]: { status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
                                         }));
                                         toast.error(`Failed to upload ${file.name}`);
+                                        return null;
                                       }
                                     });
 
-                                    await Promise.all(uploadPromises);
+                                    const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+                                    if (uploadedUrls.length > 0 && !selectedPlayer.image_url) {
+                                      await supabase
+                                        .from('players')
+                                        .update({ image_url: uploadedUrls[0] })
+                                        .eq('id', selectedPlayer.id);
+                                      setSelectedPlayer({ ...selectedPlayer, image_url: uploadedUrls[0] });
+                                    }
                                     
                                     // Clear progress after 3 seconds
                                     setTimeout(() => {
