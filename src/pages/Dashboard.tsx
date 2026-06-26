@@ -3561,8 +3561,8 @@ const Dashboard = () => {
                               </div>
                             ) : (
                               <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">{/* defaultValue="schedule" removed as we're now using controlled state */}
-                                {/* Overview Section */}
-                                {(program.overview_text || program.phase_image_url || program.player_image_url) && (
+                                 {/* Overview Section */}
+                                 {programmingMode !== "schedule" && (program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Overview
@@ -3594,8 +3594,8 @@ const Dashboard = () => {
                                   </AccordionItem>
                                 )}
 
-                                {/* Schedule Section */}
-                                {((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
+                                 {/* Schedule Section */}
+                                 {programmingMode !== "sps" && ((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
                                   <AccordionItem value="schedule">
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       {t(playerData?.portal_language, "schedule")}
