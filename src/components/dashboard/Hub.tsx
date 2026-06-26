@@ -487,6 +487,26 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
     return days;
   }, []);
 
+  // For each day in rolling7Days, resolve the weekly_schedule entry whose
+  // week_start_date contains that date. This makes the Hub strip correctly
+  // spill into next week's schedule when today is near the end of the week.
+  const scheduleByDay = React.useMemo(() => {
+    const schedules = (currentProgram?.weekly_schedules || []) as any[];
+    const map: Record<string, any> = {};
+    rolling7Days.forEach((d) => {
+      const match = schedules.find((s) => {
+        if (!s?.week_start_date) return false;
+        try {
+          const ws = parseISO(s.week_start_date);
+          const we = addDays(ws, 6);
+          return isWithinInterval(d.date, { start: ws, end: we });
+        } catch { return false; }
+      });
+      map[d.dayName + '_' + format(d.date, 'yyyy-MM-dd')] = match || currentSchedule || null;
+    });
+    return map;
+  }, [currentProgram, rolling7Days, currentSchedule]);
+
   // Session color mapping
   const getSessionColor = (sessionKey: string) => {
     const key = sessionKey.toUpperCase();
