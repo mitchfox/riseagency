@@ -379,6 +379,30 @@ export const ProgrammingManagement = ({ isOpen, onClose, playerId, playerName, i
     return JSON.parse(JSON.stringify(obj));
   };
 
+  const hasTemplateSessionDetail = (sessions: any) => {
+    if (!sessions || typeof sessions !== 'object' || Array.isArray(sessions)) return false;
+    return Object.values(sessions).some((session: any) => Array.isArray(session?.exercises) && session.exercises.length > 0);
+  };
+
+  const normaliseSpsTemplateSessions = (template: any) => {
+    const attachments = template?.attachments || {};
+    const legacySessions = deepClone(attachments.sessions || {});
+    if (hasTemplateSessionDetail(legacySessions)) return legacySessions;
+
+    const spsSessions = Array.isArray(attachments.sps_sessions) ? attachments.sps_sessions : [];
+    const normalised: Record<string, { exercises: any[] }> = {};
+    spsSessions.forEach((session: any) => {
+      const rawKey = String(session?.key || '').trim();
+      const compact = rawKey.replace(/[\s_-]/g, '').toLowerCase();
+      const preMatch = compact.match(/^pre(?:session)?([a-h])$/);
+      const mainMatch = compact.match(/^(?:session)?([a-h])$/);
+      const sessionKey = preMatch ? `PRE-${preMatch[1].toUpperCase()}` : mainMatch ? mainMatch[1].toUpperCase() : null;
+      if (!sessionKey) return;
+      normalised[sessionKey] = { exercises: deepClone(Array.isArray(session?.exercises) ? session.exercises : []) };
+    });
+    return normalised;
+  };
+
   const loadPrograms = async () => {
     try {
       const { data, error } = await supabase
@@ -1330,7 +1354,7 @@ Phase Dates: ${programmingData.phaseDates || 'Not specified'}`;
         : 1;
 
       // Create completely independent copy from template using deep cloning
-      const templateSessions = deepClone(template.attachments?.sessions || {});
+      const templateSessions = normaliseSpsTemplateSessions(template);
       const templateSchedules = deepClone(template.attachments?.weekly_schedules || []);
       
       const programData: any = {
