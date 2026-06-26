@@ -264,7 +264,7 @@ const Dashboard = () => {
   // so the right section is open by default when the tab is first shown.
   useEffect(() => {
     if (programmingMode === "schedule") setAccordionValue(['schedule']);
-    else if (programmingMode === "sps") setAccordionValue(['overview', 'sessions']);
+    else if (programmingMode === "sps") setAccordionValue(['sessions']);
   }, [programmingMode]);
 
   // Track portal tab views for staff notifications
