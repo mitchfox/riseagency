@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Target, ChevronDown, ChevronRight, Save } from "lucide-react";
+import { Plus, Trash2, Target, ChevronDown, ChevronRight, Save, Download } from "lucide-react";
 import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
@@ -14,6 +14,7 @@ import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
 import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
 import { BulkImportSpsToCoachingDB } from "./BulkImportSpsToCoachingDB";
+import { ImportTechnicalProgrammeDialog } from "./ImportTechnicalProgrammeDialog";
 import { Label } from "@/components/ui/label";
 
 interface Program {
@@ -43,6 +44,7 @@ export const TechnicalSection = () => {
     open: false, programId: null, programName: "", phase: null,
   });
   const [saveSessions, setSaveSessions] = useState<any[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -156,7 +158,12 @@ export const TechnicalSection = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Technical Programmes</h3>
-                <Button size="sm" onClick={addProgram}><Plus className="w-3.5 h-3.5 mr-1" />New programme</Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                    <Download className="w-3.5 h-3.5 mr-1" />Import programme
+                  </Button>
+                  <Button size="sm" onClick={addProgram}><Plus className="w-3.5 h-3.5 mr-1" />New programme</Button>
+                </div>
               </div>
 
               {programs.length === 0 && (
@@ -258,6 +265,16 @@ export const TechnicalSection = () => {
         phaseName={saveDialog.phase}
         sessions={saveSessions}
       />
+
+      {selectedPlayer !== "all" && (
+        <ImportTechnicalProgrammeDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          playerId={selectedPlayer}
+          existingCount={programs.length}
+          onImported={loadPrograms}
+        />
+      )}
     </div>
   );
 };
