@@ -420,7 +420,14 @@ export const RepresentationOffers = () => {
             </section>
           )}
           {GROUPS.map(g => {
-            const items = grouped[g.id] || [];
+            let items = grouped[g.id] || [];
+            if (g.id === "drafts") {
+              items = [...items].sort((a, b) => {
+                const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return tb - ta;
+              });
+            }
             if (items.length === 0) return null;
             const isOpen = openGroups[g.id];
             return (
@@ -434,7 +441,7 @@ export const RepresentationOffers = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {items.map(renderCard)}
+                    {items.map(p => renderCard(p, { showDelete: g.id === "drafts" }))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
