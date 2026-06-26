@@ -305,11 +305,11 @@ export const DrillDiagramInline = ({ initial, onSave, onCancel, maxWidth = 360 }
           </div>
       </div>
 
-      <div className="relative w-full" style={{ aspectRatio: "3 / 4", maxWidth }}>
+      <div className="relative w-full" style={{ aspectRatio: "1 / 1", maxWidth }}>
           <svg
             ref={svgRef}
             viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
             className={cn("absolute inset-0 w-full h-full rounded-md border touch-none", tool !== "select" && "cursor-crosshair")}
             onClick={handleSvgClick}
             onMouseMove={handleMouseMove}
@@ -473,7 +473,7 @@ interface ViewProps {
 export const DrillDiagramView = ({ diagram, className }: ViewProps) => {
   if (!diagram) return null;
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={cn("w-full rounded-md border", className)} style={{ aspectRatio: "3 / 4" }}>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" className={cn("w-full rounded-md border", className)} style={{ aspectRatio: "1 / 1" }}>
       <rect x="0" y="0" width="100" height="100" fill="hsl(140 45% 25%)" />
       <rect x="2" y="2" width="96" height="96" fill="none" stroke="white" strokeOpacity="0.7" strokeWidth="0.3" />
       {diagram.pitch === "half" ? (
