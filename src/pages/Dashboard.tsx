@@ -2207,7 +2207,7 @@ const Dashboard = () => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-        <div className="container mx-auto max-w-6xl px-4 md:px-6">
+        <div className={activeTab === "physical" ? "w-full max-w-none px-0" : "container mx-auto max-w-6xl px-4 md:px-6"}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Upload Progress Indicator */}
             {uploadProgress !== null && (
@@ -3483,7 +3483,7 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="physical" className="space-y-6 pb-24 md:pb-8 overflow-x-hidden">
+            <TabsContent value="physical" className="space-y-3 pb-24 md:pb-8 overflow-x-hidden px-px md:px-0">
               {(() => {
                 const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
                 if (!hasSps && !hasTechnicalPrograms) return null;
@@ -3494,7 +3494,7 @@ const Dashboard = () => {
                 ].filter(p => p.available) as any;
                 if (pills.length < 2) return null;
                 return (
-                  <div className="container mx-auto px-2 md:px-4">
+                  <div className="w-full px-px md:container md:mx-auto md:px-4">
                     <div
                       className="mx-auto max-w-2xl grid gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm"
                       style={{ gridTemplateColumns: `repeat(${pills.length}, minmax(0, 1fr))` }}
@@ -3521,18 +3521,16 @@ const Dashboard = () => {
                   </div>
                 );
               })()}
-              {/* Full-bleed gold divider above the programming card */}
-              <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] border-t-2 border-[hsl(43,49%,61%)]" />
               {/* Technical view — kept mounted so data is preloaded */}
               {hasTechnicalPrograms && (
-                <div className={`w-full px-0 md:container md:mx-auto md:px-4 ${programmingMode === "technical" ? "" : "hidden"}`}>
+                <div className={`w-full px-0 md:container md:mx-auto md:px-0 ${programmingMode === "technical" ? "" : "hidden"}`}>
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
               )}
               {programmingMode !== "technical" && (
-              <Card className="w-full px-0 md:container md:mx-auto rounded-none border-0">
+              <Card className="w-full px-0 md:container md:mx-auto rounded-none border-x-0 border-b-0 border-t-2 border-t-[hsl(43,49%,61%)]">
                 <CardHeader marble>
-                  <div className="px-2 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="px-1 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
                     </CardTitle>
@@ -3552,7 +3550,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="px-2 md:px-4">
+                <CardContent className="px-1 md:px-4">
                   
                   {programs.filter(p => p.program_name !== 'Testing Protocol').length === 0 ? (
                     <div className="py-8"></div>
@@ -3580,10 +3578,10 @@ const Dashboard = () => {
                                  {/* Overview Section */}
                                  {programmingMode !== "schedule" && (program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
+                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-2 md:pl-6">
                                       Overview
                                     </AccordionTrigger>
-                                    <AccordionContent className="space-y-4 px-2 md:px-6">
+                                     <AccordionContent className="space-y-4 px-px md:px-6">
                                       {program.overview_text && (
                                         <p className="text-base text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
                                       )}
@@ -3613,14 +3611,14 @@ const Dashboard = () => {
                                  {/* Schedule Section */}
                                  {programmingMode !== "sps" && ((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
                                   <AccordionItem value="schedule">
-                                    <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
+                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-2 md:pl-6">
                                       {t(playerData?.portal_language, "schedule")}
                                     </AccordionTrigger>
-                                    <AccordionContent className="px-1 md:px-6">
+                                     <AccordionContent className="px-px md:px-6">
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
-                                          <div className="bg-black/40 rounded-xl p-2 md:p-4 overflow-x-auto">
+                                           <div className="bg-black/40 rounded-xl p-1 md:p-4 overflow-x-auto">
                                             <div>
                                             {/* Table Header */}
                                             <div className="grid grid-cols-8 gap-1 md:gap-2 mb-2">
@@ -3892,10 +3890,10 @@ const Dashboard = () => {
                                   
                                   return (
                                     <AccordionItem value="sessions">
-                                      <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
+                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-2 md:pl-6">
                                         Sessions
                                       </AccordionTrigger>
-                                      <AccordionContent className="px-2 md:px-6">
+                                       <AccordionContent className="px-px md:px-6">
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
