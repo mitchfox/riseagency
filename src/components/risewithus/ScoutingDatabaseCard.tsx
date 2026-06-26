@@ -25,7 +25,7 @@ interface Props {
 }
 
 const labelDict: Record<string, Record<string, string>> = {
-  en: { title: "Tracked in our scouting database", sub: "You're on our radar — here's your live record alongside other players we monitor.", you: "You", prospect: "Tracked prospect", id: "Prospect ID", fit: "Fit", status: "Status", name: "Player", pos: "Pos", club: "Club", nat: "Nation" },
+  en: { title: "Tracked in our scouting database", sub: "You're on our radar. Here's your live record alongside other players we monitor.", you: "You", prospect: "Tracked prospect", id: "Prospect ID", fit: "Fit", status: "Status", name: "Player", pos: "Pos", club: "Club", nat: "Nation" },
   es: { title: "En nuestra base de datos de scouting", sub: "Estás en nuestro radar: este es tu registro junto a otros jugadores que seguimos.", you: "Tú", prospect: "Prospecto", id: "ID Prospecto", fit: "Fit", status: "Estado", name: "Jugador", pos: "Pos", club: "Club", nat: "Nación" },
   pt: { title: "Na nossa base de dados de scouting", sub: "Está no nosso radar — eis o seu registo ao lado de outros jogadores que seguimos.", you: "Tu", prospect: "Prospeto", id: "ID Prospeto", fit: "Fit", status: "Estado", name: "Jogador", pos: "Pos", club: "Clube", nat: "Nação" },
   fr: { title: "Suivi dans notre base de scouting", sub: "Tu es sur notre radar — voici ton dossier aux côtés des autres joueurs suivis.", you: "Toi", prospect: "Prospect suivi", id: "ID Prospect", fit: "Fit", status: "Statut", name: "Joueur", pos: "Pos", club: "Club", nat: "Nation" },
@@ -130,7 +130,7 @@ export const ScoutingDatabaseCard = ({
         .select("id, name, position, club, nationality, image_url, fit_score, category, representation_status")
         .neq("id", playerId)
         .not("name", "is", null)
-        // Don't pad the table with players we don't actually scout — drop
+        // Don't pad the table with players we don't actually scout. Drop
         // FFF / Scouted-only rows so every blurred neighbour is a real
         // RISE-tracked prospect.
         .not("category", "in", '("Scouted","Fuel For Football","FFF")')
@@ -186,19 +186,19 @@ export const ScoutingDatabaseCard = ({
       </div>
       <div className="min-w-0">
         <div className={`truncate font-medium ${opts.highlight ? "text-primary" : "text-foreground/90"}`}>
-          {opts.highlight ? <span className="font-bebas tracking-[0.08em] uppercase">{r.name} <span className="ml-1 text-[10px] text-primary/80">· {L.you}</span></span> : r.name}
+          {opts.highlight ? <span className="font-bebas tracking-[0.08em] uppercase">{r.name} <span className="ml-1 text-[10px] text-primary/80">| {L.you}</span></span> : r.name}
         </div>
         <div className="truncate text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground md:text-[10px]">
           {shortId(r.id)}
         </div>
       </div>
-      <div className="text-center text-foreground/80">{r.position || "—"}</div>
-      <div className="truncate text-foreground/75">{r.club || "—"}</div>
-      <div className="truncate text-foreground/70">{r.nationality || "—"}</div>
+      <div className="text-center text-foreground/80">{r.position || ""}</div>
+      <div className="truncate text-foreground/75">{r.club || ""}</div>
+      <div className="truncate text-foreground/70">{r.nationality || ""}</div>
       <div className="text-right">
         <span className={`inline-flex items-center justify-end gap-1 rounded px-1.5 py-0.5 font-mono text-[10.5px] md:text-[11.5px] ${opts.highlight ? "bg-primary/20 text-primary" : "bg-white/5 text-foreground/75"}`}>
           {opts.highlight && <Star className="h-2.5 w-2.5" />}
-          {r.fit != null ? r.fit : "—"}
+          {r.fit != null ? r.fit : ""}
         </span>
       </div>
     </div>
