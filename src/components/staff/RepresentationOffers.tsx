@@ -16,6 +16,7 @@ import { CreateOfferButton } from "./recruitment/CreateOfferButton";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
+import { isRealNonUkVisit } from "@/lib/visitorFilters";
 
 type OfferPlayer = {
   id: string;
@@ -98,12 +99,8 @@ export const RepresentationOffers = () => {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const nonUk = ((data ?? []) as any[]).filter((v) => {
-        const country = (v.location?.country ?? "").toString().toLowerCase();
-        if (!country) return false;
-        return country !== "united kingdom" && country !== "uk" && country !== "gb";
-      });
-      setVisits(nonUk as ProposalVisit[]);
+      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      setVisits(real as ProposalVisit[]);
     };
     loadVisits();
     const id = setInterval(loadVisits, 60_000);

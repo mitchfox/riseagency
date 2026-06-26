@@ -20,6 +20,8 @@ import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
+import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -150,6 +152,17 @@ export default function ClubOutreachManager() {
   const [players, setPlayers] = useState<PlayerLite[]>([]);
   const [clubs, setClubs] = useState<ClubLite[]>([]);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  // Section collapse state for the outreach board. Viewed stays open by default
+  // (it surfaces fresh activity); the status columns are collapsed so the
+  // page lands clean and staff opt-in to whichever stack they want to work on.
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    viewed: false,
+    ready: true,
+    draft: true,
+    sent: true,
+  });
+  const toggleSection = (key: string) =>
+    setCollapsedSections((s) => ({ ...s, [key]: !s[key] }));
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [newOpen, setNewOpen] = useState(false);
@@ -230,12 +243,8 @@ export default function ClubOutreachManager() {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const nonUk = ((data ?? []) as any[]).filter((v) => {
-        const country = (v.location?.country ?? "").toString().toLowerCase();
-        if (!country) return false; // skip unknown — usually local/private IPs
-        return country !== "united kingdom" && country !== "uk" && country !== "gb";
-      });
-      setVisits(nonUk as ProposalVisit[]);
+      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      setVisits(real as ProposalVisit[]);
     };
     loadVisits();
     const interval = setInterval(loadVisits, 60_000);
@@ -601,11 +610,19 @@ export default function ClubOutreachManager() {
         <div className="space-y-8">
           {viewedRows.length > 0 && (
             <section>
-              <div className="flex items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => toggleSection('viewed')}
+                className="w-full flex items-center gap-3 mb-3 group"
+              >
+                {collapsedSections.viewed
+                  ? <ChevronRight className="h-4 w-4 text-[#cbb96b]" />
+                  : <ChevronDown className="h-4 w-4 text-[#cbb96b]" />}
                 <h3 className="text-white text-lg font-semibold tracking-tight">Viewed</h3>
                 <span className="text-xs text-muted-foreground">{viewedRows.length}</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
-              </div>
+              </button>
+              {!collapsedSections.viewed && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {viewedRows.map(({ row: r, vs }) => {
                   const latest = vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b));
@@ -644,16 +661,24 @@ export default function ClubOutreachManager() {
                   );
                 })}
               </div>
+              )}
             </section>
           )}
           {STATUS_ORDER.map((status, i) => (
             <section key={status}>
-              <div className="flex items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => toggleSection(status)}
+                className="w-full flex items-center gap-3 mb-3 group"
+              >
+                {collapsedSections[status]
+                  ? <ChevronRight className="h-4 w-4 text-[#cbb96b]" />
+                  : <ChevronDown className="h-4 w-4 text-[#cbb96b]" />}
                 <h3 className="text-white text-lg font-semibold tracking-tight">{STATUS_LABELS[status]}</h3>
                 <span className="text-xs text-muted-foreground">{grouped[status].length}</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
-              </div>
-              {grouped[status].length === 0 ? (
+              </button>
+              {collapsedSections[status] ? null : grouped[status].length === 0 ? (
                 <p className="text-xs text-muted-foreground px-1">No outreach in this column.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
