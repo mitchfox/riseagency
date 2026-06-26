@@ -65,6 +65,17 @@ const programmePayloadScore = (source: Source, sessions: any[]) => {
     }, 0);
   }, 0);
 };
+const normaliseAttachments = (attachments: any): Record<string, any> => {
+  if (!attachments) return {};
+  if (Array.isArray(attachments)) {
+    return attachments.reduce((acc: Record<string, any>, item: any) => {
+      if (item && typeof item === "object" && !Array.isArray(item)) return { ...acc, ...item };
+      return acc;
+    }, {});
+  }
+  if (typeof attachments === "object") return attachments;
+  return {};
+};
 type ImportResult = { inserted: number; hydrated: number };
 const changedTotal = (r: ImportResult) => r.inserted + r.hydrated;
 const weeksFromDates = (start: any, end: any): number | null => {
@@ -413,8 +424,8 @@ const importSessions = async (source: Source) => {
 // ---- Programme harvest --------------------------------------------------
 const programmeAttachmentKey = (source: Source) => source === "sps" ? "sps_sessions" : "technical_sessions";
 const isProgrammeShell = (r: any, key: string) => {
-  const att = r?.attachments;
-  const payload = att && typeof att === "object" && Array.isArray(att[key]) ? att[key] : [];
+  const att = normaliseAttachments(r?.attachments);
+  const payload = Array.isArray(att[key]) ? att[key] : [];
   const hasPayloadDetail = key === "sps_sessions" ? spsProgrammeHasDetail(payload) : technicalProgrammeHasDetail(payload);
   return !hasPayloadDetail;
 };
@@ -588,7 +599,7 @@ const importProgrammes = async (source: Source) => {
       continue;
     }
     if (!isProgrammeShell(ex, attKey)) continue; // preserve real entries
-    const mergedAtt = { ...(ex.attachments && typeof ex.attachments === "object" ? ex.attachments : {}), ...att };
+    const mergedAtt = { ...normaliseAttachments(ex.attachments), ...att };
     const patch: any = { attachments: mergedAtt };
     if (!ex.content && p.overview) patch.content = p.overview;
     if (ex.weeks == null && p.weeks != null) patch.weeks = p.weeks;
