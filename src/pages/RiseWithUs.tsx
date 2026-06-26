@@ -224,7 +224,7 @@ const offerT = (lang: string, key: string, fallback: string): string => {
 };
 
 /* ============== AUTO-POSITION RESOLUTION ============== */
-/** Map normalised position abbreviations (GK, CB, LW, …) to the
+/** Map normalised position abbreviations (GK, CB, LW, etc.) to the
  *  broader scouting groupings used by the Scouting card. Mirrors
  *  POSITION_TO_SCOUTING in RequestRepresentation.tsx. */
 const ABBR_TO_SCOUTING: Record<string, ScoutingPosition> = {
@@ -645,7 +645,7 @@ const MeetingBookerDialog = ({
                 <Input
                   type="tel"
                   inputMode="tel"
-                  placeholder="+44 7…"
+                  placeholder="+44 7"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
                 />
@@ -743,7 +743,7 @@ const MeetingBookerDialog = ({
   );
 };
 
-/* ============== STARS SHOWCASE (Why Us — videos + best players) ==============
+/* ============== STARS SHOWCASE (Why Us: videos and best players) ==============
  * Item A1, A4, A5, A6 from the proposal backlog:
  * - multiple video clips, "Stars" style carousel (homepage_videos)
  * - best-quality player images alongside the videos (visible_on_stars_page)
@@ -1167,7 +1167,7 @@ const IntroCinematic = ({
         ];
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        const commonClass = `hidden sm:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
+        const commonClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
             <AnimatePresence>
@@ -1338,7 +1338,7 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
-  // Fallback profile image for the final "Next Step" screen — when the
+  // Fallback profile image for the final "Next Step" screen when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
   // circle. Independent of any auto-promote upload flow.
@@ -1394,7 +1394,7 @@ const RiseWithUs = () => {
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
           show_database_card: sData?.show_database_card ?? null,
         });
-        // NOTE: We do NOT call switchLanguage here — it would redirect to a
+        // NOTE: We do NOT call switchLanguage here. It would redirect to a
         // different language subdomain on production and break the offer
         // URL. Imported representation card content uses the current site
         // language; offer-specific strings use the player's portal_language
@@ -1405,7 +1405,7 @@ const RiseWithUs = () => {
   }, [slug, isPickerMode]);
 
   // Pull a marketing-gallery photo if the player has no profile picture
-  // yet — used as the fallback avatar on the closing screen.
+  // yet. Used as the fallback avatar on the closing screen.
   useEffect(() => {
     let alive = true;
     if (!player || player.image_url) { setFinalFallbackImage(null); return; }
@@ -1472,7 +1472,7 @@ const RiseWithUs = () => {
   });
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
-  // Hub Why-Us strip — items the staff flagged as hub or both.
+  // Hub Why-Us strip, using items the staff flagged as hub or both.
   const hubMedia: Array<{ kind: "image" | "video"; url: string }> =
     settings.intro_media
       .filter((m) => m.show && (m.position === "hub" || m.position === "both"))
@@ -1546,7 +1546,7 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* "Our Stars" / hub media strip removed per request — the
+                {/* "Our Stars" / hub media strip removed per request. The
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
 
