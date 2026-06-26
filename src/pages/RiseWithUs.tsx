@@ -21,7 +21,6 @@ import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
-import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
@@ -1447,14 +1446,7 @@ const RiseWithUs = () => {
 
   const openCard = (k: CardKey) => {
     setActiveCard(k);
-    // Auto-select the player's primary position when entering the
-    // Scouting card so they land directly on their own breakdown
-    // instead of the position picker.
-    if (k === "scouting") {
-      setScoutingPosition(resolveScoutingPosition(player?.position));
-    } else {
-      setScoutingPosition(null);
-    }
+    setScoutingPosition(null);
     setPerformanceSub(null);
     window.scrollTo({ top: 0, behavior: "auto" });
   };
@@ -1647,7 +1639,7 @@ const RiseWithUs = () => {
                 setScoutingPosition={setScoutingPosition}
                 performanceSub={performanceSub}
                 setPerformanceSub={setPerformanceSub}
-                recommendedScoutingPosition={null}
+                recommendedScoutingPosition={resolveScoutingPosition(player?.position)}
                 onBack={onDetailBack}
                 playerLang={playerLang}
                 extraScoutingContent={shouldShowDatabaseCard ? (
@@ -1752,9 +1744,9 @@ const RiseWithUs = () => {
                   <div className="flex items-center justify-center gap-4 sm:gap-6">
                     <img src={riseLogoWhite} alt="RISE" className="h-10 sm:h-14 w-auto" />
                     <X className="h-5 w-5 sm:h-7 sm:w-7 text-foreground/85" strokeWidth={2.5} />
-                    {(player.image_url || finalFallbackImage) ? (
+                    {(player.image_url || finalFallbackImage || extraIntro.find((m) => m.kind === "image")?.url) ? (
                       <img
-                        src={player.image_url || finalFallbackImage!}
+                        src={player.image_url || finalFallbackImage || extraIntro.find((m) => m.kind === "image")!.url}
                         alt={player.name}
                         className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover object-top border-2 border-primary/60 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.6)]"
                       />
