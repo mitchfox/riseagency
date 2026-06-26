@@ -213,6 +213,25 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
           .eq("id", resolvedId);
       }
 
+      let resolvedProfileImage = playerData?.image_url || "";
+      if (resolvedId && !resolvedProfileImage) {
+        const { data: galleryImages } = await (supabase as any)
+          .from("marketing_gallery")
+          .select("file_url")
+          .eq("player_id", resolvedId)
+          .eq("file_type", "image")
+          .order("created_at", { ascending: true })
+          .limit(1);
+        if (galleryImages?.[0]?.file_url) {
+          resolvedProfileImage = galleryImages[0].file_url;
+          await (supabase as any)
+            .from("players")
+            .update({ image_url: resolvedProfileImage })
+            .eq("id", resolvedId)
+            .is("image_url", null);
+        }
+      }
+
       if (cancelled) return;
       setPlayerId(resolvedId);
       if (playerData) {
@@ -222,7 +241,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         setClub(playerData.club || row.current_club || "");
         setEmail(playerData.email || "");
         setDob(playerData.date_of_birth || row.date_of_birth || "");
-        setImageUrl(playerData.image_url || "");
+        setImageUrl(resolvedProfileImage);
         setLanguage(playerData.portal_language || "en");
       }
 
