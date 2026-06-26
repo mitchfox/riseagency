@@ -3472,29 +3472,44 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6 pb-24 md:pb-8 overflow-x-hidden">
-              {hasTechnicalPrograms && programs.filter(p => p.program_name !== 'Testing Protocol').length > 0 && (
-                <div className="container mx-auto px-4">
-                  <div className="mx-auto max-w-2xl grid grid-cols-2 gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm">
-                    {([
-                      { id: "sps", label: "Strength, Power & Speed" },
-                      { id: "technical", label: "Technical" },
-                    ] as const).map(opt => {
-                      const active = programmingMode === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
-                          className={`py-2.5 text-sm font-bebas uppercase tracking-wider rounded-full transition-all ${active ? "bg-[hsl(43,49%,61%)] text-black shadow-md" : "text-white/70 hover:text-white"}`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+              {(() => {
+                const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
+                if (!hasSps && !hasTechnicalPrograms) return null;
+                const pills: { id: "schedule" | "sps" | "technical"; label: string; available: boolean }[] = [
+                  { id: "sps", label: "Strength, Power & Speed", available: hasSps },
+                  { id: "schedule", label: "Schedule", available: hasSps },
+                  { id: "technical", label: "Technical", available: hasTechnicalPrograms },
+                ].filter(p => p.available) as any;
+                if (pills.length < 2) return null;
+                return (
+                  <div className="container mx-auto px-4">
+                    <div
+                      className="mx-auto max-w-2xl grid gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm"
+                      style={{ gridTemplateColumns: `repeat(${pills.length}, minmax(0, 1fr))` }}
+                    >
+                      {pills.map(opt => {
+                        const active = programmingMode === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setProgrammingMode(opt.id);
+                              try { localStorage.setItem("portal.programmingTab", opt.id); } catch {}
+                              if (opt.id === "schedule") setAccordionValue(['schedule']);
+                              if (opt.id === "sps") setAccordionValue(['overview', 'sessions']);
+                            }}
+                            className={`py-2.5 text-xs md:text-sm font-bebas uppercase tracking-wider rounded-full transition-all ${active ? "bg-[hsl(43,49%,61%)] text-black shadow-md" : "text-white/70 hover:text-white"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {hasTechnicalPrograms && programmingMode === "technical" ? (
+                );
+              })()}
+              {programmingMode === "technical" && hasTechnicalPrograms ? (
                 <div className="container mx-auto px-4">
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
