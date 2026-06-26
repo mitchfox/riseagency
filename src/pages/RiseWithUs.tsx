@@ -35,6 +35,7 @@ import { type ScoutingPosition } from "@/data/scoutingSkills";
 import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
+import ballondorAsset from "@/assets/ballondor.png.asset.json";
 
 interface ProspectPlayer {
   id: string;
@@ -414,31 +415,29 @@ const BallonDorVisionCard = ({
     "vision.urgency",
     "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
   );
-  const cta = t("vision.cta", "Set up our meeting");
+  const cta = t("vision.cta", "Let's Meet");
 
   return (
-    <div className="my-6 md:my-8">
-      <SlantedBox
-        slant={22}
-        innerClassName="px-5 py-6 md:px-8 md:py-8"
-        className="overflow-hidden"
+    <div className="mt-6 md:mt-8">
+      <div
+        className="relative overflow-hidden rise-slant-card-lg border border-border/60"
+        style={solidBlackSectionStyle}
       >
-        {/* Ambient gold sweep behind the copy */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.20),transparent_55%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,hsl(var(--gold)/0.12),transparent_60%)]" />
         </div>
-
-        <div className="relative grid gap-5 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-7">
-          <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/12 shadow-[0_0_36px_hsl(var(--gold)/0.30)] md:h-14 md:w-14">
-              <Trophy className="h-6 w-6 text-primary md:h-7 md:w-7" />
-            </div>
-            <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-              {t("vision.eyebrow", "Our vision")}
-            </p>
-          </div>
-
+        <div className="relative flex flex-col items-center gap-4 px-5 py-7 text-center md:gap-5 md:px-8 md:py-9">
+          <img
+            src={ballondorAsset.url}
+            alt="Ballon d'Or"
+            loading="lazy"
+            decoding="async"
+            className="h-24 w-auto md:h-32 lg:h-36 drop-shadow-[0_0_28px_hsl(var(--gold)/0.45)]"
+          />
+          <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+            {t("vision.eyebrow", "Our vision")}
+          </p>
           <div className="min-w-0">
             <p
               className="font-bebas text-3xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-4xl lg:text-5xl"
@@ -447,33 +446,30 @@ const BallonDorVisionCard = ({
               {widont(headline)}
             </p>
             <p
-              className="mt-3 text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
+              className="mx-auto mt-3 max-w-3xl text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
               style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
             >
               {widont(body)}
             </p>
             <p
-              className="mt-3 text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+              className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
               style={{ textWrap: "balance" } as React.CSSProperties}
             >
               {widont(urgency)}
             </p>
           </div>
-
-          <div className="flex md:justify-end">
-            <button
-              type="button"
-              onClick={onBookMeeting}
-              className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
-              style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
-            >
-              <CalendarClock className="h-4 w-4 text-primary" />
-              <span>{cta}</span>
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onBookMeeting}
+            className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
+            style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+          >
+            <CalendarClock className="h-4 w-4 text-primary" />
+            <span>{cta}</span>
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+          </button>
         </div>
-      </SlantedBox>
+      </div>
     </div>
   );
 };
@@ -994,15 +990,20 @@ const IntroCinematic = ({
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
-  // Phase-3 carousel rotation across the curated intro items.
+  // Carousel of curated intro media — runs throughout the intro (every
+  // phase), not just the final beat. Each beat picks a fresh image and
+  // alternates between left-anchored and right-anchored frames so the
+  // imagery visibly drifts side-to-side as the cinematic plays.
   const [introIdx, setIntroIdx] = useState(0);
+  const [sideTick, setSideTick] = useState(0);
   useEffect(() => {
-    if (phase !== 3 || extraIntro.length <= 1) return;
+    if (extraIntro.length === 0) return;
     const t = setInterval(() => {
       setIntroIdx((i) => (i + 1) % extraIntro.length);
-    }, 3500);
+      setSideTick((s) => s + 1);
+    }, 4000);
     return () => clearInterval(t);
-  }, [phase, extraIntro.length]);
+  }, [extraIntro.length]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
@@ -1117,11 +1118,23 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — images and short clips — rotate one at a time
-          on the final RISE logo beat with a crossfade between beats. Videos
-          play muted + looped while on screen. */}
-      {phase === 3 && extraIntro.length > 0 && (() => {
-        const frame = getIntroImageFrames(1)[0];
+      {/* Uploaded intro media — drifts in and out of either side of the
+          screen throughout the cinematic, never centred over the logo
+          or text. Videos play muted + looped while on screen. */}
+      {extraIntro.length > 0 && (() => {
+        const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  left: "5%",  rotate: "-5deg" } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  right: "5%", rotate: "5deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", left: "4%",  rotate: "3deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", right: "4%", rotate: "-3deg" } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", left: "6%",  rotate: "4deg"  } },
+          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", right: "6%", rotate: "-4deg" } },
+        ];
+        // Alternate left vs right on every change; vary the row.
+        const leftFrames  = [sideFrames[0], sideFrames[2], sideFrames[4]];
+        const rightFrames = [sideFrames[1], sideFrames[3], sideFrames[5]];
+        const pool = sideTick % 2 === 0 ? leftFrames : rightFrames;
+        const frame = pool[Math.floor(sideTick / 2) % pool.length];
         const m = extraIntro[introIdx % extraIntro.length];
         const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
         return (
@@ -1129,7 +1142,7 @@ const IntroCinematic = ({
             <AnimatePresence mode="wait">
               {m.kind === "video" ? (
                 <motion.video
-                  key={m.url}
+                  key={`${m.url}-${sideTick}`}
                   src={m.url}
                   className={commonClass}
                   style={frame.style}
@@ -1137,11 +1150,11 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 />
               ) : (
                 <motion.img
-                  key={m.url}
+                  key={`${m.url}-${sideTick}`}
                   src={m.url}
                   alt=""
                   className={commonClass}
@@ -1149,7 +1162,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 />
               )}
             </AnimatePresence>
@@ -1478,17 +1491,36 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* Item 9 — dedicated Ballon d'Or vision card sits
-                    above the pillar grid and the Stars showcase. */}
-                <BallonDorVisionCard
-                  lang={lang}
-                  firstName={firstName}
-                  onBookMeeting={() => setMeetingOpen(true)}
-                  t={t}
-                />
-
-                {/* Players we've worked with — represented + mandated, live from DB. */}
-                <PlayersWeWorkWith />
+                {/* Players we've worked with — same treatment as the
+                    Representation page: live carousel inside a slanted
+                    card, followed by the background paragraph and the
+                    Fuel For Football context disclaimer. Sharing the
+                    same translation keys keeps both pages in sync. */}
+                <section className="my-6 md:my-8 space-y-4">
+                  <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                    <PlayersWeWorkWith bare />
+                  </div>
+                  <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                    <p
+                      className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.worked_with_body",
+                        "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
+                      ))}
+                    </p>
+                    <p
+                      className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
+                      style={{ textWrap: "pretty" } as React.CSSProperties}
+                    >
+                      {widont(t(
+                        "representation.worked_with_context",
+                        "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
+                      ))}
+                    </p>
+                  </div>
+                </section>
 
                 {/* Pillar boxes — pathway, HQ, training methodology,
                     performance team, parent's role (U18 only),
@@ -1590,6 +1622,17 @@ const RiseWithUs = () => {
                     </div>
                   );
                 })}
+
+                {/* Why not you? — the Ballon d'Or vision card sits at the
+                    very bottom of the hub, after every section group, so
+                    it closes the page with the ambition statement and CTA.
+                    Mirrors the placement used on the Representation page. */}
+                <BallonDorVisionCard
+                  lang={lang}
+                  firstName={firstName}
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
               </div>
 
               {/* Persistent: Explore Player Portal */}

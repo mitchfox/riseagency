@@ -47,7 +47,78 @@ export const ScoutingDatabaseCard = ({
   playerId, playerName, position, club, nationality, imageUrl, fitScore, lang,
 }: Props) => {
   const [around, setAround] = useState<Row[]>([]);
+  const [resolved, setResolved] = useState<{
+    name: string;
+    position: string | null;
+    club: string | null;
+    nationality: string | null;
+    image_url: string | null;
+    fit: number | null;
+  } | null>(null);
   const L = labels(lang);
+
+  // Resolve the prospect's *actual* details from our files. The props that
+  // come down from the outreach link can be stale or partial; we prefer the
+  // live players row, then fall back to the outreach tables (pro/youth) by
+  // player name so missing position/club/nationality is filled in instead of
+  // rendering whatever was typed onto the link.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: me } = await supabase
+        .from("players")
+        .select("name, position, club, nationality, image_url, fit_score")
+        .eq("id", playerId)
+        .maybeSingle();
+      let merged = {
+        name: (me?.name as string) || playerName,
+        position: (me?.position as string) ?? position,
+        club: (me?.club as string) ?? club,
+        nationality: (me?.nationality as string) ?? nationality,
+        image_url: (me?.image_url as string) ?? imageUrl,
+        fit:
+          typeof (me as any)?.fit_score === "number"
+            ? Math.round((me as any).fit_score)
+            : typeof fitScore === "number"
+              ? Math.round(fitScore)
+              : null,
+      };
+      const needsFill = !merged.position || !merged.club || !merged.nationality;
+      if (needsFill && merged.name) {
+        const [{ data: pro }, { data: yth }] = await Promise.all([
+          supabase
+            .from("player_outreach_pro")
+            .select("position, current_club, nationality, fit_score")
+            .ilike("player_name", merged.name)
+            .maybeSingle(),
+          supabase
+            .from("player_outreach_youth")
+            .select("position, current_club, nationality, fit_score")
+            .ilike("player_name", merged.name)
+            .maybeSingle(),
+        ]);
+        const src: any = pro || yth;
+        if (src) {
+          merged = {
+            ...merged,
+            position: merged.position || src.position || null,
+            club: merged.club || src.current_club || null,
+            nationality: merged.nationality || src.nationality || null,
+            fit:
+              merged.fit != null
+                ? merged.fit
+                : typeof src.fit_score === "number"
+                  ? Math.round(src.fit_score)
+                  : null,
+          };
+        }
+      }
+      if (alive) setResolved(merged);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [playerId, playerName, position, club, nationality, imageUrl, fitScore]);
 
   useEffect(() => {
     let alive = true;
@@ -77,12 +148,12 @@ export const ScoutingDatabaseCard = ({
 
   const youRow: Row = {
     id: playerId,
-    name: playerName,
-    position,
-    club,
-    nationality,
-    image_url: imageUrl,
-    fit: typeof fitScore === "number" ? Math.round(fitScore) : null,
+    name: resolved?.name ?? playerName,
+    position: resolved?.position ?? position,
+    club: resolved?.club ?? club,
+    nationality: resolved?.nationality ?? nationality,
+    image_url: resolved?.image_url ?? imageUrl,
+    fit: resolved?.fit ?? (typeof fitScore === "number" ? Math.round(fitScore) : null),
   };
 
   const before = around.slice(0, 3);
