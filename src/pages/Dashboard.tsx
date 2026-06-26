@@ -144,8 +144,8 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
-  const [programmingMode, setProgrammingMode] = useState<"sps" | "technical">(() =>
-    (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "sps"
+  const [programmingMode, setProgrammingMode] = useState<"schedule" | "sps" | "technical">(() =>
+    (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "schedule"
   );
   const [hasTechnicalPrograms, setHasTechnicalPrograms] = useState<boolean>(false);
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
@@ -243,19 +243,17 @@ const Dashboard = () => {
         .eq("player_id", playerData.id);
       const has = (count ?? 0) > 0;
       setHasTechnicalPrograms(has);
-      if (!has) setProgrammingMode("sps");
     })();
   }, [playerData?.id]);
 
-  // Auto-correct the programming mode so it always matches what the player
-  // actually has — prevents the SPS panel sitting blank when the saved tab
-  // is the empty one.
+  // If the saved tab points at content that doesn't exist for this player,
+  // fall back to Schedule so we never render a blank panel.
   useEffect(() => {
     const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
-    if (hasTechnicalPrograms && !hasSps && programmingMode !== "technical") {
-      setProgrammingMode("technical");
-    } else if (!hasTechnicalPrograms && hasSps && programmingMode !== "sps") {
-      setProgrammingMode("sps");
+    if (programmingMode === "technical" && !hasTechnicalPrograms) {
+      setProgrammingMode("schedule");
+    } else if (programmingMode === "sps" && !hasSps) {
+      setProgrammingMode("schedule");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programs, hasTechnicalPrograms]);
