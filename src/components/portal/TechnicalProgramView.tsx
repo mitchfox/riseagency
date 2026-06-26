@@ -323,7 +323,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
               {currentSession && (
                   <div className="space-y-3 bg-black/40 rounded-xl p-px md:p-4">
                   {(currentSession.title || currentSession.description) && (
-                    <div>
+                    <div className="border border-primary/60 rounded-lg p-3 md:p-4 bg-black/40">
                       {currentSession.title && (
                         <h3 className="font-bebas uppercase tracking-wider text-xl">{currentSession.title}</h3>
                       )}
