@@ -572,6 +572,26 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
         </div>
       )}
 
+      {!programmeLink && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border rounded px-3 py-2">
+          <CalendarRange className="w-3.5 h-3.5" />
+          <span>
+            {showPreviousWeeks
+              ? "Showing all weeks."
+              : "Showing this week and the next 5 weeks."}
+          </span>
+          {(previousWeeksCount > 0 || showPreviousWeeks) && (
+            <button
+              type="button"
+              onClick={() => setShowPreviousWeeks(v => !v)}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              {showPreviousWeeks ? "Hide previous weeks" : `View ${previousWeeksCount} previous week${previousWeeksCount === 1 ? "" : "s"}`}
+            </button>
+          )}
+        </div>
+      )}
+
       {programmeLink && rangeActive && linkedIds.length === 0 && allPlayerWeeks.some(w => w.week_start_date && weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!)) && (
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
           Master schedule weeks already exist inside these dates. Use <span className="font-semibold text-foreground">Generate weeks for this period</span> to link those existing weeks into this programme.
