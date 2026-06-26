@@ -6,6 +6,7 @@ import { Dumbbell } from "lucide-react";
 import { ProgrammingManagement } from "@/components/staff/ProgrammingManagement";
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
+import { BulkImportSpsToCoachingDB } from "@/components/staff/programming/BulkImportSpsToCoachingDB";
 
 const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
@@ -62,14 +63,17 @@ export const StrengthPowerSpeedSection = () => {
 
   return (
     <div className="space-y-4 -mx-6 sm:mx-0 px-2 sm:px-0">
-      <PlayerCombobox
-        players={players}
-        value={selectedPlayer}
-        onChange={setSelectedPlayer}
-        allLabel="Select a player..."
-        allValue="all"
-        className="w-full sm:w-[300px]"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <PlayerCombobox
+          players={players}
+          value={selectedPlayer}
+          onChange={setSelectedPlayer}
+          allLabel="Select a player..."
+          allValue="all"
+          className="w-full sm:w-[300px]"
+        />
+        <BulkImportSpsToCoachingDB />
+      </div>
 
       {selectedPlayer === "all" && (
         <div className="text-center py-12 text-muted-foreground">
