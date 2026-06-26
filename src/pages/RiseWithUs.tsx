@@ -460,8 +460,12 @@ const BallonDorVisionCard = ({
           <button
             type="button"
             onClick={onBookMeeting}
-            className="group relative inline-flex items-center gap-2 border border-primary bg-primary px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] transition hover:bg-primary/90 hover:text-primary-foreground md:text-base"
-            style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+            className="group relative inline-flex items-center gap-2 border border-primary px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] transition hover:brightness-95 md:text-base"
+            style={{
+              clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
+              backgroundColor: "hsl(var(--gold))",
+              color: "hsl(0 0% 4%)",
+            }}
           >
             <CalendarClock className="h-4 w-4" />
             <span>{cta}</span>
@@ -1826,7 +1830,8 @@ const RiseWithUs = () => {
                     <Button
                       size="lg"
                       onClick={() => setMeetingOpen(true)}
-                      className="border border-primary bg-primary font-bebas uppercase tracking-wider text-primary-foreground shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:bg-primary/90 hover:text-primary-foreground"
+                      className="border border-primary font-bebas uppercase tracking-wider shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:brightness-95"
+                      style={{ backgroundColor: "hsl(var(--gold))", color: "hsl(0 0% 4%)" }}
                     >
                       <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
