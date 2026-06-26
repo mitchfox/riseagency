@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
@@ -34,6 +34,7 @@ type OfferPlayer = {
   fit_score_breakdown?: any;
   last_contact_at?: string | null;
   offer_status?: string | null;
+  created_at?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
@@ -81,7 +82,7 @@ export const RepresentationOffers = () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
@@ -288,7 +289,21 @@ export const RepresentationOffers = () => {
     load();
   };
 
-  const renderCard = (player: OfferPlayer) => {
+  const deleteDraft = async (player: OfferPlayer) => {
+    if (!window.confirm(`Remove ${player.name} from drafts? This clears the representation offer flag — the player record stays.`)) return;
+    const { error } = await (supabase as any)
+      .from("players")
+      .update({ has_representation_offer: false })
+      .eq("id", player.id);
+    if (error) {
+      toast.error("Could not remove draft", { description: error.message });
+      return;
+    }
+    setPlayers(prev => prev.filter(p => p.id !== player.id));
+    toast.success("Draft removed");
+  };
+
+  const renderCard = (player: OfferPlayer, opts?: { showDelete?: boolean }) => {
     const slug = slugFor(player.name);
     return (
       <Card key={player.id} className="overflow-hidden">
@@ -330,6 +345,18 @@ export const RepresentationOffers = () => {
             <Button type="button" size="sm" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCustomising(player); }}>
               <Settings2 className="h-4 w-4" />
             </Button>
+            {opts?.showDelete && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDraft(player); }}
+                title="Remove from drafts"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -393,7 +420,14 @@ export const RepresentationOffers = () => {
             </section>
           )}
           {GROUPS.map(g => {
-            const items = grouped[g.id] || [];
+            let items = grouped[g.id] || [];
+            if (g.id === "drafts") {
+              items = [...items].sort((a, b) => {
+                const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return tb - ta;
+              });
+            }
             if (items.length === 0) return null;
             const isOpen = openGroups[g.id];
             return (
@@ -407,7 +441,7 @@ export const RepresentationOffers = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {items.map(renderCard)}
+                    {items.map(p => renderCard(p, { showDelete: g.id === "drafts" }))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
