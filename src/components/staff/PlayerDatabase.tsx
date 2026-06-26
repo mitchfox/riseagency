@@ -537,7 +537,7 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
-  const openPlayerDetail = (player: PlayerData) => {
+  const openPlayerDetail = async (player: PlayerData) => {
     setSelectedPlayer(player);
     setEditMode(false);
     setEditForm({
@@ -550,8 +550,33 @@ export const PlayerDatabase = () => {
       notes: player.notes || '',
       parents_name: player.parents_name || '',
       parent_contact: player.parent_contact || '',
+      national_team: false,
+      star_of_team: false,
+      previous_serious_injury: '',
+      agent_status: '',
+      agent_name: '',
+      parent_approval: false,
     });
     setDetailOpen(true);
+    // Hydrate fit-score fields from source table
+    if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
+      const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const cols = player.source === 'youth_outreach'
+        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
+        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
+      const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
+      if (data) {
+        setEditForm((f: any) => ({
+          ...f,
+          national_team: !!data.national_team,
+          star_of_team: !!data.star_of_team,
+          previous_serious_injury: data.previous_serious_injury || '',
+          agent_status: data.agent_status || '',
+          agent_name: data.agent_name || '',
+          parent_approval: !!data.parent_approval,
+        }));
+      }
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -559,6 +584,7 @@ export const PlayerDatabase = () => {
     try {
       const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
         : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
       const { error } = await supabase.from(tableName).update({
         player_name: editForm.player_name,
         position: editForm.position || null,
@@ -570,6 +596,14 @@ export const PlayerDatabase = () => {
         ...(selectedPlayer.source === 'youth_outreach' ? {
           parents_name: editForm.parents_name || null,
           parent_contact: editForm.parent_contact || null,
+          parent_approval: !!editForm.parent_approval,
+        } : {}),
+        ...(isOutreach ? {
+          national_team: !!editForm.national_team,
+          star_of_team: !!editForm.star_of_team,
+          previous_serious_injury: editForm.previous_serious_injury || null,
+          agent_status: editForm.agent_status || null,
+          agent_name: editForm.agent_name || null,
         } : {}),
       }).eq('id', selectedPlayer.id);
       if (error) throw error;
