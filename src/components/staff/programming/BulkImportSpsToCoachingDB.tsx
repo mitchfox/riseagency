@@ -37,6 +37,7 @@ const DETAIL_KEYS = [
   "players_required", "diagram", "attachments",
 ];
 const hasDetail = (row: any) => DETAIL_KEYS.some((key) => hasMeaningfulValue(row?.[key]));
+const detailScore = (row: any): number => DETAIL_KEYS.reduce((total, key) => total + (hasMeaningfulValue(row?.[key]) ? 1 : 0), 0);
 const flattenExercisePayload = (payload: any): any[] => {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== "object") return [];
@@ -47,12 +48,23 @@ const flattenExercisePayload = (payload: any): any[] => {
   });
 };
 const sessionPayloadHasDetail = (payload: any) => flattenExercisePayload(payload).some(hasDetail);
+const sessionPayloadScore = (payload: any) => flattenExercisePayload(payload).reduce((total, row) => total + detailScore(row), 0);
 const technicalProgrammeHasDetail = (sessions: any[]) => sessions.some((session) =>
   (Array.isArray(session?.drills) ? session.drills : []).some((drill: any) =>
     hasDetail(drill) || (Array.isArray(drill?.variations) ? drill.variations : []).some(hasDetail)
   )
 );
 const spsProgrammeHasDetail = (sessions: any[]) => sessions.some((session) => sessionPayloadHasDetail(session?.exercises));
+const programmePayloadScore = (source: Source, sessions: any[]) => {
+  if (source === "sps") return sessions.reduce((total, session) => total + sessionPayloadScore(session?.exercises), 0);
+  return sessions.reduce((total, session) => {
+    const drills = Array.isArray(session?.drills) ? session.drills : [];
+    return total + drills.reduce((drillTotal: number, drill: any) => {
+      const variations = Array.isArray(drill?.variations) ? drill.variations : [];
+      return drillTotal + detailScore(drill) + variations.reduce((varTotal: number, variation: any) => varTotal + detailScore(variation), 0);
+    }, 0);
+  }, 0);
+};
 type ImportResult = { inserted: number; hydrated: number };
 const changedTotal = (r: ImportResult) => r.inserted + r.hydrated;
 const weeksFromDates = (start: any, end: any): number | null => {
@@ -285,7 +297,9 @@ const importSessions = async (source: Source) => {
     const prior = harvested.get(key);
     if (!prior) { harvested.set(key, { title, description, exercises }); return; }
     // Prefer the version with more exercises / richer description
-    if ((exercises?.length || 0) > (prior.exercises?.length || 0)) {
+    const nextScore = sessionPayloadScore(exercises);
+    const priorScore = sessionPayloadScore(prior.exercises);
+    if (nextScore > priorScore || ((exercises?.length || 0) > (prior.exercises?.length || 0) && nextScore >= priorScore)) {
       harvested.set(key, { title, description: prior.description || description, exercises });
     } else if (!prior.description && description) {
       harvested.set(key, { ...prior, description });
@@ -428,7 +442,9 @@ const importProgrammes = async (source: Source) => {
     if (!key) return;
     const prior = harvested.get(key);
     if (!prior) { harvested.set(key, p); return; }
-    if ((p.payload?.length || 0) > (prior.payload?.length || 0)) {
+    const nextScore = programmePayloadScore(source, p.payload);
+    const priorScore = programmePayloadScore(source, prior.payload);
+    if (nextScore > priorScore || ((p.payload?.length || 0) > (prior.payload?.length || 0) && nextScore >= priorScore)) {
       harvested.set(key, { ...p, overview: prior.overview || p.overview, phase: prior.phase || p.phase, weeks: prior.weeks ?? p.weeks });
     }
   };
