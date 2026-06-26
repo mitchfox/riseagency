@@ -35,6 +35,7 @@ import { type ScoutingPosition } from "@/data/scoutingSkills";
 import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
+import ballondorAsset from "@/assets/ballondor.png.asset.json";
 
 interface ProspectPlayer {
   id: string;
