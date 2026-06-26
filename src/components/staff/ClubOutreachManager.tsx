@@ -152,6 +152,17 @@ export default function ClubOutreachManager() {
   const [players, setPlayers] = useState<PlayerLite[]>([]);
   const [clubs, setClubs] = useState<ClubLite[]>([]);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  // Section collapse state for the outreach board. Viewed stays open by default
+  // (it surfaces fresh activity); the status columns are collapsed so the
+  // page lands clean and staff opt-in to whichever stack they want to work on.
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    viewed: false,
+    ready: true,
+    draft: true,
+    sent: true,
+  });
+  const toggleSection = (key: string) =>
+    setCollapsedSections((s) => ({ ...s, [key]: !s[key] }));
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [newOpen, setNewOpen] = useState(false);
