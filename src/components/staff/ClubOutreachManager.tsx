@@ -610,11 +610,19 @@ export default function ClubOutreachManager() {
         <div className="space-y-8">
           {viewedRows.length > 0 && (
             <section>
-              <div className="flex items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => toggleSection('viewed')}
+                className="w-full flex items-center gap-3 mb-3 group"
+              >
+                {collapsedSections.viewed
+                  ? <ChevronRight className="h-4 w-4 text-[#cbb96b]" />
+                  : <ChevronDown className="h-4 w-4 text-[#cbb96b]" />}
                 <h3 className="text-white text-lg font-semibold tracking-tight">Viewed</h3>
                 <span className="text-xs text-muted-foreground">{viewedRows.length}</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
-              </div>
+              </button>
+              {!collapsedSections.viewed && (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {viewedRows.map(({ row: r, vs }) => {
                   const latest = vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b));
@@ -653,16 +661,24 @@ export default function ClubOutreachManager() {
                   );
                 })}
               </div>
+              )}
             </section>
           )}
           {STATUS_ORDER.map((status, i) => (
             <section key={status}>
-              <div className="flex items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => toggleSection(status)}
+                className="w-full flex items-center gap-3 mb-3 group"
+              >
+                {collapsedSections[status]
+                  ? <ChevronRight className="h-4 w-4 text-[#cbb96b]" />
+                  : <ChevronDown className="h-4 w-4 text-[#cbb96b]" />}
                 <h3 className="text-white text-lg font-semibold tracking-tight">{STATUS_LABELS[status]}</h3>
                 <span className="text-xs text-muted-foreground">{grouped[status].length}</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#cbb96b]/70 via-[#cbb96b]/30 to-transparent" />
-              </div>
-              {grouped[status].length === 0 ? (
+              </button>
+              {collapsedSections[status] ? null : grouped[status].length === 0 ? (
                 <p className="text-xs text-muted-foreground px-1">No outreach in this column.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
