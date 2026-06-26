@@ -137,7 +137,7 @@ export const TechnicalSection = () => {
           allValue="all"
           className="w-full sm:w-[300px]"
         />
-        <BulkImportSpsToCoachingDB />
+        <BulkImportSpsToCoachingDB source="technical" />
       </div>
 
       {selectedPlayer === "all" && (
