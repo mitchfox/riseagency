@@ -251,9 +251,11 @@ const Dashboard = () => {
   useEffect(() => {
     const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
     if (programmingMode === "technical" && !hasTechnicalPrograms) {
-      setProgrammingMode("schedule");
+      setProgrammingMode(hasSps ? "schedule" : "schedule");
     } else if (programmingMode === "sps" && !hasSps) {
-      setProgrammingMode("schedule");
+      setProgrammingMode(hasTechnicalPrograms ? "technical" : "schedule");
+    } else if (programmingMode === "schedule" && !hasSps && hasTechnicalPrograms) {
+      setProgrammingMode("technical");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programs, hasTechnicalPrograms]);
