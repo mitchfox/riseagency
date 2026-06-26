@@ -332,9 +332,11 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         ? (existingSettings.intro_media as any[])
             .filter((m) => m && typeof m.url === "string" && m.url)
         : [];
-      const existingUrls = new Set(existingIntro.map((m) => m.url));
+      const selectedImageUrls = new Set(Object.values(offerImages).filter(Boolean));
+      const keptExistingIntro = existingIntro.filter((m) => m.kind === "video" || selectedImageUrls.has(m.url));
+      const existingUrls = new Set(keptExistingIntro.map((m) => m.url));
       const introMedia = [
-        ...existingIntro,
+        ...keptExistingIntro,
         ...Object.values(offerImages)
           .filter((url) => url && !existingUrls.has(url))
           .map((url) => ({ id: newOfferMediaId(), kind: "image", url, show: true, position: "intro" })),
