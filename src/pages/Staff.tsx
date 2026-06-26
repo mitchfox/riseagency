@@ -2043,15 +2043,15 @@ const Staff = () => {
               {/* ErrorBoundary keyed by section so one tab crashing never blanks the whole portal. */}
               <ErrorBoundary key={expandedSection ?? 'none'}>
                 <Suspense fallback={<PageLoading />}>
-                  <div className={expandedSection === 'videoanalysis' ? '' : 'hidden'}><VideoAnalysis /></div>
-                  <div className={expandedSection === 'annotations' ? '' : 'hidden'}><AnnotationProjects /></div>
-                  <div className={expandedSection === 'players' ? '' : 'hidden'}><PlayerManagement isAdmin={canManageSection('players')} /></div>
-                  <div className={expandedSection === 'analysis' ? '' : 'hidden'}><AnalysisManagement isAdmin={canManageSection('analysis')} /></div>
-                  {expandedSection === 'dashboard' && <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />}
-                  {expandedSection === 'overview' && <StaffAccountabilityOverview isAdmin={isAdmin} userId={user?.id} />}
-                  {expandedSection === 'teamperformance' && <TeamPerformance />}
-                  {expandedSection === 'focusedtasks' && <FocusedTasksSection />}
-                  {expandedSection === 'schedule' && (
+                  {renderKA('videoanalysis', <VideoAnalysis />)}
+                  {renderKA('annotations', <AnnotationProjects />)}
+                  {renderKA('players', <PlayerManagement isAdmin={canManageSection('players')} />)}
+                  {renderKA('analysis', <AnalysisManagement isAdmin={canManageSection('analysis')} />)}
+                  {renderKA('dashboard', <StaffOverview isAdmin={isAdmin} userId={user?.id} isMarketeer={isMarketeer} />)}
+                  {renderKA('overview', <StaffAccountabilityOverview isAdmin={isAdmin} userId={user?.id} />)}
+                  {renderKA('teamperformance', <TeamPerformance />)}
+                  {renderKA('focusedtasks', <FocusedTasksSection />)}
+                  {renderKA('schedule', (
                     <div className="space-y-6">
                       <div className="mb-6">
                         <h3 className="text-xl font-semibold mb-2">Staff Availability</h3>
@@ -2059,84 +2059,73 @@ const Staff = () => {
                       </div>
                       <StaffAvailabilityManagement isAdmin={isAdmin} />
                     </div>
-                  )}
-                  {expandedSection === 'visionboard' && <VisionBoardSection />}
-                  {expandedSection === 'docs' && <DocsSection />}
-                  {expandedSection === 'sheets' && <SheetsSection />}
-                  {expandedSection === 'designstudio' && <DesignProjects />}
-                  {expandedSection === 'streams' && <StreamsSection />}
-                  {expandedSection === 'staffschedules' && <StaffSchedulesManagement />}
-                  {expandedSection === 'playerlist' && <PlayerList isAdmin={canManageSection('playerlist')} />}
-                  {expandedSection === 'recruitment' && <RecruitmentManagement isAdmin={canManageSection('recruitment')} />}
-                  {expandedSection === 'playerdatabase' && <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />}
-                  
-                  {expandedSection === 'scoutingcentre' && <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />}
-                  {expandedSection === 'coaching' && <CoachingDatabase isAdmin={canManageSection('coaching')} />}
-                  {expandedSection === 'tacticsboard' && <TacticsBoard />}
-                  {expandedSection === 'meetings' && <Meetings />}
-                  {expandedSection === 'coachingdata' && <CoachingDataSection />}
-                  {expandedSection === 'psychology' && <PsychologySection />}
-                  {expandedSection === 'marketingschedule' && <ScheduleManager canManage={canManageSection('marketingschedule')} />}
-                  {expandedSection === 'marketing' && <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />}
-                  {expandedSection === 'marketinggallery' && <MarketingGalleryViewer />}
-                  {expandedSection === 'contentcreator' && <ContentCreator />}
-                  {expandedSection === 'videocompressor' && <VideoCompressor />}
-                  {expandedSection === 'highlightcompiler' && <HighlightCompiler />}
-                  {expandedSection === 'highlightmakers' && <HighlightMakersManagement isAdmin={canManageSection('highlightmakers')} />}
-                  {expandedSection === 'datasetbuilder' && <DatasetBuilder />}
-                  {expandedSection === 'musicstudio' && <MusicStudio />}
-                  {expandedSection === 'salesdeck' && <SalesDeck />}
-                  
-                  {expandedSection === 'publiccontent' && <PublicContentManagement isAdmin={canManageSection('publiccontent')} />}
-                  {expandedSection === 'submissions' && <FormSubmissionsManagement isAdmin={canManageSection('submissions')} />}
-                  {expandedSection === 'visitors' && <SiteVisitorsManagement isAdmin={canManageSection('visitors')} />}
-                  {expandedSection === 'invoices' && <InvoiceManagement isAdmin={canManageSection('invoices')} />}
-                  {expandedSection === 'payments' && <PaymentsManagement isAdmin={canManageSection('payments')} />}
-                  {expandedSection === 'expenses' && <ExpensesManagement isAdmin={canManageSection('expenses')} />}
-                  {expandedSection === 'taxrecords' && <TaxRecordsManagement isAdmin={canManageSection('taxrecords')} />}
-                  {expandedSection === 'corporationtax' && <CorporationTaxSection isAdmin={canManageSection('corporationtax')} />}
-                  {expandedSection === 'budgets' && <BudgetsManagement isAdmin={canManageSection('budgets')} />}
-                  {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
-                  {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
-                  {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
-                  {/* Keep ClubOutreach & MarketTables mounted once visited so view state persists across tab switches */}
-                  {keepAliveSections.cluboutreach && (
-                    <div style={{ display: expandedSection === 'cluboutreach' ? 'block' : 'none' }}>
-                      <ClubOutreachManager />
-                    </div>
-                  )}
-                  {keepAliveSections.markettables && (
-                    <div style={{ display: expandedSection === 'markettables' ? 'block' : 'none' }}>
-                      <MarketTablesStandalone />
-                    </div>
-                  )}
-                  {expandedSection === 'casestudies' && <ScriptsAndCaseStudies />}
-                  {expandedSection === 'representationoffers' && <RepresentationOffers />}
-                  {expandedSection === 'transferreports' && <TransferReports />}
-                  {expandedSection === 'interactionhistory' && <InteractionHistory />}
-                  {expandedSection === 'transferhub' && <TransferHub isAdmin={canManageSection('transferhub')} />}
-                  {expandedSection === 'portalmanagement' && <PortalManagement />}
-                  {expandedSection === 'athletecentre' && <AthleteCentre />}
-                  {expandedSection === 'legal' && <LegalManagement isAdmin={canManageSection('legal')} />}
-                  {expandedSection === 'partners' && <PartnersManagement isAdmin={canManageSection('partners')} />}
-                  {expandedSection === 'jobs' && <JobsManagement />}
-                  {expandedSection === 'socialshare' && <SocialShareManagement />}
-                  {expandedSection === 'requests' && <RequestsManagement />}
-                  {expandedSection === 'sitetext' && <SiteTextManagement isAdmin={canManageSection('sitetext')} />}
-                  {expandedSection === 'languages' && <LanguagesManagement isAdmin={canManageSection('languages')} />}
-                  {expandedSection === 'passwords' && isAdmin && <PlayerPasswordManagement />}
-                  {expandedSection === 'staffaccounts' && isAdmin && <StaffAccountManagement />}
-                  {expandedSection === 'pwainstall' && <StaffPWAInstall />}
-                  {expandedSection === 'offlinemanager' && <StaffOfflineManager />}
-                  {expandedSection === 'pushnotifications' && <StaffPushNotifications />}
-                  {expandedSection === 'notifications' && isAdmin && <NotificationSettingsManagement />}
-                  {expandedSection === 'smsnotifications' && isAdmin && <StaffSMSNotifications />}
-                  {expandedSection === 'strengthpower' && <StrengthPowerSpeedSection />}
-                  {expandedSection === 'technical' && <TechnicalSection />}
-                  {expandedSection === 'nutrition' && <NutritionSection />}
-                  {expandedSection === 'activitylog' && isAdmin && <ActivityLog />}
-                  {expandedSection === 'dataexport' && isAdmin && <DatabaseExport />}
-                  {expandedSection === 'usage' && isAdmin && <UsageSection />}
+                  ))}
+                  {renderKA('visionboard', <VisionBoardSection />)}
+                  {renderKA('docs', <DocsSection />)}
+                  {renderKA('sheets', <SheetsSection />)}
+                  {renderKA('designstudio', <DesignProjects />)}
+                  {renderKA('streams', <StreamsSection />)}
+                  {renderKA('staffschedules', <StaffSchedulesManagement />)}
+                  {renderKA('playerlist', <PlayerList isAdmin={canManageSection('playerlist')} />)}
+                  {renderKA('recruitment', <RecruitmentManagement isAdmin={canManageSection('recruitment')} />)}
+                  {renderKA('playerdatabase', <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />)}
+                  {renderKA('scoutingcentre', <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />)}
+                  {renderKA('coaching', <CoachingDatabase isAdmin={canManageSection('coaching')} />)}
+                  {renderKA('tacticsboard', <TacticsBoard />)}
+                  {renderKA('meetings', <Meetings />)}
+                  {renderKA('coachingdata', <CoachingDataSection />)}
+                  {renderKA('psychology', <PsychologySection />)}
+                  {renderKA('marketingschedule', <ScheduleManager canManage={canManageSection('marketingschedule')} />)}
+                  {renderKA('marketing', <MarketingManagement isAdmin={canManageSection('marketing')} isMarketeer={isMarketeer} />)}
+                  {renderKA('marketinggallery', <MarketingGalleryViewer />)}
+                  {renderKA('contentcreator', <ContentCreator />)}
+                  {renderKA('videocompressor', <VideoCompressor />)}
+                  {renderKA('highlightcompiler', <HighlightCompiler />)}
+                  {renderKA('highlightmakers', <HighlightMakersManagement isAdmin={canManageSection('highlightmakers')} />)}
+                  {renderKA('datasetbuilder', <DatasetBuilder />)}
+                  {renderKA('musicstudio', <MusicStudio />)}
+                  {renderKA('salesdeck', <SalesDeck />)}
+                  {renderKA('publiccontent', <PublicContentManagement isAdmin={canManageSection('publiccontent')} />)}
+                  {renderKA('submissions', <FormSubmissionsManagement isAdmin={canManageSection('submissions')} />)}
+                  {renderKA('visitors', <SiteVisitorsManagement isAdmin={canManageSection('visitors')} />)}
+                  {renderKA('invoices', <InvoiceManagement isAdmin={canManageSection('invoices')} />)}
+                  {renderKA('payments', <PaymentsManagement isAdmin={canManageSection('payments')} />)}
+                  {renderKA('expenses', <ExpensesManagement isAdmin={canManageSection('expenses')} />)}
+                  {renderKA('taxrecords', <TaxRecordsManagement isAdmin={canManageSection('taxrecords')} />)}
+                  {renderKA('corporationtax', <CorporationTaxSection isAdmin={canManageSection('corporationtax')} />)}
+                  {renderKA('budgets', <BudgetsManagement isAdmin={canManageSection('budgets')} />)}
+                  {renderKA('financialreports', <FinancialReports isAdmin={canManageSection('financialreports')} />)}
+                  {renderKA('updates', <UpdatesManagement isAdmin={canManageSection('updates')} />)}
+                  {renderKA('clubnetwork', <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />)}
+                  {renderKA('cluboutreach', <ClubOutreachManager />)}
+                  {renderKA('markettables', <MarketTablesStandalone />)}
+                  {renderKA('casestudies', <ScriptsAndCaseStudies />)}
+                  {renderKA('representationoffers', <RepresentationOffers />)}
+                  {renderKA('transferreports', <TransferReports />)}
+                  {renderKA('interactionhistory', <InteractionHistory />)}
+                  {renderKA('transferhub', <TransferHub isAdmin={canManageSection('transferhub')} />)}
+                  {renderKA('portalmanagement', <PortalManagement />)}
+                  {renderKA('athletecentre', <AthleteCentre />)}
+                  {renderKA('legal', <LegalManagement isAdmin={canManageSection('legal')} />)}
+                  {renderKA('partners', <PartnersManagement isAdmin={canManageSection('partners')} />)}
+                  {renderKA('jobs', <JobsManagement />)}
+                  {renderKA('socialshare', <SocialShareManagement />)}
+                  {renderKA('requests', <RequestsManagement />)}
+                  {renderKA('sitetext', <SiteTextManagement isAdmin={canManageSection('sitetext')} />)}
+                  {renderKA('languages', <LanguagesManagement isAdmin={canManageSection('languages')} />)}
+                  {isAdmin && renderKA('passwords', <PlayerPasswordManagement />)}
+                  {isAdmin && renderKA('staffaccounts', <StaffAccountManagement />)}
+                  {renderKA('pwainstall', <StaffPWAInstall />)}
+                  {renderKA('offlinemanager', <StaffOfflineManager />)}
+                  {renderKA('pushnotifications', <StaffPushNotifications />)}
+                  {isAdmin && renderKA('notifications', <NotificationSettingsManagement />)}
+                  {isAdmin && renderKA('smsnotifications', <StaffSMSNotifications />)}
+                  {renderKA('strengthpower', <StrengthPowerSpeedSection />)}
+                  {renderKA('technical', <TechnicalSection />)}
+                  {renderKA('nutrition', <NutritionSection />)}
+                  {isAdmin && renderKA('activitylog', <ActivityLog />)}
+                  {isAdmin && renderKA('dataexport', <DatabaseExport />)}
+                  {isAdmin && renderKA('usage', <UsageSection />)}
                 </Suspense>
               </ErrorBoundary>
                 </CardContent>
