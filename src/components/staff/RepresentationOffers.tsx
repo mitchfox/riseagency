@@ -289,7 +289,21 @@ export const RepresentationOffers = () => {
     load();
   };
 
-  const renderCard = (player: OfferPlayer) => {
+  const deleteDraft = async (player: OfferPlayer) => {
+    if (!window.confirm(`Remove ${player.name} from drafts? This clears the representation offer flag — the player record stays.`)) return;
+    const { error } = await (supabase as any)
+      .from("players")
+      .update({ has_representation_offer: false })
+      .eq("id", player.id);
+    if (error) {
+      toast.error("Could not remove draft", { description: error.message });
+      return;
+    }
+    setPlayers(prev => prev.filter(p => p.id !== player.id));
+    toast.success("Draft removed");
+  };
+
+  const renderCard = (player: OfferPlayer, opts?: { showDelete?: boolean }) => {
     const slug = slugFor(player.name);
     return (
       <Card key={player.id} className="overflow-hidden">
@@ -331,6 +345,18 @@ export const RepresentationOffers = () => {
             <Button type="button" size="sm" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCustomising(player); }}>
               <Settings2 className="h-4 w-4" />
             </Button>
+            {opts?.showDelete && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDraft(player); }}
+                title="Remove from drafts"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
