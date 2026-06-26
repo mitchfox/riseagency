@@ -315,12 +315,15 @@ const Dashboard = () => {
   // Handle clicking on a schedule day to jump to that session
   const handleSessionClick = (sessionKey: string) => {
     setSelectedSession(sessionKey);
+    // Schedule lives in its own tab now; jump to SPS tab so the sessions accordion is visible.
+    setProgrammingMode("sps");
+    try { localStorage.setItem("portal.programmingTab", "sps"); } catch {}
     setAccordionValue(['sessions']);
     // Scroll to sessions section after state update
     setTimeout(() => {
       const sessionsSection = document.querySelector('[value="sessions"]');
       sessionsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    }, 150);
   };
 
   // Calculate actual dates for each day in a week based on week_start_date
