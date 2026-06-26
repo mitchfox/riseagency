@@ -389,13 +389,9 @@ const PillarsSection = ({
 
 /* ============== BALLON D'OR VISION CARD ============== */
 const BallonDorVisionCard = ({
-  lang,
-  firstName,
   onBookMeeting,
   t,
 }: {
-  lang: string;
-  firstName: string;
   onBookMeeting: () => void;
   t: (key: string, fallback: string) => string;
 }) => {
@@ -1160,10 +1156,10 @@ const IntroCinematic = ({
           It is hidden on narrow screens rather than risk crossing text. */}
       {extraIntro.length > 0 && (() => {
         const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
-          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44", style: { top: "8%", left: "4%", rotate: "-4deg" } },
-          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44", style: { top: "8%", right: "4%", rotate: "4deg" } },
-          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40", style: { bottom: "13%", left: "5%", rotate: "3deg" } },
-          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40", style: { bottom: "13%", right: "5%", rotate: "-3deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", left: "3%", rotate: "-4deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", right: "3%", rotate: "4deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", left: "4%", rotate: "3deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", right: "4%", rotate: "-3deg" } },
         ];
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
@@ -1632,8 +1628,6 @@ const RiseWithUs = () => {
                 </div>
 
                 <BallonDorVisionCard
-                  lang={lang}
-                  firstName={firstName}
                   onBookMeeting={() => setMeetingOpen(true)}
                   t={t}
                 />
