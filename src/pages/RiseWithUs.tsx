@@ -1311,6 +1311,16 @@ const RiseWithUs = () => {
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
+  // Inline-card dialogs (matching the Representation page pattern where
+  // "Who we've worked with" and "Why Rise" are revealed only by tapping
+  // a card, not shown on the main hub view).
+  const [workedWithOpen, setWorkedWithOpen] = useState(false);
+  const [whyRiseOpen, setWhyRiseOpen] = useState(false);
+  // Fallback profile image for the final "Next Step" screen — when the
+  // player has no `image_url` saved, we look up the first image they have
+  // uploaded to the marketing gallery so the lockup never shows a blank
+  // circle. Independent of any auto-promote upload flow.
+  const [finalFallbackImage, setFinalFallbackImage] = useState<string | null>(null);
 
   const isPickerMode = !slug;
 
