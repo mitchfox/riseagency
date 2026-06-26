@@ -13,6 +13,7 @@ import { SPSTimeline } from "@/components/staff/programming/SPSTimeline";
 import { TechnicalProgramEditor } from "./TechnicalProgramEditor";
 import { ProgrammingWeeksEditor } from "./ProgrammingWeeksEditor";
 import { SaveTechnicalToCoachingDBDialog } from "./SaveTechnicalToCoachingDBDialog";
+import { BulkImportSpsToCoachingDB } from "./BulkImportSpsToCoachingDB";
 import { Label } from "@/components/ui/label";
 
 interface Program {
@@ -127,14 +128,17 @@ export const TechnicalSection = () => {
 
   return (
     <div className="space-y-4 -mx-6 sm:mx-0 px-2 sm:px-0">
-      <PlayerCombobox
-        players={players}
-        value={selectedPlayer}
-        onChange={setSelectedPlayer}
-        allLabel="Select a player…"
-        allValue="all"
-        className="w-full sm:w-[300px]"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <PlayerCombobox
+          players={players}
+          value={selectedPlayer}
+          onChange={setSelectedPlayer}
+          allLabel="Select a player…"
+          allValue="all"
+          className="w-full sm:w-[300px]"
+        />
+        <BulkImportSpsToCoachingDB />
+      </div>
 
       {selectedPlayer === "all" && (
         <div className="text-center py-12 text-muted-foreground">
