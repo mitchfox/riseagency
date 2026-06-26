@@ -3895,7 +3895,7 @@ const Dashboard = () => {
                                       <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                         Sessions
                                       </AccordionTrigger>
-                                      <AccordionContent className="pl-6 pr-6">
+                                      <AccordionContent className="px-2 md:px-6">
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
