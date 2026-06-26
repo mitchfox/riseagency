@@ -634,7 +634,7 @@ const MeetingBookerDialog = ({
                 </div>
                 <div>
                   <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
-                    {offerT(lang, "rwu_meet_title", "Set Up Our Meeting")}
+                    {offerT(lang, "rwu_meet_title", "Let's Meet")}
                   </DialogTitle>
                   <DialogDescription className="text-foreground/75">
                     {offerT(
@@ -1438,7 +1438,16 @@ const RiseWithUs = () => {
         .eq("file_type", "image")
         .order("created_at", { ascending: true })
         .limit(1);
-      if (alive && data && data[0]?.file_url) setFinalFallbackImage(data[0].file_url as string);
+      if (alive && data && data[0]?.file_url) {
+        const fallbackUrl = data[0].file_url as string;
+        setFinalFallbackImage(fallbackUrl);
+        setPlayer((current) => current?.id === player.id ? { ...current, image_url: fallbackUrl } : current);
+        await (supabase as any)
+          .from("players")
+          .update({ image_url: fallbackUrl })
+          .eq("id", player.id)
+          .is("image_url", null);
+      }
     })();
     return () => { alive = false; };
   }, [player?.id, player?.image_url]);
