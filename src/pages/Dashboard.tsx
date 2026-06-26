@@ -144,8 +144,8 @@ const Dashboard = () => {
   const [updates, setUpdates] = useState<Update[]>([]);
   const [activeTab, setActiveTab] = useState("hub");
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("performance");
-  const [programmingMode, setProgrammingMode] = useState<"sps" | "technical">(() =>
-    (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "sps"
+  const [programmingMode, setProgrammingMode] = useState<"schedule" | "sps" | "technical">(() =>
+    (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "schedule"
   );
   const [hasTechnicalPrograms, setHasTechnicalPrograms] = useState<boolean>(false);
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
@@ -243,22 +243,29 @@ const Dashboard = () => {
         .eq("player_id", playerData.id);
       const has = (count ?? 0) > 0;
       setHasTechnicalPrograms(has);
-      if (!has) setProgrammingMode("sps");
     })();
   }, [playerData?.id]);
 
-  // Auto-correct the programming mode so it always matches what the player
-  // actually has — prevents the SPS panel sitting blank when the saved tab
-  // is the empty one.
+  // If the saved tab points at content that doesn't exist for this player,
+  // fall back to Schedule so we never render a blank panel.
   useEffect(() => {
     const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
-    if (hasTechnicalPrograms && !hasSps && programmingMode !== "technical") {
+    if (programmingMode === "technical" && !hasTechnicalPrograms) {
+      setProgrammingMode(hasSps ? "schedule" : "schedule");
+    } else if (programmingMode === "sps" && !hasSps) {
+      setProgrammingMode(hasTechnicalPrograms ? "technical" : "schedule");
+    } else if (programmingMode === "schedule" && !hasSps && hasTechnicalPrograms) {
       setProgrammingMode("technical");
-    } else if (!hasTechnicalPrograms && hasSps && programmingMode !== "sps") {
-      setProgrammingMode("sps");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programs, hasTechnicalPrograms]);
+
+  // Keep the SPS card accordion in sync with the selected programming pill
+  // so the right section is open by default when the tab is first shown.
+  useEffect(() => {
+    if (programmingMode === "schedule") setAccordionValue(['schedule']);
+    else if (programmingMode === "sps") setAccordionValue(['overview', 'sessions']);
+  }, [programmingMode]);
 
   // Track portal tab views for staff notifications
   useEffect(() => {
@@ -3474,29 +3481,44 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6 pb-24 md:pb-8 overflow-x-hidden">
-              {hasTechnicalPrograms && programs.filter(p => p.program_name !== 'Testing Protocol').length > 0 && (
-                <div className="container mx-auto px-4">
-                  <div className="mx-auto max-w-2xl grid grid-cols-2 gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm">
-                    {([
-                      { id: "sps", label: "Strength, Power & Speed" },
-                      { id: "technical", label: "Technical" },
-                    ] as const).map(opt => {
-                      const active = programmingMode === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
-                          className={`py-2.5 text-sm font-bebas uppercase tracking-wider rounded-full transition-all ${active ? "bg-[hsl(43,49%,61%)] text-black shadow-md" : "text-white/70 hover:text-white"}`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+              {(() => {
+                const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
+                if (!hasSps && !hasTechnicalPrograms) return null;
+                const pills: { id: "schedule" | "sps" | "technical"; label: string; available: boolean }[] = [
+                  { id: "sps", label: "Strength, Power & Speed", available: hasSps },
+                  { id: "schedule", label: "Schedule", available: hasSps },
+                  { id: "technical", label: "Technical", available: hasTechnicalPrograms },
+                ].filter(p => p.available) as any;
+                if (pills.length < 2) return null;
+                return (
+                  <div className="container mx-auto px-4">
+                    <div
+                      className="mx-auto max-w-2xl grid gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm"
+                      style={{ gridTemplateColumns: `repeat(${pills.length}, minmax(0, 1fr))` }}
+                    >
+                      {pills.map(opt => {
+                        const active = programmingMode === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setProgrammingMode(opt.id);
+                              try { localStorage.setItem("portal.programmingTab", opt.id); } catch {}
+                              if (opt.id === "schedule") setAccordionValue(['schedule']);
+                              if (opt.id === "sps") setAccordionValue(['overview', 'sessions']);
+                            }}
+                            className={`py-2.5 text-xs md:text-sm font-bebas uppercase tracking-wider rounded-full transition-all ${active ? "bg-[hsl(43,49%,61%)] text-black shadow-md" : "text-white/70 hover:text-white"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-              {hasTechnicalPrograms && programmingMode === "technical" ? (
+                );
+              })()}
+              {programmingMode === "technical" && hasTechnicalPrograms ? (
                 <div className="container mx-auto px-4">
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
@@ -3548,8 +3570,8 @@ const Dashboard = () => {
                               </div>
                             ) : (
                               <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">{/* defaultValue="schedule" removed as we're now using controlled state */}
-                                {/* Overview Section */}
-                                {(program.overview_text || program.phase_image_url || program.player_image_url) && (
+                                 {/* Overview Section */}
+                                 {programmingMode !== "schedule" && (program.overview_text || program.phase_image_url || program.player_image_url) && (
                                   <AccordionItem value="overview">
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Overview
@@ -3581,8 +3603,8 @@ const Dashboard = () => {
                                   </AccordionItem>
                                 )}
 
-                                {/* Schedule Section */}
-                                {((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
+                                 {/* Schedule Section */}
+                                 {programmingMode !== "sps" && ((program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0) || program.schedule_notes) && (
                                   <AccordionItem value="schedule">
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       {t(playerData?.portal_language, "schedule")}
@@ -3842,8 +3864,8 @@ const Dashboard = () => {
                                   </AccordionItem>
                                 )}
 
-                                {/* Sessions Section */}
-                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
+                                 {/* Sessions Section */}
+                                 {programmingMode !== "schedule" && program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
                                   // Define all possible sessions A-H
                                   const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
                                   
