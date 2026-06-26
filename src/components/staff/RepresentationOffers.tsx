@@ -40,6 +40,18 @@ type OfferPlayer = {
 const slugFor = (name: string | null | undefined) =>
   (name || "").toLowerCase().trim().replace(/\s+/g, "-");
 
+// Mirror ClubOutreachManager.openProposalLink — on Lovable preview hosts
+// keep navigation same-origin so the Rise With Us page renders inside the
+// editor iframe instead of escaping out.
+const isLovablePreviewHost = () => {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return h === "localhost"
+    || h.endsWith(".lovable.app")
+    || h.endsWith(".lovableproject.com")
+    || h.endsWith(".lovable.dev");
+};
+
 const GROUPS: { id: string; label: string; defaultOpen: boolean }[] = [
   { id: "drafts", label: "Drafts — not sent yet", defaultOpen: true },
   { id: "needs_followup", label: "Needs follow-up", defaultOpen: true },
@@ -219,6 +231,10 @@ export const RepresentationOffers = () => {
     const slug = slugFor(player.name);
     if (!slug) {
       toast.error("Player has no name to build offer link");
+      return;
+    }
+    if (isLovablePreviewHost()) {
+      window.location.assign(`/risewithus/${slug}`);
       return;
     }
     window.open(`${window.location.origin}/risewithus/${slug}`, "_blank", "noopener,noreferrer");
