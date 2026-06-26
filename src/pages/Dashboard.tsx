@@ -3525,12 +3525,12 @@ const Dashboard = () => {
               <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] border-t-2 border-[hsl(43,49%,61%)]" />
               {/* Technical view — kept mounted so data is preloaded */}
               {hasTechnicalPrograms && (
-                <div className={`container mx-auto px-2 md:px-4 ${programmingMode === "technical" ? "" : "hidden"}`}>
+                <div className={`w-full px-0 md:container md:mx-auto md:px-4 ${programmingMode === "technical" ? "" : "hidden"}`}>
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
               )}
               {programmingMode !== "technical" && (
-              <Card className="container mx-auto rounded-none border-0">
+              <Card className="w-full px-0 md:container md:mx-auto rounded-none border-0">
                 <CardHeader marble>
                   <div className="px-2 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
@@ -3583,7 +3583,7 @@ const Dashboard = () => {
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Overview
                                     </AccordionTrigger>
-                                    <AccordionContent className="space-y-4 pl-6 pr-6">
+                                    <AccordionContent className="space-y-4 px-2 md:px-6">
                                       {program.overview_text && (
                                         <p className="text-base text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
                                       )}
@@ -3616,7 +3616,7 @@ const Dashboard = () => {
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       {t(playerData?.portal_language, "schedule")}
                                     </AccordionTrigger>
-                                    <AccordionContent className="pl-6 pr-6">
+                                    <AccordionContent className="px-1 md:px-6">
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
@@ -3895,7 +3895,7 @@ const Dashboard = () => {
                                       <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                         Sessions
                                       </AccordionTrigger>
-                                      <AccordionContent className="pl-6 pr-6">
+                                      <AccordionContent className="px-2 md:px-6">
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
