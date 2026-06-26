@@ -247,6 +247,19 @@ const Dashboard = () => {
     })();
   }, [playerData?.id]);
 
+  // Auto-correct the programming mode so it always matches what the player
+  // actually has — prevents the SPS panel sitting blank when the saved tab
+  // is the empty one.
+  useEffect(() => {
+    const hasSps = programs.filter(p => p.program_name !== 'Testing Protocol').length > 0;
+    if (hasTechnicalPrograms && !hasSps && programmingMode !== "technical") {
+      setProgrammingMode("technical");
+    } else if (!hasTechnicalPrograms && hasSps && programmingMode !== "sps") {
+      setProgrammingMode("sps");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programs, hasTechnicalPrograms]);
+
   // Track portal tab views for staff notifications
   useEffect(() => {
     if (!playerData?.id) return;
@@ -3461,22 +3474,25 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="physical" className="space-y-6 pb-24 md:pb-8 overflow-x-hidden">
-              {hasTechnicalPrograms && (
-                <div className="container mx-auto px-4 -mb-4">
-                  <div className="inline-flex rounded-md border bg-muted p-1">
+              {hasTechnicalPrograms && programs.filter(p => p.program_name !== 'Testing Protocol').length > 0 && (
+                <div className="container mx-auto px-4">
+                  <div className="mx-auto max-w-2xl grid grid-cols-2 gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm">
                     {([
                       { id: "sps", label: "Strength, Power & Speed" },
                       { id: "technical", label: "Technical" },
-                    ] as const).map(opt => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
-                        className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${programmingMode === opt.id ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:text-foreground"}`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                    ] as const).map(opt => {
+                      const active = programmingMode === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => { setProgrammingMode(opt.id); try { localStorage.setItem("portal.programmingTab", opt.id); } catch {} }}
+                          className={`py-2.5 text-sm font-bebas uppercase tracking-wider rounded-full transition-all ${active ? "bg-[hsl(43,49%,61%)] text-black shadow-md" : "text-white/70 hover:text-white"}`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

@@ -1,29 +1,45 @@
-## Problem
+## 1. Portal Physical tab — fix and redesign
 
-The proposal `a9rs5tv3` (to Ústí) lists both Tyrese (FC Vysočina Jihlava) and Mikie (TJ Jiskra Domazlice). The "WhatsApp Key Club Contact" button at the bottom of the proposal currently shows **one** contact, resolved from the **first** attached player's current club — so Mikie inherits Tyrese's Jihlava TD.
+File: `src/pages/Dashboard.tsx` (the `physical` TabsContent around lines 3463–3700+)
 
-In `supabase/functions/get-club-outreach/index.ts` (lines ~88–174) the contact is computed once per link from `primaryPlayerId` (first sort_order) and exposed as `data.club_contact`. `ClubOutreachProposal.tsx` (lines ~530, 1377–1420) renders that single contact button.
+### a. SPS blank-screen fix
+When a player has both a Technical programme and SPS, the SPS panel currently renders blank. Root cause: the persisted `programmingMode` and `selectedProgramId` state can leave the SPS branch with no programme matched. Fix:
+- When `hasTechnicalPrograms` is true, still ensure `selectedProgramId` defaults to the first non-"Testing Protocol" SPS programme as soon as `programs` loads (if not already set).
+- Always render the SPS panel when `programmingMode === "sps"` and there is at least one SPS programme — never depend on the technical branch being chosen.
+- If a player has only one of the two, hide the toggle and render that one directly.
 
-## Fix
+### b. Cleaner toggle at top
+Replace the current `inline-flex border` toggle with a centred, full-width segmented control matching the rest of the portal (same style as the player-portal tabs: bordered pill, Rise Gold active state, larger hit area, equal-width halves). Only show it when both Technical and SPS exist.
 
-Make the Key Club Contact per-player when a proposal has multiple players from different clubs.
+### c. Technical view redesigned to mirror SPS
+File: `src/components/portal/TechnicalProgramView.tsx`
 
-### Edge function — `supabase/functions/get-club-outreach/index.ts`
+Replace the current card list with a layout that matches the SPS session look:
+- For each session, render a compact **drill table** with columns: Drill, Reps, Sets, Load, Recovery. Variations appear as indented sub-rows with the same columns.
+- Each row is clickable. Click opens a **wide pop-up dialog** (existing `Dialog` component, wide variant) showing the deep detail: full description, notes, diagram, and all variations laid out fully (same depth currently rendered inline).
+- Keep the programme header (name, phase, dates) but drop the per-drill inline diagram/notes block — those live in the popup.
+- Reuse SPS visual styling (rounded black panels, gold table headers, bebas headings) so the two modes feel identical.
 
-1. After resolving `entries`/`playerRows`, for each attached player look up their current club id via `players.club` → `club_map_positions`, then fetch the matching row from `club_outreach_club_contacts` (same logic that exists today for the single player). Build a `playerContactByPlayerId` map keyed by `player_id`.
-2. Attach the resolved contact to each player object returned in `data.players` (e.g. `player.club_contact = { contact_name, contact_role, contact_phone, contact_accent, contact_image_url, contact_club_id, contact_club_name, contact_club_logo_url, transfermarkt_url }`).
-3. Keep the existing top-level `data.club_contact` for backwards compatibility, but derive it from the primary player only.
+## 2. Staff — bulk save SPS into Coaching DB
 
-### Proposal page — `src/pages/ClubOutreachProposal.tsx`
+File: `src/components/staff/programming/StrengthPowerSpeedSection.tsx` plus a new dialog `SaveAllSpsToCoachingDBDialog.tsx`.
 
-1. Update the players type to include the optional `club_contact` shape.
-2. In the bottom contact block (lines 1377–1420), instead of rendering one button from `data.club_contact`, iterate over the attached players, dedupe by `contact_phone || contact_name`, and render one "WhatsApp Key Club Contact" button per unique club contact. Label each with the player's first name when there is more than one (e.g. "WhatsApp Tyrese's Key Club Contact – Sporting Director").
-3. The floating pinned `tmUrl` button stays driven by the primary player's contact (unchanged behaviour).
+Add three buttons in the SPS section header (visible regardless of selected player — they operate across every SPS programme that has ever existed):
 
-### Deploy
+1. **Import all exercises** — pulls every row from `sps_exercises`, dedupes by normalised name, and inserts new rows into `coaching_exercises` (category "Strength, Power & Speed"). Skips any whose normalised name already exists in `coaching_exercises`.
+2. **Import all sessions** — pulls every `sps_sessions` row, builds an `exercises` jsonb array from its `sps_exercises`, and inserts into `coaching_sessions`. Dedupe by `(title + programme phase)` against existing `coaching_sessions` titles.
+3. **Import all programmes** — pulls every `sps_programs` row, packages its sessions+exercises into an `attachments.sps_sessions` payload, and inserts into `coaching_programmes`. Dedupe by `title`.
 
-Deploy `get-club-outreach`.
+Each button:
+- Confirms the count first ("This will import 142 new exercises. Continue?").
+- Runs the insert in a single batch.
+- Toasts the number actually added vs skipped as duplicates.
+- Refreshes nothing in the SPS UI (Coaching DB is separate).
 
-## Verification
+Buttons sit in a small "Coaching DB" group at the top of the SPS section, next to the player picker, so they aren't gated on a player being selected.
 
-Load `/club-proposal/a9rs5tv3` headlessly and confirm two distinct Key Club Contact buttons render: one for Jihlava (Tyrese) and one for Domazlice (Mikie), each with the correct name/role/image. Re-check a single-player proposal (e.g. `9upg25s5`) to ensure exactly one button still renders.
+## Technical notes
+- Dedup uses `lower(trim(name))` comparison fetched once at the start of each import.
+- All three imports run client-side using the existing `supabase` client and the already-permitted `coaching_*` tables — no migration needed.
+- Popup uses the existing `Dialog` (sized `max-w-4xl`) per project rule "If creating pop up, make it wide screen not thin".
+- UK English throughout ("programme", "centred").
