@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DrillDiagramView, DrillDiagram } from "@/components/staff/programming/DrillDiagramEditor";
 import { Button } from "@/components/ui/button";
 import { getSessionColor } from "@/lib/sessionColors";
@@ -47,7 +46,43 @@ const formatReps = (reps: string | null, sets: string | null, perSide: boolean) 
 const GOLD = "hsl(43, 49%, 61%)";
 
 // SPS-styled session table: gold header (black text), cream drill-name cell, dark italic data cells, white 2px borders.
-const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill) => void }) => {
+// Clicking a drill expands inline to reveal its variations as sub-rows plus description/diagram.
+const DetailBlock = ({ item }: { item: Drill | Variation }) => {
+  const hasDiagram = item.diagram && (item.diagram.tokens?.length || item.diagram.arrows?.length);
+  if (!item.description && !item.notes && !hasDiagram) return null;
+  return (
+    <div className="p-3 md:p-4 space-y-3" style={{ backgroundColor: "hsl(0, 0%, 6%)", color: "hsl(0, 0%, 92%)" }}>
+      {item.description && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wider font-bebas" style={{ color: GOLD }}>Description</div>
+          <p className="text-xs md:text-sm whitespace-pre-wrap mt-1">{item.description}</p>
+        </div>
+      )}
+      {item.notes && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wider font-bebas" style={{ color: GOLD }}>Notes</div>
+          <p className="text-xs md:text-sm whitespace-pre-wrap mt-1 opacity-80">{item.notes}</p>
+        </div>
+      )}
+      {hasDiagram && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wider font-bebas mb-1" style={{ color: GOLD }}>Diagram</div>
+          <div className="max-w-md"><DrillDiagramView diagram={item.diagram!} /></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SessionTable = ({ drills }: { drills: Drill[] }) => {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   const HeaderCell = ({ children, last }: { children: React.ReactNode; last?: boolean }) => (
     <div
       className={`p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r-2 border-white"}`}
@@ -56,45 +91,110 @@ const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill) 
       {children}
     </div>
   );
+
   return (
     <div className="border-2 border-white rounded-lg overflow-hidden">
-      <div className="grid grid-cols-5 gap-0 text-xs md:text-base">
+      <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 text-xs md:text-base">
         <HeaderCell>Drill</HeaderCell>
-        <HeaderCell>Reps</HeaderCell>
-        <HeaderCell>Sets</HeaderCell>
-        <HeaderCell>Load</HeaderCell>
-        <HeaderCell last>
-          <span className="hidden md:inline">Recovery Time</span>
-          <span className="md:hidden">Recovery</span>
-        </HeaderCell>
+        <HeaderCell><span className="px-2 md:px-0">Reps</span></HeaderCell>
+        <HeaderCell last><span className="px-2 md:px-0">Sets</span></HeaderCell>
       </div>
       <div>
-        {drills.map((d) => (
-          <div
-            key={d.id}
-            onClick={() => onOpen(d)}
-            className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
-          >
-            <div
-              className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center break-words"
-              style={{ backgroundColor: "hsl(45, 40%, 80%)", color: "hsl(0, 0%, 0%)" }}
-            >
-              {d.name}
-              {d.variations.length > 0 && (
-                <span className="ml-1 text-[10px] opacity-70">(+{d.variations.length})</span>
-              )}
-            </div>
-            {[formatRepsCell(d.reps, d.reps_per_side), d.sets || "-", d.load || "-", d.recovery_time || "-"].map((v, i, arr) => (
+        {drills.map((d) => {
+          const isOpen = expanded.has(d.id);
+          const hasVariations = d.variations.length > 0;
+          const isClickable = hasVariations || !!(d.description || d.notes || (d.diagram && (d.diagram.tokens?.length || d.diagram.arrows?.length)));
+          return (
+            <Fragment key={d.id}>
               <div
-                key={i}
-                className={`p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center text-center ${i < arr.length - 1 ? "border-r-2 border-white" : ""}`}
-                style={{ backgroundColor: "hsl(0, 0%, 10%)", color: "hsl(0, 0%, 100%)" }}
+                onClick={() => isClickable && toggle(d.id)}
+                className={`grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 border-t-2 border-white ${isClickable ? "cursor-pointer hover:opacity-80" : ""} transition-opacity min-h-[60px] md:min-h-[80px]`}
               >
-                {v}
+                <div
+                  className="p-2 md:p-4 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-center text-center break-words gap-1"
+                  style={{ backgroundColor: "hsl(45, 40%, 80%)", color: "hsl(0, 0%, 0%)" }}
+                >
+                  {hasVariations && (
+                    <span className="text-[10px]" aria-hidden>{isOpen ? "▾" : "▸"}</span>
+                  )}
+                  <span>{d.name}</span>
+                  {hasVariations && (
+                    <span className="text-[10px] opacity-70">(+{d.variations.length})</span>
+                  )}
+                </div>
+                <div
+                  className="p-2 md:p-4 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center min-w-[90px] md:min-w-[140px]"
+                  style={{ backgroundColor: "hsl(0, 0%, 10%)", color: "hsl(0, 0%, 100%)" }}
+                >
+                  {formatRepsCell(d.reps, d.reps_per_side)}
+                </div>
+                <div
+                  className="p-2 md:p-4 text-xs md:text-sm italic flex items-center justify-center text-center min-w-[60px] md:min-w-[90px]"
+                  style={{ backgroundColor: "hsl(0, 0%, 10%)", color: "hsl(0, 0%, 100%)" }}
+                >
+                  {d.sets || "-"}
+                </div>
               </div>
-            ))}
-          </div>
-        ))}
+
+              {isOpen && (
+                <div className="border-t-2" style={{ borderColor: GOLD }}>
+                  <DetailBlock item={d} />
+                  {hasVariations && (
+                    <div>
+                      <div
+                        className="px-3 py-1.5 text-[10px] md:text-xs font-bebas uppercase tracking-wider"
+                        style={{ backgroundColor: "hsl(0, 0%, 11%)", color: GOLD }}
+                      >
+                        Variations of {d.name}
+                      </div>
+                      {d.variations.map((v) => {
+                        const vKey = `${d.id}:${v.id}`;
+                        const vOpen = expanded.has(vKey);
+                        const vClickable = !!(v.description || v.notes || (v.diagram && (v.diagram.tokens?.length || v.diagram.arrows?.length)));
+                        return (
+                          <Fragment key={v.id}>
+                            <div
+                              onClick={() => vClickable && toggle(vKey)}
+                              className={`grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 border-t border-white/30 ${vClickable ? "cursor-pointer hover:opacity-80" : ""} transition-opacity min-h-[48px] md:min-h-[60px]`}
+                            >
+                              <div
+                                className="p-2 md:p-3 text-xs md:text-sm font-medium border-r-2 border-white flex items-center justify-start gap-1 text-left pl-3 md:pl-8 break-words"
+                                style={{ backgroundColor: "hsl(45, 40%, 88%)", color: "hsl(0, 0%, 0%)" }}
+                              >
+                                <span className="opacity-60">↳</span>
+                                {vClickable && (
+                                  <span className="text-[10px]" aria-hidden>{vOpen ? "▾" : "▸"}</span>
+                                )}
+                                <span>{v.label}</span>
+                              </div>
+                              <div
+                                className="p-2 md:p-3 text-xs md:text-sm italic border-r-2 border-white flex items-center justify-center text-center min-w-[90px] md:min-w-[140px]"
+                                style={{ backgroundColor: "hsl(0, 0%, 13%)", color: "hsl(0, 0%, 100%)" }}
+                              >
+                                {formatRepsCell(v.reps, v.reps_per_side)}
+                              </div>
+                              <div
+                                className="p-2 md:p-3 text-xs md:text-sm italic flex items-center justify-center text-center min-w-[60px] md:min-w-[90px]"
+                                style={{ backgroundColor: "hsl(0, 0%, 13%)", color: "hsl(0, 0%, 100%)" }}
+                              >
+                                {v.sets || "-"}
+                              </div>
+                            </div>
+                            {vOpen && (
+                              <div className="border-t border-white/30">
+                                <DetailBlock item={v} />
+                              </div>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );
@@ -104,7 +204,6 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [sessions, setSessions] = useState<Record<string, Session[]>>({});
   const [loading, setLoading] = useState(true);
-  const [openDetail, setOpenDetail] = useState<{ drill: Drill; variation?: Variation } | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -209,107 +308,13 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
                       )}
                     </div>
                   )}
-                  <SessionTable
-                    drills={currentSession.drills}
-                    onOpen={(drill) => setOpenDetail({ drill })}
-                  />
+                  <SessionTable drills={currentSession.drills} />
                 </div>
               )}
             </>
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={!!openDetail} onOpenChange={(o) => !o && setOpenDetail(null)}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          {openDetail && (() => {
-            const drill = openDetail.drill;
-            const variation = openDetail.variation;
-            const active = variation || drill;
-            const titleName = variation ? `${drill.name} — ${variation.label}` : drill.name;
-            return (
-              <>
-                <DialogHeader>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {variation && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setOpenDetail({ drill })}
-                        className="h-7 px-2 text-xs font-bebas uppercase"
-                      >
-                        ← Back to {drill.name}
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setOpenDetail(null)}
-                      className="h-7 px-2 text-xs font-bebas uppercase"
-                    >
-                      ← Back to session
-                    </Button>
-                  </div>
-                  <DialogTitle className="font-bebas uppercase tracking-wider text-2xl mt-2">
-                    {titleName}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    {formatReps(active.reps, active.sets, active.reps_per_side) && (
-                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Reps × Sets</div><div className="font-medium">{formatReps(active.reps, active.sets, active.reps_per_side)}</div></div>
-                    )}
-                    {active.load && (
-                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Load</div><div className="font-medium">{active.load}</div></div>
-                    )}
-                    {active.recovery_time && (
-                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Recovery</div><div className="font-medium">{active.recovery_time}</div></div>
-                    )}
-                  </div>
-                  {active.description && (
-                    <div>
-                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Description</div>
-                      <p className="text-sm whitespace-pre-wrap">{active.description}</p>
-                    </div>
-                  )}
-                  {active.notes && (
-                    <div>
-                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Notes</div>
-                      <p className="text-sm whitespace-pre-wrap">{active.notes}</p>
-                    </div>
-                  )}
-                  {active.diagram && (active.diagram.tokens?.length || active.diagram.arrows?.length) ? (
-                    <div>
-                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Diagram</div>
-                      <div className="max-w-md"><DrillDiagramView diagram={active.diagram} /></div>
-                    </div>
-                  ) : null}
-                  {!variation && drill.variations?.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-[10px] uppercase text-muted-foreground font-bebas tracking-wider">Variations</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {drill.variations.map(v => (
-                          <button
-                            key={v.id}
-                            onClick={() => setOpenDetail({ drill, variation: v })}
-                            className="text-left border-2 rounded-md p-3 bg-muted/30 hover:bg-muted/60 transition-colors"
-                            style={{ borderColor: GOLD }}
-                          >
-                            <div className="font-medium">{v.label}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {formatReps(v.reps, v.sets, v.reps_per_side)}{v.load ? ` · ${v.load}` : ""}{v.recovery_time ? ` · Rec ${v.recovery_time}` : ""}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
