@@ -646,11 +646,12 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
               
                 {/* Day Cells - Rolling 7 days from today */}
                 {rolling7Days.map((dayInfo, index) => {
-                  const sessionValue = currentSchedule[dayInfo.dayName] || '';
-                  const teamSessionValue = currentSchedule[`${dayInfo.dayName}Team`] || '';
+                  const daySchedule = scheduleByDay[dayInfo.dayName + '_' + format(dayInfo.date, 'yyyy-MM-dd')] || currentSchedule;
+                  const sessionValue = daySchedule?.[dayInfo.dayName] || '';
+                  const teamSessionValue = daySchedule?.[`${dayInfo.dayName}Team`] || '';
                   const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                   const dayImageKey = `${dayInfo.dayName}Image`;
-                  const clubLogoUrl = currentSchedule[dayImageKey];
+                  const clubLogoUrl = daySchedule?.[dayImageKey];
                   
                   // Check if it's a clickable session (A-H)
                   const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
