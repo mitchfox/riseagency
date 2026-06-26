@@ -195,9 +195,9 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
     programSessions[0];
 
   return (
-    <div className="space-y-6">
-      <Card className="border-primary rounded-none border-x-0 md:rounded-lg md:border-x">
-        <CardHeader marble>
+    <div className="space-y-3 w-full">
+      <Card className="w-full border-primary rounded-none border-x-0 md:rounded-lg md:border-x">
+        <CardHeader marble className="rounded-none">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="font-bebas uppercase tracking-wider text-2xl">{activeProgram.program_name}</CardTitle>
               <Badge className="bg-primary">Current</Badge>
@@ -206,7 +206,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
             </div>
             {activeProgram.overview_text && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{activeProgram.overview_text}</p>}
         </CardHeader>
-        <CardContent className="space-y-4 pt-6 px-2 md:px-6">
+        <CardContent className="space-y-4 pt-4 px-px md:px-6">
           {programSessions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No sessions yet.</p>
           ) : (
@@ -238,7 +238,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
               </div>
 
               {currentSession && (
-                <div className="space-y-3 bg-black/40 rounded-xl p-1.5 md:p-4">
+                  <div className="space-y-3 bg-black/40 rounded-xl p-px md:p-4">
                   {(currentSession.title || currentSession.description) && (
                     <div>
                       {currentSession.title && (
