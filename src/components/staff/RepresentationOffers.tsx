@@ -17,6 +17,7 @@ import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
 import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { SearchWithSuggestions } from "./SearchWithSuggestions";
 
 type OfferPlayer = {
   id: string;
@@ -39,6 +40,7 @@ const slugFor = (name: string | null | undefined) =>
   (name || "").toLowerCase().trim().replace(/\s+/g, "-");
 
 const GROUPS: { id: string; label: string; defaultOpen: boolean }[] = [
+  { id: "drafts", label: "Drafts — not sent yet", defaultOpen: true },
   { id: "needs_followup", label: "Needs follow-up", defaultOpen: true },
   { id: "sent", label: "Offer sent — awaiting reply", defaultOpen: true },
   { id: "in_conversation", label: "In conversation", defaultOpen: true },
@@ -55,8 +57,11 @@ const groupFor = (p: OfferPlayer): string => {
   if (p.last_contact_at) {
     const days = (Date.now() - new Date(p.last_contact_at).getTime()) / 86400000;
     if (days >= 7) return "needs_followup";
+    return "sent";
   }
-  return "sent";
+  // No evidence of having sent yet → keep as draft.
+  if ((p.offer_status || "").toLowerCase().includes("sent")) return "sent";
+  return "drafts";
 };
 
 export const RepresentationOffers = () => {
@@ -70,6 +75,7 @@ export const RepresentationOffers = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null }[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +93,18 @@ export const RepresentationOffers = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Load all players once so the create-offer dialog can autocomplete from the
+  // existing database rather than re-typing details we already have.
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("players")
+        .select("id, name, position, club, nationality, date_of_birth")
+        .order("name");
+      setAllPlayers(data || []);
+    })();
+  }, []);
 
   // Pull non-UK visits to /risewithus/* offer pages and refresh every minute.
   useEffect(() => {
@@ -134,9 +152,16 @@ export const RepresentationOffers = () => {
 
   const grouped = useMemo(() => {
     const map: Record<string, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]]));
-    filtered.forEach(p => { (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p); });
+    const viewedIds = new Set<string>();
+    filtered.forEach(p => {
+      if ((visitsBySlug.get(slugFor(p.name)) ?? []).length > 0) viewedIds.add(p.id);
+    });
+    filtered.forEach(p => {
+      if (viewedIds.has(p.id)) return; // Shown in the Viewed section instead.
+      (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p);
+    });
     return map;
-  }, [filtered]);
+  }, [filtered, visitsBySlug]);
 
   // Offers (across all groups in the current filter) that have at least
   // one non-UK visit. Sorted by most recent visit first.
@@ -199,6 +224,27 @@ export const RepresentationOffers = () => {
       toast.error("Name required");
       return;
     }
+    // If the name matches an existing player, mark them as having an offer
+    // instead of creating a duplicate row.
+    const existing = allPlayers.find(
+      p => (p.name || "").trim().toLowerCase() === newPlayer.name.trim().toLowerCase(),
+    );
+    if (existing) {
+      const { error } = await (supabase as any)
+        .from("players")
+        .update({
+          has_representation_offer: true,
+          position: newPlayer.position.trim() || existing.position || "Other",
+          nationality: newPlayer.nationality.trim() || existing.nationality || "Unknown",
+          club: newPlayer.club.trim() || existing.club || null,
+          date_of_birth: newPlayer.date_of_birth || existing.date_of_birth || null,
+        })
+        .eq("id", existing.id);
+      if (error) {
+        toast.error("Could not update player", { description: error.message });
+        return;
+      }
+    } else {
     const payload: any = {
       name: newPlayer.name.trim(),
       position: newPlayer.position.trim() || "Other",
@@ -212,6 +258,7 @@ export const RepresentationOffers = () => {
     if (error) {
       toast.error("Could not create player", { description: error.message });
       return;
+    }
     }
     const slug = slugFor(newPlayer.name);
     try {
@@ -367,11 +414,30 @@ export const RepresentationOffers = () => {
           <DialogHeader><DialogTitle>Create representation offer</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Adds a new prospect player record and copies the offer link to your clipboard. If the player is already in the database use the search box on the page instead.
+              Start typing a name — if we already have the player in the database, pick them to autofill their details. Otherwise carry on typing a new name to create a fresh prospect record.
             </p>
             <div>
               <Label className="text-xs">Player name *</Label>
-              <Input value={newPlayer.name} onChange={e => setNewPlayer({ ...newPlayer, name: e.target.value })} />
+              <SearchWithSuggestions
+                value={newPlayer.name}
+                onCommit={(v) => setNewPlayer(p => ({ ...p, name: v }))}
+                placeholder="Type a player's name..."
+                sources={allPlayers.map(p => ({
+                  label: p.name,
+                  sublabel: [p.position, p.club, p.nationality].filter(Boolean).join(" • ") || null,
+                  payload: p,
+                }))}
+                onSuggestionSelect={(s) => {
+                  const p = s.payload as typeof allPlayers[number];
+                  setNewPlayer({
+                    name: p.name || "",
+                    position: p.position || "",
+                    nationality: p.nationality || "",
+                    club: p.club || "",
+                    date_of_birth: p.date_of_birth || "",
+                  });
+                }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
