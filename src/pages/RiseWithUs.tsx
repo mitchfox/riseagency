@@ -1359,8 +1359,7 @@ const RiseWithUs = () => {
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
-  // The vision block is revealed only by tapping its bottom card, not shown inline.
-  const [whyRiseOpen, setWhyRiseOpen] = useState(false);
+  const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
   // Fallback profile image for the final "Next Step" screen — when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
@@ -1486,7 +1485,7 @@ const RiseWithUs = () => {
 
   const goPortal = () => { setStage("portal"); window.scrollTo({ top: 0, behavior: "auto" }); };
   const goNext = () => { setStage("next"); window.scrollTo({ top: 0, behavior: "auto" }); };
-  const goHub = () => { setStage("hub"); window.scrollTo({ top: 0, behavior: "auto" }); };
+  const goHub = () => { setStage("hub"); setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); };
 
   const activeMeta = activeCard ? CARD_META.find((c) => c.key === activeCard)! : null;
   const groupSiblings = activeMeta
@@ -1494,6 +1493,7 @@ const RiseWithUs = () => {
     : [];
 
   const openCard = (k: CardKey) => {
+    setShowWhyRiseDetail(false);
     setActiveCard(k);
     setScoutingPosition(null);
     setPerformanceSub(null);
@@ -1532,7 +1532,7 @@ const RiseWithUs = () => {
           <RepresentationAudio />
 
           {/* ============ STAGE: HUB ============ */}
-          {stage === "hub" && !activeCard && (
+          {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <section className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-44 md:px-8 md:pt-8 lg:px-16 bg-black">
               <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
                 <header className="relative pb-6 text-center md:pb-10">
@@ -1561,11 +1561,6 @@ const RiseWithUs = () => {
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
-
-                {/* Pillar boxes — pathway, HQ, training methodology,
-                    performance team, parent's role (U18 only),
-                    multilingual support. */}
-                <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
                 {/* "Our Stars" / hub media strip removed per request — the
                     hub stays focused on the prospect's own journey rather
@@ -1637,7 +1632,10 @@ const RiseWithUs = () => {
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{ scale: 1.03, y: -3 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setWhyRiseOpen(true)}
+                    onClick={() => {
+                      setShowWhyRiseDetail(true);
+                      window.scrollTo({ top: 0, behavior: "auto" });
+                    }}
                     className="group relative mx-auto block w-full max-w-md overflow-hidden rounded-[1.45rem] border border-primary/50 p-3 text-center md:max-w-lg md:p-5"
                     style={solidBlackSectionStyle}
                   >
@@ -1678,7 +1676,7 @@ const RiseWithUs = () => {
           )}
 
           {/* ============ STAGE: HUB → DETAIL VIEW ============ */}
-          {stage === "hub" && activeCard && activeMeta && (
+          {stage === "hub" && activeCard && activeMeta && !showWhyRiseDetail && (
             <div className="relative bg-black min-h-[100dvh]">
               <DetailView
                 activeCard={activeCard}
@@ -1751,6 +1749,17 @@ const RiseWithUs = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {stage === "hub" && showWhyRiseDetail && (
+            <WhyRiseDetailView
+              lang={lang}
+              ageGroup={ageGroup}
+              firstName={firstName}
+              onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
+              onBookMeeting={() => setMeetingOpen(true)}
+              t={t}
+            />
           )}
 
           {/* ============ STAGE: PORTAL ============ */}
@@ -1862,7 +1871,7 @@ const RiseWithUs = () => {
             </section>
           )}
 
-          {stage === "hub" && !activeCard && (
+          {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <footer className="py-8 px-4 text-center">
               <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
             </footer>
@@ -1874,19 +1883,6 @@ const RiseWithUs = () => {
             player={player}
             lang={lang}
           />
-
-          {/* Why Rise — the Ballon d'Or vision card, revealed via the hub
-              card rather than rendered inline at the bottom. */}
-          <Dialog open={whyRiseOpen} onOpenChange={setWhyRiseOpen}>
-            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97 p-0">
-              <BallonDorVisionCard
-                lang={lang}
-                firstName={firstName}
-                onBookMeeting={() => { setWhyRiseOpen(false); setMeetingOpen(true); }}
-                t={t}
-              />
-            </DialogContent>
-          </Dialog>
         </>
       )}
     </div>
