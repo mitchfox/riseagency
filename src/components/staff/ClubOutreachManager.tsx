@@ -20,6 +20,8 @@ import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
+import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -230,12 +232,8 @@ export default function ClubOutreachManager() {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const nonUk = ((data ?? []) as any[]).filter((v) => {
-        const country = (v.location?.country ?? "").toString().toLowerCase();
-        if (!country) return false; // skip unknown — usually local/private IPs
-        return country !== "united kingdom" && country !== "uk" && country !== "gb";
-      });
-      setVisits(nonUk as ProposalVisit[]);
+      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      setVisits(real as ProposalVisit[]);
     };
     loadVisits();
     const interval = setInterval(loadVisits, 60_000);
