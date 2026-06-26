@@ -815,10 +815,17 @@ export const PlayerDatabase = () => {
         value={searchQuery}
         onCommit={setSearchQuery}
         sources={players.flatMap(p => [
-          { label: p.player_name || '', sublabel: p.current_club || p.position || null },
+          { label: p.player_name || '', sublabel: p.current_club || p.position || null, payload: p },
           ...(p.current_club ? [{ label: p.current_club, sublabel: 'Club' }] : []),
         ])}
         placeholder="Search by name, club, position..."
+        onSuggestionSelect={(s) => {
+          if (s.payload && s.payload.id) {
+            openPlayerDetail(s.payload);
+          } else {
+            setSearchQuery(s.label);
+          }
+        }}
       />
 
       <div className="rounded-lg border border-border/60 bg-card/60 p-3">

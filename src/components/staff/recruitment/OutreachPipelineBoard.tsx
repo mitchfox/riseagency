@@ -314,11 +314,19 @@ export const OutreachPipelineBoard = ({ type }: { type: OutreachType }) => {
           value={query}
           onCommit={setQuery}
           sources={rows.flatMap((r: any) => [
-            { label: r.player_name || '', sublabel: r.current_club || r.position || null },
+            { label: r.player_name || '', sublabel: r.current_club || r.position || null, payload: r },
             ...(r.current_club ? [{ label: r.current_club, sublabel: 'Club' }] : []),
           ])}
           placeholder="Search pipeline…"
           className="flex-1 max-w-sm"
+          onSuggestionSelect={(s) => {
+            if (s.payload && s.payload.id) {
+              setActiveRow(s.payload);
+              setDrawerOpen(true);
+            } else {
+              setQuery(s.label);
+            }
+          }}
         />
         <Button variant="outline" size="sm" onClick={load}>Refresh</Button>
       </div>
