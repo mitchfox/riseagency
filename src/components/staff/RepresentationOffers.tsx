@@ -152,9 +152,16 @@ export const RepresentationOffers = () => {
 
   const grouped = useMemo(() => {
     const map: Record<string, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]]));
-    filtered.forEach(p => { (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p); });
+    const viewedIds = new Set<string>();
+    filtered.forEach(p => {
+      if ((visitsBySlug.get(slugFor(p.name)) ?? []).length > 0) viewedIds.add(p.id);
+    });
+    filtered.forEach(p => {
+      if (viewedIds.has(p.id)) return; // Shown in the Viewed section instead.
+      (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p);
+    });
     return map;
-  }, [filtered]);
+  }, [filtered, visitsBySlug]);
 
   // Offers (across all groups in the current filter) that have at least
   // one non-UK visit. Sorted by most recent visit first.
