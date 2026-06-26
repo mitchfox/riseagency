@@ -450,6 +450,10 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
       } else if (activeTab === 'coaching_concepts') {
         // Concepts tab shows only concept items
         query = query.eq('analysis_type', 'concept');
+      } else if (activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') {
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
+        }
       }
 
       // Apply pagination
