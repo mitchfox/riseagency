@@ -409,12 +409,9 @@ const BallonDorVisionCard = ({
   );
   const body = t(
     "vision.body",
-    `Our ambition is the very top of the game — Ballon d'Or, Team of the Year, World Cup winners. We pick a small group of players we genuinely believe can get there, and we back them all the way. If you have what it takes to work with us, ${firstName}, there's no reason that group can't include you.`,
+    `We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, ${firstName}, reach out to better understand how we can realise potential together.`,
   );
-  const urgency = t(
-    "vision.urgency",
-    "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
-  );
+  const urgency = "";
   const cta = t("vision.cta", "Let's Meet");
 
   return (
@@ -451,12 +448,14 @@ const BallonDorVisionCard = ({
             >
               {widont(body)}
             </p>
-            <p
-              className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
-              style={{ textWrap: "balance" } as React.CSSProperties}
-            >
-              {widont(urgency)}
-            </p>
+            {urgency ? (
+              <p
+                className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+                style={{ textWrap: "balance" } as React.CSSProperties}
+              >
+                {widont(urgency)}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
