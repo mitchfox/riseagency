@@ -3583,7 +3583,7 @@ const Dashboard = () => {
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       Overview
                                     </AccordionTrigger>
-                                    <AccordionContent className="space-y-4 pl-6 pr-6">
+                                    <AccordionContent className="space-y-4 px-2 md:px-6">
                                       {program.overview_text && (
                                         <p className="text-base text-muted-foreground whitespace-pre-wrap">{program.overview_text}</p>
                                       )}
@@ -3616,7 +3616,7 @@ const Dashboard = () => {
                                     <AccordionTrigger className="text-xl font-bebas uppercase hover:no-underline pl-6">
                                       {t(playerData?.portal_language, "schedule")}
                                     </AccordionTrigger>
-                                    <AccordionContent className="pl-6 pr-6">
+                                    <AccordionContent className="px-1 md:px-6">
                                       <div className="space-y-6">
                                         {/* Weekly Schedule Table */}
                                         {program.weekly_schedules && Array.isArray(program.weekly_schedules) && program.weekly_schedules.length > 0 && (
