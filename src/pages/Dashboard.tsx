@@ -3855,8 +3855,8 @@ const Dashboard = () => {
                                   </AccordionItem>
                                 )}
 
-                                {/* Sessions Section */}
-                                {program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
+                                 {/* Sessions Section */}
+                                 {programmingMode !== "schedule" && program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
                                   // Define all possible sessions A-H
                                   const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
                                   
