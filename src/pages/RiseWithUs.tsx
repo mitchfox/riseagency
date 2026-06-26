@@ -473,6 +473,54 @@ const BallonDorVisionCard = ({
   );
 };
 
+const WhyRiseDetailView = ({
+  lang,
+  ageGroup,
+  firstName,
+  onBack,
+  onBookMeeting,
+  t,
+}: {
+  lang: string;
+  ageGroup: "under18" | "over18";
+  firstName: string;
+  onBack: () => void;
+  onBookMeeting: () => void;
+  t: (key: string, fallback: string) => string;
+}) => (
+  <motion.section
+    key="why-rise-detail"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+    className="relative min-h-[100dvh] bg-black px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-32 md:px-8 md:pt-6 lg:px-16"
+  >
+    <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10 md:mb-5"
+      >
+        <ChevronLeft className="h-3 w-3" />
+        {t("representation.back_to_all", "Back to all")}
+      </button>
+      <TitlePlate
+        icon={Trophy}
+        title={offerT(lang, "why_rise_card", "Why Rise?")}
+        eyebrow={offerT(lang, "vision_subtitle_card", "A future built with the best")}
+      />
+      <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
+      <BallonDorVisionCard
+        lang={lang}
+        firstName={firstName}
+        onBookMeeting={onBookMeeting}
+        t={t}
+      />
+    </div>
+  </motion.section>
+);
+
 /* ============== PORTAL WELCOME OVERLAY ============== */
 const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
   const [open, setOpen] = useState(true);
