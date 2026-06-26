@@ -75,13 +75,16 @@ const DetailBlock = ({ item }: { item: Drill | Variation }) => {
 };
 
 const SessionTable = ({ drills }: { drills: Drill[] }) => {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
-    setExpanded(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
+  const [expandedDrill, setExpandedDrill] = useState<string | null>(null);
+  const [expandedVariation, setExpandedVariation] = useState<string | null>(null);
+  const toggleDrill = (id: string) =>
+    setExpandedDrill(prev => {
+      if (prev === id) return null;
+      setExpandedVariation(null);
+      return id;
     });
+  const toggleVariation = (id: string) =>
+    setExpandedVariation(prev => (prev === id ? null : id));
 
   const HeaderCell = ({ children, last }: { children: React.ReactNode; last?: boolean }) => (
     <div
@@ -96,18 +99,18 @@ const SessionTable = ({ drills }: { drills: Drill[] }) => {
     <div className="border-2 border-white rounded-lg overflow-hidden">
       <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 text-xs md:text-base">
         <HeaderCell>Drill</HeaderCell>
-        <HeaderCell><span className="px-2 md:px-0">Reps</span></HeaderCell>
-        <HeaderCell last><span className="px-2 md:px-0">Sets</span></HeaderCell>
+        <HeaderCell><span className="px-2 md:px-0 min-w-[90px] md:min-w-[140px] inline-block">Reps</span></HeaderCell>
+        <HeaderCell last><span className="px-2 md:px-0 min-w-[60px] md:min-w-[90px] inline-block">Sets</span></HeaderCell>
       </div>
       <div>
         {drills.map((d) => {
-          const isOpen = expanded.has(d.id);
+          const isOpen = expandedDrill === d.id;
           const hasVariations = d.variations.length > 0;
           const isClickable = hasVariations || !!(d.description || d.notes || (d.diagram && (d.diagram.tokens?.length || d.diagram.arrows?.length)));
           return (
             <Fragment key={d.id}>
               <div
-                onClick={() => isClickable && toggle(d.id)}
+                onClick={() => isClickable && toggleDrill(d.id)}
                 className={`grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 border-t-2 border-white ${isClickable ? "cursor-pointer hover:opacity-80" : ""} transition-opacity min-h-[60px] md:min-h-[80px]`}
               >
                 <div
@@ -147,14 +150,35 @@ const SessionTable = ({ drills }: { drills: Drill[] }) => {
                       >
                         Variations of {d.name}
                       </div>
+                      {/* Variations header row */}
+                      <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 text-[10px] md:text-xs">
+                        <div
+                          className="p-1.5 md:p-2 font-bebas uppercase text-center border-r-2 border-white"
+                          style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
+                        >
+                          Variation
+                        </div>
+                        <div
+                          className="p-1.5 md:p-2 font-bebas uppercase text-center border-r-2 border-white min-w-[90px] md:min-w-[140px]"
+                          style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
+                        >
+                          Reps
+                        </div>
+                        <div
+                          className="p-1.5 md:p-2 font-bebas uppercase text-center min-w-[60px] md:min-w-[90px]"
+                          style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
+                        >
+                          Sets
+                        </div>
+                      </div>
                       {d.variations.map((v) => {
                         const vKey = `${d.id}:${v.id}`;
-                        const vOpen = expanded.has(vKey);
+                        const vOpen = expandedVariation === vKey;
                         const vClickable = !!(v.description || v.notes || (v.diagram && (v.diagram.tokens?.length || v.diagram.arrows?.length)));
                         return (
                           <Fragment key={v.id}>
                             <div
-                              onClick={() => vClickable && toggle(vKey)}
+                              onClick={() => vClickable && toggleVariation(vKey)}
                               className={`grid grid-cols-[1fr_auto_auto] md:grid-cols-3 gap-0 border-t border-white/30 ${vClickable ? "cursor-pointer hover:opacity-80" : ""} transition-opacity min-h-[48px] md:min-h-[60px]`}
                             >
                               <div
@@ -299,7 +323,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
               {currentSession && (
                   <div className="space-y-3 bg-black/40 rounded-xl p-px md:p-4">
                   {(currentSession.title || currentSession.description) && (
-                    <div>
+                    <div className="border border-primary/60 rounded-lg p-3 md:p-4 bg-black/40">
                       {currentSession.title && (
                         <h3 className="font-bebas uppercase tracking-wider text-xl">{currentSession.title}</h3>
                       )}
