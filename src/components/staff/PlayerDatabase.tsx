@@ -537,7 +537,7 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
-  const openPlayerDetail = (player: PlayerData) => {
+  const openPlayerDetail = async (player: PlayerData) => {
     setSelectedPlayer(player);
     setEditMode(false);
     setEditForm({
@@ -550,8 +550,33 @@ export const PlayerDatabase = () => {
       notes: player.notes || '',
       parents_name: player.parents_name || '',
       parent_contact: player.parent_contact || '',
+      national_team: false,
+      star_of_team: false,
+      previous_serious_injury: '',
+      agent_status: '',
+      agent_name: '',
+      parent_approval: false,
     });
     setDetailOpen(true);
+    // Hydrate fit-score fields from source table
+    if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
+      const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const cols = player.source === 'youth_outreach'
+        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
+        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
+      const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
+      if (data) {
+        setEditForm((f: any) => ({
+          ...f,
+          national_team: !!data.national_team,
+          star_of_team: !!data.star_of_team,
+          previous_serious_injury: data.previous_serious_injury || '',
+          agent_status: data.agent_status || '',
+          agent_name: data.agent_name || '',
+          parent_approval: !!data.parent_approval,
+        }));
+      }
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -559,6 +584,7 @@ export const PlayerDatabase = () => {
     try {
       const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
         : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
+      const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
       const { error } = await supabase.from(tableName).update({
         player_name: editForm.player_name,
         position: editForm.position || null,
@@ -570,6 +596,14 @@ export const PlayerDatabase = () => {
         ...(selectedPlayer.source === 'youth_outreach' ? {
           parents_name: editForm.parents_name || null,
           parent_contact: editForm.parent_contact || null,
+          parent_approval: !!editForm.parent_approval,
+        } : {}),
+        ...(isOutreach ? {
+          national_team: !!editForm.national_team,
+          star_of_team: !!editForm.star_of_team,
+          previous_serious_injury: editForm.previous_serious_injury || null,
+          agent_status: editForm.agent_status || null,
+          agent_name: editForm.agent_name || null,
         } : {}),
       }).eq('id', selectedPlayer.id);
       if (error) throw error;
@@ -1030,6 +1064,48 @@ export const PlayerDatabase = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={editForm.parents_name} onCommit={v => setEditForm((f: any) => ({ ...f, parents_name: v }))} /></div>
                   <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
+                </div>
+              )}
+              {(selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach') && (
+                <div className="space-y-3 rounded-md border border-border/60 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fit-score signals</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center justify-between gap-2 text-sm">
+                      <span>National team</span>
+                      <Switch checked={!!editForm.national_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, national_team: v }))} />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-sm">
+                      <span>Star of team</span>
+                      <Switch checked={!!editForm.star_of_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, star_of_team: v }))} />
+                    </label>
+                    {selectedPlayer.source === 'youth_outreach' && (
+                      <label className="flex items-center justify-between gap-2 text-sm col-span-2">
+                        <span>Parent approval</span>
+                        <Switch checked={!!editForm.parent_approval} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, parent_approval: v }))} />
+                      </label>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Agent status</Label>
+                      <select
+                        className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                        value={editForm.agent_status || ''}
+                        onChange={(e) => setEditForm((f: any) => ({ ...f, agent_status: e.target.value }))}
+                      >
+                        <option value="">Unknown</option>
+                        <option value="unrepresented">Unrepresented</option>
+                        <option value="family">Family</option>
+                        <option value="represented">Represented</option>
+                        <option value="top_agency">Top agency</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><BlurInput value={editForm.agent_name || ''} onCommit={v => setEditForm((f: any) => ({ ...f, agent_name: v }))} /></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Previous serious injury</Label>
+                    <BlurInput value={editForm.previous_serious_injury || ''} onCommit={v => setEditForm((f: any) => ({ ...f, previous_serious_injury: v }))} placeholder="e.g. ACL 2023" />
+                  </div>
                 </div>
               )}
               <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={v => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
