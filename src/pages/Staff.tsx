@@ -230,18 +230,27 @@ const Staff = () => {
   const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
 
-  // Track which keep-alive sections have been visited so we can hide/show without unmounting
-  const [keepAliveSections, setKeepAliveSections] = useState<{ cluboutreach: boolean; markettables: boolean }>({
-    cluboutreach: false,
-    markettables: false,
-  });
+  // Track every section the user has visited so we can mount-once and hide
+  // instead of unmount/remount. This preserves scroll, filters, popups and any
+  // in-flight requests when switching tabs — no re-loads on return.
+  const [visitedSections, setVisitedSections] = useState<Set<string>>(() => new Set());
   useEffect(() => {
-    if (expandedSection === 'cluboutreach' || expandedSection === 'markettables') {
-      setKeepAliveSections((prev) =>
-        prev[expandedSection] ? prev : { ...prev, [expandedSection]: true }
-      );
-    }
+    if (!expandedSection) return;
+    setVisitedSections((prev) => {
+      if (prev.has(expandedSection)) return prev;
+      const next = new Set(prev);
+      next.add(expandedSection);
+      return next;
+    });
   }, [expandedSection]);
+  const renderKA = (id: string, node: React.ReactNode) => {
+    if (!visitedSections.has(id)) return null;
+    return (
+      <div key={id} style={{ display: expandedSection === id ? 'block' : 'none' }}>
+        {node}
+      </div>
+    );
+  };
   
   // Role permissions from database
   const { canView, canEdit, loading: permissionsLoading, getViewableSections } = useRolePermissions(currentRole);
