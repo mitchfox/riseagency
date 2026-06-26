@@ -60,7 +60,7 @@ const GOLD = "hsl(43, 49%, 61%)";
 
 const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?: boolean }) => (
   <div
-    className={`p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r border-black/20"}`}
+    className={`px-1 py-1.5 md:p-4 text-[10px] md:text-base font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r border-black/20"}`}
     style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
   >
     {children}
@@ -69,7 +69,7 @@ const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?:
 
 const TableBodyCell = ({ children, name, last, indent }: { children: React.ReactNode; name?: boolean; last?: boolean; indent?: boolean }) => (
   <div
-    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : ""} ${last ? "" : "border-r border-white/10"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-start") : "justify-center text-center"} whitespace-normal break-words`}
+    className={`px-1 py-1.5 md:p-4 text-[11px] md:text-sm ${name ? "font-medium" : ""} ${last ? "" : "border-r border-white/10"} flex items-center ${name ? (indent ? "justify-start pl-2 md:pl-8" : "justify-start") : "justify-center text-center"} whitespace-normal break-words`}
     style={
       name
         ? { backgroundColor: indent ? "hsl(0, 0%, 14%)" : "hsl(0, 0%, 11%)", color: GOLD }
