@@ -415,31 +415,29 @@ const BallonDorVisionCard = ({
     "vision.urgency",
     "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
   );
-  const cta = t("vision.cta", "Set up our meeting");
+  const cta = t("vision.cta", "Let's Meet");
 
   return (
-    <div className="my-6 md:my-8">
-      <SlantedBox
-        slant={22}
-        innerClassName="px-5 py-6 md:px-8 md:py-8"
-        className="overflow-hidden"
+    <div className="mt-6 md:mt-8">
+      <div
+        className="relative overflow-hidden rise-slant-card-lg border border-border/60"
+        style={solidBlackSectionStyle}
       >
-        {/* Ambient gold sweep behind the copy */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,hsl(var(--gold)/0.20),transparent_55%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_100%,hsl(var(--gold)/0.12),transparent_60%)]" />
         </div>
-
-        <div className="relative grid gap-5 md:grid-cols-[auto,1fr,auto] md:items-center md:gap-7">
-          <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/40 bg-primary/12 shadow-[0_0_36px_hsl(var(--gold)/0.30)] md:h-14 md:w-14">
-              <Trophy className="h-6 w-6 text-primary md:h-7 md:w-7" />
-            </div>
-            <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
-              {t("vision.eyebrow", "Our vision")}
-            </p>
-          </div>
-
+        <div className="relative flex flex-col items-center gap-4 px-5 py-7 text-center md:gap-5 md:px-8 md:py-9">
+          <img
+            src={ballondorAsset.url}
+            alt="Ballon d'Or"
+            loading="lazy"
+            decoding="async"
+            className="h-24 w-auto md:h-32 lg:h-36 drop-shadow-[0_0_28px_hsl(var(--gold)/0.45)]"
+          />
+          <p className="font-bebas text-[11px] uppercase tracking-[0.32em] text-primary md:text-[12px]">
+            {t("vision.eyebrow", "Our vision")}
+          </p>
           <div className="min-w-0">
             <p
               className="font-bebas text-3xl uppercase leading-[1.05] tracking-[0.06em] text-foreground md:text-4xl lg:text-5xl"
@@ -448,33 +446,30 @@ const BallonDorVisionCard = ({
               {widont(headline)}
             </p>
             <p
-              className="mt-3 text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
+              className="mx-auto mt-3 max-w-3xl text-[13.5px] leading-relaxed text-foreground/90 md:text-[15px]"
               style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
             >
               {widont(body)}
             </p>
             <p
-              className="mt-3 text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+              className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
               style={{ textWrap: "balance" } as React.CSSProperties}
             >
               {widont(urgency)}
             </p>
           </div>
-
-          <div className="flex md:justify-end">
-            <button
-              type="button"
-              onClick={onBookMeeting}
-              className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
-              style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
-            >
-              <CalendarClock className="h-4 w-4 text-primary" />
-              <span>{cta}</span>
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onBookMeeting}
+            className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
+            style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+          >
+            <CalendarClock className="h-4 w-4 text-primary" />
+            <span>{cta}</span>
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+          </button>
         </div>
-      </SlantedBox>
+      </div>
     </div>
   );
 };
