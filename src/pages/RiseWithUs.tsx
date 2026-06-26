@@ -472,16 +472,12 @@ const BallonDorVisionCard = ({
 const WhyRiseDetailView = ({
   lang,
   ageGroup,
-  firstName,
   onBack,
-  onBookMeeting,
   t,
 }: {
   lang: string;
   ageGroup: "under18" | "over18";
-  firstName: string;
   onBack: () => void;
-  onBookMeeting: () => void;
   t: (key: string, fallback: string) => string;
 }) => (
   <motion.section
@@ -1731,9 +1727,7 @@ const RiseWithUs = () => {
             <WhyRiseDetailView
               lang={lang}
               ageGroup={ageGroup}
-              firstName={firstName}
               onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
-              onBookMeeting={() => setMeetingOpen(true)}
               t={t}
             />
           )}
