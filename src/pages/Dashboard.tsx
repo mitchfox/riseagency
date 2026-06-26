@@ -3494,7 +3494,7 @@ const Dashboard = () => {
                 ].filter(p => p.available) as any;
                 if (pills.length < 2) return null;
                 return (
-                  <div className="container mx-auto px-4">
+                  <div className="container mx-auto px-2 md:px-4">
                     <div
                       className="mx-auto max-w-2xl grid gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm"
                       style={{ gridTemplateColumns: `repeat(${pills.length}, minmax(0, 1fr))` }}
@@ -3532,7 +3532,7 @@ const Dashboard = () => {
               {programmingMode !== "technical" && (
               <Card className="container mx-auto rounded-none border-0">
                 <CardHeader marble>
-                  <div className="px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="px-2 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
                     </CardTitle>
@@ -3552,7 +3552,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="px-4">
+                <CardContent className="px-2 md:px-4">
                   
                   {programs.filter(p => p.program_name !== 'Testing Protocol').length === 0 ? (
                     <div className="py-8"></div>
