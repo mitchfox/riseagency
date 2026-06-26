@@ -34,6 +34,7 @@ import {
 import { type ScoutingPosition } from "@/data/scoutingSkills";
 import { normalisePosition } from "@/lib/positionNormalise";
 import riseLogoWhite from "@/assets/RISEWhite.png";
+import riseLogoWhiteHQ from "@/assets/RISEWhiteHQ.png";
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 import ballondorAsset from "@/assets/ballondor.png.asset.json";
 
@@ -295,7 +296,7 @@ const PILLARS: Pillar[] = [
     titleKey: "rwu_perf_team_title", titleFallback: "Performance Team Provision",
     bodyKey:  "rwu_perf_team_body",
     bodyFallback:
-      "Full Premier League level support — analysis, S&C, nutrition, sports psychology, technique — wrapped around you, working off one shared plan, not a list of disconnected freelancers.",
+      "Full Premier League level support across analysis, S&C, nutrition, sports psychology and technique, wrapped around you through one shared plan, not a list of disconnected freelancers.",
   },
   {
     key: "parent",
@@ -386,12 +387,7 @@ const PillarsSection = ({
   );
 };
 
-/* ============== BALLON D'OR VISION CARD ==============
- * Item 9 — dedicated full-width vision card sitting above the
- * pillar grid on the Rise With Us hub. Carries the urgency without
- * leaning on a "FOMO" badge — the framing does the work. CTA opens
- * the existing meeting booker dialog.
- */
+/* ============== BALLON D'OR VISION CARD ============== */
 const BallonDorVisionCard = ({
   lang,
   firstName,
@@ -408,8 +404,8 @@ const BallonDorVisionCard = ({
     "Only The Best.",
   );
   const body = t(
-    "vision.body",
-    `We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, ${firstName}, reach out to better understand how we can realise potential together.`,
+    "vision.body_anon",
+    "We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, reach out to better understand how we can realise potential together.",
   );
   const urgency = "";
   const cta = t("vision.cta", "Let's Meet");
@@ -515,12 +511,6 @@ const WhyRiseDetailView = ({
         eyebrow={offerT(lang, "vision_subtitle_card", "A future built with the best")}
       />
       <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
-      <BallonDorVisionCard
-        lang={lang}
-        firstName={firstName}
-        onBookMeeting={onBookMeeting}
-        t={t}
-      />
     </div>
   </motion.section>
 );
@@ -601,7 +591,7 @@ const MeetingBookerDialog = ({
       await insertStaffNotification({
         eventType: "proposal_meeting_request",
         title: `Meeting requested: ${player.name}`,
-        body: `${player.name} (${whatsapp.trim()}) — ${preferredDates.trim() || "no dates"} · ${labelFor(timeOfDay)}`,
+        body: `${player.name} (${whatsapp.trim()}) | ${preferredDates.trim() || "no dates"} | ${labelFor(timeOfDay)}`,
         eventData: {
           player_id: player.id,
           player_name: player.name,
@@ -624,7 +614,7 @@ const MeetingBookerDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
+      <DialogContent className="max-w-3xl border border-primary/30 !bg-black text-foreground shadow-[0_0_60px_-20px_hsl(var(--gold)/0.65)]">
         {!done ? (
           <>
             <DialogHeader>
@@ -697,7 +687,7 @@ const MeetingBookerDialog = ({
                 </label>
                 <Textarea
                   rows={3}
-                  placeholder={offerT(lang, "rwu_meet_note_ph", "Family present, language preference, questions…")}
+                  placeholder={offerT(lang, "rwu_meet_note_ph", "Family present, language preference, questions")}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
@@ -718,7 +708,7 @@ const MeetingBookerDialog = ({
                 className="font-bebas uppercase tracking-[0.2em] bg-primary text-primary-foreground hover:bg-primary/90 px-6"
               >
                 {submitting
-                  ? offerT(lang, "rwu_meet_sending", "Sending…")
+                  ? offerT(lang, "rwu_meet_sending", "Sending...")
                   : offerT(lang, "rwu_meet_submit", "Send Request")}
               </Button>
             </div>
@@ -1041,10 +1031,7 @@ const IntroCinematic = ({
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
-  // Carousel of curated intro media — runs throughout the intro (every
-  // phase), not just the final beat. Each beat picks a fresh image and
-  // alternates between left-anchored and right-anchored frames so the
-  // imagery visibly drifts side-to-side as the cinematic plays.
+  // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
   useEffect(() => {
@@ -1111,7 +1098,7 @@ const IntroCinematic = ({
         transition={{ duration: 24, ease: "linear", repeat: Infinity }}
       />
 
-      {/* Floating gold embers — drift upward across every phase to give the
+      {/* Floating gold embers drift upward across every phase to give the
           intro a constant sense of motion without distracting from the text. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
         {Array.from({ length: 28 }).map((_, i) => {
@@ -1169,54 +1156,46 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media — drifts in and out of either side of the
-          screen throughout the cinematic, never centred over the logo
-          or text. Videos play muted + looped while on screen. */}
+      {/* Uploaded intro media appears one at a time in the outer corners.
+          It is hidden on narrow screens rather than risk crossing text. */}
       {extraIntro.length > 0 && (() => {
         const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  left: "5%",  rotate: "-5deg" } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "9%",  right: "5%", rotate: "5deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", left: "4%",  rotate: "3deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { top: "44%", right: "4%", rotate: "-3deg" } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", left: "6%",  rotate: "4deg"  } },
-          { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", right: "6%", rotate: "-4deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44", style: { top: "8%", left: "4%", rotate: "-4deg" } },
+          { className: "h-28 w-28 md:h-36 md:w-36 lg:h-44 lg:w-44", style: { top: "8%", right: "4%", rotate: "4deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40", style: { bottom: "13%", left: "5%", rotate: "3deg" } },
+          { className: "h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40", style: { bottom: "13%", right: "5%", rotate: "-3deg" } },
         ];
-        // Show several images at once when available, split across both sides
-        // of the screen and rotating every few seconds.
-        const visibleCount = Math.min(extraIntro.length, 4);
+        const m = extraIntro[introIdx % extraIntro.length];
+        const frame = sideFrames[sideTick % sideFrames.length];
+        const commonClass = `hidden sm:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
             <AnimatePresence>
-              {Array.from({ length: visibleCount }).map((_, slot) => {
-                const m = extraIntro[(introIdx + slot) % extraIntro.length];
-                const frame = sideFrames[(sideTick + slot * 2) % sideFrames.length];
-                const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
-                return m.kind === "video" ? (
-                  <motion.video
-                    key={`${m.url}-${sideTick}-${slot}`}
-                    src={m.url}
-                    className={commonClass}
-                    style={frame.style}
-                    autoPlay muted loop playsInline
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 0.86, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.03 }}
-                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                ) : (
-                  <motion.img
-                    key={`${m.url}-${sideTick}-${slot}`}
-                    src={m.url}
-                    alt=""
-                    className={commonClass}
-                    style={frame.style}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    animate={{ opacity: 0.86, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.03 }}
-                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                );
-              })}
+              {m.kind === "video" ? (
+                <motion.video
+                  key={`${m.url}-${sideTick}`}
+                  src={m.url}
+                  className={commonClass}
+                  style={frame.style}
+                  autoPlay muted loop playsInline
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 0.82, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                />
+              ) : (
+                <motion.img
+                  key={`${m.url}-${sideTick}`}
+                  src={m.url}
+                  alt=""
+                  className={commonClass}
+                  style={frame.style}
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 0.82, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                />
+              )}
             </AnimatePresence>
           </div>
         );
@@ -1314,7 +1293,7 @@ const IntroCinematic = ({
                   transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.img
-                  src={riseLogoWhite} alt="RISE"
+                  src={riseLogoWhiteHQ} alt="RISE"
                   className="relative h-24 sm:h-32 md:h-40 w-auto"
                   initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
                   animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.85))" }}
@@ -1621,8 +1600,6 @@ const RiseWithUs = () => {
                   );
                 })}
 
-                {/* BallonDorVisionCard is now revealed via the "Why Rise?"
-                    card below, so the full vision content never appears inline. */}
                 <div className="mt-8 scroll-mt-[88px] md:mt-10 md:scroll-mt-[96px]">
                   <motion.button
                     type="button"
@@ -1653,6 +1630,13 @@ const RiseWithUs = () => {
                     </div>
                   </motion.button>
                 </div>
+
+                <BallonDorVisionCard
+                  lang={lang}
+                  firstName={firstName}
+                  onBookMeeting={() => setMeetingOpen(true)}
+                  t={t}
+                />
               </div>
 
               {/* Persistent: Explore Player Portal */}
