@@ -3494,7 +3494,7 @@ const Dashboard = () => {
                 ].filter(p => p.available) as any;
                 if (pills.length < 2) return null;
                 return (
-                  <div className="container mx-auto px-4">
+                  <div className="container mx-auto px-2 md:px-4">
                     <div
                       className="mx-auto max-w-2xl grid gap-1 p-1 rounded-full border-2 border-[hsl(43,49%,61%)]/40 bg-black/40 backdrop-blur-sm"
                       style={{ gridTemplateColumns: `repeat(${pills.length}, minmax(0, 1fr))` }}
@@ -3521,14 +3521,18 @@ const Dashboard = () => {
                   </div>
                 );
               })()}
-              {programmingMode === "technical" && hasTechnicalPrograms ? (
-                <div className="container mx-auto px-4">
+              {/* Full-bleed gold divider above the programming card */}
+              <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] border-t-2 border-[hsl(43,49%,61%)]" />
+              {/* Technical view — kept mounted so data is preloaded */}
+              {hasTechnicalPrograms && (
+                <div className={`container mx-auto px-2 md:px-4 ${programmingMode === "technical" ? "" : "hidden"}`}>
                   <TechnicalProgramView playerId={playerData?.id ?? null} />
                 </div>
-              ) : (
-              <Card className="container mx-auto rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0">
+              )}
+              {programmingMode !== "technical" && (
+              <Card className="container mx-auto rounded-none border-0">
                 <CardHeader marble>
-                  <div className="px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="px-2 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
                     </CardTitle>
@@ -3548,7 +3552,7 @@ const Dashboard = () => {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="px-4">
+                <CardContent className="px-2 md:px-4">
                   
                   {programs.filter(p => p.program_name !== 'Testing Protocol').length === 0 ? (
                     <div className="py-8"></div>
