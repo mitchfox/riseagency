@@ -962,10 +962,17 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         value={searchQuery}
         onCommit={setSearchQuery}
         sources={data.flatMap((d: any) => [
-          { label: d.player_name || '', sublabel: d.current_club || d.nationality || null },
+          { label: d.player_name || '', sublabel: d.current_club || d.nationality || null, payload: d },
           ...(d.current_club ? [{ label: d.current_club, sublabel: 'Club' }] : []),
         ])}
         placeholder="Search name, club, nationality..."
+        onSuggestionSelect={(s) => {
+          if (s.payload && s.payload.id) {
+            openDetail(s.payload);
+          } else {
+            setSearchQuery(s.label);
+          }
+        }}
       />
 
       {/* Active filter indicators */}
