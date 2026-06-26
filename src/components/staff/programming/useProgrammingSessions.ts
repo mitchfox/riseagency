@@ -37,17 +37,17 @@ export const useProgrammingSessions = (playerId: string | null) => {
     const [spsRes, techProgRes, spsNewProgRes] = await Promise.all([
       supabase
         .from("player_programs")
-        .select("id, program_name, sessions")
+        .select("id, program_name, sessions, is_current")
         .eq("player_id", playerId)
         .order("display_order"),
       supabase
         .from("technical_programs" as any)
-        .select("id, program_name")
+        .select("id, program_name, is_current")
         .eq("player_id", playerId)
         .order("display_order"),
       supabase
         .from("sps_programs" as any)
-        .select("id, program_name, legacy_player_program_id")
+        .select("id, program_name, legacy_player_program_id, is_current")
         .eq("player_id", playerId)
         .order("display_order"),
     ]);
@@ -70,6 +70,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
           sessionKey: key,
           sessionTitle: data?.title ?? null,
           spsSessionField: f,
+          hiddenFromPicker: p.is_current ? false : true,
         });
       }
     }
@@ -111,6 +112,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
         .in("program_id", techProgIds)
         .order("display_order");
       const progName = new Map(((techProgRes.data || []) as any[]).map(p => [p.id, p.program_name]));
+      const progCurrent = new Map(((techProgRes.data || []) as any[]).map(p => [p.id, !!p.is_current]));
       for (const s of (techSess || []) as any[]) {
         out.push({
           refId: `tech:${s.id}`,
@@ -121,6 +123,7 @@ export const useProgrammingSessions = (playerId: string | null) => {
           sessionKey: s.session_key || "",
           sessionTitle: s.title ?? null,
           sessionId: s.id,
+          hiddenFromPicker: progCurrent.get(s.program_id) ? false : true,
         });
       }
     }
