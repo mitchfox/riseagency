@@ -5,35 +5,118 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const normalize = (s: string) => (s || "").trim().toLowerCase();
+const toInt = (v: any) => {
+  if (v === null || v === undefined) return null;
+  const m = String(v).match(/-?\d+/);
+  if (!m) return null;
+  const n = parseInt(m[0], 10);
+  return Number.isFinite(n) ? n : null;
+};
+
+// SPS data lives in the legacy player_programs.sessions jsonb (sessions keyed
+// by "A"/"B"/"preA" etc., each with { title, exercises: [...] }). The new
+// sps_* tables are largely empty so we read the legacy source.
+const loadSpsPrograms = async () => {
+  const { data, error } = await supabase
+    .from("player_programs")
+    .select("program_name, phase_name, overview_text, start_date, end_date, sessions");
+  if (error) throw error;
+  return data || [];
+};
+
+const loadTechnical = async () => {
+  const { data: programs, error: pErr } = await supabase
+    .from("technical_programs" as any)
+    .select("id, program_name, phase_name, start_date, end_date");
+  if (pErr) throw pErr;
+  const progIds = (programs || []).map((p: any) => p.id);
+  const { data: sessions } = progIds.length
+    ? await supabase
+        .from("technical_sessions" as any)
+        .select("id, program_id, title, session_key, description, display_order")
+        .in("program_id", progIds)
+    : { data: [] as any[] };
+  const sessIds = (sessions || []).map((s: any) => s.id);
+  const { data: drills } = sessIds.length
+    ? await supabase
+        .from("technical_drills" as any)
+        .select("id, session_id, name, description, reps, sets, reps_per_side, load, recovery_time, display_order")
+        .in("session_id", sessIds)
+    : { data: [] as any[] };
+  const drillIds = (drills || []).map((d: any) => d.id);
+  const { data: variations } = drillIds.length
+    ? await supabase
+        .from("technical_drill_variations" as any)
+        .select("drill_id, name, description, reps, sets, reps_per_side, load, recovery_time")
+        .in("drill_id", drillIds)
+    : { data: [] as any[] };
+  return { programs: programs || [], sessions: sessions || [], drills: drills || [], variations: variations || [] };
+};
 
 const importExercises = async () => {
-  const { data: ex, error } = await supabase
-    .from("sps_exercises")
-    .select("name, description, reps, sets, load, recovery_time, video_url");
-  if (error) throw error;
   const { data: existing } = await supabase.from("coaching_exercises").select("title");
   const existingSet = new Set((existing || []).map(r => normalize(r.title)));
   const seen = new Set<string>();
   const rows: any[] = [];
-  (ex || []).forEach((e: any) => {
+
+  const push = (e: { name: string; description?: string; reps?: string; sets?: any; load?: string; recoveryTime?: string; videoUrl?: string; category: string }) => {
     const name = (e.name || "").trim();
     if (!name) return;
     const key = normalize(name);
     if (existingSet.has(key) || seen.has(key)) return;
     seen.add(key);
-    const setsNum = e.sets ? parseInt(String(e.sets).match(/\d+/)?.[0] || "", 10) : null;
-    const restNum = e.recovery_time ? parseInt(String(e.recovery_time).match(/\d+/)?.[0] || "", 10) : null;
     rows.push({
       title: name,
       description: e.description || null,
       reps: e.reps || null,
-      sets: Number.isFinite(setsNum as number) ? setsNum : null,
+      sets: toInt(e.sets),
       load: e.load || null,
-      rest_time: Number.isFinite(restNum as number) ? restNum : null,
-      video_url: e.video_url || null,
-      category: "Strength, Power & Speed",
+      rest_time: toInt(e.recoveryTime),
+      video_url: e.videoUrl || null,
+      category: e.category,
+    });
+  };
+
+  // SPS exercises from legacy jsonb
+  const sps = await loadSpsPrograms();
+  sps.forEach((p: any) => {
+    const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
+    Object.values(sessions).forEach((s: any) => {
+      const exs = Array.isArray(s?.exercises) ? s.exercises : [];
+      exs.forEach((e: any) => push({
+        name: e?.name,
+        description: e?.description,
+        reps: e?.reps || e?.repetitions,
+        sets: e?.sets,
+        load: e?.load,
+        recoveryTime: e?.recoveryTime || e?.recovery_time,
+        videoUrl: e?.videoUrl && e.videoUrl !== "-" ? e.videoUrl : undefined,
+        category: "Strength, Power & Speed",
+      }));
     });
   });
+
+  // Technical drills + variations
+  const tech = await loadTechnical();
+  tech.drills.forEach((d: any) => push({
+    name: d.name,
+    description: d.description,
+    reps: d.reps,
+    sets: d.sets,
+    load: d.load,
+    recoveryTime: d.recovery_time,
+    category: "Technical",
+  }));
+  tech.variations.forEach((v: any) => push({
+    name: v.name,
+    description: v.description,
+    reps: v.reps,
+    sets: v.sets,
+    load: v.load,
+    recoveryTime: v.recovery_time,
+    category: "Technical",
+  }));
+
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_exercises").insert(rows);
   if (insErr) throw insErr;
@@ -41,50 +124,63 @@ const importExercises = async () => {
 };
 
 const importSessions = async () => {
-  const { data: sessions, error } = await supabase
-    .from("sps_sessions")
-    .select("id, title, session_key, description");
-  if (error) throw error;
   const { data: existing } = await supabase.from("coaching_sessions").select("title");
   const existingSet = new Set((existing || []).map(r => normalize(r.title)));
-
-  const sessionIds = (sessions || []).map((s: any) => s.id);
-  const { data: allEx } = sessionIds.length
-    ? await supabase
-        .from("sps_exercises")
-        .select("session_id, name, reps, sets, load, recovery_time, display_order")
-        .in("session_id", sessionIds)
-        .order("display_order", { ascending: true })
-    : { data: [] as any[] };
-  const exBySession = new Map<string, any[]>();
-  (allEx || []).forEach((e: any) => {
-    const arr = exBySession.get(e.session_id) || [];
-    arr.push(e);
-    exBySession.set(e.session_id, arr);
-  });
-
   const seen = new Set<string>();
   const rows: any[] = [];
-  (sessions || []).forEach((s: any) => {
-    const title = (s.title || s.session_key || "").trim();
+
+  const push = (title: string, description: string | null, category: string, exercises: any[]) => {
+    title = (title || "").trim();
     if (!title) return;
     const key = normalize(title);
     if (existingSet.has(key) || seen.has(key)) return;
     seen.add(key);
-    const exercises = (exBySession.get(s.id) || []).map(e => ({
-      title: e.name,
-      reps: e.reps,
-      sets: e.sets,
-      load: e.load,
-      recovery_time: e.recovery_time,
-    }));
-    rows.push({
-      title,
-      description: s.description || null,
-      category: "Strength, Power & Speed",
-      exercises,
+    rows.push({ title, description, category, exercises });
+  };
+
+  // SPS sessions from legacy jsonb
+  const sps = await loadSpsPrograms();
+  sps.forEach((p: any) => {
+    const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
+    Object.entries(sessions).forEach(([key, s]: [string, any]) => {
+      const title = (s?.title || `Session ${key}`).trim();
+      const exercises = (Array.isArray(s?.exercises) ? s.exercises : []).map((e: any) => ({
+        title: e?.name,
+        reps: e?.reps || e?.repetitions,
+        sets: e?.sets,
+        load: e?.load,
+        recovery_time: e?.recoveryTime || e?.recovery_time,
+      }));
+      push(title, s?.staffNotes || null, "Strength, Power & Speed", exercises);
     });
   });
+
+  // Technical sessions (with their drills + variations)
+  const tech = await loadTechnical();
+  const drillsBySession = new Map<string, any[]>();
+  tech.drills.forEach((d: any) => {
+    const a = drillsBySession.get(d.session_id) || [];
+    a.push(d);
+    drillsBySession.set(d.session_id, a);
+  });
+  const variationsByDrill = new Map<string, any[]>();
+  tech.variations.forEach((v: any) => {
+    const a = variationsByDrill.get(v.drill_id) || [];
+    a.push(v);
+    variationsByDrill.set(v.drill_id, a);
+  });
+  tech.sessions.forEach((s: any) => {
+    const drills = (drillsBySession.get(s.id) || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const exercises: any[] = [];
+    drills.forEach((d: any) => {
+      exercises.push({ title: d.name, reps: d.reps, sets: d.sets, load: d.load, recovery_time: d.recovery_time });
+      (variationsByDrill.get(d.id) || []).forEach((v: any) => {
+        exercises.push({ title: `${d.name} — ${v.name}`, reps: v.reps, sets: v.sets, load: v.load, recovery_time: v.recovery_time });
+      });
+    });
+    push(s.title || s.session_key, s.description || null, "Technical", exercises);
+  });
+
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_sessions").insert(rows);
   if (insErr) throw insErr;
@@ -92,33 +188,31 @@ const importSessions = async () => {
 };
 
 const importProgrammes = async () => {
-  const { data: programs, error } = await supabase
-    .from("sps_programs")
-    .select("program_name, phase_name, overview_text, start_date, end_date");
-  if (error) throw error;
   const { data: existing } = await supabase.from("coaching_programmes").select("title");
   const existingSet = new Set((existing || []).map(r => normalize(r.title)));
   const seen = new Set<string>();
   const rows: any[] = [];
-  (programs || []).forEach((p: any) => {
-    const title = (p.program_name || "").trim();
+
+  const push = (title: string, phase: string | null, overview: string | null, start: string | null, end: string | null, category: string) => {
+    title = (title || "").trim();
     if (!title) return;
     const key = normalize(title);
     if (existingSet.has(key) || seen.has(key)) return;
     seen.add(key);
     let weeks: number | null = null;
-    if (p.start_date && p.end_date) {
-      const ms = new Date(p.end_date).getTime() - new Date(p.start_date).getTime();
+    if (start && end) {
+      const ms = new Date(end).getTime() - new Date(start).getTime();
       if (Number.isFinite(ms) && ms > 0) weeks = Math.max(1, Math.round(ms / (7 * 24 * 60 * 60 * 1000)));
     }
-    rows.push({
-      title,
-      description: p.phase_name || null,
-      content: p.overview_text || null,
-      weeks,
-      category: "Strength, Power & Speed",
-    });
-  });
+    rows.push({ title, description: phase, content: overview, weeks, category });
+  };
+
+  const sps = await loadSpsPrograms();
+  sps.forEach((p: any) => push(p.program_name, p.phase_name, p.overview_text, p.start_date, p.end_date, "Strength, Power & Speed"));
+
+  const tech = await loadTechnical();
+  tech.programs.forEach((p: any) => push(p.program_name, p.phase_name, null, p.start_date, p.end_date, "Technical"));
+
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_programmes").insert(rows);
   if (insErr) throw insErr;
