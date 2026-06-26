@@ -124,6 +124,29 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
         .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
       if (error) { toast.error("Upload failed"); return; }
       const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+      if (kind === "image") {
+        await (supabase as any)
+          .from("marketing_gallery")
+          .insert({
+            title: `${playerName} - offer image`,
+            description: `Rise With Us image for ${playerName}`,
+            file_url: data.publicUrl,
+            file_type: "image",
+            category: "players",
+            player_id: playerId,
+          });
+        const { data: existingPlayer } = await (supabase as any)
+          .from("players")
+          .select("image_url")
+          .eq("id", playerId)
+          .maybeSingle();
+        if (!existingPlayer?.image_url) {
+          await (supabase as any)
+            .from("players")
+            .update({ image_url: data.publicUrl })
+            .eq("id", playerId);
+        }
+      }
       setIntroMedia((prev) => [
         ...prev,
         { id: newId(), kind, url: data.publicUrl, show: true, position: "intro" },
