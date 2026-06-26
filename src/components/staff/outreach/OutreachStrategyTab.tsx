@@ -37,6 +37,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   const [clubs, setClubs] = useState<ClubLite[]>([]);
   const [strategies, setStrategies] = useState<StrategyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [autoTickedClubIds, setAutoTickedClubIds] = useState<Set<string>>(new Set());
 
   const [name, setName] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
@@ -66,12 +67,26 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: clubRows }, { data: stratRows }] = await Promise.all([
+      const [{ data: clubRows }, { data: stratRows }, { data: sentLinkRows }, { data: visitRows }] = await Promise.all([
         supabase.from("club_map_positions").select("id, club_name, country, league, league_level, image_url").order("club_name"),
         (supabase as any).from("club_outreach_strategies").select("*").order("created_at", { ascending: false }),
+        supabase.from("club_outreach_links").select("id, club_id, status, target_type").eq("target_type", "club").eq("status", "sent"),
+        supabase.from("club_outreach_visits").select("outreach_id"),
       ]);
       setClubs((clubRows ?? []) as ClubLite[]);
       setStrategies((stratRows ?? []) as StrategyRow[]);
+      const auto = new Set<string>();
+      (sentLinkRows ?? []).forEach((r: any) => { if (r.club_id) auto.add(r.club_id); });
+      const visitedIds = new Set<string>((visitRows ?? []).map((v: any) => v.outreach_id).filter(Boolean));
+      if (visitedIds.size) {
+        const { data: visitedLinks } = await supabase
+          .from("club_outreach_links")
+          .select("id, club_id, target_type")
+          .in("id", Array.from(visitedIds))
+          .eq("target_type", "club");
+        (visitedLinks ?? []).forEach((r: any) => { if (r.club_id) auto.add(r.club_id); });
+      }
+      setAutoTickedClubIds(auto);
       setLoading(false);
     })();
   }, []);
@@ -351,7 +366,8 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
               const open = expandedStrategyId === s.id;
               const list = strategyClubs(s);
               const checked: string[] = s.defaults?.checked_keys ?? [];
-              const doneCount = list.filter((c) => checked.includes(c.key)).length;
+              const isAutoTicked = (c: StratClub) => !!(c.club_id && autoTickedClubIds.has(c.club_id));
+              const doneCount = list.filter((c) => checked.includes(c.key) || isAutoTicked(c)).length;
               const q = (addClubQuery[s.id] ?? "").trim();
               const stratCountry = s.filters?.country ?? null;
               const suggestions = q.length >= 2
@@ -397,7 +413,8 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
                       )}
                       <ul className="space-y-1">
                         {list.map((c) => {
-                          const isChecked = checked.includes(c.key);
+                          const auto = isAutoTicked(c);
+                          const isChecked = checked.includes(c.key) || auto;
                           if (c.pending) {
                             return (
                               <li
@@ -430,10 +447,19 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
                               key={c.key}
                               className="flex items-center gap-2 text-xs px-2 py-1 rounded hover:bg-muted/40"
                             >
-                              <Checkbox checked={isChecked} onCheckedChange={() => toggleStrategyClub(s, c.key)} />
+                              <Checkbox
+                                checked={isChecked}
+                                disabled={auto && !checked.includes(c.key)}
+                                onCheckedChange={() => toggleStrategyClub(s, c.key)}
+                              />
                               <span className={`truncate flex-1 ${isChecked ? "line-through text-muted-foreground" : "text-white"}`}>
                                 {c.name}
                               </span>
+                              {auto && (
+                                <span className="text-[9px] uppercase tracking-wider text-[#cbb96b]/80" title="Auto-ticked: this club has been sent or viewed an outreach proposal">
+                                  Outreached
+                                </span>
+                              )}
                               {c.note && <span className="text-[10px] text-muted-foreground italic">{c.note}</span>}
                               {c.isExtra && (
                                 <button
