@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
@@ -34,6 +34,7 @@ type OfferPlayer = {
   fit_score_breakdown?: any;
   last_contact_at?: string | null;
   offer_status?: string | null;
+  created_at?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
@@ -81,7 +82,7 @@ export const RepresentationOffers = () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
