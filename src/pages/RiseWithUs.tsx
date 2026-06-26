@@ -27,6 +27,7 @@ import {
   formatCardSubtitle, solidBlackSectionStyle,
   getCardContent, MISSION_BIO_KEY, MISSION_BIO_FALLBACK,
   DetailView,
+  TitlePlate,
   type CardKey, type AgeGroup, type GroupKey,
   type PerformanceSub,
 } from "./RequestRepresentation";
@@ -404,7 +405,7 @@ const BallonDorVisionCard = ({
 }) => {
   const headline = t(
     "vision.headline",
-    "Why not you?",
+    "Only The Best.",
   );
   const body = t(
     "vision.body",
@@ -459,10 +460,10 @@ const BallonDorVisionCard = ({
           <button
             type="button"
             onClick={onBookMeeting}
-            className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
+            className="group relative inline-flex items-center gap-2 border border-primary bg-primary px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-primary-foreground shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] transition hover:bg-primary/90 hover:text-primary-foreground md:text-base"
             style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
           >
-            <CalendarClock className="h-4 w-4 text-primary" />
+            <CalendarClock className="h-4 w-4" />
             <span>{cta}</span>
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
           </button>
