@@ -2039,9 +2039,10 @@ const Staff = () => {
               })()}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
-              {/* Use hidden class for key sections to preserve state (popups, playback, etc.) */}
-              {/* ErrorBoundary keyed by section so one tab crashing never blanks the whole portal. */}
-              <ErrorBoundary key={expandedSection ?? 'none'}>
+              {/* Mount once, hide via display:none on tab switch so scroll, filters
+                  and in-flight requests survive navigation. ErrorBoundary is NOT
+                  keyed because remounting would defeat the keep-alive. */}
+              <ErrorBoundary>
                 <Suspense fallback={<PageLoading />}>
                   {renderKA('videoanalysis', <VideoAnalysis />)}
                   {renderKA('annotations', <AnnotationProjects />)}
