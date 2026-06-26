@@ -264,7 +264,7 @@ const Dashboard = () => {
   // so the right section is open by default when the tab is first shown.
   useEffect(() => {
     if (programmingMode === "schedule") setAccordionValue(['schedule']);
-    else if (programmingMode === "sps") setAccordionValue(['overview', 'sessions']);
+    else if (programmingMode === "sps") setAccordionValue(['sessions']);
   }, [programmingMode]);
 
   // Track portal tab views for staff notifications
@@ -4334,31 +4334,21 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               )}
-              {/* Injury Log Section */}
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 mt-6">
-                <CardHeader marble>
-                  <div className="container mx-auto px-4">
-                    <CardTitle className="font-heading tracking-tight">Injury Log</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="container mx-auto px-4 py-4">
-                  {playerData?.id && <InjuryLog playerId={playerData.id} />}
-                </CardContent>
-              </Card>
-
-              {/* Psychology / SPQ Section */}
-              <Card className="w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] rounded-none border-x-0 border-t-[2px] border-t-[hsl(43,49%,61%)] border-b-0 mt-6">
-                <CardHeader marble>
-                  <div className="container mx-auto px-4">
-                    <CardTitle className="font-heading tracking-tight flex items-center gap-2">
-                      <Brain className="h-5 w-5" /> Psychology
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="container mx-auto px-4 py-4">
-                  {playerData?.id && <PlayerSpqHistory playerId={playerData.id} variant="inline" />}
-                </CardContent>
-              </Card>
+              {/* Injury Log Section — collapsed, only under SPS mode */}
+              {programmingMode === "sps" && (
+                <Card className="container mx-auto rounded-lg border-2 border-[hsl(43,49%,61%)]/40 mt-6 overflow-hidden">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="injury-log" className="border-0">
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline font-heading tracking-tight">
+                        Injury Log
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        {playerData?.id && <InjuryLog playerId={playerData.id} />}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="invoices">

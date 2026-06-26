@@ -29,11 +29,19 @@ interface Program {
   overview_text: string | null; is_current: boolean; start_date: string | null; end_date: string | null;
 }
 
+const formatRepsCell = (reps: string | null, perSide: boolean): string => {
+  if (!reps) return "-";
+  if (!perSide) return reps;
+  const n = Number(reps);
+  if (!Number.isNaN(n) && Number.isFinite(n)) return `${n * 2} (${n} each side)`;
+  return `${reps} each side`;
+};
+
 const formatReps = (reps: string | null, sets: string | null, perSide: boolean) => {
-  const parts: string[] = [];
-  if (reps) parts.push(reps);
-  if (sets) parts.push(`× ${sets}`);
-  return parts.length ? parts.join(" ") + (perSide ? " each side" : "") : null;
+  if (!reps && !sets) return null;
+  const repsPart = reps ? formatRepsCell(reps, perSide) : "";
+  if (sets) return repsPart ? `${repsPart} × ${sets}` : `× ${sets}`;
+  return repsPart || null;
 };
 
 type DrillRow = {
@@ -52,7 +60,7 @@ const GOLD = "hsl(43, 49%, 61%)";
 
 const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?: boolean }) => (
   <div
-    className={`p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r-2 border-white"}`}
+    className={`p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r border-black/20"}`}
     style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
   >
     {children}
@@ -61,11 +69,11 @@ const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?:
 
 const TableBodyCell = ({ children, name, last, indent }: { children: React.ReactNode; name?: boolean; last?: boolean; indent?: boolean }) => (
   <div
-    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : "italic"} ${last ? "" : "border-r-2 border-white"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-center text-center") : "justify-center text-center"} whitespace-normal break-words`}
+    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : ""} ${last ? "" : "border-r border-white/10"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-start") : "justify-center text-center"} whitespace-normal break-words`}
     style={
       name
-        ? { backgroundColor: indent ? "hsl(45, 30%, 88%)" : "hsl(45, 40%, 80%)", color: "hsl(0, 0%, 0%)" }
-        : { backgroundColor: "hsl(0, 0%, 10%)", color: "hsl(0, 0%, 100%)" }
+        ? { backgroundColor: indent ? "hsl(0, 0%, 14%)" : "hsl(0, 0%, 11%)", color: GOLD }
+        : { backgroundColor: "hsl(0, 0%, 8%)", color: "hsl(0, 0%, 92%)" }
     }
   >
     {children}
@@ -74,7 +82,7 @@ const TableBodyCell = ({ children, name, last, indent }: { children: React.React
 
 const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill | Variation, parent?: Drill) => void }) => {
   return (
-    <div className="border-2 border-white rounded-lg overflow-hidden">
+    <div className="border border-white/15 rounded-lg overflow-hidden">
       <div className="grid grid-cols-5 gap-0 text-xs md:text-base">
         <TableHeaderCell>Drill</TableHeaderCell>
         <TableHeaderCell>Reps</TableHeaderCell>
@@ -89,7 +97,7 @@ const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill |
         {drills.map((d, di) => (
           <div
             key={d.id}
-            className={`border-t-2 border-white ${d.variations.length > 0 ? "border-l-4 border-l-[hsl(43,49%,61%)]" : ""}`}
+            className={`border-t border-white/10 ${d.variations.length > 0 ? "border-l-4 border-l-[hsl(43,49%,61%)]" : ""}`}
           >
             {/* Parent drill row */}
             <div
@@ -97,26 +105,26 @@ const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill |
               className="grid grid-cols-5 gap-0 cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
             >
               <TableBodyCell name>{d.name}</TableBodyCell>
-              <TableBodyCell>{d.reps ? `${d.reps}${d.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
+              <TableBodyCell>{formatRepsCell(d.reps, d.reps_per_side)}</TableBodyCell>
               <TableBodyCell>{d.sets || "-"}</TableBodyCell>
               <TableBodyCell>{d.load || "-"}</TableBodyCell>
               <TableBodyCell last>{d.recovery_time || "-"}</TableBodyCell>
             </div>
             {/* Variations grouped visually under the parent */}
             {d.variations.length > 0 && (
-              <div className="bg-[hsl(45,30%,92%)] pl-3 md:pl-6 pr-2 pb-2 pt-1 border-t border-dashed border-black/20">
-                <div className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-black/60 mb-1 pl-1">
+              <div className="bg-[hsl(43,49%,61%)]/10 pl-3 md:pl-6 pr-2 pb-2 pt-1 border-t border-dashed border-[hsl(43,49%,61%)]/30">
+                <div className="text-[10px] md:text-xs font-bebas uppercase tracking-wider text-[hsl(43,49%,61%)]/80 mb-1 pl-1">
                   Variations of {d.name}
                 </div>
-                <div className="rounded-md overflow-hidden border border-black/10">
+                <div className="rounded-md overflow-hidden border border-white/10">
                   {d.variations.map((v, vi) => (
                     <div
                       key={v.id}
                       onClick={() => onOpen(v, d)}
-                      className={`grid grid-cols-5 gap-0 cursor-pointer hover:opacity-80 transition-opacity min-h-[50px] md:min-h-[60px] ${vi > 0 ? "border-t border-white" : ""}`}
+                      className={`grid grid-cols-5 gap-0 cursor-pointer hover:opacity-80 transition-opacity min-h-[50px] md:min-h-[60px] ${vi > 0 ? "border-t border-white/10" : ""}`}
                     >
                       <TableBodyCell name indent>↳ {v.label}</TableBodyCell>
-                      <TableBodyCell>{v.reps ? `${v.reps}${v.reps_per_side ? " each side" : ""}` : "-"}</TableBodyCell>
+                      <TableBodyCell>{formatRepsCell(v.reps, v.reps_per_side)}</TableBodyCell>
                       <TableBodyCell>{v.sets || "-"}</TableBodyCell>
                       <TableBodyCell>{v.load || "-"}</TableBodyCell>
                       <TableBodyCell last>{v.recovery_time || "-"}</TableBodyCell>
