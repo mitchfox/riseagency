@@ -75,7 +75,7 @@ export const RepresentationOffers = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
-  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null }[]>([]);
+  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -94,15 +94,31 @@ export const RepresentationOffers = () => {
 
   useEffect(() => { load(); }, []);
 
-  // Load all players once so the create-offer dialog can autocomplete from the
-  // existing database rather than re-typing details we already have.
+  // Load all players from every database the Player Database aggregates so the
+  // create-offer dialog can autocomplete from anyone we already track — not
+  // just the `players` table. Sergej Savic etc. live in the outreach tables.
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any)
-        .from("players")
-        .select("id, name, position, club, nationality, date_of_birth")
-        .order("name");
-      setAllPlayers(data || []);
+      const [{ data: corePlayers }, { data: youth }, { data: pro }, { data: scouts }] = await Promise.all([
+        (supabase as any).from("players").select("id, name, position, club, nationality, date_of_birth"),
+        (supabase as any).from("player_outreach_youth").select("id, player_name, position, club_name, nationality, date_of_birth"),
+        (supabase as any).from("player_outreach_pro").select("id, player_name, position, club_name, nationality, date_of_birth"),
+        (supabase as any).from("scouting_reports").select("id, player_name, position, current_club, nationality, date_of_birth"),
+      ]);
+      const combined: any[] = [];
+      const seen = new Set<string>();
+      const push = (row: any) => {
+        const key = (row.name || "").trim().toLowerCase();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        combined.push(row);
+      };
+      (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'players' }));
+      (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.club_name, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'youth' }));
+      (pro || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.club_name, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'pro' }));
+      (scouts || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'scout' }));
+      combined.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      setAllPlayers(combined);
     })();
   }, []);
 
@@ -227,7 +243,7 @@ export const RepresentationOffers = () => {
     // If the name matches an existing player, mark them as having an offer
     // instead of creating a duplicate row.
     const existing = allPlayers.find(
-      p => (p.name || "").trim().toLowerCase() === newPlayer.name.trim().toLowerCase(),
+      p => p.source === 'players' && (p.name || "").trim().toLowerCase() === newPlayer.name.trim().toLowerCase(),
     );
     if (existing) {
       const { error } = await (supabase as any)
