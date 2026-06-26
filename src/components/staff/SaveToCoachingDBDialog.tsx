@@ -234,7 +234,7 @@ export const SaveToCoachingDBDialog = ({
           title: programmeName,
           description: `${programmeName} - ${programmingData.phaseDates || 'No dates'}`,
           content: programmingData.overviewText,
-          category: 'Player Programming',
+          category: 'Strength, Power & Speed',
           attachments: {
             sessions: sessionsClone,
             weekly_schedules: schedulesClone
@@ -264,7 +264,7 @@ export const SaveToCoachingDBDialog = ({
           return {
             title: settings.name,
             description: `Saved from programming - ${allExercises.length} exercises (${preExercises.length} pre + ${mainExercises.length} main)`,
-            category: 'Player Programming',
+            category: 'Strength, Power & Speed',
             exercises: allExercises as unknown as any
           };
         });
