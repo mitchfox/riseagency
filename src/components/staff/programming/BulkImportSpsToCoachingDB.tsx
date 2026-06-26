@@ -76,6 +76,7 @@ const normaliseAttachments = (attachments: any): Record<string, any> => {
   if (typeof attachments === "object") return attachments;
   return {};
 };
+const attachmentsNeedNormalising = (attachments: any) => Array.isArray(attachments);
 type ImportResult = { inserted: number; hydrated: number };
 const changedTotal = (r: ImportResult) => r.inserted + r.hydrated;
 const weeksFromDates = (start: any, end: any): number | null => {
@@ -596,6 +597,17 @@ const importProgrammes = async (source: Source) => {
         category: cat,
         attachments: att,
       });
+      continue;
+    }
+    if (attachmentsNeedNormalising(ex.attachments)) {
+      const normalised = normaliseAttachments(ex.attachments);
+      const patch: any = { attachments: normalised };
+      if (isProgrammeShell({ ...ex, attachments: normalised }, attKey)) {
+        patch.attachments = { ...normalised, ...att };
+        if (!ex.content && p.overview) patch.content = p.overview;
+        if (ex.weeks == null && p.weeks != null) patch.weeks = p.weeks;
+      }
+      toUpdate.push({ id: ex.id, patch });
       continue;
     }
     if (!isProgrammeShell(ex, attKey)) continue; // preserve real entries
