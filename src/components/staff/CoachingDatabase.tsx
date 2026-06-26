@@ -450,6 +450,10 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
       } else if (activeTab === 'coaching_concepts') {
         // Concepts tab shows only concept items
         query = query.eq('analysis_type', 'concept');
+      } else if (activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') {
+        if (selectedCategory !== 'all') {
+          query = query.eq('category', selectedCategory);
+        }
       }
 
       // Apply pagination
@@ -1049,6 +1053,8 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
         if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
       } else if (activeTab === 'coaching_concepts') {
         query = query.eq('analysis_type', 'concept');
+      } else if (activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') {
+        if (selectedCategory !== 'all') query = query.eq('category', selectedCategory);
       }
 
       const { data, error } = await query;
@@ -1473,6 +1479,27 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
 
             {/* Filters - Show based on table type */}
             {activeTab !== 'coaching_aphorisms' && activeTab !== 'tactical_schemes' && (
+              <>
+              {(activeTab === 'coaching_exercises' || activeTab === 'coaching_sessions' || activeTab === 'coaching_programmes') && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[
+                    { key: 'all', label: 'All sources' },
+                    { key: 'Strength, Power & Speed', label: 'SPS' },
+                    { key: 'Technical', label: 'Technical' },
+                    { key: 'Nutrition', label: 'Nutrition' },
+                  ].map(s => (
+                    <Button
+                      key={s.key}
+                      type="button"
+                      size="sm"
+                      variant={selectedCategory === s.key ? 'default' : 'outline'}
+                      onClick={() => setSelectedCategory(s.key)}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <StaffSearchInput
                   value=""
@@ -1604,6 +1631,7 @@ export const CoachingDatabase = ({ isAdmin = false, initialTable }: { isAdmin?: 
                   </>
                 )}
               </div>
+              </>
             )}
 
             {/* PDF Upload Progress */}

@@ -4,6 +4,11 @@ import { Database, Dumbbell, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type Source = "sps" | "technical";
+
+const SPS_CATEGORY = "Strength, Power & Speed";
+const TECH_CATEGORY = "Technical";
+
 const normalize = (s: string) => (s || "").trim().toLowerCase();
 const toInt = (v: any) => {
   if (v === null || v === undefined) return null;
@@ -13,9 +18,6 @@ const toInt = (v: any) => {
   return Number.isFinite(n) ? n : null;
 };
 
-// SPS data lives in the legacy player_programs.sessions jsonb (sessions keyed
-// by "A"/"B"/"preA" etc., each with { title, exercises: [...] }). The new
-// sps_* tables are largely empty so we read the legacy source.
 const loadSpsPrograms = async () => {
   const { data, error } = await supabase
     .from("player_programs")
@@ -53,13 +55,19 @@ const loadTechnical = async () => {
   return { programs: programs || [], sessions: sessions || [], drills: drills || [], variations: variations || [] };
 };
 
-const importExercises = async () => {
-  const { data: existing } = await supabase.from("coaching_exercises").select("title");
-  const existingSet = new Set((existing || []).map(r => normalize(r.title)));
+const categoryFor = (source: Source) => (source === "sps" ? SPS_CATEGORY : TECH_CATEGORY);
+
+const importExercises = async (source: Source) => {
+  const cat = categoryFor(source);
+  const { data: existing } = await supabase
+    .from("coaching_exercises")
+    .select("title, category")
+    .eq("category", cat);
+  const existingSet = new Set((existing || []).map((r: any) => normalize(r.title)));
   const seen = new Set<string>();
   const rows: any[] = [];
 
-  const push = (e: { name: string; description?: string; reps?: string; sets?: any; load?: string; recoveryTime?: string; videoUrl?: string; category: string }) => {
+  const push = (e: { name: string; description?: string; reps?: string; sets?: any; load?: string; recoveryTime?: string; videoUrl?: string }) => {
     const name = (e.name || "").trim();
     if (!name) return;
     const key = normalize(name);
@@ -73,49 +81,46 @@ const importExercises = async () => {
       load: e.load || null,
       rest_time: toInt(e.recoveryTime),
       video_url: e.videoUrl || null,
-      category: e.category,
+      category: cat,
     });
   };
 
-  // SPS exercises from legacy jsonb
-  const sps = await loadSpsPrograms();
-  sps.forEach((p: any) => {
-    const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
-    Object.values(sessions).forEach((s: any) => {
-      const exs = Array.isArray(s?.exercises) ? s.exercises : [];
-      exs.forEach((e: any) => push({
-        name: e?.name,
-        description: e?.description,
-        reps: e?.reps || e?.repetitions,
-        sets: e?.sets,
-        load: e?.load,
-        recoveryTime: e?.recoveryTime || e?.recovery_time,
-        videoUrl: e?.videoUrl && e.videoUrl !== "-" ? e.videoUrl : undefined,
-        category: "Strength, Power & Speed",
-      }));
+  if (source === "sps") {
+    const sps = await loadSpsPrograms();
+    sps.forEach((p: any) => {
+      const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
+      Object.values(sessions).forEach((s: any) => {
+        const exs = Array.isArray(s?.exercises) ? s.exercises : [];
+        exs.forEach((e: any) => push({
+          name: e?.name,
+          description: e?.description,
+          reps: e?.reps || e?.repetitions,
+          sets: e?.sets,
+          load: e?.load,
+          recoveryTime: e?.recoveryTime || e?.recovery_time,
+          videoUrl: e?.videoUrl && e.videoUrl !== "-" ? e.videoUrl : undefined,
+        }));
+      });
     });
-  });
-
-  // Technical drills + variations
-  const tech = await loadTechnical();
-  tech.drills.forEach((d: any) => push({
-    name: d.name,
-    description: d.description,
-    reps: d.reps,
-    sets: d.sets,
-    load: d.load,
-    recoveryTime: d.recovery_time,
-    category: "Technical",
-  }));
-  tech.variations.forEach((v: any) => push({
-    name: v.name,
-    description: v.description,
-    reps: v.reps,
-    sets: v.sets,
-    load: v.load,
-    recoveryTime: v.recovery_time,
-    category: "Technical",
-  }));
+  } else {
+    const tech = await loadTechnical();
+    tech.drills.forEach((d: any) => push({
+      name: d.name,
+      description: d.description,
+      reps: d.reps,
+      sets: d.sets,
+      load: d.load,
+      recoveryTime: d.recovery_time,
+    }));
+    tech.variations.forEach((v: any) => push({
+      name: v.name,
+      description: v.description,
+      reps: v.reps,
+      sets: v.sets,
+      load: v.load,
+      recoveryTime: v.recovery_time,
+    }));
+  }
 
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_exercises").insert(rows);
@@ -123,63 +128,67 @@ const importExercises = async () => {
   return rows.length;
 };
 
-const importSessions = async () => {
-  const { data: existing } = await supabase.from("coaching_sessions").select("title");
-  const existingSet = new Set((existing || []).map(r => normalize(r.title)));
+const importSessions = async (source: Source) => {
+  const cat = categoryFor(source);
+  const { data: existing } = await supabase
+    .from("coaching_sessions")
+    .select("title, category")
+    .eq("category", cat);
+  const existingSet = new Set((existing || []).map((r: any) => normalize(r.title)));
   const seen = new Set<string>();
   const rows: any[] = [];
 
-  const push = (title: string, description: string | null, category: string, exercises: any[]) => {
+  const push = (title: string, description: string | null, exercises: any[]) => {
     title = (title || "").trim();
     if (!title) return;
     const key = normalize(title);
     if (existingSet.has(key) || seen.has(key)) return;
     seen.add(key);
-    rows.push({ title, description, category, exercises });
+    rows.push({ title, description, category: cat, exercises });
   };
 
-  // SPS sessions from legacy jsonb
-  const sps = await loadSpsPrograms();
-  sps.forEach((p: any) => {
-    const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
-    Object.entries(sessions).forEach(([key, s]: [string, any]) => {
-      const title = (s?.title || `Session ${key}`).trim();
-      const exercises = (Array.isArray(s?.exercises) ? s.exercises : []).map((e: any) => ({
-        title: e?.name,
-        reps: e?.reps || e?.repetitions,
-        sets: e?.sets,
-        load: e?.load,
-        recovery_time: e?.recoveryTime || e?.recovery_time,
-      }));
-      push(title, s?.staffNotes || null, "Strength, Power & Speed", exercises);
-    });
-  });
-
-  // Technical sessions (with their drills + variations)
-  const tech = await loadTechnical();
-  const drillsBySession = new Map<string, any[]>();
-  tech.drills.forEach((d: any) => {
-    const a = drillsBySession.get(d.session_id) || [];
-    a.push(d);
-    drillsBySession.set(d.session_id, a);
-  });
-  const variationsByDrill = new Map<string, any[]>();
-  tech.variations.forEach((v: any) => {
-    const a = variationsByDrill.get(v.drill_id) || [];
-    a.push(v);
-    variationsByDrill.set(v.drill_id, a);
-  });
-  tech.sessions.forEach((s: any) => {
-    const drills = (drillsBySession.get(s.id) || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-    const exercises: any[] = [];
-    drills.forEach((d: any) => {
-      exercises.push({ title: d.name, reps: d.reps, sets: d.sets, load: d.load, recovery_time: d.recovery_time });
-      (variationsByDrill.get(d.id) || []).forEach((v: any) => {
-        exercises.push({ title: `${d.name} — ${v.name}`, reps: v.reps, sets: v.sets, load: v.load, recovery_time: v.recovery_time });
+  if (source === "sps") {
+    const sps = await loadSpsPrograms();
+    sps.forEach((p: any) => {
+      const sessions = p.sessions && typeof p.sessions === "object" ? p.sessions : {};
+      Object.entries(sessions).forEach(([key, s]: [string, any]) => {
+        const title = (s?.title || `Session ${key}`).trim();
+        const exercises = (Array.isArray(s?.exercises) ? s.exercises : []).map((e: any) => ({
+          title: e?.name,
+          reps: e?.reps || e?.repetitions,
+          sets: e?.sets,
+          load: e?.load,
+          recovery_time: e?.recoveryTime || e?.recovery_time,
+        }));
+        push(title, s?.staffNotes || null, exercises);
       });
     });
-    push(s.title || s.session_key, s.description || null, "Technical", exercises);
-  });
+  } else {
+    const tech = await loadTechnical();
+    const drillsBySession = new Map<string, any[]>();
+    tech.drills.forEach((d: any) => {
+      const a = drillsBySession.get(d.session_id) || [];
+      a.push(d);
+      drillsBySession.set(d.session_id, a);
+    });
+    const variationsByDrill = new Map<string, any[]>();
+    tech.variations.forEach((v: any) => {
+      const a = variationsByDrill.get(v.drill_id) || [];
+      a.push(v);
+      variationsByDrill.set(v.drill_id, a);
+    });
+    tech.sessions.forEach((s: any) => {
+      const drills = (drillsBySession.get(s.id) || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      const exercises: any[] = [];
+      drills.forEach((d: any) => {
+        exercises.push({ title: d.name, reps: d.reps, sets: d.sets, load: d.load, recovery_time: d.recovery_time });
+        (variationsByDrill.get(d.id) || []).forEach((v: any) => {
+          exercises.push({ title: `${d.name} — ${v.name}`, reps: v.reps, sets: v.sets, load: v.load, recovery_time: v.recovery_time });
+        });
+      });
+      push(s.title || s.session_key, s.description || null, exercises);
+    });
+  }
 
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_sessions").insert(rows);
@@ -187,13 +196,17 @@ const importSessions = async () => {
   return rows.length;
 };
 
-const importProgrammes = async () => {
-  const { data: existing } = await supabase.from("coaching_programmes").select("title");
-  const existingSet = new Set((existing || []).map(r => normalize(r.title)));
+const importProgrammes = async (source: Source) => {
+  const cat = categoryFor(source);
+  const { data: existing } = await supabase
+    .from("coaching_programmes")
+    .select("title, category")
+    .eq("category", cat);
+  const existingSet = new Set((existing || []).map((r: any) => normalize(r.title)));
   const seen = new Set<string>();
   const rows: any[] = [];
 
-  const push = (title: string, phase: string | null, overview: string | null, start: string | null, end: string | null, category: string) => {
+  const push = (title: string, phase: string | null, overview: string | null, start: string | null, end: string | null) => {
     title = (title || "").trim();
     if (!title) return;
     const key = normalize(title);
@@ -204,14 +217,16 @@ const importProgrammes = async () => {
       const ms = new Date(end).getTime() - new Date(start).getTime();
       if (Number.isFinite(ms) && ms > 0) weeks = Math.max(1, Math.round(ms / (7 * 24 * 60 * 60 * 1000)));
     }
-    rows.push({ title, description: phase, content: overview, weeks, category });
+    rows.push({ title, description: phase, content: overview, weeks, category: cat });
   };
 
-  const sps = await loadSpsPrograms();
-  sps.forEach((p: any) => push(p.program_name, p.phase_name, p.overview_text, p.start_date, p.end_date, "Strength, Power & Speed"));
-
-  const tech = await loadTechnical();
-  tech.programs.forEach((p: any) => push(p.program_name, p.phase_name, null, p.start_date, p.end_date, "Technical"));
+  if (source === "sps") {
+    const sps = await loadSpsPrograms();
+    sps.forEach((p: any) => push(p.program_name, p.phase_name, p.overview_text, p.start_date, p.end_date));
+  } else {
+    const tech = await loadTechnical();
+    tech.programs.forEach((p: any) => push(p.program_name, p.phase_name, null, p.start_date, p.end_date));
+  }
 
   if (!rows.length) return 0;
   const { error: insErr } = await supabase.from("coaching_programmes").insert(rows);
@@ -219,18 +234,23 @@ const importProgrammes = async () => {
   return rows.length;
 };
 
-export const BulkImportSpsToCoachingDB = () => {
-  const [busy, setBusy] = useState<string | null>(null);
+interface Props {
+  source?: Source;
+}
 
-  const run = async (label: string, key: string, fn: () => Promise<number>) => {
+export const BulkImportSpsToCoachingDB = ({ source = "sps" }: Props) => {
+  const [busy, setBusy] = useState<string | null>(null);
+  const label = source === "technical" ? "Technical" : "SPS";
+
+  const run = async (kind: string, key: string, fn: () => Promise<number>) => {
     if (busy) return;
-    if (!confirm(`Import all SPS ${label.toLowerCase()} into the coaching database? Duplicates will be skipped.`)) return;
+    if (!confirm(`Import all ${label} ${kind.toLowerCase()} into the coaching database? Duplicates will be skipped.`)) return;
     setBusy(key);
     try {
       const n = await fn();
-      toast.success(n ? `Added ${n} ${label.toLowerCase()} to coaching database` : `No new ${label.toLowerCase()} to add`);
+      toast.success(n ? `Added ${n} ${label} ${kind.toLowerCase()} to coaching database` : `No new ${label} ${kind.toLowerCase()} to add`);
     } catch (e: any) {
-      toast.error(e?.message || `Failed to import ${label.toLowerCase()}`);
+      toast.error(e?.message || `Failed to import ${kind.toLowerCase()}`);
     } finally {
       setBusy(null);
     }
@@ -238,17 +258,17 @@ export const BulkImportSpsToCoachingDB = () => {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Exercises", "ex", importExercises)}>
+      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Exercises", "ex", () => importExercises(source))}>
         <Dumbbell className="w-4 h-4 mr-1" />
-        {busy === "ex" ? "Importing…" : "Add all exercises to Coaching DB"}
+        {busy === "ex" ? "Importing…" : `Add all ${label} exercises to Coaching DB`}
       </Button>
-      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Sessions", "ses", importSessions)}>
+      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Sessions", "ses", () => importSessions(source))}>
         <Layers className="w-4 h-4 mr-1" />
-        {busy === "ses" ? "Importing…" : "Add all sessions to Coaching DB"}
+        {busy === "ses" ? "Importing…" : `Add all ${label} sessions to Coaching DB`}
       </Button>
-      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Programmes", "prog", importProgrammes)}>
+      <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("Programmes", "prog", () => importProgrammes(source))}>
         <Database className="w-4 h-4 mr-1" />
-        {busy === "prog" ? "Importing…" : "Add all programmes to Coaching DB"}
+        {busy === "prog" ? "Importing…" : `Add all ${label} programmes to Coaching DB`}
       </Button>
     </div>
   );
