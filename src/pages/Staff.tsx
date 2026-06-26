@@ -2077,8 +2077,17 @@ const Staff = () => {
                   {expandedSection === 'financialreports' && <FinancialReports isAdmin={canManageSection('financialreports')} />}
                   {expandedSection === 'updates' && <UpdatesManagement isAdmin={canManageSection('updates')} />}
                   {expandedSection === 'clubnetwork' && <ClubNetworkManagement isAdmin={canManageSection('clubnetwork')} userRole={currentRole || undefined} />}
-                  {expandedSection === 'cluboutreach' && <ClubOutreachManager />}
-                  {expandedSection === 'markettables' && <MarketTablesStandalone />}
+                  {/* Keep ClubOutreach & MarketTables mounted once visited so view state persists across tab switches */}
+                  {keepAliveSections.cluboutreach && (
+                    <div style={{ display: expandedSection === 'cluboutreach' ? 'block' : 'none' }}>
+                      <ClubOutreachManager />
+                    </div>
+                  )}
+                  {keepAliveSections.markettables && (
+                    <div style={{ display: expandedSection === 'markettables' ? 'block' : 'none' }}>
+                      <MarketTablesStandalone />
+                    </div>
+                  )}
                   {expandedSection === 'casestudies' && <ScriptsAndCaseStudies />}
                   {expandedSection === 'representationoffers' && <RepresentationOffers />}
                   {expandedSection === 'transferreports' && <TransferReports />}
