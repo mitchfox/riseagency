@@ -1139,7 +1139,10 @@ const IntroCinematic = ({
         const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
-            <AnimatePresence mode="wait">
+            {/* No `mode="wait"` so the outgoing and incoming media overlap
+                briefly — the next image fades up before the previous one
+                has fully disappeared, giving a smoother hand-off. */}
+            <AnimatePresence>
               {m.kind === "video" ? (
                 <motion.video
                   key={`${m.url}-${sideTick}`}
@@ -1150,7 +1153,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 />
               ) : (
                 <motion.img
@@ -1162,7 +1165,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 />
               )}
             </AnimatePresence>
