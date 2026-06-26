@@ -13,7 +13,7 @@ export const WhatsAppWidget = () => {
       rel="noopener noreferrer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))]/90 text-black rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[hsl(var(--gold))] hover:bg-[hsl(var(--gold))] text-black hover:text-black rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
       aria-label="Chat on WhatsApp"
     >
       <div className="flex items-center justify-center w-14 h-14 rounded-full">
