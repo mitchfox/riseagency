@@ -1066,6 +1066,48 @@ export const PlayerDatabase = () => {
                   <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
                 </div>
               )}
+              {(selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach') && (
+                <div className="space-y-3 rounded-md border border-border/60 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fit-score signals</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center justify-between gap-2 text-sm">
+                      <span>National team</span>
+                      <Switch checked={!!editForm.national_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, national_team: v }))} />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-sm">
+                      <span>Star of team</span>
+                      <Switch checked={!!editForm.star_of_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, star_of_team: v }))} />
+                    </label>
+                    {selectedPlayer.source === 'youth_outreach' && (
+                      <label className="flex items-center justify-between gap-2 text-sm col-span-2">
+                        <span>Parent approval</span>
+                        <Switch checked={!!editForm.parent_approval} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, parent_approval: v }))} />
+                      </label>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Agent status</Label>
+                      <select
+                        className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                        value={editForm.agent_status || ''}
+                        onChange={(e) => setEditForm((f: any) => ({ ...f, agent_status: e.target.value }))}
+                      >
+                        <option value="">Unknown</option>
+                        <option value="unrepresented">Unrepresented</option>
+                        <option value="family">Family</option>
+                        <option value="represented">Represented</option>
+                        <option value="top_agency">Top agency</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><BlurInput value={editForm.agent_name || ''} onCommit={v => setEditForm((f: any) => ({ ...f, agent_name: v }))} /></div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Previous serious injury</Label>
+                    <BlurInput value={editForm.previous_serious_injury || ''} onCommit={v => setEditForm((f: any) => ({ ...f, previous_serious_injury: v }))} placeholder="e.g. ACL 2023" />
+                  </div>
+                </div>
+              )}
               <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={v => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
