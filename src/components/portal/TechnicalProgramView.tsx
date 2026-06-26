@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DrillDiagramView, DrillDiagram } from "@/components/staff/programming/DrillDiagramEditor";
 
 interface Variation {
@@ -33,55 +34,95 @@ const formatReps = (reps: string | null, sets: string | null, perSide: boolean) 
   return parts.length ? parts.join(" ") + (perSide ? " each side" : "") : null;
 };
 
-const DrillBlock = ({ drill }: { drill: Drill }) => (
-  <div className="border rounded-lg p-3 space-y-3 bg-card">
-    <div className="flex items-start justify-between gap-3">
+type DrillRow = {
+  kind: "drill" | "variation";
+  id: string;
+  drillId: string;
+  name: string;
+  reps: string | null;
+  sets: string | null;
+  reps_per_side: boolean;
+  load: string | null;
+  recovery_time: string | null;
+};
+
+const GOLD = "hsl(43, 49%, 61%)";
+
+const TableHeaderCell = ({ children, last }: { children: React.ReactNode; last?: boolean }) => (
+  <div
+    className={`p-2 md:p-4 font-bebas uppercase text-center flex items-center justify-center ${last ? "" : "border-r-2 border-white"}`}
+    style={{ backgroundColor: GOLD, color: "hsl(0, 0%, 0%)" }}
+  >
+    {children}
+  </div>
+);
+
+const TableBodyCell = ({ children, name, last, indent }: { children: React.ReactNode; name?: boolean; last?: boolean; indent?: boolean }) => (
+  <div
+    className={`p-2 md:p-4 text-xs md:text-sm ${name ? "font-medium" : "italic"} ${last ? "" : "border-r-2 border-white"} flex items-center ${name ? (indent ? "justify-start pl-4 md:pl-8" : "justify-center text-center") : "justify-center text-center"} break-words`}
+    style={
+      name
+        ? { backgroundColor: indent ? "hsl(45, 30%, 88%)" : "hsl(45, 40%, 80%)", color: "hsl(0, 0%, 0%)" }
+        : { backgroundColor: "hsl(0, 0%, 10%)", color: "hsl(0, 0%, 100%)" }
+    }
+  >
+    {children}
+  </div>
+);
+
+const SessionTable = ({ drills, onOpen }: { drills: Drill[]; onOpen: (d: Drill | Variation, parent?: Drill) => void }) => {
+  const rows: { row: DrillRow; click: () => void }[] = [];
+  drills.forEach(d => {
+    rows.push({
+      row: { kind: "drill", id: d.id, drillId: d.id, name: d.name, reps: d.reps, sets: d.sets, reps_per_side: d.reps_per_side, load: d.load, recovery_time: d.recovery_time },
+      click: () => onOpen(d),
+    });
+    d.variations.forEach(v => {
+      rows.push({
+        row: { kind: "variation", id: v.id, drillId: d.id, name: v.label, reps: v.reps, sets: v.sets, reps_per_side: v.reps_per_side, load: v.load, recovery_time: v.recovery_time },
+        click: () => onOpen(v, d),
+      });
+    });
+  });
+
+  return (
+    <div className="border-2 border-white rounded-lg overflow-hidden">
+      <div className="grid grid-cols-5 gap-0 text-xs md:text-base">
+        <TableHeaderCell>Drill</TableHeaderCell>
+        <TableHeaderCell>Reps</TableHeaderCell>
+        <TableHeaderCell>Sets</TableHeaderCell>
+        <TableHeaderCell>Load</TableHeaderCell>
+        <TableHeaderCell last>
+          <span className="hidden md:inline">Recovery Time</span>
+          <span className="md:hidden">Recovery</span>
+        </TableHeaderCell>
+      </div>
       <div>
-        <h4 className="font-semibold">{drill.name}</h4>
-        {drill.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{drill.description}</p>}
-      </div>
-      <div className="text-right text-xs space-y-0.5 shrink-0">
-        {formatReps(drill.reps, drill.sets, drill.reps_per_side) && (
-          <div className="font-medium">{formatReps(drill.reps, drill.sets, drill.reps_per_side)}</div>
-        )}
-        {drill.load && <div className="text-muted-foreground">{drill.load}</div>}
-        {drill.recovery_time && <div className="text-muted-foreground">Recovery: {drill.recovery_time}</div>}
-      </div>
-    </div>
-    <div className="grid sm:grid-cols-[200px_1fr] gap-3">
-      {drill.diagram && (drill.diagram.tokens?.length || drill.diagram.arrows?.length) ? (
-        <DrillDiagramView diagram={drill.diagram} />
-      ) : <div />}
-      <div className="space-y-2">
-        {drill.notes && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{drill.notes}</p>}
-        {drill.variations.map(v => (
-          <div key={v.id} className="border rounded-md p-2 bg-muted/30">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="font-medium text-sm">{v.label}</div>
-              <div className="text-xs text-right">
-                {formatReps(v.reps, v.sets, v.reps_per_side) && (
-                  <div className="font-medium">{formatReps(v.reps, v.sets, v.reps_per_side)}</div>
-                )}
-                {v.load && <div className="text-muted-foreground">{v.load}</div>}
-              </div>
-            </div>
-            {v.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{v.description}</p>}
-            {v.diagram && (v.diagram.tokens?.length || v.diagram.arrows?.length) ? (
-              <div className="max-w-[200px] mt-2">
-                <DrillDiagramView diagram={v.diagram} />
-              </div>
-            ) : null}
+        {rows.map(({ row, click }) => (
+          <div
+            key={row.id}
+            onClick={click}
+            className="grid grid-cols-5 gap-0 border-t-2 border-white cursor-pointer hover:opacity-80 transition-opacity min-h-[60px] md:min-h-[80px]"
+          >
+            <TableBodyCell name indent={row.kind === "variation"}>
+              {row.kind === "variation" ? `↳ ${row.name}` : row.name}
+            </TableBodyCell>
+            <TableBodyCell>{row.reps ? `${row.reps}${row.reps_per_side ? " ea" : ""}` : "-"}</TableBodyCell>
+            <TableBodyCell>{row.sets || "-"}</TableBodyCell>
+            <TableBodyCell>{row.load || "-"}</TableBodyCell>
+            <TableBodyCell last>{row.recovery_time || "-"}</TableBodyCell>
           </div>
         ))}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [sessions, setSessions] = useState<Record<string, Session[]>>({});
   const [loading, setLoading] = useState(true);
+  const [openDetail, setOpenDetail] = useState<{ drill: Drill | Variation; parent?: Drill } | null>(null);
 
   useEffect(() => {
     if (!playerId) { setLoading(false); return; }
@@ -127,31 +168,104 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
     <div className="space-y-6">
       {programs.map(p => (
         <Card key={p.id} className={p.is_current ? "border-primary" : ""}>
-          <CardHeader>
+          <CardHeader marble>
             <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="font-heading tracking-tight">{p.program_name}</CardTitle>
+              <CardTitle className="font-bebas uppercase tracking-wider text-2xl">{p.program_name}</CardTitle>
               {p.is_current && <Badge className="bg-primary">Current</Badge>}
               {p.phase_name && <span className="text-sm text-muted-foreground">{p.phase_name}</span>}
               {p.phase_dates && <span className="text-sm text-muted-foreground">{p.phase_dates}</span>}
             </div>
             {p.overview_text && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{p.overview_text}</p>}
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pt-6">
             {(sessions[p.id] || []).map(s => (
-              <div key={s.id} className="space-y-3">
+              <div key={s.id} className="space-y-3 bg-black/40 rounded-xl p-3 md:p-4">
                 <div className="flex items-baseline gap-2">
-                  <Badge variant="outline">{s.session_key}</Badge>
-                  <h3 className="font-semibold">{s.title || `Session ${s.session_key}`}</h3>
+                  <Badge variant="outline" className="border-[hsl(43,49%,61%)] text-[hsl(43,49%,61%)]">{s.session_key}</Badge>
+                  <h3 className="font-bebas uppercase tracking-wider text-xl">{s.title || `Session ${s.session_key}`}</h3>
                 </div>
-                {s.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{s.description}</p>}
-                <div className="space-y-3">
-                  {s.drills.map(d => <DrillBlock key={d.id} drill={d} />)}
-                </div>
+                {s.description && <p className="text-sm text-white/70 whitespace-pre-wrap">{s.description}</p>}
+                {s.drills.length > 0 ? (
+                  <SessionTable drills={s.drills} onOpen={(drill, parent) => setOpenDetail({ drill, parent })} />
+                ) : (
+                  <p className="text-xs text-white/50 italic">No drills yet.</p>
+                )}
               </div>
             ))}
           </CardContent>
         </Card>
       ))}
+
+      <Dialog open={!!openDetail} onOpenChange={(o) => !o && setOpenDetail(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {openDetail && (() => {
+            const d = openDetail.drill;
+            const isVariation = !("name" in d);
+            const name = isVariation ? (d as Variation).label : (d as Drill).name;
+            const parentName = openDetail.parent?.name;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="font-bebas uppercase tracking-wider text-2xl">
+                    {parentName ? `${parentName} — ${name}` : name}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    {formatReps(d.reps, d.sets, d.reps_per_side) && (
+                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Reps × Sets</div><div className="font-medium">{formatReps(d.reps, d.sets, d.reps_per_side)}</div></div>
+                    )}
+                    {d.load && (
+                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Load</div><div className="font-medium">{d.load}</div></div>
+                    )}
+                    {d.recovery_time && (
+                      <div className="p-2 rounded border"><div className="text-[10px] uppercase text-muted-foreground">Recovery</div><div className="font-medium">{d.recovery_time}</div></div>
+                    )}
+                  </div>
+                  {d.description && (
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Description</div>
+                      <p className="text-sm whitespace-pre-wrap">{d.description}</p>
+                    </div>
+                  )}
+                  {d.notes && (
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Notes</div>
+                      <p className="text-sm whitespace-pre-wrap">{d.notes}</p>
+                    </div>
+                  )}
+                  {d.diagram && (d.diagram.tokens?.length || d.diagram.arrows?.length) ? (
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground mb-1">Diagram</div>
+                      <div className="max-w-md"><DrillDiagramView diagram={d.diagram} /></div>
+                    </div>
+                  ) : null}
+                  {!isVariation && (openDetail.drill as Drill).variations?.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-[10px] uppercase text-muted-foreground">Variations</div>
+                      {(openDetail.drill as Drill).variations.map(v => (
+                        <div key={v.id} className="border rounded-md p-3 bg-muted/30 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium">{v.label}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatReps(v.reps, v.sets, v.reps_per_side)}{v.load ? ` · ${v.load}` : ""}{v.recovery_time ? ` · Rec ${v.recovery_time}` : ""}
+                            </div>
+                          </div>
+                          {v.description && <p className="text-xs whitespace-pre-wrap">{v.description}</p>}
+                          {v.notes && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{v.notes}</p>}
+                          {v.diagram && (v.diagram.tokens?.length || v.diagram.arrows?.length) ? (
+                            <div className="max-w-[260px]"><DrillDiagramView diagram={v.diagram} /></div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
