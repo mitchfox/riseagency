@@ -34,7 +34,7 @@ const hasMeaningfulValue = (v: any): boolean => {
 const DETAIL_KEYS = [
   "description", "content", "repetitions", "reps", "sets", "load", "recoveryTime", "recovery_time",
   "rest_time", "videoUrl", "video_url", "notes", "staffNotes", "setup", "equipment",
-  "players_required", "diagram", "attachments",
+  "players_required", "diagram",
 ];
 const hasDetail = (row: any) => DETAIL_KEYS.some((key) => hasMeaningfulValue(row?.[key]));
 const detailScore = (row: any): number => DETAIL_KEYS.reduce((total, key) => total + (hasMeaningfulValue(row?.[key]) ? 1 : 0), 0);
