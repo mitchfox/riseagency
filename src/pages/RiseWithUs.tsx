@@ -1632,14 +1632,7 @@ const RiseWithUs = () => {
 
                 {/* BallonDorVisionCard is now revealed via the "Why Rise?"
                     card below, so the full vision content never appears inline. */}
-                <div className="scroll-mt-[88px] md:scroll-mt-[96px]">
-                  <div className="my-6 flex items-center gap-3 md:my-8">
-                    <div className="h-[1px] flex-1 bg-primary/40" />
-                    <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
-                      {ot("vision_eyebrow_card", "Our Vision")}
-                    </span>
-                    <div className="h-[1px] flex-1 bg-primary/40" />
-                  </div>
+                <div className="mt-8 scroll-mt-[88px] md:mt-10 md:scroll-mt-[96px]">
                   <motion.button
                     type="button"
                     initial={{ opacity: 0, y: 18 }}
