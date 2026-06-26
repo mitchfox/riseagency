@@ -57,6 +57,13 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 }
 
+// Replace any hard-coded Rise/Lovable URL inside a template with the card's
+// specific outreach URL, so old pasted links get rewritten on copy.
+function applyOutreachLink(text: string, url: string): string {
+  if (!url) return text;
+  return text.replace(/https?:\/\/\S*(?:risefootballagency\.com|lovable\.app|lovableproject\.com)\S*/gi, url);
+}
+
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
 interface ClubLite { id: string; club_name: string; country: string | null; image_url: string | null; }
 interface LinkPlayerRow {
@@ -699,7 +706,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
   const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
   const isPending = !!row.is_pending_strategy_draft;
   const copyTemplate = async (t: QuickTemplate) => {
-    const filled = fillTemplate(t.content, {
+    const filled = applyOutreachLink(fillTemplate(t.content, {
       club: targetName,
       agent: isAgent ? targetName : "",
       player: firstPlayerName,
@@ -707,7 +714,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
       players: names.join(", "),
       link: url,
       url,
-    });
+    }), url);
     try {
       await navigator.clipboard.writeText(filled);
       toast.success(`Copied: ${t.title}`);
@@ -773,7 +780,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
       {templates.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {templates.map(t => {
-            const preview = fillTemplate(t.content, {
+            const preview = applyOutreachLink(fillTemplate(t.content, {
               club: targetName,
               agent: isAgent ? targetName : "",
               player: firstPlayerName,
@@ -781,7 +788,7 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
               players: names.join(", "),
               link: url,
               url,
-            });
+            }), url);
             return (
               <button
                 key={t.id}
