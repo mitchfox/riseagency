@@ -17,6 +17,7 @@ import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
 import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { SearchWithSuggestions } from "./SearchWithSuggestions";
 
 type OfferPlayer = {
   id: string;
@@ -39,6 +40,7 @@ const slugFor = (name: string | null | undefined) =>
   (name || "").toLowerCase().trim().replace(/\s+/g, "-");
 
 const GROUPS: { id: string; label: string; defaultOpen: boolean }[] = [
+  { id: "drafts", label: "Drafts — not sent yet", defaultOpen: true },
   { id: "needs_followup", label: "Needs follow-up", defaultOpen: true },
   { id: "sent", label: "Offer sent — awaiting reply", defaultOpen: true },
   { id: "in_conversation", label: "In conversation", defaultOpen: true },
@@ -55,8 +57,11 @@ const groupFor = (p: OfferPlayer): string => {
   if (p.last_contact_at) {
     const days = (Date.now() - new Date(p.last_contact_at).getTime()) / 86400000;
     if (days >= 7) return "needs_followup";
+    return "sent";
   }
-  return "sent";
+  // No evidence of having sent yet → keep as draft.
+  if ((p.offer_status || "").toLowerCase().includes("sent")) return "sent";
+  return "drafts";
 };
 
 export const RepresentationOffers = () => {
@@ -70,6 +75,7 @@ export const RepresentationOffers = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null }[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +93,18 @@ export const RepresentationOffers = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Load all players once so the create-offer dialog can autocomplete from the
+  // existing database rather than re-typing details we already have.
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("players")
+        .select("id, name, position, club, nationality, date_of_birth")
+        .order("name");
+      setAllPlayers(data || []);
+    })();
+  }, []);
 
   // Pull non-UK visits to /risewithus/* offer pages and refresh every minute.
   useEffect(() => {
