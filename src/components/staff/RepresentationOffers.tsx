@@ -100,7 +100,35 @@ export const RepresentationOffers = () => {
     if (error) {
       toast.error("Failed to load representation offers");
     } else {
-      setPlayers(data || []);
+      let rows = (data || []) as OfferPlayer[];
+      const missingImageIds = rows.filter((p) => !p.image_url).map((p) => p.id);
+      if (missingImageIds.length > 0) {
+        const { data: galleryImages } = await (supabase as any)
+          .from("marketing_gallery")
+          .select("player_id, file_url, created_at")
+          .in("player_id", missingImageIds)
+          .eq("file_type", "image")
+          .order("created_at", { ascending: true });
+        const firstByPlayer = new Map<string, string>();
+        (galleryImages || []).forEach((img: any) => {
+          if (img.player_id && img.file_url && !firstByPlayer.has(img.player_id)) {
+            firstByPlayer.set(img.player_id, img.file_url);
+          }
+        });
+        if (firstByPlayer.size > 0) {
+          rows = rows.map((p) => ({ ...p, image_url: p.image_url || firstByPlayer.get(p.id) || null }));
+          await Promise.all(
+            Array.from(firstByPlayer.entries()).map(([id, image_url]) =>
+              (supabase as any)
+                .from("players")
+                .update({ image_url })
+                .eq("id", id)
+                .is("image_url", null),
+            ),
+          );
+        }
+      }
+      setPlayers(rows);
     }
     setLoading(false);
   };
@@ -471,7 +499,12 @@ export const RepresentationOffers = () => {
           playerId={customising.id}
           playerName={customising.name}
           open={!!customising}
-          onOpenChange={(o) => !o && setCustomising(null)}
+          onOpenChange={(o) => {
+            if (!o) {
+              setCustomising(null);
+              load();
+            }
+          }}
         />
       )}
 

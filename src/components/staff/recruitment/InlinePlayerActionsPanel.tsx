@@ -74,6 +74,11 @@ const ageFromDob = (dob?: string | null): number | null => {
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : (name ? name.trim().toLowerCase() : '');
 
+const newOfferMediaId = () =>
+  (typeof crypto !== "undefined" && (crypto as any).randomUUID
+    ? (crypto as any).randomUUID()
+    : `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+
 const PORTAL_LANGUAGES = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "es", label: "Español", flag: "🇪🇸" },
@@ -208,6 +213,25 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
           .eq("id", resolvedId);
       }
 
+      let resolvedProfileImage = playerData?.image_url || "";
+      if (resolvedId && !resolvedProfileImage) {
+        const { data: galleryImages } = await (supabase as any)
+          .from("marketing_gallery")
+          .select("file_url")
+          .eq("player_id", resolvedId)
+          .eq("file_type", "image")
+          .order("created_at", { ascending: true })
+          .limit(1);
+        if (galleryImages?.[0]?.file_url) {
+          resolvedProfileImage = galleryImages[0].file_url;
+          await (supabase as any)
+            .from("players")
+            .update({ image_url: resolvedProfileImage })
+            .eq("id", resolvedId)
+            .is("image_url", null);
+        }
+      }
+
       if (cancelled) return;
       setPlayerId(resolvedId);
       if (playerData) {
@@ -217,7 +241,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         setClub(playerData.club || row.current_club || "");
         setEmail(playerData.email || "");
         setDob(playerData.date_of_birth || row.date_of_birth || "");
-        setImageUrl(playerData.image_url || "");
+        setImageUrl(resolvedProfileImage);
         setLanguage(playerData.portal_language || "en");
       }
 
@@ -225,13 +249,19 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
       if (resolvedId) {
         const [offerRes, portalRes] = await Promise.all([
           (supabase as any).from("player_offer_settings")
-            .select("section_images").eq("player_id", resolvedId).maybeSingle(),
+            .select("section_images, intro_media").eq("player_id", resolvedId).maybeSingle(),
           (supabase as any).from("player_portal_settings")
             .select("rise_with_us_under18, representation_subtitle_secondary")
             .eq("player_id", resolvedId).maybeSingle(),
         ]);
         if (!cancelled) {
-          setOfferImages((offerRes.data?.section_images || {}) as Record<string, string>);
+          const sectionImages = (offerRes.data?.section_images || {}) as Record<string, string>;
+          const introMediaImages = Array.isArray(offerRes.data?.intro_media)
+            ? (offerRes.data.intro_media as any[])
+                .filter((m) => m?.kind !== "video" && typeof m?.url === "string" && m.url)
+                .reduce((acc, m, idx) => ({ ...acc, [`intro-${idx}`]: m.url }), {} as Record<string, string>)
+            : {};
+          setOfferImages(Object.keys(sectionImages).length > 0 ? sectionImages : introMediaImages);
           if (portalRes.data) {
             setUnder18Override(
               typeof portalRes.data.rise_with_us_under18 === "boolean" ? portalRes.data.rise_with_us_under18 : null
@@ -283,6 +313,23 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
       .upload(path, file, { cacheControl: "3600", upsert: true });
     if (error) { toast.error("Upload failed"); setUploadingImg(false); return; }
     const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+    await (supabase as any)
+      .from("marketing_gallery")
+      .insert({
+        title: `${name || row.player_name} - offer image`,
+        description: `Rise With Us image for ${name || row.player_name}`,
+        file_url: data.publicUrl,
+        file_type: "image",
+        category: "players",
+        player_id: playerId,
+      });
+    if (!imageUrl) {
+      await (supabase as any)
+        .from("players")
+        .update({ image_url: data.publicUrl })
+        .eq("id", playerId);
+      setImageUrl(data.publicUrl);
+    }
     setOfferImages(prev => ({ ...prev, [key]: data.publicUrl }));
     setUploadingImg(false);
   };
@@ -295,6 +342,24 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
     if (!playerId) { toast.error("Player record not ready"); return; }
     setSavingOffer(true);
     try {
+      const { data: existingSettings } = await (supabase as any)
+        .from("player_offer_settings")
+        .select("intro_media")
+        .eq("player_id", playerId)
+        .maybeSingle();
+      const existingIntro = Array.isArray(existingSettings?.intro_media)
+        ? (existingSettings.intro_media as any[])
+            .filter((m) => m && typeof m.url === "string" && m.url)
+        : [];
+      const selectedImageUrls = new Set(Object.values(offerImages).filter(Boolean));
+      const keptExistingIntro = existingIntro.filter((m) => m.kind === "video" || selectedImageUrls.has(m.url));
+      const existingUrls = new Set(keptExistingIntro.map((m) => m.url));
+      const introMedia = [
+        ...keptExistingIntro,
+        ...Object.values(offerImages)
+          .filter((url) => url && !existingUrls.has(url))
+          .map((url) => ({ id: newOfferMediaId(), kind: "image", url, show: true, position: "intro" })),
+      ];
       await Promise.all([
         (supabase as any).from("players")
           .update({ portal_language: language, has_representation_offer: true })
@@ -302,6 +367,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         (supabase as any).from("player_offer_settings").upsert({
           player_id: playerId,
           section_images: offerImages,
+          intro_media: introMedia,
         }, { onConflict: "player_id" }),
         (supabase as any).from("player_portal_settings").upsert({
           player_id: playerId,

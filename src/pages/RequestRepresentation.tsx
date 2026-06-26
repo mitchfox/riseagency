@@ -1065,6 +1065,7 @@ interface DetailViewProps {
    *  visitor's global site language. Used by the per-prospect RiseWithUs
    *  page so detail sections render in the player's portal_language. */
   playerLang?: string;
+  extraScoutingContent?: React.ReactNode;
 }
 
 export const DetailView = ({
@@ -1074,6 +1075,7 @@ export const DetailView = ({
   recommendedScoutingPosition,
   onBack,
   playerLang,
+  extraScoutingContent,
 }: DetailViewProps) => {
   const ctxLang = useLanguage();
   const playerT = usePlayerLanguageTranslations(playerLang || ctxLang.language);
@@ -1368,6 +1370,8 @@ export const DetailView = ({
                   </div>
                 ))}
               </div>
+
+              {extraScoutingContent}
 
               <SectionDivider label={t("representation.what_we_look_for", "What we look for")} />
 

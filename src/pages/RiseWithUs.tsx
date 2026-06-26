@@ -21,13 +21,13 @@ import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
-import { PlayersWeWorkWith } from "@/components/representation/PlayersWeWorkWith";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
   formatCardSubtitle, solidBlackSectionStyle,
   getCardContent, MISSION_BIO_KEY, MISSION_BIO_FALLBACK,
   DetailView,
+  TitlePlate,
   type CardKey, type AgeGroup, type GroupKey,
   type PerformanceSub,
 } from "./RequestRepresentation";
@@ -405,7 +405,7 @@ const BallonDorVisionCard = ({
 }) => {
   const headline = t(
     "vision.headline",
-    "Why not you?",
+    "Only The Best.",
   );
   const body = t(
     "vision.body",
@@ -460,10 +460,14 @@ const BallonDorVisionCard = ({
           <button
             type="button"
             onClick={onBookMeeting}
-            className="group relative inline-flex items-center gap-2 border border-primary/60 bg-primary/15 px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] text-foreground transition hover:bg-primary/25 md:text-base"
-            style={{ clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)" }}
+            className="group relative inline-flex items-center gap-2 border border-primary px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] transition hover:brightness-95 md:text-base"
+            style={{
+              clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
+              backgroundColor: "hsl(var(--gold))",
+              color: "hsl(0 0% 4%)",
+            }}
           >
-            <CalendarClock className="h-4 w-4 text-primary" />
+            <CalendarClock className="h-4 w-4" />
             <span>{cta}</span>
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
           </button>
@@ -472,6 +476,54 @@ const BallonDorVisionCard = ({
     </div>
   );
 };
+
+const WhyRiseDetailView = ({
+  lang,
+  ageGroup,
+  firstName,
+  onBack,
+  onBookMeeting,
+  t,
+}: {
+  lang: string;
+  ageGroup: "under18" | "over18";
+  firstName: string;
+  onBack: () => void;
+  onBookMeeting: () => void;
+  t: (key: string, fallback: string) => string;
+}) => (
+  <motion.section
+    key="why-rise-detail"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+    className="relative min-h-[100dvh] bg-black px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-32 md:px-8 md:pt-6 lg:px-16"
+  >
+    <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-5xl lg:max-w-6xl">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bebas uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/10 md:mb-5"
+      >
+        <ChevronLeft className="h-3 w-3" />
+        {t("representation.back_to_all", "Back to all")}
+      </button>
+      <TitlePlate
+        icon={Trophy}
+        title={offerT(lang, "why_rise_card", "Why Rise?")}
+        eyebrow={offerT(lang, "vision_subtitle_card", "A future built with the best")}
+      />
+      <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
+      <BallonDorVisionCard
+        lang={lang}
+        firstName={firstName}
+        onBookMeeting={onBookMeeting}
+        t={t}
+      />
+    </div>
+  </motion.section>
+);
 
 /* ============== PORTAL WELCOME OVERLAY ============== */
 const PortalWelcomeOverlay = ({ lang }: { lang: string }) => {
@@ -582,7 +634,7 @@ const MeetingBookerDialog = ({
                 </div>
                 <div>
                   <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
-                    {offerT(lang, "rwu_meet_title", "Set Up Our Meeting")}
+                    {offerT(lang, "rwu_meet_title", "Let's Meet")}
                   </DialogTitle>
                   <DialogDescription className="text-foreground/75">
                     {offerT(
@@ -1129,51 +1181,46 @@ const IntroCinematic = ({
           { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", left: "6%",  rotate: "4deg"  } },
           { className: "h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52", style: { bottom: "10%", right: "6%", rotate: "-4deg" } },
         ];
-        // Alternate left vs right on every change; vary the row.
-        const leftFrames  = [sideFrames[0], sideFrames[2], sideFrames[4]];
-        const rightFrames = [sideFrames[1], sideFrames[3], sideFrames[5]];
-        const pool = sideTick % 2 === 0 ? leftFrames : rightFrames;
-        const frame = pool[Math.floor(sideTick / 2) % pool.length];
-        const m = extraIntro[introIdx % extraIntro.length];
-        const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+        // Show several images at once when available, split across both sides
+        // of the screen and rotating every few seconds.
+        const visibleCount = Math.min(extraIntro.length, 4);
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
-            {/* No `mode="wait"` so the outgoing and incoming media overlap
-                briefly — the next image fades up before the previous one
-                has fully disappeared, giving a smoother hand-off. */}
             <AnimatePresence>
-              {m.kind === "video" ? (
-                <motion.video
-                  key={`${m.url}-${sideTick}`}
-                  src={m.url}
-                  className={commonClass}
-                  style={frame.style}
-                  autoPlay muted loop playsInline
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 0.92, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                />
-              ) : (
-                <motion.img
-                  key={`${m.url}-${sideTick}`}
-                  src={m.url}
-                  alt=""
-                  className={commonClass}
-                  style={frame.style}
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 0.92, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                />
-              )}
+              {Array.from({ length: visibleCount }).map((_, slot) => {
+                const m = extraIntro[(introIdx + slot) % extraIntro.length];
+                const frame = sideFrames[(sideTick + slot * 2) % sideFrames.length];
+                const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
+                return m.kind === "video" ? (
+                  <motion.video
+                    key={`${m.url}-${sideTick}-${slot}`}
+                    src={m.url}
+                    className={commonClass}
+                    style={frame.style}
+                    autoPlay muted loop playsInline
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 0.86, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.03 }}
+                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                ) : (
+                  <motion.img
+                    key={`${m.url}-${sideTick}-${slot}`}
+                    src={m.url}
+                    alt=""
+                    className={commonClass}
+                    style={frame.style}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 0.86, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.03 }}
+                    transition={{ duration: 0.9, delay: slot * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                );
+              })}
             </AnimatePresence>
           </div>
         );
       })()}
-
-      {/* Player image is intentionally NOT rendered in the intro cinematic.
-          The intro must show only the smudged marble + RISE logo. */}
 
       {/* Text reveal */}
       <div className="relative z-10 max-w-xl px-6 text-center">
@@ -1311,11 +1358,7 @@ const RiseWithUs = () => {
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
-  // Inline-card dialogs (matching the Representation page pattern where
-  // "Who we've worked with" and "Why Rise" are revealed only by tapping
-  // a card, not shown on the main hub view).
-  const [workedWithOpen, setWorkedWithOpen] = useState(false);
-  const [whyRiseOpen, setWhyRiseOpen] = useState(false);
+  const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
   // Fallback profile image for the final "Next Step" screen — when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
@@ -1395,7 +1438,16 @@ const RiseWithUs = () => {
         .eq("file_type", "image")
         .order("created_at", { ascending: true })
         .limit(1);
-      if (alive && data && data[0]?.file_url) setFinalFallbackImage(data[0].file_url as string);
+      if (alive && data && data[0]?.file_url) {
+        const fallbackUrl = data[0].file_url as string;
+        setFinalFallbackImage(fallbackUrl);
+        setPlayer((current) => current?.id === player.id ? { ...current, image_url: fallbackUrl } : current);
+        await (supabase as any)
+          .from("players")
+          .update({ image_url: fallbackUrl })
+          .eq("id", player.id)
+          .is("image_url", null);
+      }
     })();
     return () => { alive = false; };
   }, [player?.id, player?.image_url]);
@@ -1414,18 +1466,31 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
+  const shouldShowDatabaseCard =
+    settings.show_database_card === true
+    || (settings.show_database_card == null && (fitScore ?? 0) >= 60);
   // Build the intro pool from the new intro_media list (kind=image|video,
   // show=true, position in intro/both). Fall back to legacy section_images
   // when the player hasn't been migrated yet so we never go blank.
   const introVisible = settings.intro_media.filter(
     (m) => m.show && (m.position === "intro" || m.position === "both"),
   );
-  const extraIntro: Array<{ kind: "image" | "video"; url: string }> =
+  const baseIntro: Array<{ kind: "image" | "video"; url: string }> =
     introVisible.length > 0
       ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
       : Object.values(settings.section_images)
           .filter(Boolean)
           .map((url) => ({ kind: "image" as const, url: url as string }));
+  const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
+  const seenIntroUrls = new Set<string>();
+  const extraIntro: Array<{ kind: "image" | "video"; url: string }> = [
+    ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
+    ...baseIntro,
+  ].filter((m) => {
+    if (!m.url || seenIntroUrls.has(m.url)) return false;
+    seenIntroUrls.add(m.url);
+    return true;
+  });
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
   // Hub Why-Us strip — items the staff flagged as hub or both.
@@ -1438,7 +1503,7 @@ const RiseWithUs = () => {
 
   const goPortal = () => { setStage("portal"); window.scrollTo({ top: 0, behavior: "auto" }); };
   const goNext = () => { setStage("next"); window.scrollTo({ top: 0, behavior: "auto" }); };
-  const goHub = () => { setStage("hub"); window.scrollTo({ top: 0, behavior: "auto" }); };
+  const goHub = () => { setStage("hub"); setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); };
 
   const activeMeta = activeCard ? CARD_META.find((c) => c.key === activeCard)! : null;
   const groupSiblings = activeMeta
@@ -1446,15 +1511,9 @@ const RiseWithUs = () => {
     : [];
 
   const openCard = (k: CardKey) => {
+    setShowWhyRiseDetail(false);
     setActiveCard(k);
-    // Auto-select the player's primary position when entering the
-    // Scouting card so they land directly on their own breakdown
-    // instead of the position picker.
-    if (k === "scouting") {
-      setScoutingPosition(resolveScoutingPosition(player?.position));
-    } else {
-      setScoutingPosition(null);
-    }
+    setScoutingPosition(null);
     setPerformanceSub(null);
     window.scrollTo({ top: 0, behavior: "auto" });
   };
@@ -1491,7 +1550,7 @@ const RiseWithUs = () => {
           <RepresentationAudio />
 
           {/* ============ STAGE: HUB ============ */}
-          {stage === "hub" && !activeCard && (
+          {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <section className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-44 md:px-8 md:pt-8 lg:px-16 bg-black">
               <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
                 <header className="relative pb-6 text-center md:pb-10">
@@ -1504,94 +1563,13 @@ const RiseWithUs = () => {
                       </h1>
                       <span className="h-px flex-1 bg-primary/45" />
                     </div>
-                    <div className="mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/55 px-4 py-3 backdrop-blur-sm md:max-w-3xl md:px-6 md:py-4">
-                      <p
-                        className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
-                        style={{
-                          textWrap: "pretty",
-                          hyphens: "none",
-                          wordBreak: "normal",
-                          overflowWrap: "normal",
-                        } as React.CSSProperties}
-                      >
-                        {widont(t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK))}
-                      </p>
-                    </div>
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* "Who we've worked with" and "Why Rise" intentionally
-                    live inside their own cards (revealed via dialog) —
-                    matching the Representation page treatment so neither
-                    is shown inline on the main hub view. */}
-                <section className="my-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:my-8 md:gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setWorkedWithOpen(true)}
-                    className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-4 text-left md:p-5"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.10),transparent_60%)]" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
-                          {ot("worked_with_eyebrow", "Our background")}
-                        </p>
-                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
-                          {ot("worked_with_card", "Who we've worked with")}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWhyRiseOpen(true)}
-                    className="group relative overflow-hidden rounded-[1.45rem] border border-primary/50 p-4 text-left md:p-5"
-                    style={solidBlackSectionStyle}
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,hsl(var(--gold)/0.18),transparent_60%)]" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
-                          {ot("vision_eyebrow_card", "Our vision")}
-                        </p>
-                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
-                          {ot("why_rise_card", "Why Rise?")}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
-                    </div>
-                  </button>
-                </section>
-
-                {/* Pillar boxes — pathway, HQ, training methodology,
-                    performance team, parent's role (U18 only),
-                    multilingual support. */}
-                <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
-
                 {/* "Our Stars" / hub media strip removed per request — the
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
-
-                {/* Scouting database snapshot — shows the prospect they're tracked
-                    in our database with neighbouring rows blurred. Auto-shows when
-                    fit_score >= 60, or when staff have toggled it on. */}
-                {(settings.show_database_card === true
-                  || (settings.show_database_card == null && (fitScore ?? 0) >= 60)) && (
-                  <ScoutingDatabaseCard
-                    playerId={player.id}
-                    playerName={player.name}
-                    position={player.position}
-                    club={player.club}
-                    nationality={player.nationality}
-                    imageUrl={player.image_url}
-                    fitScore={fitScore}
-                    lang={lang}
-                    t={t}
-                  />
-                )}
 
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
@@ -1644,8 +1622,37 @@ const RiseWithUs = () => {
                 })}
 
                 {/* BallonDorVisionCard is now revealed via the "Why Rise?"
-                    card dialog above, so the hub doesn't end with the
-                    inline vision block. */}
+                    card below, so the full vision content never appears inline. */}
+                <div className="mt-8 scroll-mt-[88px] md:mt-10 md:scroll-mt-[96px]">
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setShowWhyRiseDetail(true);
+                      window.scrollTo({ top: 0, behavior: "auto" });
+                    }}
+                    className="group relative mx-auto block w-full max-w-md overflow-hidden rounded-[1.45rem] border border-primary/50 p-3 text-center md:max-w-lg md:p-5"
+                    style={solidBlackSectionStyle}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.14),transparent_60%)]" />
+                    <div className="relative flex min-h-[140px] flex-col items-center justify-center gap-3 md:min-h-[200px] md:gap-4 lg:min-h-[220px]">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/35 bg-primary/10 shadow-[0_0_26px_hsl(var(--gold)/0.14)] md:h-14 md:w-14">
+                        <Trophy className="h-5 w-5 text-primary md:h-6 md:w-6" />
+                      </div>
+                      <div>
+                        <p className="font-bebas text-[clamp(1rem,4.2vw,1.375rem)] uppercase leading-[1.05] tracking-[0.08em] md:text-[clamp(1.15rem,2.6vw,1.75rem)] md:tracking-[0.1em] lg:text-[clamp(1.25rem,2.2vw,2.125rem)]">
+                          {ot("why_rise_card", "Why Rise?")}
+                        </p>
+                        <p className="mx-auto mt-1.5 max-w-[11.5rem] whitespace-pre-line text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:text-xs">
+                          {ot("vision_subtitle_card", "A future built with the best")}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.button>
+                </div>
               </div>
 
               {/* Persistent: Explore Player Portal */}
@@ -1667,7 +1674,7 @@ const RiseWithUs = () => {
           )}
 
           {/* ============ STAGE: HUB → DETAIL VIEW ============ */}
-          {stage === "hub" && activeCard && activeMeta && (
+          {stage === "hub" && activeCard && activeMeta && !showWhyRiseDetail && (
             <div className="relative bg-black min-h-[100dvh]">
               <DetailView
                 activeCard={activeCard}
@@ -1677,9 +1684,22 @@ const RiseWithUs = () => {
                 setScoutingPosition={setScoutingPosition}
                 performanceSub={performanceSub}
                 setPerformanceSub={setPerformanceSub}
-                recommendedScoutingPosition={null}
+                recommendedScoutingPosition={resolveScoutingPosition(player?.position)}
                 onBack={onDetailBack}
                 playerLang={playerLang}
+                extraScoutingContent={shouldShowDatabaseCard ? (
+                  <ScoutingDatabaseCard
+                    playerId={player.id}
+                    playerName={player.name}
+                    position={player.position}
+                    club={player.club}
+                    nationality={player.nationality}
+                    imageUrl={player.image_url}
+                    fitScore={fitScore}
+                    lang={lang}
+                    t={t}
+                  />
+                ) : null}
               />
 
               {/* Scoped slider + back-to-all + next button */}
@@ -1729,6 +1749,17 @@ const RiseWithUs = () => {
             </div>
           )}
 
+          {stage === "hub" && showWhyRiseDetail && (
+            <WhyRiseDetailView
+              lang={lang}
+              ageGroup={ageGroup}
+              firstName={firstName}
+              onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
+              onBookMeeting={() => setMeetingOpen(true)}
+              t={t}
+            />
+          )}
+
           {/* ============ STAGE: PORTAL ============ */}
           {stage === "portal" && (
             <section className="relative w-full bg-background" style={{ minHeight: "100dvh" }}>
@@ -1769,9 +1800,9 @@ const RiseWithUs = () => {
                   <div className="flex items-center justify-center gap-4 sm:gap-6">
                     <img src={riseLogoWhite} alt="RISE" className="h-10 sm:h-14 w-auto" />
                     <X className="h-5 w-5 sm:h-7 sm:w-7 text-foreground/85" strokeWidth={2.5} />
-                    {(player.image_url || finalFallbackImage) ? (
+                    {(player.image_url || finalFallbackImage || extraIntro.find((m) => m.kind === "image")?.url) ? (
                       <img
-                        src={player.image_url || finalFallbackImage!}
+                        src={player.image_url || finalFallbackImage || extraIntro.find((m) => m.kind === "image")!.url}
                         alt={player.name}
                         className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover object-top border-2 border-primary/60 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.6)]"
                       />
@@ -1793,7 +1824,8 @@ const RiseWithUs = () => {
                     <Button
                       size="lg"
                       onClick={() => setMeetingOpen(true)}
-                      className="font-bebas uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="border border-primary font-bebas uppercase tracking-wider shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:brightness-95"
+                      style={{ backgroundColor: "hsl(var(--gold))", color: "hsl(0 0% 4%)" }}
                     >
                       <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
@@ -1838,7 +1870,7 @@ const RiseWithUs = () => {
             </section>
           )}
 
-          {stage === "hub" && !activeCard && (
+          {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <footer className="py-8 px-4 text-center">
               <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
             </footer>
@@ -1850,56 +1882,6 @@ const RiseWithUs = () => {
             player={player}
             lang={lang}
           />
-
-          {/* Who we've worked with — same content as the inline section
-              used to be, now revealed via the hub card. */}
-          <Dialog open={workedWithOpen} onOpenChange={setWorkedWithOpen}>
-            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
-              <DialogHeader>
-                <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
-                  {t("representation.worked_with_title", "Who we've worked with")}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
-                  <PlayersWeWorkWith bare />
-                </div>
-                <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
-                  <p
-                    className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
-                    style={{ textWrap: "pretty" } as React.CSSProperties}
-                  >
-                    {widont(t(
-                      "representation.worked_with_body",
-                      "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
-                    ))}
-                  </p>
-                  <p
-                    className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
-                    style={{ textWrap: "pretty" } as React.CSSProperties}
-                  >
-                    {widont(t(
-                      "representation.worked_with_context",
-                      "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
-                    ))}
-                  </p>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Why Rise — the Ballon d'Or vision card, revealed via the hub
-              card rather than rendered inline at the bottom. */}
-          <Dialog open={whyRiseOpen} onOpenChange={setWhyRiseOpen}>
-            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97 p-0">
-              <BallonDorVisionCard
-                lang={lang}
-                firstName={firstName}
-                onBookMeeting={() => { setWhyRiseOpen(false); setMeetingOpen(true); }}
-                t={t}
-              />
-            </DialogContent>
-          </Dialog>
         </>
       )}
     </div>
