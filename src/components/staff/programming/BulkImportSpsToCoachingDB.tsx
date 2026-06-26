@@ -89,7 +89,7 @@ const weeksFromDates = (start: any, end: any): number | null => {
 const loadSpsPrograms = async () => {
   const { data, error } = await supabase
     .from("player_programs")
-    .select("program_name, phase_name, overview_text, start_date, end_date, sessions");
+    .select("program_name, phase_name, overview_text, start_date, end_date, sessions, weekly_schedules");
   if (error) throw error;
   return data || [];
 };
@@ -431,6 +431,54 @@ const isProgrammeShell = (r: any, key: string) => {
   return !hasPayloadDetail;
 };
 
+const spsPayloadToLegacySessionKey = (session: any): string | null => {
+  const rawKey = String(session?.key || session?.session_key || "").trim();
+  const compact = rawKey.replace(/[\s_-]/g, "").toLowerCase();
+  const kind = String(session?.sessionKind || session?.session_kind || "").toLowerCase();
+  const preMatch = compact.match(/^pre(?:session)?([a-h])$/);
+  if (preMatch) return `PRE-${preMatch[1].toUpperCase()}`;
+  const mainMatch = compact.match(/^(?:session)?([a-h])$/);
+  if (!mainMatch) return null;
+  const suffix = mainMatch[1].toUpperCase();
+  return kind === "pre" ? `PRE-${suffix}` : suffix;
+};
+
+const spsPayloadToLegacySessions = (payload: any[]) => {
+  const legacy: Record<string, { exercises: any[] }> = {};
+  payload.forEach((session: any) => {
+    const key = spsPayloadToLegacySessionKey(session);
+    if (!key) return;
+    legacy[key] = {
+      exercises: (Array.isArray(session?.exercises) ? session.exercises : []).map((e: any) => ({
+        name: e?.name || "",
+        description: e?.description || "",
+        repetitions: e?.repetitions || e?.reps || "",
+        sets: e?.sets || "",
+        load: e?.load || "",
+        recoveryTime: e?.recoveryTime || e?.recovery_time || "",
+        videoUrl: e?.videoUrl || e?.video_url || "",
+      })),
+    };
+  });
+  return legacy;
+};
+
+const legacySpsSessionsHaveDetail = (attachments: any) => {
+  const sessions = normaliseAttachments(attachments)?.sessions;
+  if (!sessions || typeof sessions !== "object" || Array.isArray(sessions)) return false;
+  return Object.values(sessions).some((session: any) => sessionPayloadHasDetail(session?.exercises));
+};
+
+const buildProgrammeAttachments = (source: Source, attKey: string, payload: any[], weeklySchedules?: any[]) => {
+  const attachments: Record<string, any> = { [attKey]: payload };
+  if (source === "sps") {
+    const legacySessions = spsPayloadToLegacySessions(payload);
+    if (Object.keys(legacySessions).length) attachments.sessions = legacySessions;
+    if (Array.isArray(weeklySchedules) && weeklySchedules.length) attachments.weekly_schedules = weeklySchedules;
+  }
+  return attachments;
+};
+
 const importProgrammes = async (source: Source) => {
   const cat = categoryFor(source);
   const attKey = programmeAttachmentKey(source);
@@ -447,6 +495,7 @@ const importProgrammes = async (source: Source) => {
     overview: string | null;
     weeks: number | null;
     payload: any[]; // sessions in importable shape
+    weeklySchedules?: any[];
   };
   const harvested = new Map<string, Programme>();
   const push = (p: Programme) => {
@@ -485,6 +534,7 @@ const importProgrammes = async (source: Source) => {
         overview: p.overview_text || null,
         weeks: weeksFromDates(p.start_date, p.end_date),
         payload,
+        weeklySchedules: Array.isArray(p.weekly_schedules) ? p.weekly_schedules : [],
       });
     });
     // Structured sps_programs
@@ -500,7 +550,8 @@ const importProgrammes = async (source: Source) => {
     struct.programs.forEach((p: any) => {
       const sess = (sessByProg.get(p.id) || []).sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
       const payload = sess.map((s: any) => ({
-        key: s.session_key,
+        key: s.session_kind === "pre" ? `PRE-${s.session_key}` : s.session_key,
+        sessionKind: s.session_kind,
         title: s.title || `Session ${s.session_key}`,
         staffNotes: s.staff_notes || s.description || "",
         exercises: (exBySess.get(s.id) || [])
@@ -586,7 +637,7 @@ const importProgrammes = async (source: Source) => {
   for (const [key, p] of harvested) {
     const hasPayloadDetail = source === "sps" ? spsProgrammeHasDetail(p.payload) : technicalProgrammeHasDetail(p.payload);
     if (!hasPayloadDetail) continue; // don't write empty shells
-    const att = { [attKey]: p.payload };
+    const att = buildProgrammeAttachments(source, attKey, p.payload, p.weeklySchedules);
     const ex = existingByKey.get(key);
     if (!ex) {
       toInsert.push({
@@ -599,20 +650,27 @@ const importProgrammes = async (source: Source) => {
       });
       continue;
     }
-    if (attachmentsNeedNormalising(ex.attachments)) {
-      const normalised = normaliseAttachments(ex.attachments);
-      const patch: any = { attachments: normalised };
-      if (isProgrammeShell({ ...ex, attachments: normalised }, attKey)) {
-        patch.attachments = { ...normalised, ...att };
-        if (!ex.content && p.overview) patch.content = p.overview;
-        if (ex.weeks == null && p.weeks != null) patch.weeks = p.weeks;
-      }
-      toUpdate.push({ id: ex.id, patch });
-      continue;
+    const normalised = normaliseAttachments(ex.attachments);
+    const patchAttachments = { ...normalised };
+    let shouldHydrate = attachmentsNeedNormalising(ex.attachments);
+
+    if (isProgrammeShell({ ...ex, attachments: normalised }, attKey)) {
+      patchAttachments[attKey] = att[attKey];
+      shouldHydrate = true;
     }
-    if (!isProgrammeShell(ex, attKey)) continue; // preserve real entries
-    const mergedAtt = { ...normaliseAttachments(ex.attachments), ...att };
-    const patch: any = { attachments: mergedAtt };
+
+    if (source === "sps" && att.sessions && !legacySpsSessionsHaveDetail(normalised)) {
+      patchAttachments.sessions = att.sessions;
+      shouldHydrate = true;
+    }
+
+    if (source === "sps" && att.weekly_schedules && (!Array.isArray(normalised.weekly_schedules) || normalised.weekly_schedules.length === 0)) {
+      patchAttachments.weekly_schedules = att.weekly_schedules;
+      shouldHydrate = true;
+    }
+
+    if (!shouldHydrate) continue; // preserve real entries
+    const patch: any = { attachments: patchAttachments };
     if (!ex.content && p.overview) patch.content = p.overview;
     if (ex.weeks == null && p.weeks != null) patch.weeks = p.weeks;
     toUpdate.push({ id: ex.id, patch });
