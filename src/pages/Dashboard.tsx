@@ -3529,7 +3529,7 @@ const Dashboard = () => {
               )}
               {programmingMode !== "technical" && (
               <Card className="w-full px-0 md:container md:mx-auto rounded-none border-x-0 border-b-0 border-t-2 border-t-[hsl(43,49%,61%)]">
-                <CardHeader marble>
+                <CardHeader marble className="rounded-none">
                   <div className="px-1 md:px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <CardTitle className="font-heading tracking-tight">
                       Physical Programming
