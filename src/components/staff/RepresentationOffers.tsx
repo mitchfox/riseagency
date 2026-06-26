@@ -224,6 +224,27 @@ export const RepresentationOffers = () => {
       toast.error("Name required");
       return;
     }
+    // If the name matches an existing player, mark them as having an offer
+    // instead of creating a duplicate row.
+    const existing = allPlayers.find(
+      p => (p.name || "").trim().toLowerCase() === newPlayer.name.trim().toLowerCase(),
+    );
+    if (existing) {
+      const { error } = await (supabase as any)
+        .from("players")
+        .update({
+          has_representation_offer: true,
+          position: newPlayer.position.trim() || existing.position || "Other",
+          nationality: newPlayer.nationality.trim() || existing.nationality || "Unknown",
+          club: newPlayer.club.trim() || existing.club || null,
+          date_of_birth: newPlayer.date_of_birth || existing.date_of_birth || null,
+        })
+        .eq("id", existing.id);
+      if (error) {
+        toast.error("Could not update player", { description: error.message });
+        return;
+      }
+    } else {
     const payload: any = {
       name: newPlayer.name.trim(),
       position: newPlayer.position.trim() || "Other",
@@ -237,6 +258,7 @@ export const RepresentationOffers = () => {
     if (error) {
       toast.error("Could not create player", { description: error.message });
       return;
+    }
     }
     const slug = slugFor(newPlayer.name);
     try {
