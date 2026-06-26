@@ -3050,7 +3050,11 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                                         .from('players')
                                         .update({ image_url: uploadedUrls[0] })
                                         .eq('id', selectedPlayer.id);
-                                      setSelectedPlayer({ ...selectedPlayer, image_url: uploadedUrls[0] });
+                                      setPlayers(prev => prev.map(player =>
+                                        player.id === selectedPlayer.id
+                                          ? { ...player, image_url: uploadedUrls[0] }
+                                          : player
+                                      ));
                                     }
                                     
                                     // Clear progress after 3 seconds
