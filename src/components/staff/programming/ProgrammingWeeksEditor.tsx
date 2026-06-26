@@ -89,6 +89,7 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
   const [editing, setEditing] = useState<ProgrammingSessionRef | null>(null);
   const [programmeRange, setProgrammeRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [showOutsideRange, setShowOutsideRange] = useState(false);
+  const [showPreviousWeeks, setShowPreviousWeeks] = useState(false);
   const { sessions, reload: reloadSessions } = useProgrammingSessions(playerId);
 
   const refIndex = useMemo(() => {
@@ -228,7 +229,26 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
 
   /** Weeks that fall inside the parent programme's start/end window. */
   const filteredWeeks = useMemo(() => {
-    if (!programmeLink || !programmeRange.start || !programmeRange.end) return weeks;
+    if (!programmeLink) {
+      // Master schedule view — default to current week + next 5 (6 total).
+      const sorted = [...weeks].sort((a, b) => {
+        const av = a.week_start_date || "9999-12-31";
+        const bv = b.week_start_date || "9999-12-31";
+        return av < bv ? -1 : av > bv ? 1 : 0;
+      });
+      const today = new Date();
+      const dow = today.getUTCDay();
+      const back = dow === 0 ? 6 : dow - 1;
+      const monday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - back));
+      const mondayIso = `${monday.getUTCFullYear()}-${String(monday.getUTCMonth() + 1).padStart(2, "0")}-${String(monday.getUTCDate()).padStart(2, "0")}`;
+      const windowEnd = addDaysIso(mondayIso, 7 * 6 - 1);
+      if (showPreviousWeeks) return sorted;
+      return sorted.filter(w => {
+        if (!w.week_start_date) return true;
+        return w.week_start_date >= mondayIso && w.week_start_date <= windowEnd;
+      });
+    }
+    if (!programmeRange.start || !programmeRange.end) return weeks;
     // Chronological sort regardless of display_order.
     const sorted = [...weeks].sort((a, b) => {
       const av = a.week_start_date || "9999-12-31";
@@ -240,7 +260,17 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
       if (!w.week_start_date) return true;
       return weekOverlapsRange(w.week_start_date, programmeRange.start!, programmeRange.end!);
     });
-  }, [weeks, programmeLink, programmeRange, showOutsideRange]);
+  }, [weeks, programmeLink, programmeRange, showOutsideRange, showPreviousWeeks]);
+
+  const previousWeeksCount = useMemo(() => {
+    if (programmeLink) return 0;
+    const today = new Date();
+    const dow = today.getUTCDay();
+    const back = dow === 0 ? 6 : dow - 1;
+    const monday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - back));
+    const mondayIso = `${monday.getUTCFullYear()}-${String(monday.getUTCMonth() + 1).padStart(2, "0")}-${String(monday.getUTCDate()).padStart(2, "0")}`;
+    return weeks.filter(w => w.week_start_date && w.week_start_date < mondayIso).length;
+  }, [weeks, programmeLink]);
 
   const outsideCount = useMemo(() => {
     if (!programmeLink || !programmeRange.start || !programmeRange.end) return 0;
@@ -537,6 +567,26 @@ export const ProgrammingWeeksEditor = ({ playerId, programmeLink, hideMasterColl
               className="underline underline-offset-2 hover:text-foreground"
             >
               {showOutsideRange ? "Hide" : `Show ${outsideCount} outside this period`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {!programmeLink && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 border rounded px-3 py-2">
+          <CalendarRange className="w-3.5 h-3.5" />
+          <span>
+            {showPreviousWeeks
+              ? "Showing all weeks."
+              : "Showing this week and the next 5 weeks."}
+          </span>
+          {(previousWeeksCount > 0 || showPreviousWeeks) && (
+            <button
+              type="button"
+              onClick={() => setShowPreviousWeeks(v => !v)}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              {showPreviousWeeks ? "Hide previous weeks" : `View ${previousWeeksCount} previous week${previousWeeksCount === 1 ? "" : "s"}`}
             </button>
           )}
         </div>
