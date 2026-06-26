@@ -127,12 +127,19 @@ export const ScoutingDatabaseCard = ({
       // Public players policy already allows anon reads.
       const { data } = await supabase
         .from("players")
-        .select("id, name, position, club, nationality, image_url, fit_score")
+        .select("id, name, position, club, nationality, image_url, fit_score, category, representation_status")
         .neq("id", playerId)
         .not("name", "is", null)
+        // Don't pad the table with players we don't actually scout — drop
+        // FFF / Scouted-only rows so every blurred neighbour is a real
+        // RISE-tracked prospect.
+        .not("category", "in", '("Scouted","Fuel For Football","FFF")')
         .limit(40);
       if (!alive || !data) return;
-      const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 6).map((p: any) => ({
+      const filtered = (data as any[]).filter(
+        (p) => (p.representation_status || "").toLowerCase() !== "scouted",
+      );
+      const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 6).map((p: any) => ({
         id: p.id,
         name: p.name,
         position: p.position,

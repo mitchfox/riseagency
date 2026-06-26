@@ -89,6 +89,27 @@ export function UploadPlayerImageDialog({
 
       if (dbError) throw dbError;
 
+      // If this player doesn't have a profile picture yet, promote the
+      // first uploaded image to their `image_url` so it shows up across
+      // every staff surface (player database, outreach, offers, hub etc.)
+      // automatically. Only fills the gap — never overwrites an existing
+      // profile picture.
+      try {
+        const { data: existing } = await supabase
+          .from("players")
+          .select("image_url")
+          .eq("id", playerId)
+          .maybeSingle();
+        if (!existing?.image_url) {
+          await supabase
+            .from("players")
+            .update({ image_url: publicUrl })
+            .eq("id", playerId);
+        }
+      } catch (err) {
+        console.warn("Could not auto-set profile picture from upload:", err);
+      }
+
       toast.success("Image uploaded successfully!");
       setTitle("");
       setImageFile(null);

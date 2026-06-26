@@ -409,12 +409,9 @@ const BallonDorVisionCard = ({
   );
   const body = t(
     "vision.body",
-    `Our ambition is the very top of the game — Ballon d'Or, Team of the Year, World Cup winners. We pick a small group of players we genuinely believe can get there, and we back them all the way. If you have what it takes to work with us, ${firstName}, there's no reason that group can't include you.`,
+    `We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, ${firstName}, reach out to better understand how we can realise potential together.`,
   );
-  const urgency = t(
-    "vision.urgency",
-    "We are picking the first names now. The seats fill quickly and once they are taken, they are taken for years.",
-  );
+  const urgency = "";
   const cta = t("vision.cta", "Let's Meet");
 
   return (
@@ -451,12 +448,14 @@ const BallonDorVisionCard = ({
             >
               {widont(body)}
             </p>
-            <p
-              className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
-              style={{ textWrap: "balance" } as React.CSSProperties}
-            >
-              {widont(urgency)}
-            </p>
+            {urgency ? (
+              <p
+                className="mx-auto mt-3 max-w-2xl text-[12.5px] uppercase tracking-[0.16em] text-primary md:text-[13px]"
+                style={{ textWrap: "balance" } as React.CSSProperties}
+              >
+                {widont(urgency)}
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -1139,7 +1138,10 @@ const IntroCinematic = ({
         const commonClass = `absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_50px_-10px_hsl(var(--gold)/0.75)] ${frame.className}`;
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
-            <AnimatePresence mode="wait">
+            {/* No `mode="wait"` so the outgoing and incoming media overlap
+                briefly — the next image fades up before the previous one
+                has fully disappeared, giving a smoother hand-off. */}
+            <AnimatePresence>
               {m.kind === "video" ? (
                 <motion.video
                   key={`${m.url}-${sideTick}`}
@@ -1150,7 +1152,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 />
               ) : (
                 <motion.img
@@ -1162,7 +1164,7 @@ const IntroCinematic = ({
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 0.92, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.03 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 />
               )}
             </AnimatePresence>
@@ -1309,6 +1311,16 @@ const RiseWithUs = () => {
   const [performanceSub, setPerformanceSub] = useState<PerformanceSub | null>(null);
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
+  // Inline-card dialogs (matching the Representation page pattern where
+  // "Who we've worked with" and "Why Rise" are revealed only by tapping
+  // a card, not shown on the main hub view).
+  const [workedWithOpen, setWorkedWithOpen] = useState(false);
+  const [whyRiseOpen, setWhyRiseOpen] = useState(false);
+  // Fallback profile image for the final "Next Step" screen — when the
+  // player has no `image_url` saved, we look up the first image they have
+  // uploaded to the marketing gallery so the lockup never shows a blank
+  // circle. Independent of any auto-promote upload flow.
+  const [finalFallbackImage, setFinalFallbackImage] = useState<string | null>(null);
 
   const isPickerMode = !slug;
 
@@ -1369,6 +1381,24 @@ const RiseWithUs = () => {
       setLoading(false);
     })();
   }, [slug, isPickerMode]);
+
+  // Pull a marketing-gallery photo if the player has no profile picture
+  // yet — used as the fallback avatar on the closing screen.
+  useEffect(() => {
+    let alive = true;
+    if (!player || player.image_url) { setFinalFallbackImage(null); return; }
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("marketing_gallery")
+        .select("file_url")
+        .eq("player_id", player.id)
+        .eq("file_type", "image")
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (alive && data && data[0]?.file_url) setFinalFallbackImage(data[0].file_url as string);
+    })();
+    return () => { alive = false; };
+  }, [player?.id, player?.image_url]);
 
   // ageGroup defaults to over18 (most prospects). Card content uses this
   // to switch the under18/over18 specific copy in fees/agreement/expectations.
@@ -1491,35 +1521,49 @@ const RiseWithUs = () => {
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-primary/35" />
                 </header>
 
-                {/* Players we've worked with — same treatment as the
-                    Representation page: live carousel inside a slanted
-                    card, followed by the background paragraph and the
-                    Fuel For Football context disclaimer. Sharing the
-                    same translation keys keeps both pages in sync. */}
-                <section className="my-6 md:my-8 space-y-4">
-                  <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
-                    <PlayersWeWorkWith bare />
-                  </div>
-                  <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
-                    <p
-                      className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
-                      style={{ textWrap: "pretty" } as React.CSSProperties}
-                    >
-                      {widont(t(
-                        "representation.worked_with_body",
-                        "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
-                      ))}
-                    </p>
-                    <p
-                      className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
-                      style={{ textWrap: "pretty" } as React.CSSProperties}
-                    >
-                      {widont(t(
-                        "representation.worked_with_context",
-                        "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
-                      ))}
-                    </p>
-                  </div>
+                {/* "Who we've worked with" and "Why Rise" intentionally
+                    live inside their own cards (revealed via dialog) —
+                    matching the Representation page treatment so neither
+                    is shown inline on the main hub view. */}
+                <section className="my-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:my-8 md:gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setWorkedWithOpen(true)}
+                    className="group relative overflow-hidden rounded-[1.45rem] border border-border/60 p-4 text-left md:p-5"
+                    style={solidBlackSectionStyle}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--gold)/0.10),transparent_60%)]" />
+                    <div className="relative flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
+                          {ot("worked_with_eyebrow", "Our background")}
+                        </p>
+                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
+                          {ot("worked_with_card", "Who we've worked with")}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWhyRiseOpen(true)}
+                    className="group relative overflow-hidden rounded-[1.45rem] border border-primary/50 p-4 text-left md:p-5"
+                    style={solidBlackSectionStyle}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,hsl(var(--gold)/0.18),transparent_60%)]" />
+                    <div className="relative flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bebas text-[10.5px] uppercase tracking-[0.28em] text-primary">
+                          {ot("vision_eyebrow_card", "Our vision")}
+                        </p>
+                        <p className="mt-1 font-bebas text-xl uppercase tracking-[0.1em] text-foreground md:text-2xl">
+                          {ot("why_rise_card", "Why Rise?")}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-primary transition group-hover:translate-x-1" />
+                    </div>
+                  </button>
                 </section>
 
                 {/* Pillar boxes — pathway, HQ, training methodology,
@@ -1527,33 +1571,9 @@ const RiseWithUs = () => {
                     multilingual support. */}
                 <PillarsSection lang={lang} ageGroup={ageGroup} t={t} />
 
-                {/* Our Stars — clips + best player imagery */}
-                {hubMedia.length > 0 && (
-                  <section className="my-8 md:my-10">
-                    <div className="mb-3 flex items-center gap-3">
-                      <div className="h-[1px] flex-1 bg-primary/40" />
-                      <span className="font-bebas text-xl uppercase tracking-[0.32em] text-primary md:text-2xl">
-                        {ot("your_moments", "Your moments")}
-                      </span>
-                      <div className="h-[1px] flex-1 bg-primary/40" />
-                    </div>
-                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
-                      {hubMedia.map((m, i) => (
-                        <div
-                          key={m.url + i}
-                          className="snap-start shrink-0 w-44 sm:w-52 md:w-60 aspect-[3/4] overflow-hidden rounded-2xl border border-primary/35 shadow-[0_0_30px_-12px_hsl(var(--gold)/0.55)] bg-black/40"
-                        >
-                          {m.kind === "video" ? (
-                            <video src={m.url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
-                          ) : (
-                            <img src={m.url} alt="" className="h-full w-full object-cover" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-                <StarsShowcase lang={lang} />
+                {/* "Our Stars" / hub media strip removed per request — the
+                    hub stays focused on the prospect's own journey rather
+                    than a generic stars carousel. */}
 
                 {/* Scouting database snapshot — shows the prospect they're tracked
                     in our database with neighbouring rows blurred. Auto-shows when
@@ -1623,16 +1643,9 @@ const RiseWithUs = () => {
                   );
                 })}
 
-                {/* Why not you? — the Ballon d'Or vision card sits at the
-                    very bottom of the hub, after every section group, so
-                    it closes the page with the ambition statement and CTA.
-                    Mirrors the placement used on the Representation page. */}
-                <BallonDorVisionCard
-                  lang={lang}
-                  firstName={firstName}
-                  onBookMeeting={() => setMeetingOpen(true)}
-                  t={t}
-                />
+                {/* BallonDorVisionCard is now revealed via the "Why Rise?"
+                    card dialog above, so the hub doesn't end with the
+                    inline vision block. */}
               </div>
 
               {/* Persistent: Explore Player Portal */}
@@ -1756,9 +1769,9 @@ const RiseWithUs = () => {
                   <div className="flex items-center justify-center gap-4 sm:gap-6">
                     <img src={riseLogoWhite} alt="RISE" className="h-10 sm:h-14 w-auto" />
                     <X className="h-5 w-5 sm:h-7 sm:w-7 text-foreground/85" strokeWidth={2.5} />
-                    {player.image_url ? (
+                    {(player.image_url || finalFallbackImage) ? (
                       <img
-                        src={player.image_url}
+                        src={player.image_url || finalFallbackImage!}
                         alt={player.name}
                         className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover object-top border-2 border-primary/60 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.6)]"
                       />
@@ -1782,9 +1795,9 @@ const RiseWithUs = () => {
                       onClick={() => setMeetingOpen(true)}
                       className="font-bebas uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Set Up Our Meeting")}
+                      <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
-                    <Button asChild size="lg" variant="outline" className="font-bebas uppercase tracking-wider border-[#25D366]/60 text-[#25D366] hover:bg-[#25D366]/10">
+                    <Button asChild size="lg" className="font-bebas uppercase tracking-wider border border-[#25D366] bg-[#25D366] text-white hover:bg-[#1ebe57] hover:text-white">
                       <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                         <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
                       </a>
@@ -1837,6 +1850,56 @@ const RiseWithUs = () => {
             player={player}
             lang={lang}
           />
+
+          {/* Who we've worked with — same content as the inline section
+              used to be, now revealed via the hub card. */}
+          <Dialog open={workedWithOpen} onOpenChange={setWorkedWithOpen}>
+            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97">
+              <DialogHeader>
+                <DialogTitle className="font-bebas text-2xl uppercase tracking-[0.12em] md:text-3xl">
+                  {t("representation.worked_with_title", "Who we've worked with")}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40 py-2">
+                  <PlayersWeWorkWith bare />
+                </div>
+                <div className="rise-slant-card border border-border/60 bg-card/55 p-4 md:p-6">
+                  <p
+                    className="text-[14px] leading-relaxed text-foreground/85 md:text-[16px]"
+                    style={{ textWrap: "pretty" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.worked_with_body",
+                      "Our background comes from working with some of the best talent across Europe and in the English Premier League through a decade of experience at Fuel For Football performance consultancy. Now we RISE more holistically with our players, combining exclusive representation with elite performance training.",
+                    ))}
+                  </p>
+                  <p
+                    className="mt-4 border-t border-border/50 pt-4 text-[12px] leading-relaxed text-muted-foreground md:text-[13.5px]"
+                    style={{ textWrap: "pretty" } as React.CSSProperties}
+                  >
+                    {widont(t(
+                      "representation.worked_with_context",
+                      "The same performance depth from the FFF consultancy work is a central part of our complete representation model for our new stars.",
+                    ))}
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Why Rise — the Ballon d'Or vision card, revealed via the hub
+              card rather than rendered inline at the bottom. */}
+          <Dialog open={whyRiseOpen} onOpenChange={setWhyRiseOpen}>
+            <DialogContent className="max-w-3xl border border-primary/30 bg-background/97 p-0">
+              <BallonDorVisionCard
+                lang={lang}
+                firstName={firstName}
+                onBookMeeting={() => { setWhyRiseOpen(false); setMeetingOpen(true); }}
+                t={t}
+              />
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
