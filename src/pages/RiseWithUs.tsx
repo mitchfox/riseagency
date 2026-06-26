@@ -1471,12 +1471,22 @@ const RiseWithUs = () => {
   const introVisible = settings.intro_media.filter(
     (m) => m.show && (m.position === "intro" || m.position === "both"),
   );
-  const extraIntro: Array<{ kind: "image" | "video"; url: string }> =
+  const baseIntro: Array<{ kind: "image" | "video"; url: string }> =
     introVisible.length > 0
       ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
       : Object.values(settings.section_images)
           .filter(Boolean)
           .map((url) => ({ kind: "image" as const, url: url as string }));
+  const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
+  const seenIntroUrls = new Set<string>();
+  const extraIntro: Array<{ kind: "image" | "video"; url: string }> = [
+    ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
+    ...baseIntro,
+  ].filter((m) => {
+    if (!m.url || seenIntroUrls.has(m.url)) return false;
+    seenIntroUrls.add(m.url);
+    return true;
+  });
   // Keep the old name working for any downstream consumers that just want urls.
   const extraImages = extraIntro.map((m) => m.url);
   // Hub Why-Us strip — items the staff flagged as hub or both.
