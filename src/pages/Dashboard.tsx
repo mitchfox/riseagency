@@ -21,7 +21,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import { FileText, Play, Download, Upload, ChevronDown, Trash2, Lock, Calendar, Trophy, TrendingUp, Eye, EyeOff, ChevronUp, ChevronDown as ChevronDownIcon, List, RefreshCw, CheckCircle2, WifiOff, Bell, BarChart3, ChevronLeft, LineChart, Video, Database, Users, Search, Compass, Layers, Brain, FolderOpen, Activity, UtensilsCrossed, Home } from "lucide-react";
 import { ClipNameEditor } from "@/components/ClipNameEditor";
-import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { addDays, format, parseISO, startOfWeek, endOfWeek, isWithinInterval, startOfDay } from "date-fns";
 import { SEO } from "@/components/SEO";
 import { PerformanceReportDialog } from "@/components/PerformanceReportDialog";
 import { PlaylistContent } from "@/components/PlaylistContent";
@@ -3539,7 +3539,7 @@ const Dashboard = () => {
               {/* Technical view — kept mounted so data is preloaded */}
               {hasTechnicalPrograms && (
                 <div className={`w-full px-0 md:container md:mx-auto md:px-0 ${programmingMode === "technical" ? "" : "hidden"}`}>
-                  <TechnicalProgramView playerId={playerData?.id ?? null} />
+                  <TechnicalProgramView playerId={playerData?.id ?? null} initialPrograms={technicalPrograms} />
                 </div>
               )}
               {programmingMode !== "technical" && (
@@ -3674,9 +3674,8 @@ const Dashboard = () => {
                                                 .filter((week: any) => {
                                                   if (!week?.week_start_date) return true;
                                                   try {
-                                                    const ws = parseISO(week.week_start_date);
-                                                    const currentMon = startOfWeek(new Date(), { weekStartsOn: 1 });
-                                                    return ws >= currentMon;
+                                                    const weekEnd = endOfWeek(parseISO(week.week_start_date), { weekStartsOn: 1 });
+                                                    return weekEnd >= startOfDay(new Date());
                                                   } catch { return true; }
                                                 })
                                                 .map((week: any, idx: number) => (
