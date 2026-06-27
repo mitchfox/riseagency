@@ -1509,24 +1509,27 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
-  const shouldShowDatabaseCard =
-    settings.show_database_card === true
-    || (settings.show_database_card == null && (fitScore ?? 0) >= 60);
+  // The scouting database card is always shown — the card itself decides
+  // whether to reveal the numeric fit score (only when it sits between 60
+  // and 100). Older settings rows may have an explicit `false`, but the
+  // new behaviour is "always visible, conditional number", so we ignore
+  // that legacy flag here on purpose.
+  const shouldShowDatabaseCard = true;
   // Build the intro pool from the new intro_media list (kind=image|video,
   // show=true, position in intro/both). Fall back to legacy section_images
   // when the player hasn't been migrated yet so we never go blank.
   const introVisible = settings.intro_media.filter(
     (m) => m.show && (m.position === "intro" || m.position === "both"),
   );
-  const baseIntro: Array<{ kind: "image" | "video"; url: string }> =
+  const baseIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> =
     introVisible.length > 0
-      ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
+      ? introVisible.map((m) => ({ kind: m.kind, url: m.url, objectPosition: m.objectPosition }))
       : Object.values(settings.section_images)
           .filter(Boolean)
           .map((url) => ({ kind: "image" as const, url: url as string }));
   const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
   const seenIntroUrls = new Set<string>();
-  const extraIntro: Array<{ kind: "image" | "video"; url: string }> = [
+  const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> = [
     ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
     ...baseIntro,
   ].filter((m) => {
