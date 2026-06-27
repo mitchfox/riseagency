@@ -227,7 +227,7 @@ const SessionTable = ({ drills }: { drills: Drill[] }) => {
 export const TechnicalProgramView = ({
   playerId,
   initialPrograms,
-  selectedSessionId,
+  selectedSessionId: selectedSessionIdFromSchedule,
   selectedSessionKey,
 }: {
   playerId: string | null;
@@ -289,8 +289,8 @@ export const TechnicalProgramView = ({
   }, [playerId, initialPrograms]);
 
   useEffect(() => {
-    if (selectedSessionId) {
-      setSelectedSessionId(selectedSessionId);
+    if (selectedSessionIdFromSchedule) {
+      setSelectedSessionId(selectedSessionIdFromSchedule);
       return;
     }
     if (!selectedSessionKey) return;
@@ -300,7 +300,7 @@ export const TechnicalProgramView = ({
       String(session.session_key || "").trim().toLowerCase() === key
     );
     if (matched) setSelectedSessionId(matched.id);
-  }, [selectedSessionId, selectedSessionKey, sessions]);
+  }, [selectedSessionIdFromSchedule, selectedSessionKey, sessions]);
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading technical programmes…</p>;
   if (!programs.length) return <p className="text-sm text-muted-foreground">No technical programmes yet.</p>;
