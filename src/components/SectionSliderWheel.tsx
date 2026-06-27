@@ -38,8 +38,10 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
   // moves under the finger / cursor instead of waiting for release.
   const [drag, setDrag] = useState(0);
   const dragRef = useRef<{ start: number; pointerId: number | null }>({ start: 0, pointerId: null });
-  // One full slot is ~118px wide; threshold to commit a step.
-  const SLOT = 118;
+  // One full slot must be wide enough that adjacent labels don't visually
+  // overlap with the centred active one. The button has a min-width of
+  // 170px (sm: 210px) so we use 200 to give each label its own runway.
+  const SLOT = 200;
   const STEP_THRESHOLD = 60;
 
   const wrap = (i: number) => (i + total) % total;
@@ -124,7 +126,7 @@ export const SectionSliderWheel = ({ sections, activeKey, onChange }: SectionSli
                       : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
                   }
                   onClick={() => onChange(section.key)}
-                  className="absolute inline-flex min-w-[150px] items-center justify-center gap-2 whitespace-nowrap px-3 text-center font-bebas text-xs uppercase tracking-[0.18em] text-primary sm:min-w-[190px] sm:text-sm"
+                  className="absolute inline-flex min-w-[170px] items-center justify-center gap-3 whitespace-nowrap px-4 text-center font-bebas text-xs uppercase tracking-[0.18em] text-primary sm:min-w-[210px] sm:text-sm"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   {!isCenter && offset < 0 && <span className="text-primary/70">•</span>}
