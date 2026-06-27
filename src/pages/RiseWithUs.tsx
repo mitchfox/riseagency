@@ -2022,7 +2022,7 @@ const RiseWithUs = () => {
             extraImages={extraImages}
             extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
-            profileImageUrl={player.image_url || finalFallbackImage || extraIntro.find((m) => m.kind === "image")?.url || null}
+            profileImageUrl={player.image_url || finalFallbackImage || null}
             onDone={() => setIntroDone(true)}
           />
         )}
