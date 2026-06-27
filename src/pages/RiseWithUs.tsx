@@ -852,15 +852,6 @@ const BallonDorVisionCard = ({
                 {widont(urgency)}
               </p>
             ) : null}
-            <Button
-              type="button"
-              onClick={onBookMeeting}
-              className="mt-5 border border-primary font-bebas uppercase tracking-[0.2em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:brightness-95"
-              style={{ backgroundColor: "hsl(var(--gold))", color: "hsl(0 0% 4%)" }}
-            >
-              <CalendarClock className="mr-2 h-4 w-4" />
-              {cta}
-            </Button>
           </div>
         </div>
       </div>
