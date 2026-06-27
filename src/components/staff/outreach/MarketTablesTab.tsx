@@ -3,12 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
 import { Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ClubRow {
   id: string;
@@ -335,6 +337,13 @@ export default function MarketTablesTab() {
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
   const [addTeamOpen, setAddTeamOpen] = useState(false);
+  // Live activity log of additions / changes to the market table. Seeded with
+  // the most recent saves and kept in sync via the realtime channel below so
+  // every staff member sees teammates' edits as they happen.
+  const [activity, setActivity] = useState<
+    Array<{ id: string; club_id: string; td: string | null; cs: string | null; at: string; kind: "insert" | "update" }>
+  >([]);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
