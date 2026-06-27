@@ -55,7 +55,7 @@ interface ProspectPlayer {
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
-  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both" }>;
+  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both"; objectPosition?: string }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
   show_database_card?: boolean | null;
@@ -1452,6 +1452,7 @@ const RiseWithUs = () => {
                   url: String(x.url),
                   show: x.show !== false,
                   position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+                  objectPosition: typeof x.objectPosition === "string" ? x.objectPosition : undefined,
                 }))
             : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
