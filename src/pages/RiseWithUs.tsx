@@ -1332,7 +1332,7 @@ const IntroCinematic = ({
               transition={{ duration: 0.45 }}
               className="space-y-4"
             >
-              <p className="font-bebas text-2xl sm:text-4xl md:text-5xl uppercase tracking-[0.16em] text-primary"
+              <p className="whitespace-pre-line font-bebas text-2xl sm:text-4xl md:text-5xl uppercase tracking-[0.16em] text-primary"
                  style={{ textShadow: "0 0 24px hsl(var(--gold)/0.45)", textWrap: "balance" } as React.CSSProperties}>
                 {balanceLineBreak(fullName).toUpperCase()}
               </p>
