@@ -454,20 +454,6 @@ const BallonDorVisionCard = ({
               </p>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={onBookMeeting}
-            className="group relative inline-flex items-center gap-2 border border-primary px-5 py-3 font-bebas text-sm uppercase tracking-[0.18em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] transition hover:brightness-95 md:text-base"
-            style={{
-              clipPath: "polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%)",
-              backgroundColor: "hsl(var(--gold))",
-              color: "hsl(0 0% 4%)",
-            }}
-          >
-            <CalendarClock className="h-4 w-4" />
-            <span>{cta}</span>
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-          </button>
         </div>
       </div>
     </div>
