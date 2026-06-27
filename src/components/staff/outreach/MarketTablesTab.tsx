@@ -349,6 +349,9 @@ export default function MarketTablesTab() {
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
   const [addTeamOpen, setAddTeamOpen] = useState(false);
+  // Outreach mode: filter to only clubs we have at least one contact for,
+  // and surface a "Create outreach" shortcut next to each contact name.
+  const [outreachMode, setOutreachMode] = useState(false);
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
