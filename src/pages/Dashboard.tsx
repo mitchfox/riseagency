@@ -2215,6 +2215,9 @@ const Dashboard = () => {
                 }}
                 onNavigateToSchedule={() => {
                   setActiveTab("physical");
+                  setProgrammingMode("schedule");
+                  try { localStorage.setItem("portal.programmingTab", "schedule"); } catch {}
+                  setAccordionValue(['schedule']);
                 }}
               />
             </motion.div>
