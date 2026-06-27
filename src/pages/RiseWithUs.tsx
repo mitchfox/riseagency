@@ -1170,8 +1170,10 @@ const IntroCinematic = ({
         />
       ))}
 
-      {/* Uploaded intro media appears one at a time in the outer corners.
-          It is hidden on narrow screens rather than risk crossing text. */}
+      {/* Uploaded intro media. On wider screens it floats in the outer
+          corners, on mobile (where there is no side room) it appears
+          stacked above and below the text instead so the prospect still
+          sees their own footage during the intro. */}
       {extraIntro.length > 0 && (() => {
         const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
           { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", left: "3%", rotate: "-4deg" } },
@@ -1181,35 +1183,48 @@ const IntroCinematic = ({
         ];
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        const commonClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
+        // Pick a second media item for the bottom slot on mobile so the
+        // top and bottom frames are not identical when more than one
+        // piece of intro media is available.
+        const m2 = extraIntro[(introIdx + 1) % extraIntro.length] || m;
+        const sideClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
+        const mobileBase = "block lg:hidden absolute left-1/2 -translate-x-1/2 object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
+        const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
+          media.kind === "video" ? (
+            <motion.video
+              key={key}
+              src={media.url}
+              className={className}
+              style={style}
+              autoPlay muted loop playsInline
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 0.82, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            />
+          ) : (
+            <motion.img
+              key={key}
+              src={media.url}
+              alt=""
+              className={className}
+              style={style}
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 0.82, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            />
+          );
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
             <AnimatePresence>
-              {m.kind === "video" ? (
-                <motion.video
-                  key={`${m.url}-${sideTick}`}
-                  src={m.url}
-                  className={commonClass}
-                  style={frame.style}
-                  autoPlay muted loop playsInline
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 0.82, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                />
-              ) : (
-                <motion.img
-                  key={`${m.url}-${sideTick}`}
-                  src={m.url}
-                  alt=""
-                  className={commonClass}
-                  style={frame.style}
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 0.82, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                />
-              )}
+              {renderMedia(m, `desktop-${m.url}-${sideTick}`, sideClass, frame.style)}
+            </AnimatePresence>
+            <AnimatePresence>
+              {renderMedia(m, `mobile-top-${m.url}-${sideTick}`, `${mobileBase}`, { top: "6%" })}
+            </AnimatePresence>
+            <AnimatePresence>
+              {renderMedia(m2, `mobile-bot-${m2.url}-${sideTick}`, `${mobileBase}`, { bottom: "10%" })}
             </AnimatePresence>
           </div>
         );
