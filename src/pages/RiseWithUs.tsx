@@ -251,6 +251,24 @@ const offerT = (lang: string, key: string, fallback: string): string => {
   return allDicts[key]?.[code] || allDicts[key]?.en || fallback;
 };
 
+const balanceLineBreak = (value: string) => {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= 2) return value;
+  let bestIndex = 1;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (let i = 1; i < words.length; i += 1) {
+    const left = words.slice(0, i).join(" ");
+    const right = words.slice(i).join(" ");
+    const shortLastLinePenalty = right.length < 7 ? 6 : 0;
+    const score = Math.abs(left.length - right.length) + shortLastLinePenalty;
+    if (score < bestScore) {
+      bestIndex = i;
+      bestScore = score;
+    }
+  }
+  return `${words.slice(0, bestIndex).join(" ")}\n${words.slice(bestIndex).join(" ")}`;
+};
+
 /* ============== AUTO-POSITION RESOLUTION ============== */
 /** Map normalised position abbreviations (GK, CB, LW, etc.) to the
  *  broader scouting groupings used by the Scouting card. Mirrors
@@ -476,6 +494,15 @@ const BallonDorVisionCard = ({
                 {widont(urgency)}
               </p>
             ) : null}
+            <Button
+              type="button"
+              onClick={onBookMeeting}
+              className="mt-5 border border-primary font-bebas uppercase tracking-[0.2em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:brightness-95"
+              style={{ backgroundColor: "hsl(var(--gold))", color: "hsl(0 0% 4%)" }}
+            >
+              <CalendarClock className="mr-2 h-4 w-4" />
+              {cta}
+            </Button>
           </div>
         </div>
       </div>
@@ -950,8 +977,8 @@ const StarsShowcase = ({ lang }: { lang: string }) => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-2">
-                      <p className="font-bebas text-[12px] uppercase leading-tight tracking-[0.08em] text-foreground">
-                        {p.name}
+                      <p className="whitespace-pre-line text-center font-bebas text-[12px] uppercase leading-tight tracking-[0.08em] text-foreground">
+                        {balanceLineBreak(p.name)}
                       </p>
                       <p className="font-bebas text-[9px] uppercase tracking-[0.22em] text-primary/95">
                         {[normalisePosition(p.position || ""), p.club].filter(Boolean).join(" · ")}
@@ -1071,14 +1098,20 @@ const IntroCinematic = ({
   // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
+  const [mobileSide, setMobileSide] = useState<"left" | "right">("left");
   useEffect(() => {
     if (extraIntro.length === 0) return;
     const t = setInterval(() => {
       setIntroIdx((i) => (i + 1) % extraIntro.length);
       setSideTick((s) => s + 1);
-    }, 4000);
+      setMobileSide((side) => (side === "left" ? "right" : "left"));
+    }, 3200);
     return () => clearInterval(t);
   }, [extraIntro.length]);
+
+  useEffect(() => {
+    if (phase === 1 && secondaryParagraph) setMobileSide("left");
+  }, [phase, secondaryParagraph]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
@@ -1208,12 +1241,8 @@ const IntroCinematic = ({
         // with varying horizontal offsets so it never feels stuck in one
         // place. Matches the desktop pacing of one image at a time with a
         // soft overlap as the next one fades in.
-        // When the optional secondary paragraph is long it can drift down
-        // far enough to collide with a bottom-anchored image on mobile, so
-        // we drop the bottom slots entirely in that case and alternate the
-        // image between the top-left and top-right of the screen (above
-        // where the player's name will appear). Text staying readable
-        // trumps having an image in the lower half.
+        // When the optional secondary paragraph is present, keep the image
+        // clear of the copy and visibly alternate top-left then top-right.
         const hasLongSecondary = !!(secondaryParagraph && secondaryParagraph.trim().length > 0);
         const mobileFramesFull: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
           { vertical: "top", offsetVw: -18, rotate: -3 },
@@ -1223,24 +1252,25 @@ const IntroCinematic = ({
           { vertical: "top", offsetVw: 0, rotate: 0 },
           { vertical: "bottom", offsetVw: 6, rotate: 2 },
         ];
-        const mobileFramesTopOnly: Array<{ vertical: "top"; offsetVw: number; rotate: number }> = [
-          { vertical: "top", offsetVw: -20, rotate: -4 },
-          { vertical: "top", offsetVw: 20, rotate: 4 },
-          { vertical: "top", offsetVw: -14, rotate: -2 },
-          { vertical: "top", offsetVw: 14, rotate: 2 },
-        ];
-        const mobileFrames = hasLongSecondary ? mobileFramesTopOnly : mobileFramesFull;
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        const mobileFrame = mobileFrames[sideTick % mobileFrames.length];
+        const mobileFrame = mobileFramesFull[sideTick % mobileFramesFull.length];
         const sideClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         const mobileClass = "block lg:hidden absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
-        const mobileStyle: React.CSSProperties = {
-          left: "50%",
-          transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
-          ...(mobileFrame.vertical === "top" ? { top: hasLongSecondary ? "4%" : "6%" } : { bottom: "10%" }),
-          objectPosition: m.objectPosition || "50% 35%",
-        };
+        const mobileStyle: React.CSSProperties = hasLongSecondary
+          ? {
+              top: "5%",
+              left: mobileSide === "left" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
+              right: mobileSide === "right" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
+              transform: `rotate(${mobileSide === "left" ? -4 : 4}deg)`,
+              objectPosition: m.objectPosition || "50% 35%",
+            }
+          : {
+              left: "50%",
+              transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
+              ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
+              objectPosition: m.objectPosition || "50% 35%",
+            };
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
             <motion.video
@@ -1272,8 +1302,8 @@ const IntroCinematic = ({
             <AnimatePresence>
               {renderMedia(m, `desktop-${m.url}-${sideTick}`, sideClass, frame.style)}
             </AnimatePresence>
-            <AnimatePresence>
-              {renderMedia(m, `mobile-${m.url}-${sideTick}`, mobileClass, mobileStyle)}
+            <AnimatePresence mode="wait">
+              {renderMedia(m, `mobile-${m.url}-${sideTick}-${mobileSide}`, mobileClass, mobileStyle)}
             </AnimatePresence>
           </div>
         );
@@ -1302,9 +1332,9 @@ const IntroCinematic = ({
               transition={{ duration: 0.45 }}
               className="space-y-4"
             >
-              <p className="font-bebas text-2xl sm:text-4xl md:text-5xl uppercase tracking-[0.16em] text-primary"
-                 style={{ textShadow: "0 0 24px hsl(var(--gold)/0.45)" }}>
-                {fullName.toUpperCase()}
+              <p className="whitespace-pre-line font-bebas text-2xl sm:text-4xl md:text-5xl uppercase tracking-[0.16em] text-primary"
+                 style={{ textShadow: "0 0 24px hsl(var(--gold)/0.45)", textWrap: "balance" } as React.CSSProperties}>
+                {balanceLineBreak(fullName).toUpperCase()}
               </p>
               <p
                 className="mx-auto max-w-[36ch] text-base sm:text-xl md:text-2xl leading-snug text-foreground font-medium sm:max-w-[42ch] md:max-w-[44ch]"
