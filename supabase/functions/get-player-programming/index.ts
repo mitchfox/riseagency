@@ -186,10 +186,13 @@ Deno.serve(async (req) => {
         if (slot.refId) {
           const meta = refToSession.get(slot.refId);
           out[day] = meta?.key || "";
+          out[`${day}_type`] = meta?.type || "";
         } else if (slot.free_text) {
           out[day] = slot.free_text;
+          out[`${day}_type`] = "free";
         } else {
           out[day] = "";
+          out[`${day}_type`] = "";
         }
       }
       return out;
