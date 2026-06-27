@@ -1,14 +1,16 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const SPS_FIELDS = ["sessionA", "sessionB", "sessionC", "sessionD", "sessionE", "sessionF", "sessionG", "sessionH"];
 
 type SessionMeta = { key: string; title: string | null; type: "sps" | "technical" };
+
+const BodySchema = z.object({
+  playerId: z.string().uuid(),
+  email: z.string().min(1).max(255).transform((value) => value.trim().toLowerCase()),
+});
 
 const hasExercises = (session: any) =>
   !!session && Array.isArray(session.exercises) && session.exercises.length > 0;
@@ -27,16 +29,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const playerId = String(body.playerId || "").trim();
-    const email = String(body.email || "").trim().toLowerCase();
+    const parsed = BodySchema.safeParse(await req.json().catch(() => ({})));
 
-    if (!playerId || !email) {
-      return new Response(JSON.stringify({ error: "playerId and email required" }), {
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const { playerId, email } = parsed.data;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
