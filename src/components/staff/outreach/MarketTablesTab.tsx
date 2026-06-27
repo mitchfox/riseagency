@@ -3,12 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
 import { Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ClubRow {
   id: string;
@@ -335,6 +337,13 @@ export default function MarketTablesTab() {
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
   const [addTeamOpen, setAddTeamOpen] = useState(false);
+  // Live activity log of additions / changes to the market table. Seeded with
+  // the most recent saves and kept in sync via the realtime channel below so
+  // every staff member sees teammates' edits as they happen.
+  const [activity, setActivity] = useState<
+    Array<{ id: string; club_id: string; td: string | null; cs: string | null; at: string; kind: "insert" | "update" }>
+  >([]);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -518,12 +527,55 @@ export default function MarketTablesTab() {
               },
             };
           });
+          if (payload.eventType !== "DELETE") {
+            setActivity((prev) => {
+              const next = [
+                {
+                  id: `${row.id ?? row.club_id}-${row.updated_at ?? Date.now()}`,
+                  club_id: row.club_id,
+                  td: row.technical_director_name ?? null,
+                  cs: row.chief_scout_name ?? null,
+                  at: (row.updated_at as string) ?? new Date().toISOString(),
+                  kind: (payload.eventType === "INSERT" ? "insert" : "update") as
+                    | "insert"
+                    | "update",
+                },
+                ...prev.filter((e) => e.club_id !== row.club_id || e.at !== (row.updated_at ?? "")),
+              ];
+              return next.slice(0, 60);
+            });
+          }
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
+  }, []);
+
+  // Seed the activity feed with the most recent saves so the popover is
+  // useful straight away rather than only after a teammate makes an edit
+  // while we're watching.
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("market_table_entries")
+        .select("id, club_id, technical_director_name, chief_scout_name, created_at, updated_at")
+        .eq("market_table_key", MARKET_TABLE_KEY)
+        .order("updated_at", { ascending: false })
+        .limit(40);
+      if (error || !data) return;
+      setActivity(
+        (data as any[]).map((r) => ({
+          id: `${r.id}-${r.updated_at}`,
+          club_id: r.club_id,
+          td: r.technical_director_name ?? null,
+          cs: r.chief_scout_name ?? null,
+          at: r.updated_at ?? r.created_at,
+          kind: r.created_at === r.updated_at ? "insert" : "update",
+        })),
+      );
+    })();
   }, []);
 
   const countries = useMemo(() => {
@@ -561,6 +613,34 @@ export default function MarketTablesTab() {
   const pageStart = (safePage - 1) * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
   const paged = useMemo(() => filtered.slice(pageStart, pageEnd), [filtered, pageStart, pageEnd]);
+
+  // Completion tally: how many clubs in the table now have at least one
+  // identified contact (TD/CS name saved or a matching role contact in the
+  // network). Drives the "X of Y clubs · Z%" pill at the top.
+  const tally = useMemo(() => {
+    const total = clubs.length;
+    let withContact = 0;
+    clubs.forEach((c) => {
+      const e = entries[c.id];
+      const hasName =
+        !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+        !!(e?.chief_scout_name && e.chief_scout_name.trim());
+      if (hasName) {
+        withContact++;
+        return;
+      }
+      const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+      const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+      if (td || cs) withContact++;
+    });
+    const pct = total === 0 ? 0 : Math.round((withContact / total) * 100);
+    return { total, withContact, pct };
+  }, [clubs, entries, contacts]);
+  const clubNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    clubs.forEach((c) => map.set(c.id, c.club_name));
+    return map;
+  }, [clubs]);
 
   const getValues = (club: ClubRow) => {
     const entry = entries[club.id];
@@ -862,6 +942,65 @@ export default function MarketTablesTab() {
               ? "0 clubs"
               : `Showing ${pageStart + 1}–${Math.min(pageEnd, filtered.length)} of ${filtered.length}`}
           </span>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-risegold/40 bg-risegold/10 px-2.5 py-1 text-[11px] font-medium text-risegold"
+            title="Clubs with at least one identified contact"
+          >
+            <Check className="h-3 w-3" />
+            {tally.withContact}/{tally.total} clubs · {tally.pct}%
+          </span>
+          <Popover open={activityOpen} onOpenChange={setActivityOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background/60 px-2 text-[11px] text-muted-foreground hover:text-white hover:border-risegold/60"
+                title="Recent additions and edits"
+              >
+                <History className="h-3.5 w-3.5" />
+                Activity
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[320px] p-0">
+              <div className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                Live activity
+              </div>
+              <ScrollArea className="max-h-[320px]">
+                {activity.length === 0 ? (
+                  <div className="p-3 text-xs text-muted-foreground">No saves yet.</div>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {activity.map((a) => {
+                      const when = new Date(a.at);
+                      const name = clubNameById.get(a.club_id) ?? "Unknown club";
+                      const parts = [
+                        a.td ? `TD: ${a.td}` : null,
+                        a.cs ? `CS: ${a.cs}` : null,
+                      ].filter(Boolean) as string[];
+                      return (
+                        <li key={a.id} className="px-3 py-2 text-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-white truncate">{name}</span>
+                            <span className="text-[10px] text-muted-foreground shrink-0">
+                              {when.toLocaleString(undefined, {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {a.kind === "insert" ? "Added" : "Updated"}
+                            {parts.length > 0 ? ` · ${parts.join(" · ")}` : ""}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
           <Button
             type="button"
             size="sm"

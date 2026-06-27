@@ -318,7 +318,7 @@ const PILLARS: Pillar[] = [
     titleKey: "rwu_how_title", titleFallback: "How We Work With You",
     bodyKey:  "rwu_how_body",
     bodyFallback:
-      "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation and the family is included.",
+      "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation.",
   },
 ];
 
@@ -1181,14 +1181,28 @@ const IntroCinematic = ({
           { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", left: "4%", rotate: "3deg" } },
           { className: "h-24 w-24 md:h-32 md:w-32 lg:h-32 lg:w-32 xl:h-40 xl:w-40", style: { bottom: "13%", right: "4%", rotate: "-3deg" } },
         ];
+        // Mobile drifts a single frame between alternating top/bottom slots
+        // with varying horizontal offsets so it never feels stuck in one
+        // place. Matches the desktop pacing of one image at a time with a
+        // soft overlap as the next one fades in.
+        const mobileFrames: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
+          { vertical: "top", offsetVw: -18, rotate: -3 },
+          { vertical: "bottom", offsetVw: 16, rotate: 4 },
+          { vertical: "top", offsetVw: 14, rotate: 3 },
+          { vertical: "bottom", offsetVw: -16, rotate: -4 },
+          { vertical: "top", offsetVw: 0, rotate: 0 },
+          { vertical: "bottom", offsetVw: 6, rotate: 2 },
+        ];
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        // Pick a second media item for the bottom slot on mobile so the
-        // top and bottom frames are not identical when more than one
-        // piece of intro media is available.
-        const m2 = extraIntro[(introIdx + 1) % extraIntro.length] || m;
+        const mobileFrame = mobileFrames[sideTick % mobileFrames.length];
         const sideClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
-        const mobileBase = "block lg:hidden absolute left-1/2 -translate-x-1/2 object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
+        const mobileClass = "block lg:hidden absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
+        const mobileStyle: React.CSSProperties = {
+          left: "50%",
+          transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
+          ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
+        };
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
             <motion.video
@@ -1200,7 +1214,7 @@ const IntroCinematic = ({
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
               exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             />
           ) : (
             <motion.img
@@ -1212,7 +1226,7 @@ const IntroCinematic = ({
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
               exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             />
           );
         return (
@@ -1221,10 +1235,7 @@ const IntroCinematic = ({
               {renderMedia(m, `desktop-${m.url}-${sideTick}`, sideClass, frame.style)}
             </AnimatePresence>
             <AnimatePresence>
-              {renderMedia(m, `mobile-top-${m.url}-${sideTick}`, `${mobileBase}`, { top: "6%" })}
-            </AnimatePresence>
-            <AnimatePresence>
-              {renderMedia(m2, `mobile-bot-${m2.url}-${sideTick}`, `${mobileBase}`, { bottom: "10%" })}
+              {renderMedia(m, `mobile-${m.url}-${sideTick}`, mobileClass, mobileStyle)}
             </AnimatePresence>
           </div>
         );
