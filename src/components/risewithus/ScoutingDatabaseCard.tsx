@@ -210,7 +210,16 @@ export const ScoutingDatabaseCard = ({
       <div className="text-right">
         <span className={`inline-flex items-center justify-end gap-1 rounded px-1.5 py-0.5 font-mono text-[10.5px] md:text-[11.5px] ${opts.highlight ? "bg-primary/20 text-primary" : "bg-white/5 text-foreground/75"}`}>
           {opts.highlight && <Star className="h-2.5 w-2.5" />}
-          {r.fit != null ? r.fit : ""}
+          {(() => {
+            // Numeric fit score is only revealed for the highlighted "you"
+            // row when it lands in the 60-100 window. Outside that band we
+            // still show the row (the card is always present) but leave the
+            // number off so a soft score never undermines the pitch. The
+            // surrounding blurred rows always show their seeded numbers.
+            if (!opts.highlight) return r.fit != null ? r.fit : "";
+            if (r.fit != null && r.fit >= 60 && r.fit <= 100) return r.fit;
+            return "";
+          })()}
         </span>
       </div>
     </div>

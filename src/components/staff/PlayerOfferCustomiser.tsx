@@ -48,6 +48,13 @@ export type IntroMediaItem = {
   url: string;
   show: boolean;
   position: "intro" | "hub" | "both";
+  /**
+   * CSS object-position string ("50% 30%") that decides which part of the
+   * media is visible inside the cropped frame. Tuned against the mobile
+   * portrait preview (smallest height) so the chosen subject stays in view
+   * across every breakpoint.
+   */
+  objectPosition?: string;
 };
 
 const newId = () =>
@@ -85,12 +92,13 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
           url: String(x.url),
           show: x.show !== false,
           position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+          objectPosition: typeof x.objectPosition === "string" ? x.objectPosition : "50% 35%",
         }));
       if (normalised.length === 0) {
         const legacy = (data?.section_images || {}) as Record<string, string>;
         normalised = Object.values(legacy)
           .filter(Boolean)
-          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const }));
+          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const, objectPosition: "50% 35%" }));
       }
       setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
@@ -114,42 +122,51 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
     setHidden(next);
   };
 
-  const uploadMedia = async (kind: "image" | "video", file: File) => {
+  const uploadOne = async (kind: "image" | "video", file: File): Promise<string | null> => {
+    const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+    const path = `offer-sections/${playerId}/${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from("marketing-gallery")
+      .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
+    if (error) { toast.error(`Upload failed: ${file.name}`); return null; }
+    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+    if (kind === "image") {
+      await (supabase as any)
+        .from("marketing_gallery")
+        .insert({
+          title: `${playerName} - offer image`,
+          description: `Rise With Us image for ${playerName}`,
+          file_url: data.publicUrl,
+          file_type: "image",
+          category: "players",
+          player_id: playerId,
+        });
+    }
+    return data.publicUrl;
+  };
+
+  const uploadMedia = async (kind: "image" | "video", files: File[]) => {
+    if (files.length === 0) return;
     setUploading(kind);
     try {
-      const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
-      const path = `offer-sections/${playerId}/${kind}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("marketing-gallery")
-        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
-      if (error) { toast.error("Upload failed"); return; }
-      const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
-      if (kind === "image") {
-        await (supabase as any)
-          .from("marketing_gallery")
-          .insert({
-            title: `${playerName} - offer image`,
-            description: `Rise With Us image for ${playerName}`,
-            file_url: data.publicUrl,
-            file_type: "image",
-            category: "players",
-            player_id: playerId,
-          });
+      const urls: string[] = [];
+      for (const f of files.slice(0, 10)) {
+        const url = await uploadOne(kind, f);
+        if (url) urls.push(url);
+      }
+      if (kind === "image" && urls.length > 0) {
         const { data: existingPlayer } = await (supabase as any)
-          .from("players")
-          .select("image_url")
-          .eq("id", playerId)
-          .maybeSingle();
+          .from("players").select("image_url").eq("id", playerId).maybeSingle();
         if (!existingPlayer?.image_url) {
-          await (supabase as any)
-            .from("players")
-            .update({ image_url: data.publicUrl })
-            .eq("id", playerId);
+          await (supabase as any).from("players").update({ image_url: urls[0] }).eq("id", playerId);
         }
       }
       setIntroMedia((prev) => [
         ...prev,
-        { id: newId(), kind, url: data.publicUrl, show: true, position: "intro" },
+        ...urls.map((url) => ({
+          id: newId(), kind, url, show: true,
+          position: "intro" as const, objectPosition: "50% 35%",
+        })),
       ]);
     } finally {
       setUploading(null);
@@ -184,7 +201,11 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       hidden_sections: [...hidden],
       intro_media: introMedia,
       section_images: legacyImages,
-      show_database_card: showDatabaseCard,
+      // The scouting card is always shown. The card itself decides whether
+      // to display the numeric fit score based on the 60-100 threshold, so
+      // we always persist `true` to satisfy any older readers expecting an
+      // explicit opt-in.
+      show_database_card: true,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
@@ -246,32 +267,15 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               />
             </div>
           </div>
-          <div className="rounded-lg border p-3 space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Label className="font-medium">Show scouting database card</Label>
-                <p className="text-xs text-muted-foreground">
-                  Drops a mock of our internal player database into their Rise With Us page — their row highlighted, others around them blurred. Adds a "we've been tracking you" feel.
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Current fit score: <span className="font-mono">{playerFitScore != null ? Math.round(playerFitScore) : "—"}</span>
-                  {" · "}Auto threshold: <span className="font-mono">60</span>
-                </p>
-              </div>
-              <Select
-                value={showDatabaseCard === null ? "auto" : showDatabaseCard ? "on" : "off"}
-                onValueChange={(v) => setShowDatabaseCard(v === "auto" ? null : v === "on")}
-              >
-                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">
-                    Auto {((playerFitScore ?? 0) >= 60) ? "(showing)" : "(hidden)"}
-                  </SelectItem>
-                  <SelectItem value="on">Always show</SelectItem>
-                  <SelectItem value="off">Hide</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="rounded-lg border p-3 space-y-1">
+            <Label className="font-medium">Scouting database card</Label>
+            <p className="text-xs text-muted-foreground">
+              Always shown on the offer page. The numeric fit score is only revealed when it sits between 60 and 100; otherwise the row appears without the number, so a soft score never undermines the pitch.
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Current fit score:{" "}
+              <span className="font-mono">{playerFitScore != null ? Math.round(playerFitScore) : "—"}</span>
+            </p>
           </div>
           <div className="rounded-lg border p-3 space-y-3">
             <div>
@@ -288,12 +292,31 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               )}
               {introMedia.map((m, idx) => (
                 <div key={m.id} className={`flex items-center gap-3 rounded border p-2 ${m.show ? "" : "opacity-60"}`}>
-                  <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded bg-muted">
+                  <div className="relative h-28 w-16 shrink-0 overflow-hidden rounded bg-muted" title="Mobile preview – tap a hotspot to set the focal point">
                     {m.kind === "video" ? (
-                      <video src={m.url} className="h-full w-full object-cover" muted playsInline />
+                      <video src={m.url} className="h-full w-full object-cover" muted playsInline style={{ objectPosition: m.objectPosition || "50% 35%" }} />
                     ) : (
-                      <img src={m.url} alt="" className="h-full w-full object-cover" />
+                      <img src={m.url} alt="" className="h-full w-full object-cover" style={{ objectPosition: m.objectPosition || "50% 35%" }} />
                     )}
+                    {/* 3x3 focal-point picker overlaid on the mobile preview. */}
+                    <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                      {[
+                        ["0% 0%", "50% 0%", "100% 0%"],
+                        ["0% 50%", "50% 50%", "100% 50%"],
+                        ["0% 100%", "50% 100%", "100% 100%"],
+                      ].flat().map((pos) => {
+                        const active = (m.objectPosition || "50% 35%") === pos;
+                        return (
+                          <button
+                            key={pos}
+                            type="button"
+                            aria-label={`Focus ${pos}`}
+                            onClick={() => patchItem(m.id, { objectPosition: pos })}
+                            className={`m-[2px] rounded-full ${active ? "bg-primary/90 ring-2 ring-primary" : "bg-black/30 hover:bg-primary/60"}`}
+                          />
+                        );
+                      })}
+                    </div>
                     <span className="absolute bottom-0.5 left-0.5 rounded bg-background/80 px-1 text-[9px] uppercase tracking-wider">
                       {m.kind === "video" ? "Clip" : "Image"}
                     </span>
@@ -317,6 +340,9 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                           <SelectItem value="both">Both</SelectItem>
                         </SelectContent>
                       </Select>
+                      <span className="text-[10px] text-muted-foreground">
+                        Focal: <span className="font-mono">{m.objectPosition || "50% 35%"}</span>
+                      </span>
                     </div>
                     <div className="truncate text-[10px] text-muted-foreground">{m.url}</div>
                   </div>
@@ -330,13 +356,35 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               <div className="flex flex-wrap gap-2 pt-1">
                 <label className="inline-flex items-center gap-2 cursor-pointer rounded border px-3 py-2 text-xs hover:bg-muted/40">
                   {uploading === "image" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-                  <span>Add image</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMedia("image", f); e.currentTarget.value = ""; }} disabled={uploading !== null} />
+                  <span>Add image(s) — up to 10</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length) uploadMedia("image", files);
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={uploading !== null}
+                  />
                 </label>
                 <label className="inline-flex items-center gap-2 cursor-pointer rounded border px-3 py-2 text-xs hover:bg-muted/40">
                   {uploading === "video" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <VideoIcon className="h-3.5 w-3.5" />}
                   <span>Add video clip</span>
-                  <input type="file" accept="video/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMedia("video", f); e.currentTarget.value = ""; }} disabled={uploading !== null} />
+                  <input
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length) uploadMedia("video", files);
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={uploading !== null}
+                  />
                 </label>
               </div>
             </div>

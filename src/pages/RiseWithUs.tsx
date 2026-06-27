@@ -55,7 +55,7 @@ interface ProspectPlayer {
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
-  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both" }>;
+  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both"; objectPosition?: string }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
   show_database_card?: boolean | null;
@@ -64,7 +64,16 @@ interface OfferSettings {
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
 const tyresePortalEmbed = (lang: string) =>
   `${TYRESE_PORTAL_EMBED_BASE}&lang=${encodeURIComponent(lang || "en")}`;
-const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
+const WHATSAPP_BASE = "https://wa.me/447508342901";
+/**
+ * Translate the opening line of the WhatsApp deep link so the prospect
+ * sees a message in their own language when they tap "Message us on
+ * WhatsApp". English is the fallback so the link is always usable.
+ */
+const buildWhatsappUrl = (lang: string) => {
+  const msg = offerT(lang, "rwu_whatsapp_opener", "Hi RISE, I just read my invitation");
+  return `${WHATSAPP_BASE}?text=${encodeURIComponent(msg)}`;
+};
 const HOMEPAGE_URL = "https://www.risefootballagency.com";
 
 /* ============== TRANSLATION DICT (offer-only strings) ============== */
@@ -219,6 +228,20 @@ const portalWelcomeDict: Record<string, Partial<Record<Lang, string>>> = {
     en: "Got it", es: "Entendido", pt: "Entendido", fr: "Compris",
     de: "Verstanden", it: "Capito", pl: "Rozumiem", cs: "Rozumím",
     ru: "Понятно", tr: "Anladım", hr: "Razumijem", no: "Skjønner",
+  },
+  rwu_whatsapp_opener: {
+    en: "Hi RISE, I just read my invitation",
+    es: "Hola RISE, acabo de leer mi invitación",
+    pt: "Olá RISE, acabei de ler o meu convite",
+    fr: "Bonjour RISE, je viens de lire mon invitation",
+    de: "Hallo RISE, ich habe gerade meine Einladung gelesen",
+    it: "Ciao RISE, ho appena letto il mio invito",
+    pl: "Cześć RISE, właśnie przeczytałem moje zaproszenie",
+    cs: "Ahoj RISE, právě jsem si přečetl pozvánku",
+    ru: "Здравствуйте, RISE, я только что прочитал приглашение",
+    tr: "Merhaba RISE, davetimi az önce okudum",
+    hr: "Bok RISE, upravo sam pročitao pozivnicu",
+    no: "Hei RISE, jeg har nettopp lest invitasjonen min",
   },
 };
 const allDicts = { ...offerDict, ...portalWelcomeDict };
@@ -1038,7 +1061,7 @@ const IntroCinematic = ({
   fullName, lang, extraImages, extraIntro, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
-  extraIntro: Array<{ kind: "image" | "video"; url: string }>;
+  extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
   secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
@@ -1185,7 +1208,14 @@ const IntroCinematic = ({
         // with varying horizontal offsets so it never feels stuck in one
         // place. Matches the desktop pacing of one image at a time with a
         // soft overlap as the next one fades in.
-        const mobileFrames: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
+        // When the optional secondary paragraph is long it can drift down
+        // far enough to collide with a bottom-anchored image on mobile, so
+        // we drop the bottom slots entirely in that case and alternate the
+        // image between the top-left and top-right of the screen (above
+        // where the player's name will appear). Text staying readable
+        // trumps having an image in the lower half.
+        const hasLongSecondary = !!(secondaryParagraph && secondaryParagraph.trim().length > 0);
+        const mobileFramesFull: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
           { vertical: "top", offsetVw: -18, rotate: -3 },
           { vertical: "bottom", offsetVw: 16, rotate: 4 },
           { vertical: "top", offsetVw: 14, rotate: 3 },
@@ -1193,6 +1223,13 @@ const IntroCinematic = ({
           { vertical: "top", offsetVw: 0, rotate: 0 },
           { vertical: "bottom", offsetVw: 6, rotate: 2 },
         ];
+        const mobileFramesTopOnly: Array<{ vertical: "top"; offsetVw: number; rotate: number }> = [
+          { vertical: "top", offsetVw: -20, rotate: -4 },
+          { vertical: "top", offsetVw: 20, rotate: 4 },
+          { vertical: "top", offsetVw: -14, rotate: -2 },
+          { vertical: "top", offsetVw: 14, rotate: 2 },
+        ];
+        const mobileFrames = hasLongSecondary ? mobileFramesTopOnly : mobileFramesFull;
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
         const mobileFrame = mobileFrames[sideTick % mobileFrames.length];
@@ -1201,7 +1238,8 @@ const IntroCinematic = ({
         const mobileStyle: React.CSSProperties = {
           left: "50%",
           transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
-          ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
+          ...(mobileFrame.vertical === "top" ? { top: hasLongSecondary ? "4%" : "6%" } : { bottom: "10%" }),
+          objectPosition: m.objectPosition || "50% 35%",
         };
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
@@ -1209,7 +1247,7 @@ const IntroCinematic = ({
               key={key}
               src={media.url}
               className={className}
-              style={style}
+              style={{ ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" }}
               autoPlay muted loop playsInline
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
@@ -1222,7 +1260,7 @@ const IntroCinematic = ({
               src={media.url}
               alt=""
               className={className}
-              style={style}
+              style={{ ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" }}
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
               exit={{ opacity: 0, scale: 1.02 }}
@@ -1429,6 +1467,7 @@ const RiseWithUs = () => {
                   url: String(x.url),
                   show: x.show !== false,
                   position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+                  objectPosition: typeof x.objectPosition === "string" ? x.objectPosition : undefined,
                 }))
             : [],
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
@@ -1486,24 +1525,27 @@ const RiseWithUs = () => {
   const visibleCardKeys = new Set(
     CARD_META.filter((c) => !settings.hidden_sections.includes(c.key)).map((c) => c.key)
   );
-  const shouldShowDatabaseCard =
-    settings.show_database_card === true
-    || (settings.show_database_card == null && (fitScore ?? 0) >= 60);
+  // The scouting database card is always shown — the card itself decides
+  // whether to reveal the numeric fit score (only when it sits between 60
+  // and 100). Older settings rows may have an explicit `false`, but the
+  // new behaviour is "always visible, conditional number", so we ignore
+  // that legacy flag here on purpose.
+  const shouldShowDatabaseCard = true;
   // Build the intro pool from the new intro_media list (kind=image|video,
   // show=true, position in intro/both). Fall back to legacy section_images
   // when the player hasn't been migrated yet so we never go blank.
   const introVisible = settings.intro_media.filter(
     (m) => m.show && (m.position === "intro" || m.position === "both"),
   );
-  const baseIntro: Array<{ kind: "image" | "video"; url: string }> =
+  const baseIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> =
     introVisible.length > 0
-      ? introVisible.map((m) => ({ kind: m.kind, url: m.url }))
+      ? introVisible.map((m) => ({ kind: m.kind, url: m.url, objectPosition: m.objectPosition }))
       : Object.values(settings.section_images)
           .filter(Boolean)
           .map((url) => ({ kind: "image" as const, url: url as string }));
   const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
   const seenIntroUrls = new Set<string>();
-  const extraIntro: Array<{ kind: "image" | "video"; url: string }> = [
+  const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> = [
     ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
     ...baseIntro,
   ].filter((m) => {
@@ -1870,7 +1912,7 @@ const RiseWithUs = () => {
                       <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
                     <Button asChild size="lg" className="font-bebas uppercase tracking-wider border border-[#25D366] bg-[#25D366] text-white hover:bg-[#1ebe57] hover:text-white">
-                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                      <a href={buildWhatsappUrl(lang)} target="_blank" rel="noopener noreferrer">
                         <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
                       </a>
                     </Button>
