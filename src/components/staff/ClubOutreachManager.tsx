@@ -931,15 +931,15 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string }; }) {
   const isAgent = mode === 'agent';
-  const [clubId, setClubId] = useState(editing?.club_id ?? "");
+  const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
   const [agentLogoUrl, setAgentLogoUrl] = useState(editing?.agent_logo_url ?? "");
   const [agentLogoUploading, setAgentLogoUploading] = useState(false);
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
-  const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? "");
+  const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? prefill?.preparedFor ?? "");
   const [showForm, setShowForm] = useState<boolean>(editing?.show_form ?? false);
   const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);
