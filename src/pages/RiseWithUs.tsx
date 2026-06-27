@@ -1061,7 +1061,7 @@ const IntroCinematic = ({
   fullName, lang, extraImages, extraIntro, secondaryParagraph, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
-  extraIntro: Array<{ kind: "image" | "video"; url: string }>;
+  extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
   secondaryParagraph?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
@@ -1208,7 +1208,14 @@ const IntroCinematic = ({
         // with varying horizontal offsets so it never feels stuck in one
         // place. Matches the desktop pacing of one image at a time with a
         // soft overlap as the next one fades in.
-        const mobileFrames: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
+        // When the optional secondary paragraph is long it can drift down
+        // far enough to collide with a bottom-anchored image on mobile, so
+        // we drop the bottom slots entirely in that case and alternate the
+        // image between the top-left and top-right of the screen (above
+        // where the player's name will appear). Text staying readable
+        // trumps having an image in the lower half.
+        const hasLongSecondary = !!(secondaryParagraph && secondaryParagraph.trim().length > 0);
+        const mobileFramesFull: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
           { vertical: "top", offsetVw: -18, rotate: -3 },
           { vertical: "bottom", offsetVw: 16, rotate: 4 },
           { vertical: "top", offsetVw: 14, rotate: 3 },
@@ -1216,6 +1223,13 @@ const IntroCinematic = ({
           { vertical: "top", offsetVw: 0, rotate: 0 },
           { vertical: "bottom", offsetVw: 6, rotate: 2 },
         ];
+        const mobileFramesTopOnly: Array<{ vertical: "top"; offsetVw: number; rotate: number }> = [
+          { vertical: "top", offsetVw: -20, rotate: -4 },
+          { vertical: "top", offsetVw: 20, rotate: 4 },
+          { vertical: "top", offsetVw: -14, rotate: -2 },
+          { vertical: "top", offsetVw: 14, rotate: 2 },
+        ];
+        const mobileFrames = hasLongSecondary ? mobileFramesTopOnly : mobileFramesFull;
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
         const mobileFrame = mobileFrames[sideTick % mobileFrames.length];
@@ -1224,7 +1238,8 @@ const IntroCinematic = ({
         const mobileStyle: React.CSSProperties = {
           left: "50%",
           transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
-          ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
+          ...(mobileFrame.vertical === "top" ? { top: hasLongSecondary ? "4%" : "6%" } : { bottom: "10%" }),
+          objectPosition: m.objectPosition || "50% 35%",
         };
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
@@ -1232,7 +1247,7 @@ const IntroCinematic = ({
               key={key}
               src={media.url}
               className={className}
-              style={style}
+              style={{ ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" }}
               autoPlay muted loop playsInline
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
@@ -1245,7 +1260,7 @@ const IntroCinematic = ({
               src={media.url}
               alt=""
               className={className}
-              style={style}
+              style={{ ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" }}
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 0.82, scale: 1 }}
               exit={{ opacity: 0, scale: 1.02 }}
