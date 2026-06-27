@@ -1284,6 +1284,7 @@ export default function MarketTablesTab() {
                       links={renderContactLinks(tdContact)}
                       onConfirm={(v) => persistAndShell(club, "td", v)}
                       onEdit={() => openEdit(club, "td", tdContact)}
+                      onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -1295,6 +1296,7 @@ export default function MarketTablesTab() {
                       links={renderContactLinks(csContact)}
                       onConfirm={(v) => persistAndShell(club, "cs", v)}
                       onEdit={() => openEdit(club, "cs", csContact)}
+                      onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
                     />
                   </td>
                 </tr>
