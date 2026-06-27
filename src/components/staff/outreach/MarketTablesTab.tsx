@@ -613,9 +613,22 @@ export default function MarketTablesTab() {
       if (country !== "all" && c.country !== country) return false;
       if (league !== "all" && c.league !== league) return false;
       if (q && !c.club_name.toLowerCase().includes(q)) return false;
+      if (outreachMode) {
+        const e = entries[c.id];
+        const hasNamed =
+          !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+          !!(e?.chief_scout_name && e.chief_scout_name.trim());
+        if (hasNamed) return true;
+        const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+        const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+        if (td || cs) return true;
+        const extras = additionalContactsForClub(contacts, c.club_name, c.country, new Set());
+        if (extras.length > 0) return true;
+        return false;
+      }
       return true;
     });
-  }, [clubs, country, league, search]);
+  }, [clubs, country, league, search, outreachMode, entries, contacts]);
 
   // Reset to first page whenever the active filter / search changes so the
   // user always sees the start of the new result set.
