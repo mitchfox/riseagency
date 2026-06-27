@@ -614,6 +614,34 @@ export default function MarketTablesTab() {
   const pageEnd = pageStart + PAGE_SIZE;
   const paged = useMemo(() => filtered.slice(pageStart, pageEnd), [filtered, pageStart, pageEnd]);
 
+  // Completion tally: how many clubs in the table now have at least one
+  // identified contact (TD/CS name saved or a matching role contact in the
+  // network). Drives the "X of Y clubs · Z%" pill at the top.
+  const tally = useMemo(() => {
+    const total = clubs.length;
+    let withContact = 0;
+    clubs.forEach((c) => {
+      const e = entries[c.id];
+      const hasName =
+        !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+        !!(e?.chief_scout_name && e.chief_scout_name.trim());
+      if (hasName) {
+        withContact++;
+        return;
+      }
+      const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+      const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+      if (td || cs) withContact++;
+    });
+    const pct = total === 0 ? 0 : Math.round((withContact / total) * 100);
+    return { total, withContact, pct };
+  }, [clubs, entries, contacts]);
+  const clubNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    clubs.forEach((c) => map.set(c.id, c.club_name));
+    return map;
+  }, [clubs]);
+
   const getValues = (club: ClubRow) => {
     const entry = entries[club.id];
     const tdRoleContact = matchContactForClub(contacts, club.club_name, club.country, TD_RE);
