@@ -15,6 +15,7 @@ interface SessionMeta {
   key: string;
   title: string | null;
   type: "sps" | "technical";
+  sessionId?: string;
 }
 
 const SPS_FIELDS = [
@@ -85,6 +86,7 @@ export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
         key: s.session_key || "",
         title: s.title ?? null,
         type: "technical",
+        sessionId: s.id,
       });
     }
   }
@@ -103,10 +105,15 @@ export const composeWeeklySchedulesForPlayer = async (playerId: string) => {
       if (slot.refId) {
         const meta = refToSession.get(slot.refId);
         out[day] = meta?.key || "";
+        out[`${day}_type`] = meta?.type || "";
+        out[`${day}_refId`] = slot.refId;
+        out[`${day}_sessionId`] = meta?.sessionId || "";
       } else if (slot.free_text) {
         out[day] = slot.free_text;
+        out[`${day}_type`] = "free";
       } else {
         out[day] = "";
+        out[`${day}_type`] = "";
       }
     }
     return out;
