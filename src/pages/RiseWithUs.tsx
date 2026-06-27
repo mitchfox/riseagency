@@ -201,6 +201,363 @@ const offerDict: Record<string, Partial<Record<Lang, string>>> = {
     pl: "Rośnij Z Nami", cs: "Rosti S Námi", ru: "Расти С Нами",
     tr: "Bizimle Yüksel", hr: "Rasti S Nama", no: "Vokse Med Oss",
   },
+  /* ---------- Vision / Ballon d'Or card ---------- */
+  "vision.eyebrow": {
+    en: "Our vision", es: "Nuestra visión", pt: "A nossa visão",
+    fr: "Notre vision", de: "Unsere Vision", it: "La nostra visione",
+    pl: "Nasza wizja", cs: "Naše vize", ru: "Наше видение",
+    tr: "Vizyonumuz", hr: "Naša vizija", no: "Vår visjon",
+  },
+  "vision.headline": {
+    en: "Only The Best.", es: "Sólo Los Mejores.", pt: "Só Os Melhores.",
+    fr: "Seulement Les Meilleurs.", de: "Nur Die Besten.", it: "Solo I Migliori.",
+    pl: "Tylko Najlepsi.", cs: "Jen Ti Nejlepší.", ru: "Только Лучшие.",
+    tr: "Sadece En İyiler.", hr: "Samo Najbolji.", no: "Bare De Beste.",
+  },
+  "vision.body_anon": {
+    en: "We are on a 10 year mission to train and represent a future Ballon d'Or winner and World Team of the Year player at every position. We pick a small group of players we genuinely believe can get there and back them all the way. If you have what it takes to work with us, reach out to better understand how we can realise potential together.",
+    es: "Estamos en una misión de 10 años para formar y representar a un futuro ganador del Balón de Oro y a un jugador del Equipo Mundial del Año en cada posición. Elegimos a un grupo reducido de jugadores que de verdad creemos pueden llegar y los apoyamos hasta el final. Si tienes lo necesario para trabajar con nosotros, contáctanos para entender mejor cómo realizar el potencial juntos.",
+    pt: "Estamos numa missão de 10 anos para formar e representar um futuro vencedor da Bola de Ouro e um jogador da Equipa Mundial do Ano em cada posição. Escolhemos um pequeno grupo de jogadores em quem acreditamos genuinamente e apoiamo-los até ao fim. Se tens o que é preciso para trabalhar connosco, fala connosco para perceber melhor como realizar o potencial juntos.",
+    fr: "Nous sommes engagés dans une mission de 10 ans pour former et représenter un futur Ballon d'Or et un joueur de l'Équipe Mondiale de l'Année à chaque poste. Nous choisissons un petit groupe de joueurs que nous croyons sincèrement capables d'y parvenir et nous les soutenons jusqu'au bout. Si tu as ce qu'il faut pour travailler avec nous, contacte-nous pour mieux comprendre comment réaliser ce potentiel ensemble.",
+    de: "Wir verfolgen eine 10-Jahres-Mission, einen zukünftigen Ballon-d'Or-Sieger und einen Spieler der Weltauswahl des Jahres auf jeder Position auszubilden und zu vertreten. Wir wählen eine kleine Gruppe von Spielern, von denen wir wirklich überzeugt sind, und unterstützen sie bis zum Ende. Wenn du das Zeug hast, mit uns zu arbeiten, melde dich, um besser zu verstehen, wie wir das Potenzial gemeinsam entfalten können.",
+    it: "Abbiamo una missione decennale: formare e rappresentare un futuro vincitore del Pallone d'Oro e un giocatore del World Team of the Year in ogni ruolo. Scegliamo un piccolo gruppo di giocatori in cui crediamo davvero e li sosteniamo fino in fondo. Se hai ciò che serve per lavorare con noi, contattaci per capire meglio come realizzare insieme il tuo potenziale.",
+    pl: "Mamy 10-letnią misję: szkolić i reprezentować przyszłego zdobywcę Złotej Piłki i piłkarza Drużyny Roku Świata na każdej pozycji. Wybieramy małą grupę zawodników, w których naprawdę wierzymy, i wspieramy ich do końca. Jeśli masz to, czego potrzeba, by z nami pracować, odezwij się, aby lepiej zrozumieć, jak wspólnie zrealizujemy potencjał.",
+    cs: "Máme 10letou misi: vychovat a zastupovat budoucího vítěze Zlatého míče a hráče Světového týmu roku na každém postu. Vybíráme malou skupinu hráčů, o kterých opravdu věříme, že to dokážou, a podporujeme je až do konce. Pokud na to máš, ozvi se, abychom společně lépe pochopili, jak naplnit potenciál.",
+    ru: "У нас 10-летняя миссия — подготовить и представлять будущего обладателя «Золотого мяча» и игрока Сборной мира на каждой позиции. Мы выбираем небольшую группу игроков, в которых искренне верим, и поддерживаем их до конца. Если в тебе есть всё нужное, свяжись с нами, чтобы вместе понять, как раскрыть потенциал.",
+    tr: "10 yıllık bir hedefimiz var: her mevkide gelecekteki bir Ballon d'Or sahibini ve Yılın Dünya Takımı oyuncusunu yetiştirip temsil etmek. Gerçekten başarabileceğine inandığımız küçük bir oyuncu grubunu seçer ve sonuna kadar destekleriz. Bizimle çalışacak donanıma sahipsen, potansiyeli birlikte nasıl gerçekleştirebileceğimizi anlamak için iletişime geç.",
+    hr: "Imamo 10-godišnju misiju: razvijati i zastupati budućeg dobitnika Zlatne lopte i igrača Svjetske momčadi godine na svakoj poziciji. Biramo malu skupinu igrača u koje istinski vjerujemo i podržavamo ih do kraja. Ako imaš ono što treba za rad s nama, javi se kako bismo zajedno bolje razumjeli kako ostvariti potencijal.",
+    no: "Vi har et tiårsoppdrag med å utvikle og representere en framtidig Ballon d'Or-vinner og en spiller på World Team of the Year på hver posisjon. Vi velger en liten gruppe spillere vi virkelig tror kan nå dit, og støtter dem hele veien. Har du det som skal til for å jobbe med oss, ta kontakt så vi sammen kan forstå hvordan vi kan realisere potensialet.",
+  },
+  "vision.cta": {
+    en: "Let's Meet", es: "Reunámonos", pt: "Vamos Falar",
+    fr: "Rencontrons-nous", de: "Lass uns treffen", it: "Incontriamoci",
+    pl: "Spotkajmy się", cs: "Domluvme schůzku", ru: "Давайте встретимся",
+    tr: "Tanışalım", hr: "Nađimo se", no: "La oss møtes",
+  },
+  /* ---------- Why Rise card + pillars heading ---------- */
+  why_rise_card: {
+    en: "Why Rise?", es: "¿Por qué Rise?", pt: "Porquê Rise?",
+    fr: "Pourquoi Rise?", de: "Warum Rise?", it: "Perché Rise?",
+    pl: "Dlaczego Rise?", cs: "Proč Rise?", ru: "Почему Rise?",
+    tr: "Neden Rise?", hr: "Zašto Rise?", no: "Hvorfor Rise?",
+  },
+  vision_subtitle_card: {
+    en: "A future built with the best",
+    es: "Un futuro construido con los mejores",
+    pt: "Um futuro construído com os melhores",
+    fr: "Un avenir bâti avec les meilleurs",
+    de: "Eine Zukunft, gebaut mit den Besten",
+    it: "Un futuro costruito con i migliori",
+    pl: "Przyszłość budowana z najlepszymi",
+    cs: "Budoucnost budovaná s nejlepšími",
+    ru: "Будущее, построенное с лучшими",
+    tr: "En iyilerle inşa edilen bir gelecek",
+    hr: "Budućnost izgrađena s najboljima",
+    no: "En framtid bygget med de beste",
+  },
+  rwu_pillars_heading: {
+    en: "Why RISE", es: "Por qué RISE", pt: "Porquê RISE",
+    fr: "Pourquoi RISE", de: "Warum RISE", it: "Perché RISE",
+    pl: "Dlaczego RISE", cs: "Proč RISE", ru: "Почему RISE",
+    tr: "Neden RISE", hr: "Zašto RISE", no: "Hvorfor RISE",
+  },
+  /* ---------- Pillars ---------- */
+  rwu_pathway_title: {
+    en: "Pathway Planning", es: "Planificación del Camino", pt: "Planeamento do Percurso",
+    fr: "Planification du Parcours", de: "Karriereplanung", it: "Pianificazione del Percorso",
+    pl: "Planowanie Ścieżki", cs: "Plánování Cesty", ru: "Планирование Пути",
+    tr: "Kariyer Planlaması", hr: "Planiranje Puta", no: "Veiplanlegging",
+  },
+  rwu_pathway_body: {
+    en: "We map out a clear journey from where you are today to where you want to be. Each step is chosen to remove the risk of failure and fit your appetite for risk, so you always know what comes next and why.",
+    es: "Trazamos un camino claro desde donde estás hoy hasta donde quieres llegar. Cada paso se elige para reducir el riesgo de fracaso y ajustarse a tu tolerancia al riesgo, para que siempre sepas qué viene después y por qué.",
+    pt: "Traçamos um percurso claro desde onde estás hoje até onde queres chegar. Cada passo é escolhido para reduzir o risco de falha e adequar-se ao teu apetite para o risco, para que saibas sempre o que vem a seguir e porquê.",
+    fr: "Nous traçons un parcours clair entre ta situation actuelle et celle que tu vises. Chaque étape est choisie pour réduire le risque d'échec et correspondre à ton appétit pour le risque, afin que tu saches toujours ce qui vient ensuite et pourquoi.",
+    de: "Wir planen einen klaren Weg von dort, wo du heute stehst, bis dorthin, wo du hin willst. Jeder Schritt minimiert das Risiko des Scheiterns und passt zu deiner Risikobereitschaft, damit du immer weißt, was als Nächstes kommt und warum.",
+    it: "Tracciamo un percorso chiaro da dove sei oggi a dove vuoi arrivare. Ogni tappa è scelta per ridurre il rischio di fallimento e adattarsi alla tua propensione al rischio, così sai sempre cosa viene dopo e perché.",
+    pl: "Wyznaczamy jasną drogę od miejsca, w którym jesteś dziś, do miejsca, w którym chcesz być. Każdy krok jest dobrany tak, by ograniczyć ryzyko niepowodzenia i pasować do twojej tolerancji ryzyka.",
+    cs: "Naplánujeme jasnou cestu z místa, kde jsi dnes, tam, kam chceš dojít. Každý krok je vybrán tak, aby snížil riziko neúspěchu a odpovídal tvé toleranci k riziku.",
+    ru: "Мы выстраиваем чёткий путь от того, где ты сейчас, до того, где хочешь быть. Каждый шаг подобран так, чтобы снизить риск неудачи и соответствовать твоей готовности к риску.",
+    tr: "Bugün bulunduğun yerden ulaşmak istediğin yere kadar net bir yol çiziyoruz. Her adım, başarısızlık riskini azaltacak ve risk iştahına uyacak şekilde seçilir.",
+    hr: "Trasiramo jasan put od mjesta gdje si danas do onoga gdje želiš biti. Svaki je korak odabran da smanji rizik neuspjeha i odgovara tvojoj sklonosti riziku.",
+    no: "Vi tegner opp en tydelig vei fra der du er i dag til dit du vil. Hvert steg er valgt for å fjerne risikoen for å mislykkes og passe din risikovilje.",
+  },
+  rwu_hq_title: {
+    en: "London HQ", es: "Sede en Londres", pt: "Sede em Londres",
+    fr: "QG à Londres", de: "Hauptsitz London", it: "Sede a Londra",
+    pl: "Siedziba w Londynie", cs: "Sídlo v Londýně", ru: "Штаб-квартира в Лондоне",
+    tr: "Londra Merkez", hr: "Sjedište u Londonu", no: "Hovedkontor i London",
+  },
+  rwu_hq_badge: {
+    en: "London, England", es: "Londres, Inglaterra", pt: "Londres, Inglaterra",
+    fr: "Londres, Angleterre", de: "London, England", it: "Londra, Inghilterra",
+    pl: "Londyn, Anglia", cs: "Londýn, Anglie", ru: "Лондон, Англия",
+    tr: "Londra, İngiltere", hr: "London, Engleska", no: "London, England",
+  },
+  rwu_hq_body: {
+    en: "Our base in London puts us inside the world's most-watched football market, with daily access to Premier League contacts, recruitment staff and decision-makers.",
+    es: "Nuestra base en Londres nos sitúa en el mercado de fútbol más visto del mundo, con acceso diario a contactos de la Premier League, personal de captación y responsables de decisiones.",
+    pt: "A nossa base em Londres coloca-nos dentro do mercado de futebol mais visto do mundo, com acesso diário a contactos da Premier League, equipas de recrutamento e decisores.",
+    fr: "Notre base à Londres nous place au cœur du marché du football le plus suivi au monde, avec un accès quotidien aux contacts de la Premier League, au recrutement et aux décideurs.",
+    de: "Unser Standort in London bringt uns mitten in den meistgesehenen Fußballmarkt der Welt, mit täglichem Zugang zu Premier-League-Kontakten, Scouting-Teams und Entscheidungsträgern.",
+    it: "La nostra sede a Londra ci colloca nel mercato calcistico più seguito al mondo, con accesso quotidiano ai contatti della Premier League, ai recruiter e ai decision-maker.",
+    pl: "Nasza siedziba w Londynie umieszcza nas w sercu najpopularniejszego rynku piłkarskiego świata, z codziennym dostępem do kontaktów w Premier League, skautów i decydentów.",
+    cs: "Naše sídlo v Londýně nás staví doprostřed nejsledovanějšího fotbalového trhu na světě s každodenním přístupem ke kontaktům v Premier League, skautům a rozhodovacím autoritám.",
+    ru: "Наша база в Лондоне ставит нас в центр самого популярного футбольного рынка мира с ежедневным доступом к контактам АПЛ, скаутам и людям, принимающим решения.",
+    tr: "Londra'daki üssümüz bizi dünyanın en çok izlenen futbol pazarının içine yerleştirir; Premier Lig bağlantılarına, scouting ekiplerine ve karar vericilere her gün erişim sağlar.",
+    hr: "Naša baza u Londonu smješta nas u najgledanije nogometno tržište na svijetu, uz svakodnevni pristup kontaktima Premier lige, skautima i donositeljima odluka.",
+    no: "Vår base i London plasserer oss midt i verdens mest sette fotballmarked, med daglig tilgang til Premier League-kontakter, speidere og beslutningstakere.",
+  },
+  rwu_training_title: {
+    en: "Training Methodology", es: "Metodología de Entrenamiento", pt: "Metodologia de Treino",
+    fr: "Méthodologie d'Entraînement", de: "Trainingsmethodik", it: "Metodologia di Allenamento",
+    pl: "Metodologia Treningu", cs: "Metodika Tréninku", ru: "Методика Тренировок",
+    tr: "Antrenman Metodolojisi", hr: "Metodologija Treninga", no: "Treningsmetodikk",
+  },
+  rwu_training_body: {
+    en: "Programming is built around match weeks, not generic templates. Strength, power, speed and technical work are sequenced to peak you for the games that matter and recover you properly after.",
+    es: "La programación se construye en torno a las semanas de partido, no a plantillas genéricas. La fuerza, la potencia, la velocidad y el trabajo técnico se secuencian para que llegues en tu pico a los partidos importantes y recuperes bien después.",
+    pt: "A programação é construída em torno das semanas de jogo, não em modelos genéricos. Força, potência, velocidade e trabalho técnico são sequenciados para chegares no pico aos jogos que importam e recuperares bem depois.",
+    fr: "La planification se construit autour des semaines de match, pas de modèles génériques. Force, puissance, vitesse et travail technique sont enchaînés pour que tu sois au top pour les matchs importants et que tu récupères correctement ensuite.",
+    de: "Die Programmierung wird um Spielwochen herum aufgebaut, nicht um generische Vorlagen. Kraft, Power, Schnelligkeit und Technik werden so getaktet, dass du für die wichtigen Spiele in Topform bist und danach richtig regenerierst.",
+    it: "La programmazione è costruita attorno alle settimane di partita, non a schemi generici. Forza, potenza, velocità e lavoro tecnico sono organizzati per portarti al picco nelle partite importanti e farti recuperare bene dopo.",
+    pl: "Programowanie buduje się wokół tygodni meczowych, a nie ogólnych szablonów. Siła, moc, szybkość i praca techniczna są tak ułożone, byś osiągał szczyt formy na ważne mecze i dobrze regenerował się po nich.",
+    cs: "Plánování stavíme kolem zápasových týdnů, ne podle obecných šablon. Síla, výbušnost, rychlost i technická práce jsou poskládané tak, abys byl ve formě na zápasy, na kterých záleží, a po nich správně regeneroval.",
+    ru: "Планирование строится вокруг матчевых недель, а не по шаблонам. Сила, мощность, скорость и техническая работа выстроены так, чтобы ты подходил к важным играм в пике и правильно восстанавливался после.",
+    tr: "Programlama jenerik şablonlar üzerine değil, maç haftaları üzerine kurulur. Kuvvet, güç, sürat ve teknik çalışma; önemli maçlarda zirveye çıkacak ve sonrasında doğru toparlanacak şekilde sıralanır.",
+    hr: "Programiranje se gradi oko utakmica, a ne po generičkim predlošcima. Snaga, eksplozivnost, brzina i tehnički rad slažu se tako da budeš u vrhuncu za važne utakmice i dobro se oporaviš nakon njih.",
+    no: "Programmering bygges rundt kampuker, ikke generiske maler. Styrke, power, fart og teknisk arbeid sekvenseres for å toppe deg til kampene som teller og hente deg ordentlig tilbake etterpå.",
+  },
+  rwu_perf_team_title: {
+    en: "Performance Team Provision", es: "Equipo de Rendimiento Completo", pt: "Equipa de Performance Completa",
+    fr: "Équipe de Performance Complète", de: "Performance-Team-Versorgung", it: "Performance Team Completo",
+    pl: "Pełny Zespół Performance", cs: "Kompletní Performance Tým", ru: "Полная команда Performance",
+    tr: "Performans Ekibi Desteği", hr: "Performance Tim", no: "Performance-team",
+  },
+  rwu_perf_team_body: {
+    en: "Full Premier League level support across analysis, S&C, nutrition, sports psychology and technique, wrapped around you through one shared plan, not a list of disconnected freelancers.",
+    es: "Soporte completo a nivel Premier League en análisis, fuerza y acondicionamiento, nutrición, psicología deportiva y técnica, organizado en torno a ti con un único plan compartido, no con una lista de freelancers desconectados.",
+    pt: "Apoio completo ao nível da Premier League em análise, força e condicionamento, nutrição, psicologia desportiva e técnica, organizado à tua volta com um único plano partilhado, não uma lista de freelancers desconectados.",
+    fr: "Un soutien complet au niveau Premier League en analyse, préparation physique, nutrition, psychologie sportive et technique, articulé autour de toi via un seul plan partagé, pas une liste de freelances déconnectés.",
+    de: "Volle Unterstützung auf Premier-League-Niveau in Analyse, Athletik, Ernährung, Sportpsychologie und Technik, eingebettet in einen gemeinsamen Plan rund um dich, nicht in eine Liste isolierter Freelancer.",
+    it: "Supporto completo a livello Premier League su analisi, preparazione atletica, nutrizione, psicologia sportiva e tecnica, integrato attorno a te in un unico piano condiviso, non una lista di freelance scollegati.",
+    pl: "Pełne wsparcie na poziomie Premier League w zakresie analizy, S&C, żywienia, psychologii sportu i techniki, zorganizowane wokół ciebie w jednym wspólnym planie, a nie liście rozproszonych freelancerów.",
+    cs: "Plná podpora na úrovni Premier League v analýze, kondici, výživě, sportovní psychologii a technice, propojená kolem tebe jedním společným plánem, ne seznamem nesouvisejících freelancerů.",
+    ru: "Полная поддержка уровня АПЛ — анализ, физподготовка, питание, спортивная психология и техника — выстроены вокруг тебя в едином плане, а не списком разрозненных фрилансеров.",
+    tr: "Analiz, kuvvet-kondisyon, beslenme, spor psikolojisi ve teknikte Premier Lig seviyesinde tam destek; bağlantısız freelance listesi değil, tek bir ortak planda etrafına örülür.",
+    hr: "Puna podrška na razini Premier lige u analizi, kondiciji, prehrani, sportskoj psihologiji i tehnici, organizirana oko tebe kroz jedan zajednički plan, a ne popis nepovezanih freelancera.",
+    no: "Full støtte på Premier League-nivå innen analyse, styrke og kondisjon, ernæring, idrettspsykologi og teknikk, samlet rundt deg i én felles plan – ikke en liste med løsrevne frilansere.",
+  },
+  rwu_parent_title: {
+    en: "The Parent's Role", es: "El Rol de los Padres", pt: "O Papel dos Pais",
+    fr: "Le Rôle des Parents", de: "Die Rolle der Eltern", it: "Il Ruolo dei Genitori",
+    pl: "Rola Rodziców", cs: "Role Rodičů", ru: "Роль Родителей",
+    tr: "Ailenin Rolü", hr: "Uloga Roditelja", no: "Foreldrenes Rolle",
+  },
+  rwu_parent_body: {
+    en: "We work alongside you, not around you. You stay in the loop on every decision, every conversation with a club, every step in the plan. Your job is the home environment and steady support; ours is the football, the contacts and the standards.",
+    es: "Trabajamos contigo, no a tu alrededor. Estás informado en cada decisión, cada conversación con un club y cada paso del plan. Vuestro papel es el entorno familiar y el apoyo constante; el nuestro, el fútbol, los contactos y los estándares.",
+    pt: "Trabalhamos contigo, não à tua volta. Estás a par de cada decisão, cada conversa com um clube e cada passo do plano. O vosso papel é o ambiente em casa e o apoio constante; o nosso é o futebol, os contactos e os padrões.",
+    fr: "Nous travaillons avec vous, pas autour de vous. Vous êtes informés à chaque décision, chaque échange avec un club et chaque étape du plan. Votre rôle est l'environnement familial et le soutien constant ; le nôtre, le football, les contacts et les standards.",
+    de: "Wir arbeiten mit Ihnen, nicht um Sie herum. Sie sind bei jeder Entscheidung, jedem Gespräch mit einem Verein und jedem Planschritt eingebunden. Ihre Aufgabe ist das häusliche Umfeld und stete Unterstützung; unsere ist Fußball, Kontakte und Standards.",
+    it: "Lavoriamo con voi, non attorno a voi. Restate aggiornati su ogni decisione, ogni conversazione con un club e ogni passo del piano. Il vostro ruolo è l'ambiente familiare e il sostegno costante; il nostro è il calcio, i contatti e gli standard.",
+    pl: "Pracujemy z wami, nie wokół was. Jesteście informowani o każdej decyzji, każdej rozmowie z klubem i każdym kroku planu. Wasza rola to środowisko domowe i stałe wsparcie; nasza to piłka, kontakty i standardy.",
+    cs: "Pracujeme s vámi, ne kolem vás. Jste v obraze u každého rozhodnutí, každého rozhovoru s klubem a každého kroku plánu. Vaše role je domácí prostředí a stálá podpora; naše je fotbal, kontakty a standardy.",
+    ru: "Мы работаем с вами, а не вокруг вас. Вы в курсе каждого решения, каждого разговора с клубом и каждого шага плана. Ваша задача — домашняя среда и постоянная поддержка; наша — футбол, контакты и стандарты.",
+    tr: "Sizinle birlikte çalışırız, etrafınızda değil. Her karardan, kulüple her görüşmeden ve plandaki her adımdan haberdar olursunuz. Sizin işiniz ev ortamı ve istikrarlı destek; bizim işimiz futbol, bağlantılar ve standartlar.",
+    hr: "Radimo s vama, ne oko vas. U toku ste sa svakom odlukom, svakim razgovorom s klubom i svakim korakom plana. Vaša je uloga domaće okruženje i stalna podrška; naša je nogomet, kontakti i standardi.",
+    no: "Vi jobber sammen med dere, ikke rundt dere. Dere holdes oppdatert på hver beslutning, hver samtale med en klubb og hvert steg i planen. Deres rolle er hjemmemiljøet og stabil støtte; vår er fotballen, kontaktene og standardene.",
+  },
+  rwu_how_title: {
+    en: "How We Work With You", es: "Cómo Trabajamos Contigo", pt: "Como Trabalhamos Contigo",
+    fr: "Comment Nous Travaillons Avec Toi", de: "Wie Wir Mit Dir Arbeiten", it: "Come Lavoriamo Con Te",
+    pl: "Jak Z Tobą Pracujemy", cs: "Jak S Tebou Pracujeme", ru: "Как Мы Работаем С Тобой",
+    tr: "Seninle Nasıl Çalışıyoruz", hr: "Kako Radimo S Tobom", no: "Hvordan Vi Jobber Med Deg",
+  },
+  rwu_how_body: {
+    en: "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation.",
+    es: "Comunicación directa, en tu idioma. El portal, tus informes y el contacto del día a día se dan en el idioma que prefieras, para que nada se pierda en la traducción.",
+    pt: "Comunicação direta, na tua língua. O portal, os teus relatórios e o contacto do dia-a-dia acontecem no idioma que preferires, para que nada se perca na tradução.",
+    fr: "Communication directe, dans ta langue. Le portail, tes rapports et le contact quotidien se font dans la langue que tu préfères, pour que rien ne se perde dans la traduction.",
+    de: "Direkte Kommunikation in deiner Sprache. Portal, Berichte und tägliche Ansprache laufen in der Sprache, die du bevorzugst, damit nichts in der Übersetzung verloren geht.",
+    it: "Comunicazione diretta, nella tua lingua. Il portale, i tuoi report e i contatti quotidiani avvengono nella lingua che preferisci, così nulla si perde nella traduzione.",
+    pl: "Bezpośrednia komunikacja, w twoim języku. Portal, raporty i codzienny kontakt odbywają się w wybranym przez ciebie języku, by nic nie zginęło w tłumaczeniu.",
+    cs: "Přímá komunikace ve tvém jazyce. Portál, tvé reporty i každodenní kontakt probíhají v jazyce, který preferuješ, aby se v překladu nic neztratilo.",
+    ru: "Прямое общение на твоём языке. Портал, отчёты и ежедневный контакт идут на удобном тебе языке, чтобы ничего не терялось при переводе.",
+    tr: "Doğrudan iletişim, kendi dilinde. Portal, raporların ve günlük temaslar tercih ettiğin dilde olur; çeviride hiçbir şey kaybolmaz.",
+    hr: "Izravna komunikacija, na tvom jeziku. Portal, izvještaji i svakodnevni kontakt odvijaju se na jeziku koji preferiraš, kako se ništa ne bi izgubilo u prijevodu.",
+    no: "Direkte kommunikasjon på ditt språk. Portalen, rapportene og den daglige kontakten foregår på språket du foretrekker, slik at ingenting går tapt i oversettelsen.",
+  },
+  /* ---------- Meeting booker dialog ---------- */
+  rwu_meet_title: {
+    en: "Let's Meet", es: "Reunámonos", pt: "Vamos Falar",
+    fr: "Rencontrons-nous", de: "Lass uns treffen", it: "Incontriamoci",
+    pl: "Spotkajmy się", cs: "Domluvme schůzku", ru: "Давайте встретимся",
+    tr: "Tanışalım", hr: "Nađimo se", no: "La oss møtes",
+  },
+  rwu_meet_subtitle: {
+    en: "Leave us your WhatsApp and a couple of times that suit you. We'll message you to lock it in.",
+    es: "Déjanos tu WhatsApp y un par de horarios que te vengan bien. Te escribiremos para cerrarlo.",
+    pt: "Deixa-nos o teu WhatsApp e alguns horários que te dêem jeito. Enviamos mensagem para confirmar.",
+    fr: "Laisse-nous ton WhatsApp et quelques créneaux qui te conviennent. On te recontacte pour caler ça.",
+    de: "Hinterlass uns deine WhatsApp-Nummer und ein paar passende Zeiten. Wir melden uns, um es festzuzurren.",
+    it: "Lasciaci il tuo WhatsApp e un paio di orari che ti vanno bene. Ti scriviamo per fissarlo.",
+    pl: "Zostaw nam swój WhatsApp i kilka pasujących ci terminów. Napiszemy, by je potwierdzić.",
+    cs: "Nech nám svůj WhatsApp a pár termínů, které ti vyhovují. Napíšeme ti a domluvíme to.",
+    ru: "Оставьте свой WhatsApp и удобные варианты времени. Мы напишем и подтвердим.",
+    tr: "WhatsApp numaranı ve sana uygun birkaç saati bırak. Kesinleştirmek için sana yazarız.",
+    hr: "Ostavi nam svoj WhatsApp i nekoliko termina koji ti odgovaraju. Javit ćemo se da to potvrdimo.",
+    no: "Legg igjen WhatsApp-en din og noen tider som passer. Vi sender melding for å lande det.",
+  },
+  rwu_meet_whatsapp: {
+    en: "WhatsApp number", es: "Número de WhatsApp", pt: "Número de WhatsApp",
+    fr: "Numéro WhatsApp", de: "WhatsApp-Nummer", it: "Numero WhatsApp",
+    pl: "Numer WhatsApp", cs: "Číslo WhatsApp", ru: "Номер WhatsApp",
+    tr: "WhatsApp numarası", hr: "WhatsApp broj", no: "WhatsApp-nummer",
+  },
+  rwu_meet_time_of_day: {
+    en: "Preferred time of day", es: "Franja horaria preferida", pt: "Período preferido do dia",
+    fr: "Moment de la journée préféré", de: "Bevorzugte Tageszeit", it: "Fascia oraria preferita",
+    pl: "Preferowana pora dnia", cs: "Preferovaná denní doba", ru: "Удобное время суток",
+    tr: "Tercih edilen saat dilimi", hr: "Preferirano doba dana", no: "Foretrukket tid på dagen",
+  },
+  rwu_meet_dates: {
+    en: "Dates that work for you", es: "Fechas que te van bien", pt: "Datas que te dêem jeito",
+    fr: "Dates qui te conviennent", de: "Passende Termine", it: "Date che ti vanno bene",
+    pl: "Pasujące terminy", cs: "Termíny, které ti vyhovují", ru: "Удобные даты",
+    tr: "Sana uygun tarihler", hr: "Termini koji ti odgovaraju", no: "Datoer som passer deg",
+  },
+  rwu_meet_dates_hint: {
+    en: "Pick as many as suit you over the next month.",
+    es: "Elige las que te vayan bien en el próximo mes.",
+    pt: "Escolhe as que te dêem jeito no próximo mês.",
+    fr: "Choisis-en autant que tu veux dans le mois à venir.",
+    de: "Wähle so viele wie passen im nächsten Monat.",
+    it: "Scegli quante ne vuoi nel prossimo mese.",
+    pl: "Wybierz tyle, ile ci pasuje w ciągu najbliższego miesiąca.",
+    cs: "Vyber si tolik, kolik ti vyhovuje, v příštím měsíci.",
+    ru: "Выбирайте столько, сколько удобно, в течение следующего месяца.",
+    tr: "Önümüzdeki ay içinde sana uyan kadarını seç.",
+    hr: "Odaberi koliko ti odgovara u sljedećih mjesec dana.",
+    no: "Velg så mange som passer i løpet av neste måned.",
+  },
+  rwu_meet_note: {
+    en: "Anything you want us to know (optional)",
+    es: "Cualquier cosa que quieras que sepamos (opcional)",
+    pt: "Algo que queiras que saibamos (opcional)",
+    fr: "Quelque chose à nous faire savoir (facultatif)",
+    de: "Möchtest du uns noch etwas sagen? (optional)",
+    it: "Qualcosa che vuoi farci sapere (facoltativo)",
+    pl: "Coś, co chciałbyś, abyśmy wiedzieli (opcjonalnie)",
+    cs: "Něco, co bychom měli vědět (volitelné)",
+    ru: "Что-нибудь, что нам стоит знать (необязательно)",
+    tr: "Bilmemizi istediğin bir şey (isteğe bağlı)",
+    hr: "Nešto što želiš da znamo (po želji)",
+    no: "Noe du vil at vi skal vite (valgfritt)",
+  },
+  rwu_meet_note_ph: {
+    en: "Family present, language preference, questions",
+    es: "Familia presente, idioma preferido, preguntas",
+    pt: "Família presente, idioma preferido, perguntas",
+    fr: "Famille présente, langue préférée, questions",
+    de: "Familie dabei, Sprachpräferenz, Fragen",
+    it: "Famiglia presente, lingua preferita, domande",
+    pl: "Obecność rodziny, preferowany język, pytania",
+    cs: "Rodina přítomna, preferovaný jazyk, otázky",
+    ru: "Семья рядом, предпочтительный язык, вопросы",
+    tr: "Aile yanında, dil tercihi, sorular",
+    hr: "Obitelj prisutna, jezik, pitanja",
+    no: "Familie til stede, språkpreferanse, spørsmål",
+  },
+  rwu_meet_cancel: {
+    en: "Cancel", es: "Cancelar", pt: "Cancelar", fr: "Annuler",
+    de: "Abbrechen", it: "Annulla", pl: "Anuluj", cs: "Zrušit",
+    ru: "Отмена", tr: "İptal", hr: "Odustani", no: "Avbryt",
+  },
+  rwu_meet_sending: {
+    en: "Sending...", es: "Enviando...", pt: "A enviar...", fr: "Envoi...",
+    de: "Senden...", it: "Invio...", pl: "Wysyłanie...", cs: "Odesílám...",
+    ru: "Отправка...", tr: "Gönderiliyor...", hr: "Šaljem...", no: "Sender...",
+  },
+  rwu_meet_submit: {
+    en: "Send Request", es: "Enviar Solicitud", pt: "Enviar Pedido",
+    fr: "Envoyer la Demande", de: "Anfrage Senden", it: "Invia Richiesta",
+    pl: "Wyślij Prośbę", cs: "Odeslat Žádost", ru: "Отправить Запрос",
+    tr: "Talebi Gönder", hr: "Pošalji Zahtjev", no: "Send Forespørsel",
+  },
+  rwu_meet_done_title: {
+    en: "Request received", es: "Solicitud recibida", pt: "Pedido recebido",
+    fr: "Demande reçue", de: "Anfrage erhalten", it: "Richiesta ricevuta",
+    pl: "Prośba odebrana", cs: "Žádost přijata", ru: "Запрос получен",
+    tr: "Talep alındı", hr: "Zahtjev zaprimljen", no: "Forespørsel mottatt",
+  },
+  rwu_meet_done_body: {
+    en: "Thanks. We'll WhatsApp you shortly to lock in a time that works.",
+    es: "Gracias. Te escribiremos por WhatsApp en breve para fijar una hora que te vaya bien.",
+    pt: "Obrigado. Em breve mandamos WhatsApp para combinar uma hora que te dê jeito.",
+    fr: "Merci. On te recontacte sur WhatsApp très vite pour caler un créneau qui te convient.",
+    de: "Danke. Wir melden uns gleich per WhatsApp, um eine passende Zeit zu fixieren.",
+    it: "Grazie. Ti scriviamo a breve su WhatsApp per fissare un orario che ti vada bene.",
+    pl: "Dzięki. Wkrótce napiszemy na WhatsApp, by ustalić pasujący termin.",
+    cs: "Díky. Brzy ti napíšeme na WhatsApp a domluvíme čas, který ti vyhovuje.",
+    ru: "Спасибо. Скоро напишем в WhatsApp, чтобы согласовать удобное время.",
+    tr: "Teşekkürler. Uygun bir saati netleştirmek için kısa süre içinde WhatsApp'tan yazacağız.",
+    hr: "Hvala. Uskoro ti šaljemo poruku na WhatsApp da dogovorimo termin koji ti odgovara.",
+    no: "Takk. Vi sender deg en WhatsApp snart for å lande en tid som passer.",
+  },
+  rwu_meet_done_close: {
+    en: "Close", es: "Cerrar", pt: "Fechar", fr: "Fermer",
+    de: "Schließen", it: "Chiudi", pl: "Zamknij", cs: "Zavřít",
+    ru: "Закрыть", tr: "Kapat", hr: "Zatvori", no: "Lukk",
+  },
+  rwu_meet_error: {
+    en: "Something went wrong. Please WhatsApp us directly and we'll sort it.",
+    es: "Algo salió mal. Escríbenos por WhatsApp y lo solucionamos.",
+    pt: "Algo correu mal. Manda-nos WhatsApp diretamente e resolvemos.",
+    fr: "Un souci est survenu. Écris-nous directement sur WhatsApp et on règle ça.",
+    de: "Etwas ist schiefgelaufen. Schreib uns direkt auf WhatsApp und wir kümmern uns.",
+    it: "Qualcosa è andato storto. Scrivici direttamente su WhatsApp e sistemiamo tutto.",
+    pl: "Coś poszło nie tak. Napisz do nas bezpośrednio na WhatsApp, zajmiemy się tym.",
+    cs: "Něco se pokazilo. Napiš nám přímo na WhatsApp a vyřešíme to.",
+    ru: "Что-то пошло не так. Напишите нам напрямую в WhatsApp, и мы всё уладим.",
+    tr: "Bir şeyler ters gitti. Doğrudan WhatsApp'tan yaz, hallederiz.",
+    hr: "Nešto je pošlo po zlu. Javi nam izravno na WhatsApp i riješit ćemo to.",
+    no: "Noe gikk galt. Send oss en WhatsApp direkte, så ordner vi det.",
+  },
+  rwu_meet_need_whatsapp: {
+    en: "Please add your WhatsApp number so we can reach you.",
+    es: "Añade tu número de WhatsApp para que podamos contactarte.",
+    pt: "Adiciona o teu número de WhatsApp para podermos contactar-te.",
+    fr: "Ajoute ton numéro WhatsApp pour qu'on puisse te joindre.",
+    de: "Bitte gib deine WhatsApp-Nummer an, damit wir dich erreichen können.",
+    it: "Aggiungi il tuo numero WhatsApp così possiamo contattarti.",
+    pl: "Dodaj swój numer WhatsApp, abyśmy mogli się z tobą skontaktować.",
+    cs: "Přidej prosím své číslo na WhatsApp, ať tě můžeme kontaktovat.",
+    ru: "Пожалуйста, укажите номер WhatsApp, чтобы мы могли с вами связаться.",
+    tr: "Sana ulaşabilmemiz için lütfen WhatsApp numaranı ekle.",
+    hr: "Dodaj svoj WhatsApp broj kako bismo te mogli kontaktirati.",
+    no: "Legg til WhatsApp-nummeret ditt så vi kan nå deg.",
+  },
+  rwu_meet_cta: {
+    en: "Let's Meet", es: "Reunámonos", pt: "Vamos Falar",
+    fr: "Rencontrons-nous", de: "Lass uns treffen", it: "Incontriamoci",
+    pl: "Spotkajmy się", cs: "Domluvme schůzku", ru: "Давайте встретимся",
+    tr: "Tanışalım", hr: "Nađimo se", no: "La oss møtes",
+  },
+  rwu_private_footer: {
+    en: "This page is a private invitation and is not indexed by search engines.",
+    es: "Esta página es una invitación privada y no aparece en buscadores.",
+    pt: "Esta página é um convite privado e não é indexada pelos motores de busca.",
+    fr: "Cette page est une invitation privée et n'est pas indexée par les moteurs de recherche.",
+    de: "Diese Seite ist eine private Einladung und wird nicht von Suchmaschinen indexiert.",
+    it: "Questa pagina è un invito privato e non viene indicizzata dai motori di ricerca.",
+    pl: "Ta strona to prywatne zaproszenie i nie jest indeksowana przez wyszukiwarki.",
+    cs: "Tato stránka je soukromá pozvánka a vyhledávače ji neindexují.",
+    ru: "Эта страница — личное приглашение и не индексируется поисковиками.",
+    tr: "Bu sayfa özel bir davettir ve arama motorlarına dizinlenmez.",
+    hr: "Ova je stranica privatni poziv i ne indeksiraju je tražilice.",
+    no: "Denne siden er en privat invitasjon og indekseres ikke av søkemotorer.",
+  },
 };
 
 const portalWelcomeDict: Record<string, Partial<Record<Lang, string>>> = {
@@ -1098,20 +1455,14 @@ const IntroCinematic = ({
   // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
-  const [mobileSide, setMobileSide] = useState<"left" | "right">("left");
   useEffect(() => {
     if (extraIntro.length === 0) return;
     const t = setInterval(() => {
       setIntroIdx((i) => (i + 1) % extraIntro.length);
       setSideTick((s) => s + 1);
-      setMobileSide((side) => (side === "left" ? "right" : "left"));
     }, 3200);
     return () => clearInterval(t);
   }, [extraIntro.length]);
-
-  useEffect(() => {
-    if (phase === 1 && secondaryParagraph) setMobileSide("left");
-  }, [phase, secondaryParagraph]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
@@ -1244,33 +1595,41 @@ const IntroCinematic = ({
         // When the optional secondary paragraph is present, keep the image
         // clear of the copy and visibly alternate top-left then top-right.
         const hasLongSecondary = !!(secondaryParagraph && secondaryParagraph.trim().length > 0);
-        const mobileFramesFull: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
-          { vertical: "top", offsetVw: -18, rotate: -3 },
-          { vertical: "bottom", offsetVw: 16, rotate: 4 },
-          { vertical: "top", offsetVw: 14, rotate: 3 },
-          { vertical: "bottom", offsetVw: -16, rotate: -4 },
-          { vertical: "top", offsetVw: 0, rotate: 0 },
-          { vertical: "bottom", offsetVw: 6, rotate: 2 },
-        ];
+        const restrictToTop = hasLongSecondary && phase === 1;
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        const mobileFrame = mobileFramesFull[sideTick % mobileFramesFull.length];
+        // Deterministic-but-feels-random corner + jitter per tick so the
+        // mobile image hops between corners (TL/TR/BL/BR) with a tiny
+        // 4–8px offset rather than sliding in a predictable pattern.
+        // Top corners only while the long secondary paragraph is on screen
+        // so the copy never overlaps the image.
+        const rand = (seed: number) => {
+          const x = Math.sin(seed * 9301 + 49297) * 233280;
+          return x - Math.floor(x);
+        };
+        const allCorners = ["tl", "tr", "bl", "br"] as const;
+        const topCorners = ["tl", "tr"] as const;
+        const cornerPool = restrictToTop ? topCorners : allCorners;
+        // Avoid landing on the same corner twice in a row.
+        const prevCornerIdx = Math.floor(rand(sideTick) * cornerPool.length);
+        let cornerIdx = Math.floor(rand(sideTick + 1) * cornerPool.length);
+        if (cornerPool.length > 1 && cornerIdx === prevCornerIdx) {
+          cornerIdx = (cornerIdx + 1) % cornerPool.length;
+        }
+        const corner = cornerPool[cornerIdx];
+        const jitterX = 4 + rand(sideTick * 2 + 3) * 4; // 4–8px
+        const jitterY = 4 + rand(sideTick * 2 + 5) * 4; // 4–8px
+        const rotateDeg = (rand(sideTick * 2 + 7) * 8 - 4); // -4..+4deg
+        const isTop = corner === "tl" || corner === "tr";
+        const isLeft = corner === "tl" || corner === "bl";
         const sideClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         const mobileClass = "block lg:hidden absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
-        const mobileStyle: React.CSSProperties = hasLongSecondary
-          ? {
-              top: "5%",
-              left: mobileSide === "left" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
-              right: mobileSide === "right" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
-              transform: `rotate(${mobileSide === "left" ? -4 : 4}deg)`,
-              objectPosition: m.objectPosition || "50% 35%",
-            }
-          : {
-              left: "50%",
-              transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
-              ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
-              objectPosition: m.objectPosition || "50% 35%",
-            };
+        const mobileStyle: React.CSSProperties = {
+          [isTop ? "top" : "bottom"]: `calc(${isTop ? "5%" : "10%"} + ${jitterY}px)`,
+          [isLeft ? "left" : "right"]: `calc(clamp(0.75rem, 4vw, 1.5rem) + ${jitterX}px)`,
+          transform: `rotate(${rotateDeg.toFixed(2)}deg)`,
+          objectPosition: m.objectPosition || "50% 35%",
+        } as React.CSSProperties;
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
             <motion.video
@@ -1303,7 +1662,7 @@ const IntroCinematic = ({
               {renderMedia(m, `desktop-${m.url}-${sideTick}`, sideClass, frame.style)}
             </AnimatePresence>
             <AnimatePresence mode="wait">
-              {renderMedia(m, `mobile-${m.url}-${sideTick}-${mobileSide}`, mobileClass, mobileStyle)}
+              {renderMedia(m, `mobile-${m.url}-${sideTick}-${corner}`, mobileClass, mobileStyle)}
             </AnimatePresence>
           </div>
         );
@@ -1984,7 +2343,7 @@ const RiseWithUs = () => {
 
           {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <footer className="px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-2 text-center bg-black">
-              <p className="text-[11px] text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
+              <p className="text-[11px] text-muted-foreground">{offerT(lang, "rwu_private_footer", "This page is a private invitation and is not indexed by search engines.")}</p>
             </footer>
           )}
 

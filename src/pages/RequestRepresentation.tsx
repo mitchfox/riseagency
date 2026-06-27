@@ -1474,7 +1474,7 @@ export const DetailView = ({
               </div>
               <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
                 <div className="h-[420px] md:h-[600px]">
-                  <ScoutingNetworkMap hideStats hideGridToggle />
+                  <ScoutingNetworkMap hideStats hideGridToggle languageOverride={usePlayer ? (language as string) : undefined} />
                 </div>
               </div>
             </div>
