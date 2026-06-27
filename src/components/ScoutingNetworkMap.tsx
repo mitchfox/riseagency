@@ -124,9 +124,10 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
   const activeLang = normaliseMapLang(languageOverride || siteLanguage);
   const baseT = languageOverride ? playerT : siteT;
   const t = (key: string, fallback: string) => {
+    if (mapFallbackDict[key]?.[activeLang]) return mapFallbackDict[key]![activeLang]!;
     const translated = baseT(key, fallback);
     if (translated && translated !== fallback && translated !== key) return translated;
-    return mapFallbackDict[key]?.[activeLang] || mapFallbackDict[key]?.en || fallback;
+    return mapFallbackDict[key]?.en || fallback;
   };
   const translateCountry = (country: string) => {
     const localOverride = localCountryNames[country]?.[activeLang];
