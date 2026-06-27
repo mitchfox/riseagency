@@ -241,6 +241,7 @@ function MarketContactSlot({
   inputClassName,
   onConfirm,
   onEdit,
+  onCreateOutreach,
 }: {
   value: string;
   contact: ContactRow | null;
@@ -249,6 +250,7 @@ function MarketContactSlot({
   inputClassName: string;
   onConfirm: (value: string | null) => Promise<boolean | void>;
   onEdit: () => void;
+  onCreateOutreach?: () => void;
 }) {
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -317,6 +319,18 @@ function MarketContactSlot({
       >
         <Icon className="h-3.5 w-3.5" />
       </button>
+      {onCreateOutreach && hasSavedName && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onCreateOutreach}
+          title="Create club outreach addressed to this contact"
+          aria-label="Create club outreach addressed to this contact"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-risegold/70 text-risegold hover:bg-risegold/15 transition"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
