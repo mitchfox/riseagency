@@ -942,6 +942,65 @@ export default function MarketTablesTab() {
               ? "0 clubs"
               : `Showing ${pageStart + 1}–${Math.min(pageEnd, filtered.length)} of ${filtered.length}`}
           </span>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-risegold/40 bg-risegold/10 px-2.5 py-1 text-[11px] font-medium text-risegold"
+            title="Clubs with at least one identified contact"
+          >
+            <Check className="h-3 w-3" />
+            {tally.withContact}/{tally.total} clubs · {tally.pct}%
+          </span>
+          <Popover open={activityOpen} onOpenChange={setActivityOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background/60 px-2 text-[11px] text-muted-foreground hover:text-white hover:border-risegold/60"
+                title="Recent additions and edits"
+              >
+                <History className="h-3.5 w-3.5" />
+                Activity
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[320px] p-0">
+              <div className="border-b border-border px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                Live activity
+              </div>
+              <ScrollArea className="max-h-[320px]">
+                {activity.length === 0 ? (
+                  <div className="p-3 text-xs text-muted-foreground">No saves yet.</div>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {activity.map((a) => {
+                      const when = new Date(a.at);
+                      const name = clubNameById.get(a.club_id) ?? "Unknown club";
+                      const parts = [
+                        a.td ? `TD: ${a.td}` : null,
+                        a.cs ? `CS: ${a.cs}` : null,
+                      ].filter(Boolean) as string[];
+                      return (
+                        <li key={a.id} className="px-3 py-2 text-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-white truncate">{name}</span>
+                            <span className="text-[10px] text-muted-foreground shrink-0">
+                              {when.toLocaleString(undefined, {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {a.kind === "insert" ? "Added" : "Updated"}
+                            {parts.length > 0 ? ` · ${parts.join(" · ")}` : ""}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
           <Button
             type="button"
             size="sm"
