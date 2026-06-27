@@ -1893,7 +1893,7 @@ const RiseWithUs = () => {
                       <CalendarClock className="mr-2 h-5 w-5" /> {ot("rwu_meet_cta", "Let's Meet")}
                     </Button>
                     <Button asChild size="lg" className="font-bebas uppercase tracking-wider border border-[#25D366] bg-[#25D366] text-white hover:bg-[#1ebe57] hover:text-white">
-                      <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                      <a href={buildWhatsappUrl(lang)} target="_blank" rel="noopener noreferrer">
                         <MessageCircle className="mr-2 h-5 w-5" /> {ot("message_whatsapp", "Message us on WhatsApp")}
                       </a>
                     </Button>
