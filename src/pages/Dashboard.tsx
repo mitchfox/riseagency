@@ -3815,7 +3815,7 @@ const Dashboard = () => {
                                                               </span>
                                                             </div>
                                                             <div 
-                                                              onClick={() => handleSessionClick(sessionValue)}
+                                                              onClick={() => handleSessionClick(sessionValue, sessionType)}
                                                               className="flex-1 flex items-center justify-center relative cursor-pointer"
                                                               style={{ backgroundColor: colors.bg }}
                                                               onMouseEnter={(e) => {
@@ -3845,7 +3845,7 @@ const Dashboard = () => {
                                                         {/* Individual Session Only or Empty - Full 100% */}
                                                         {(onlySession || (!teamSessionValue && !sessionValue)) && (
                                                           <div 
-                                                            onClick={() => sessionValue && handleSessionClick(sessionValue)}
+                                                            onClick={() => sessionValue && handleSessionClick(sessionValue, sessionType)}
                                                             className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
                                                             style={{ backgroundColor: colors.bg }}
                                                             onMouseEnter={(e) => {
