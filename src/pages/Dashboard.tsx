@@ -3897,7 +3897,7 @@ const Dashboard = () => {
                                  {programmingMode !== "schedule" && program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
                                   // Define all possible sessions A-H
                                   const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                                  
+
                                   // Check which sessions have actual exercise data
                                   const hasSessionData = (sessionKey: string) => {
                                     const mainSession = program.sessions[sessionKey] || program.sessions[sessionKey.toLowerCase()];
@@ -3908,9 +3908,16 @@ const Dashboard = () => {
                                     
                                     return !!(mainHasData || preHasData);
                                   };
-                                  
-                                  // Find first session with data
-                                  const firstSessionWithData = allSessions.find(s => hasSessionData(s)) || 'A';
+
+                                  // Only show sessions that actually have content, like the Technical view.
+                                  const sessionsWithData = allSessions.filter(hasSessionData);
+                                  const firstSessionWithData = sessionsWithData[0] || 'A';
+                                  const firstRow = sessionsWithData.slice(0, 4);
+                                  const secondRow = sessionsWithData.slice(4, 8);
+                                  const gridCols = (n: number) =>
+                                    n <= 1 ? 'grid-cols-1' :
+                                    n === 2 ? 'grid-cols-2' :
+                                    n === 3 ? 'grid-cols-3' : 'grid-cols-4';
                                   
                                   return (
                                     <AccordionItem value="sessions">
@@ -3921,8 +3928,8 @@ const Dashboard = () => {
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
-                                           <div className="grid grid-cols-4 gap-2">
-                                             {['A', 'B', 'C', 'D'].map((mainKey) => {
+                                           <div className={`grid ${gridCols(firstRow.length)} gap-2`}>
+                                             {firstRow.map((mainKey) => {
                                                const colors = getSessionColor(mainKey);
                                                const hasData = hasSessionData(mainKey);
                                                const isActive = (selectedSession || firstSessionWithData) === mainKey;
@@ -3947,8 +3954,9 @@ const Dashboard = () => {
                                            </div>
                                            
                                            {/* Second Row: E, F, G, H */}
-                                           <div className="grid grid-cols-4 gap-2">
-                                             {['E', 'F', 'G', 'H'].map((mainKey) => {
+                                           {secondRow.length > 0 && (
+                                           <div className={`grid ${gridCols(secondRow.length)} gap-2`}>
+                                             {secondRow.map((mainKey) => {
                                                const colors = getSessionColor(mainKey);
                                                const hasData = hasSessionData(mainKey);
                                                const isActive = (selectedSession || firstSessionWithData) === mainKey;
@@ -3971,6 +3979,7 @@ const Dashboard = () => {
                                                );
                                              })}
                                            </div>
+                                           )}
                                         </div>
                                         
                                         {/* Main Session Content with Sub-tabs */}
