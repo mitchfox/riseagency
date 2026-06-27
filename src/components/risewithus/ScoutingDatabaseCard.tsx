@@ -41,8 +41,6 @@ const labelDict: Record<string, Record<string, string>> = {
 
 const labels = (lang: string) => labelDict[lang] || labelDict.en;
 
-const shortId = (id: string) => "RFA-" + id.replace(/-/g, "").slice(0, 7).toUpperCase();
-
 export const ScoutingDatabaseCard = ({
   playerId, playerName, position, club, nationality, imageUrl, fitScore, lang,
 }: Props) => {
@@ -83,6 +81,23 @@ export const ScoutingDatabaseCard = ({
               ? Math.round(fitScore)
               : null,
       };
+      // If the player has no profile image on file, fall back to the
+      // first image stashed in player_offer_settings.intro_media so we
+      // never render an empty avatar for the highlighted "You" row.
+      if (!merged.image_url) {
+        const { data: offer } = await supabase
+          .from("player_offer_settings")
+          .select("intro_media")
+          .eq("player_id", playerId)
+          .maybeSingle();
+        const media = ((offer as any)?.intro_media ?? []) as Array<{
+          url?: string; kind?: string; show?: boolean;
+        }>;
+        const firstImage = Array.isArray(media)
+          ? media.find((m) => (m?.kind ?? "image") === "image" && m?.show !== false && m?.url)
+          : null;
+        if (firstImage?.url) merged.image_url = firstImage.url;
+      }
       const needsFill = !merged.position || !merged.club || !merged.nationality;
       if (needsFill && merged.name) {
         const [{ data: pro }, { data: yth }] = await Promise.all([
@@ -187,9 +202,6 @@ export const ScoutingDatabaseCard = ({
       <div className="min-w-0">
         <div className={`truncate font-medium ${opts.highlight ? "text-primary" : "text-foreground/90"}`}>
           {opts.highlight ? <span className="font-bebas tracking-[0.08em] uppercase">{r.name} <span className="ml-1 text-[10px] text-primary/80">| {L.you}</span></span> : r.name}
-        </div>
-        <div className="truncate text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground md:text-[10px]">
-          {shortId(r.id)}
         </div>
       </div>
       <div className="text-center text-foreground/80">{r.position || ""}</div>

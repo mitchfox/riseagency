@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 import { insertStaffNotification } from "@/lib/staffNotifications";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
@@ -539,7 +540,7 @@ const MeetingBookerDialog = ({
   lang: string;
 }) => {
   const [whatsapp, setWhatsapp] = useState("");
-  const [preferredDates, setPreferredDates] = useState("");
+  const [preferredDates, setPreferredDates] = useState<Date[]>([]);
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("any");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -550,12 +551,30 @@ const MeetingBookerDialog = ({
   useEffect(() => {
     if (open) {
       setDone(false); setError(null);
-      setWhatsapp(""); setPreferredDates(""); setTimeOfDay("any"); setNote("");
+      setWhatsapp(""); setPreferredDates([]); setTimeOfDay("any"); setNote("");
     }
   }, [open]);
 
   const labelFor = (k: TimeOfDay) =>
     timeOfDayDict[k]?.[lang as Lang] || timeOfDayDict[k]?.en || k;
+
+  // Calendar window: starts tomorrow, runs for one full month.
+  const tomorrow = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 1);
+    return d;
+  }, [open]);
+  const oneMonthOut = useMemo(() => {
+    const d = new Date(tomorrow);
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  }, [tomorrow]);
+  const formatDates = (dates: Date[]) =>
+    [...dates]
+      .sort((a, b) => a.getTime() - b.getTime())
+      .map((d) => d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }))
+      .join(", ");
 
   const submit = async () => {
     if (!whatsapp.trim()) {
@@ -566,6 +585,7 @@ const MeetingBookerDialog = ({
     setError(null);
     try {
       const slug = window.location.pathname.split("/").filter(Boolean).pop() || null;
+      const datesText = formatDates(preferredDates);
       const { error: insertErr } = await (supabase as any)
         .from("proposal_meeting_requests")
         .insert({
@@ -573,7 +593,7 @@ const MeetingBookerDialog = ({
           player_slug: slug,
           player_name: player.name,
           whatsapp_number: whatsapp.trim(),
-          preferred_dates: preferredDates.trim() || null,
+          preferred_dates: datesText || null,
           preferred_time_of_day: timeOfDay,
           message: note.trim() || null,
           language: lang,
@@ -583,12 +603,12 @@ const MeetingBookerDialog = ({
       await insertStaffNotification({
         eventType: "proposal_meeting_request",
         title: `Meeting requested: ${player.name}`,
-        body: `${player.name} (${whatsapp.trim()}) | ${preferredDates.trim() || "no dates"} | ${labelFor(timeOfDay)}`,
+        body: `${player.name} (${whatsapp.trim()}) | ${datesText || "no dates"} | ${labelFor(timeOfDay)}`,
         eventData: {
           player_id: player.id,
           player_name: player.name,
           whatsapp_number: whatsapp.trim(),
-          preferred_dates: preferredDates.trim(),
+          preferred_dates: datesText,
           preferred_time_of_day: timeOfDay,
           message: note.trim(),
           tagged_staff: MEETING_STAFF_TAGS,
@@ -606,7 +626,7 @@ const MeetingBookerDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border border-primary/30 !bg-black text-foreground shadow-[0_0_60px_-20px_hsl(var(--gold)/0.65)]">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-3xl max-h-[calc(100dvh-1rem)] overflow-y-auto border border-primary/30 !bg-black text-foreground shadow-[0_0_60px_-20px_hsl(var(--gold)/0.65)] rounded-xl">
         {!done ? (
           <>
             <DialogHeader>
@@ -646,13 +666,13 @@ const MeetingBookerDialog = ({
                 <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
                   {offerT(lang, "rwu_meet_time_of_day", "Preferred time of day")}
                 </label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                   {(["morning", "afternoon", "evening", "any"] as TimeOfDay[]).map((k) => (
                     <button
                       key={k}
                       type="button"
                       onClick={() => setTimeOfDay(k)}
-                      className={`rounded-md border px-2 py-1.5 font-bebas text-[11px] uppercase tracking-[0.14em] transition-colors ${
+                      className={`min-w-0 truncate rounded-md border px-2 py-1.5 font-bebas text-[11px] uppercase tracking-[0.14em] transition-colors ${
                         timeOfDay === k
                           ? "border-primary bg-primary/15 text-primary"
                           : "border-border/60 text-foreground/75 hover:border-primary/40 hover:text-foreground"
@@ -667,11 +687,23 @@ const MeetingBookerDialog = ({
                 <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
                   {offerT(lang, "rwu_meet_dates", "Dates that work for you")}
                 </label>
-                <Input
-                  placeholder={offerT(lang, "rwu_meet_dates_ph", "e.g. Mon 24 Jun or this weekend")}
-                  value={preferredDates}
-                  onChange={(e) => setPreferredDates(e.target.value)}
-                />
+                <div className="rounded-md border border-border/60 bg-black/40 p-1 sm:p-2">
+                  <Calendar
+                    mode="multiple"
+                    selected={preferredDates}
+                    onSelect={(dates) => setPreferredDates(dates ?? [])}
+                    fromDate={tomorrow}
+                    toDate={oneMonthOut}
+                    defaultMonth={tomorrow}
+                    showOutsideDays={false}
+                    className="mx-auto"
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {preferredDates.length > 0
+                    ? formatDates(preferredDates)
+                    : offerT(lang, "rwu_meet_dates_hint", "Pick as many as suit you over the next month.")}
+                </p>
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1.5 block font-bebas text-[11px] uppercase tracking-[0.22em] text-primary">
@@ -1285,8 +1317,9 @@ const IntroCinematic = ({
                   transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.img
-                  src={riseLogoWhiteHQ} alt="RISE"
+                  src={riseLogoWhite} alt="RISE"
                   className="relative h-24 sm:h-32 md:h-40 w-auto"
+                  style={{ imageRendering: "auto" as any }}
                   initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
                   animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.85))" }}
                   transition={{ duration: 1.2, repeat: Infinity, repeatType: "mirror" }}
@@ -1541,6 +1574,25 @@ const RiseWithUs = () => {
                 {/* "Our Stars" / hub media strip removed per request. The
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
+
+                {/* Mission bio - mirrors the Representation page header so
+                    every prospect lands on the same context about RISE
+                    before tapping into the grouped cards. */}
+                <div className="mx-auto mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/80 px-4 py-3 md:max-w-3xl md:px-6 md:py-4">
+                  <p
+                    className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
+                    style={{
+                      textWrap: "pretty",
+                      hyphens: "none",
+                      WebkitHyphens: "none",
+                      msHyphens: "none",
+                      wordBreak: "normal",
+                      overflowWrap: "normal",
+                    } as React.CSSProperties}
+                  >
+                    {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                  </p>
+                </div>
 
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));

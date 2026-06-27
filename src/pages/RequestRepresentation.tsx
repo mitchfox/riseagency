@@ -1347,7 +1347,7 @@ export const DetailView = ({
 
               {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
-                <div className="h-[640px] md:h-[760px] lg:h-[860px]">
+                <div className="h-[460px] md:h-[560px] lg:h-[620px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
               </div>
@@ -1748,7 +1748,7 @@ export const DetailView = ({
                   >
                     {widont(t(
                       "representation.director_jolon_bio",
-                      "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
+                      "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, through an academic background at University of Bath. Obsessed with the small details that separate the best from the rest.",
                     ))}
                   </p>
                 </div>
@@ -1775,7 +1775,7 @@ export const DetailView = ({
                   >
                     {widont(t(
                       "representation.director_kuda_bio",
-                      "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
+                      "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Several years of experience marketing athletes and helping to establish their brand. Brings the commercial and contractual rigour that protects every player we represent.",
                     ))}
                   </p>
                 </div>
