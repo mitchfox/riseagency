@@ -1560,7 +1560,7 @@ const RiseWithUs = () => {
 
           {/* ============ STAGE: HUB ============ */}
           {stage === "hub" && !activeCard && !showWhyRiseDetail && (
-            <section className="relative min-h-[100dvh] px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-44 md:px-8 md:pt-8 lg:px-16 bg-black">
+            <section className="relative px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 md:px-8 md:pt-8 md:pb-36 lg:px-16 bg-black">
               <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
                 <header className="relative pb-6 text-center md:pb-10">
                   <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
@@ -1900,8 +1900,8 @@ const RiseWithUs = () => {
           )}
 
           {stage === "hub" && !activeCard && !showWhyRiseDetail && (
-            <footer className="py-8 px-4 text-center">
-              <p className="text-xs text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
+            <footer className="px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-2 text-center bg-black">
+              <p className="text-[11px] text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
             </footer>
           )}
 
