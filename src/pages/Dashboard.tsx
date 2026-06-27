@@ -3720,6 +3720,7 @@ const Dashboard = () => {
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
                                                     const sessionValue = week[day] || '';
                                                     const teamSessionValue = week[`${day}Team`] || '';
+                                                    const sessionType = week[`${day}_type`] || '';
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
