@@ -168,6 +168,9 @@ export default function ClubOutreachManager() {
   const [newOpen, setNewOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
+  // Prefill state for when the New Outreach panel is opened programmatically
+  // (e.g. from the Market Tables "Create outreach" buttons).
+  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; preparedFor?: string } | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
@@ -459,6 +462,24 @@ export default function ClubOutreachManager() {
     scrollPanelToTop();
   };
 
+  // External trigger: Market Tables (and possibly other surfaces) dispatch
+  // this event to open the New Outreach panel with a club + contact name
+  // already filled in.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { clubId?: string; preparedFor?: string } | undefined;
+      if (!detail) return;
+      setMode('club');
+      setEditRow(null);
+      setSettingsOpen(false);
+      setNewPrefill({ clubId: detail.clubId, preparedFor: detail.preparedFor });
+      setNewOpen(true);
+      scrollPanelToTop();
+    };
+    window.addEventListener("staff:open-club-outreach-new", handler as EventListener);
+    return () => window.removeEventListener("staff:open-club-outreach-new", handler as EventListener);
+  }, []);
+
   const openSettingsPanel = () => {
     setSettingsOpen(true);
     scrollPanelToTop();
@@ -476,21 +497,22 @@ export default function ClubOutreachManager() {
   if (newOpen) {
     return (
       <div ref={rootRef} className="space-y-4">
-        <Button variant="outline" onClick={() => setNewOpen(false)} className="gap-2">
+        <Button variant="outline" onClick={() => { setNewOpen(false); setNewPrefill(null); }} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Outreach
         </Button>
         <OutreachDialog
           mode={mode}
           open={newOpen}
-          onClose={() => setNewOpen(false)}
+          onClose={() => { setNewOpen(false); setNewPrefill(null); }}
           players={players}
           clubs={clubs}
           allRows={rows}
           defaultFit={defaultFit}
           defaultSeasonDataMode={defaultSeasonDataMode}
           defaultVideoMode={defaultVideoMode}
+          prefill={newPrefill ?? undefined}
           onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
-          onSaved={() => { setNewOpen(false); load(); }}
+          onSaved={() => { setNewOpen(false); setNewPrefill(null); load(); }}
         />
       </div>
     );
@@ -909,15 +931,15 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club' }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string }; }) {
   const isAgent = mode === 'agent';
-  const [clubId, setClubId] = useState(editing?.club_id ?? "");
+  const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
   const [agentLogoUrl, setAgentLogoUrl] = useState(editing?.agent_logo_url ?? "");
   const [agentLogoUploading, setAgentLogoUploading] = useState(false);
   const [clubQuery, setClubQuery] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
-  const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? "");
+  const [preparedFor, setPreparedFor] = useState<string>(editing?.prepared_for_name ?? prefill?.preparedFor ?? "");
   const [showForm, setShowForm] = useState<boolean>(editing?.show_form ?? false);
   const [showInNumbers, setShowInNumbers] = useState<boolean>(editing?.show_in_numbers ?? false);
   const [showSeasonStats, setShowSeasonStats] = useState<boolean>(editing?.show_season_stats ?? false);

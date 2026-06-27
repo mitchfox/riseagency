@@ -588,6 +588,17 @@ const Staff = () => {
     return () => document.removeEventListener("keydown", down);
   }, [expandedCategory, expandedSection]);
 
+  // Allow other staff components to jump to a section programmatically
+  // (e.g. Market Tables "Create outreach" button switching to Club Outreach).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { section?: string } | undefined;
+      if (detail?.section) handleSectionToggle(detail.section);
+    };
+    window.addEventListener("staff:switch-section", handler as EventListener);
+    return () => window.removeEventListener("staff:switch-section", handler as EventListener);
+  }, []);
+
   const handleSectionToggle = (section: string, replaceCurrentTab = false) => {
     // Always navigate to the section - never toggle off by clicking the same one
     playSectionSwitch();

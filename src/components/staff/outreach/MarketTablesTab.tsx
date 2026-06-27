@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -157,8 +157,6 @@ const additionalContactsForClub = (
     .filter((c) => {
       if (excludeIds.has(c.id)) return false;
       if (!contactMatchesClub(c, clubName, country)) return false;
-      if (c.position && TD_RE.test(c.position)) return false;
-      if (c.position && CS_RE.test(c.position)) return false;
       if (c.position && /\b(player|agent)\b/i.test(c.position)) return false;
       // Never surface placeholder rows whose "name" is just the club name —
       // these are shell records used to anchor the club, not real people.
@@ -243,6 +241,7 @@ function MarketContactSlot({
   inputClassName,
   onConfirm,
   onEdit,
+  onCreateOutreach,
 }: {
   value: string;
   contact: ContactRow | null;
@@ -251,6 +250,7 @@ function MarketContactSlot({
   inputClassName: string;
   onConfirm: (value: string | null) => Promise<boolean | void>;
   onEdit: () => void;
+  onCreateOutreach?: () => void;
 }) {
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -319,6 +319,18 @@ function MarketContactSlot({
       >
         <Icon className="h-3.5 w-3.5" />
       </button>
+      {onCreateOutreach && hasSavedName && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onCreateOutreach}
+          title="Create club outreach addressed to this contact"
+          aria-label="Create club outreach addressed to this contact"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-risegold/70 text-risegold hover:bg-risegold/15 transition"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -337,6 +349,9 @@ export default function MarketTablesTab() {
   const [addingToNetwork, setAddingToNetwork] = useState(false);
   const [page, setPage] = useState(1);
   const [addTeamOpen, setAddTeamOpen] = useState(false);
+  // Outreach mode: filter to only clubs we have at least one contact for,
+  // and surface a "Create outreach" shortcut next to each contact name.
+  const [outreachMode, setOutreachMode] = useState(false);
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
@@ -598,15 +613,28 @@ export default function MarketTablesTab() {
       if (country !== "all" && c.country !== country) return false;
       if (league !== "all" && c.league !== league) return false;
       if (q && !c.club_name.toLowerCase().includes(q)) return false;
+      if (outreachMode) {
+        const e = entries[c.id];
+        const hasNamed =
+          !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+          !!(e?.chief_scout_name && e.chief_scout_name.trim());
+        if (hasNamed) return true;
+        const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+        const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+        if (td || cs) return true;
+        const extras = additionalContactsForClub(contacts, c.club_name, c.country, new Set());
+        if (extras.length > 0) return true;
+        return false;
+      }
       return true;
     });
-  }, [clubs, country, league, search]);
+  }, [clubs, country, league, search, outreachMode, entries, contacts]);
 
   // Reset to first page whenever the active filter / search changes so the
   // user always sees the start of the new result set.
   useEffect(() => {
     setPage(1);
-  }, [country, league, search]);
+  }, [country, league, search, outreachMode]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -805,6 +833,26 @@ export default function MarketTablesTab() {
     return persist(club.id, { chief_scout_name: value });
   };
 
+  // Fire a window event the Staff page + ClubOutreachManager listen for.
+  // Switches to the Club Outreach tab and opens a fresh New Outreach panel
+  // with the chosen club and contact name pre-filled.
+  const createOutreach = (club: ClubRow, contactName: string | null) => {
+    window.dispatchEvent(
+      new CustomEvent("staff:switch-section", { detail: { section: "cluboutreach" } }),
+    );
+    // Wait for the section to mount before asking the manager to open the panel.
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent("staff:open-club-outreach-new", {
+          detail: {
+            clubId: club.id,
+            preparedFor: (contactName ?? "").trim() || undefined,
+          },
+        }),
+      );
+    }, 60);
+  };
+
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
     const defaultPos = role === "td" ? "Technical Director" : "Chief Scout";
     setEditing({
@@ -871,6 +919,27 @@ export default function MarketTablesTab() {
         void ensureRelationshipShell(saved.id).catch((e: any) => {
           toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
         });
+      }
+      // Defensive: re-pull any contacts attached to this club so the extras
+      // list is guaranteed to reflect the new row immediately (handles weird
+      // edge cases like the same contact id already being present with a
+      // different normalised club_name).
+      try {
+        const { data: refreshed } = await supabase
+          .from("club_network_contacts")
+          .select(CONTACT_SELECT)
+          .eq("club_name", club.club_name);
+        if (Array.isArray(refreshed) && refreshed.length > 0) {
+          setContacts((prev) => {
+            let next = prev;
+            (refreshed as ContactRow[]).forEach((r) => {
+              next = upsertContactRow(next, r);
+            });
+            return next;
+          });
+        }
+      } catch {
+        /* non-fatal */
       }
       toast.success(existing ? "Contact updated" : "Contact added");
       setEditing(null);
@@ -949,6 +1018,19 @@ export default function MarketTablesTab() {
             <Check className="h-3 w-3" />
             {tally.withContact}/{tally.total} clubs · {tally.pct}%
           </span>
+          <button
+            type="button"
+            onClick={() => setOutreachMode((v) => !v)}
+            title="Show only clubs we have a contact for, with one-click outreach"
+            className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] transition ${
+              outreachMode
+                ? "border-risegold bg-risegold/20 text-risegold"
+                : "border-border bg-background/60 text-muted-foreground hover:text-white hover:border-risegold/60"
+            }`}
+          >
+            <Send className="h-3.5 w-3.5" />
+            Outreach mode {outreachMode ? "· on" : ""}
+          </button>
           <Popover open={activityOpen} onOpenChange={setActivityOpen}>
             <PopoverTrigger asChild>
               <button
@@ -1088,6 +1170,7 @@ export default function MarketTablesTab() {
                   links={renderContactLinks(tdContact)}
                   onConfirm={(v) => persistAndShell(club, "td", v)}
                   onEdit={() => openEdit(club, "td", tdContact)}
+                  onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1100,6 +1183,7 @@ export default function MarketTablesTab() {
                   links={renderContactLinks(csContact)}
                   onConfirm={(v) => persistAndShell(club, "cs", v)}
                   onEdit={() => openEdit(club, "cs", csContact)}
+                  onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
                 />
               </div>
               <div className="pt-1 border-t border-border/40">
@@ -1131,6 +1215,16 @@ export default function MarketTablesTab() {
                           <span className="text-white">{c.name}</span>
                           {c.position && <span className="text-muted-foreground">· {c.position}</span>}
                           {renderContactLinks(c)}
+                          {outreachMode && (
+                            <button
+                              type="button"
+                              onClick={() => createOutreach(club, c.name)}
+                              title="Create club outreach addressed to this contact"
+                              className="inline-flex items-center gap-1 rounded-md border border-risegold/70 px-1.5 py-0.5 text-[10px] text-risegold hover:bg-risegold/15"
+                            >
+                              <Send className="h-3 w-3" /> Outreach
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => openExtraEdit(club, c)}
@@ -1221,6 +1315,7 @@ export default function MarketTablesTab() {
                       links={renderContactLinks(tdContact)}
                       onConfirm={(v) => persistAndShell(club, "td", v)}
                       onEdit={() => openEdit(club, "td", tdContact)}
+                      onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -1232,6 +1327,7 @@ export default function MarketTablesTab() {
                       links={renderContactLinks(csContact)}
                       onConfirm={(v) => persistAndShell(club, "cs", v)}
                       onEdit={() => openEdit(club, "cs", csContact)}
+                      onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
                     />
                   </td>
                 </tr>
@@ -1263,6 +1359,16 @@ export default function MarketTablesTab() {
                                   <span className="text-muted-foreground">· {c.position}</span>
                                 )}
                                 {renderContactLinks(c)}
+                                {outreachMode && (
+                                  <button
+                                    type="button"
+                                    onClick={() => createOutreach(club, c.name)}
+                                    title="Create club outreach addressed to this contact"
+                                    className="inline-flex items-center gap-1 rounded-md border border-risegold/70 px-1.5 py-0.5 text-[10px] text-risegold hover:bg-risegold/15"
+                                  >
+                                    <Send className="h-3 w-3" /> Outreach
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => openExtraEdit(club, c)}
