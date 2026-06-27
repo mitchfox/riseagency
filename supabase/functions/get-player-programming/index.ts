@@ -5,7 +5,7 @@ import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const SPS_FIELDS = ["sessionA", "sessionB", "sessionC", "sessionD", "sessionE", "sessionF", "sessionG", "sessionH"];
 
-type SessionMeta = { key: string; title: string | null; type: "sps" | "technical" };
+type SessionMeta = { key: string; title: string | null; type: "sps" | "technical"; sessionId?: string };
 
 const BodySchema = z.object({
   playerId: z.string().uuid(),
@@ -152,6 +152,7 @@ Deno.serve(async (req) => {
         key: s.session_key || "",
         title: s.title ?? null,
         type: "technical",
+        sessionId: s.id,
       });
     }
 
@@ -187,6 +188,8 @@ Deno.serve(async (req) => {
           const meta = refToSession.get(slot.refId);
           out[day] = meta?.key || "";
           out[`${day}_type`] = meta?.type || "";
+          out[`${day}_refId`] = slot.refId;
+          out[`${day}_sessionId`] = meta?.sessionId || "";
         } else if (slot.free_text) {
           out[day] = slot.free_text;
           out[`${day}_type`] = "free";

@@ -173,7 +173,7 @@ interface HubProps {
   onNavigateToAnalysis: () => void;
   onNavigateToComparisons?: () => void;
   onNavigateToForm?: () => void;
-  onNavigateToSession?: (sessionKey: string) => void;
+  onNavigateToSession?: (sessionKey: string, sessionType?: string, sessionRefId?: string, sessionId?: string) => void;
   onNavigateToSchedule?: () => void;
 }
 
@@ -649,17 +649,25 @@ export const Hub = ({ programs, analyses, playerData, dailyAphorism, portalSetti
                   const daySchedule = scheduleByDay[dayInfo.dayName + '_' + format(dayInfo.date, 'yyyy-MM-dd')] || currentSchedule;
                   const sessionValue = daySchedule?.[dayInfo.dayName] || '';
                   const teamSessionValue = daySchedule?.[`${dayInfo.dayName}Team`] || '';
+                  const sessionType = daySchedule?.[`${dayInfo.dayName}_type`] || '';
+                  const sessionRefId = daySchedule?.[`${dayInfo.dayName}_refId`] || '';
+                  const sessionId = daySchedule?.[`${dayInfo.dayName}_sessionId`] || '';
                   const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                   const dayImageKey = `${dayInfo.dayName}Image`;
                   const clubLogoUrl = daySchedule?.[dayImageKey];
                   
-                  // Check if it's a clickable session (A-H)
-                  const isClickableSession = sessionValue && /^[A-H]$/i.test(sessionValue);
+                  // Only master-scheduled SPS/Technical sessions should jump into programming.
+                  const isClickableSession = !!sessionValue && (
+                    sessionType === "sps" ||
+                    sessionType === "technical" ||
+                    String(sessionRefId).startsWith("sps:") ||
+                    String(sessionRefId).startsWith("tech:")
+                  );
                   
                   return (
                     <button
                       key={index}
-                      onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase())}
+                      onClick={() => isClickableSession && onNavigateToSession?.(sessionValue.toUpperCase(), sessionType, sessionRefId, sessionId)}
                       disabled={!isClickableSession}
                       className="relative rounded-lg transition-all flex flex-col min-h-[80px] md:min-h-[100px] disabled:cursor-default overflow-hidden"
                       style={{

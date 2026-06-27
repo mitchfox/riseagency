@@ -136,6 +136,7 @@ const Dashboard = () => {
   const [programs, setPrograms] = useState<PlayerProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedTechnicalSessionId, setSelectedTechnicalSessionId] = useState<string | null>(null);
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
@@ -312,9 +313,17 @@ const Dashboard = () => {
 
   // Handle clicking on a schedule day to jump to that session.
   // sessionType lets us route Technical days to the Technical tab instead of SPS.
-  const handleSessionClick = (sessionKey: string, sessionType?: string) => {
+  const handleSessionClick = (sessionKey: string, sessionType?: string, sessionRefId?: string, sessionId?: string) => {
+    const inferredType = sessionType || (sessionRefId?.startsWith("tech:") ? "technical" : sessionRefId?.startsWith("sps:") ? "sps" : "");
+    const targetMode: "sps" | "technical" = inferredType === "technical" ? "technical" : "sps";
+
+    if (targetMode === "technical") {
+      setSelectedTechnicalSessionId(sessionId || (sessionRefId?.startsWith("tech:") ? sessionRefId.slice(5) : null));
+    } else {
+      setSelectedTechnicalSessionId(null);
+    }
+
     setSelectedSession(sessionKey);
-    const targetMode: "sps" | "technical" = sessionType === "technical" ? "technical" : "sps";
     setProgrammingMode(targetMode);
     try { localStorage.setItem("portal.programmingTab", targetMode); } catch {}
     setAccordionValue(['sessions']);
@@ -2191,17 +2200,14 @@ const Dashboard = () => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("form");
                 }}
-                onNavigateToSession={(sessionKey) => {
+                onNavigateToSession={(sessionKey, sessionType, sessionRefId, sessionId) => {
                   setActiveTab("physical");
-                  setSelectedSession(sessionKey);
-                  setAccordionValue((prev) => {
-                    if (!prev.includes("sessions")) {
-                      return [...prev, "sessions"];
-                    }
-                    return prev;
-                  });
+                  handleSessionClick(sessionKey, sessionType, sessionRefId, sessionId);
                   setTimeout(() => {
-                    const element = document.getElementById(`session-${sessionKey}`);
+                    const targetSessionId = sessionId || (sessionRefId?.startsWith("tech:") ? sessionRefId.slice(5) : null);
+                    const element = document.getElementById(
+                      targetSessionId ? `technical-session-${targetSessionId}` : `session-${sessionKey}`
+                    );
                     if (element) {
                       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
@@ -2209,6 +2215,9 @@ const Dashboard = () => {
                 }}
                 onNavigateToSchedule={() => {
                   setActiveTab("physical");
+                  setProgrammingMode("schedule");
+                  try { localStorage.setItem("portal.programmingTab", "schedule"); } catch {}
+                  setAccordionValue(['schedule']);
                 }}
               />
             </motion.div>
@@ -3539,7 +3548,7 @@ const Dashboard = () => {
               {/* Technical view — kept mounted so data is preloaded */}
               {hasTechnicalPrograms && (
                 <div className={`w-full px-0 md:container md:mx-auto md:px-0 ${programmingMode === "technical" ? "" : "hidden"}`}>
-                  <TechnicalProgramView playerId={playerData?.id ?? null} initialPrograms={technicalPrograms} />
+                  <TechnicalProgramView playerId={playerData?.id ?? null} initialPrograms={technicalPrograms} selectedSessionId={selectedTechnicalSessionId} selectedSessionKey={selectedSession} />
                 </div>
               )}
               {programmingMode !== "technical" && (
@@ -3721,6 +3730,9 @@ const Dashboard = () => {
                                                     const sessionValue = week[day] || '';
                                                     const teamSessionValue = week[`${day}Team`] || '';
                                                     const sessionType = week[`${day}_type`] || '';
+                                                    const sessionRefId = week[`${day}_refId`] || '';
+                                                    const sessionId = week[`${day}_sessionId`] || '';
+                                                    const isTrainingSession = sessionType === "sps" || sessionType === "technical" || sessionRefId.startsWith("sps:") || sessionRefId.startsWith("tech:");
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
@@ -3736,7 +3748,7 @@ const Dashboard = () => {
                                                     return (
                                                       <div 
                                                         key={day}
-                                                        className={`flex flex-col rounded-lg min-h-[50px] md:min-h-[60px] overflow-hidden transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`flex flex-col rounded-lg min-h-[50px] md:min-h-[60px] overflow-hidden transition-all relative ${sessionValue && isTrainingSession ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
@@ -3815,8 +3827,8 @@ const Dashboard = () => {
                                                               </span>
                                                             </div>
                                                             <div 
-                                                              onClick={() => handleSessionClick(sessionValue, sessionType)}
-                                                              className="flex-1 flex items-center justify-center relative cursor-pointer"
+                                                              onClick={() => isTrainingSession && handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
+                                                              className={`flex-1 flex items-center justify-center relative ${isTrainingSession ? 'cursor-pointer' : ''}`}
                                                               style={{ backgroundColor: colors.bg }}
                                                               onMouseEnter={(e) => {
                                                                 if (colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
@@ -3845,8 +3857,8 @@ const Dashboard = () => {
                                                         {/* Individual Session Only or Empty - Full 100% */}
                                                         {(onlySession || (!teamSessionValue && !sessionValue)) && (
                                                           <div 
-                                                            onClick={() => sessionValue && handleSessionClick(sessionValue, sessionType)}
-                                                            className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
+                                                             onClick={() => sessionValue && isTrainingSession && handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
+                                                             className={`flex-1 flex items-center justify-center relative ${sessionValue && isTrainingSession ? 'cursor-pointer' : ''}`}
                                                             style={{ backgroundColor: colors.bg }}
                                                             onMouseEnter={(e) => {
                                                               if (sessionValue && colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
