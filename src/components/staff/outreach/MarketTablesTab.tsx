@@ -634,7 +634,7 @@ export default function MarketTablesTab() {
   // user always sees the start of the new result set.
   useEffect(() => {
     setPage(1);
-  }, [country, league, search]);
+  }, [country, league, search, outreachMode]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
