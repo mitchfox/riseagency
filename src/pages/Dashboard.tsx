@@ -3732,6 +3732,7 @@ const Dashboard = () => {
                                                     const sessionType = week[`${day}_type`] || '';
                                                     const sessionRefId = week[`${day}_refId`] || '';
                                                     const sessionId = week[`${day}_sessionId`] || '';
+                                                    const isTrainingSession = sessionType === "sps" || sessionType === "technical" || sessionRefId.startsWith("sps:") || sessionRefId.startsWith("tech:");
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
@@ -3747,7 +3748,7 @@ const Dashboard = () => {
                                                     return (
                                                       <div 
                                                         key={day}
-                                                        className={`flex flex-col rounded-lg min-h-[50px] md:min-h-[60px] overflow-hidden transition-all relative ${sessionValue ? 'cursor-pointer hover:scale-105' : ''}`}
+                                                        className={`flex flex-col rounded-lg min-h-[50px] md:min-h-[60px] overflow-hidden transition-all relative ${sessionValue && isTrainingSession ? 'cursor-pointer hover:scale-105' : ''}`}
                                                         style={{ 
                                                           border: '1px solid rgba(255, 255, 255, 0.1)'
                                                         }}
@@ -3826,8 +3827,8 @@ const Dashboard = () => {
                                                               </span>
                                                             </div>
                                                             <div 
-                                                              onClick={() => handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
-                                                              className="flex-1 flex items-center justify-center relative cursor-pointer"
+                                                              onClick={() => isTrainingSession && handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
+                                                              className={`flex-1 flex items-center justify-center relative ${isTrainingSession ? 'cursor-pointer' : ''}`}
                                                               style={{ backgroundColor: colors.bg }}
                                                               onMouseEnter={(e) => {
                                                                 if (colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
@@ -3856,8 +3857,8 @@ const Dashboard = () => {
                                                         {/* Individual Session Only or Empty - Full 100% */}
                                                         {(onlySession || (!teamSessionValue && !sessionValue)) && (
                                                           <div 
-                                                             onClick={() => sessionValue && handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
-                                                            className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
+                                                             onClick={() => sessionValue && isTrainingSession && handleSessionClick(sessionValue, sessionType, sessionRefId, sessionId)}
+                                                             className={`flex-1 flex items-center justify-center relative ${sessionValue && isTrainingSession ? 'cursor-pointer' : ''}`}
                                                             style={{ backgroundColor: colors.bg }}
                                                             onMouseEnter={(e) => {
                                                               if (sessionValue && colors.hover) e.currentTarget.style.backgroundColor = colors.hover;
