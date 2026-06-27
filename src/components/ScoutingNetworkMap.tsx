@@ -48,10 +48,18 @@ interface ScoutingNetworkMapProps {
   hideStats?: boolean;
   hideGridToggle?: boolean;
   onClubPositionChange?: (clubName: string, x: number, y: number) => void;
+  /** Optional language override. Used by the Rise With Us / Request
+   *  Representation offer pages so each prospect sees the map labels
+   *  (Network Coverage, country names, etc.) in their own portal
+   *  language regardless of the visitor's currently-active site
+   *  language. Falls back to the site-wide useLanguage hook. */
+  languageOverride?: string;
 }
 
-const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle = false, onClubPositionChange }: ScoutingNetworkMapProps = {}) => {
-  const { t } = useLanguage();
+const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle = false, onClubPositionChange, languageOverride }: ScoutingNetworkMapProps = {}) => {
+  const { t: siteT } = useLanguage();
+  const { t: playerT } = usePlayerLanguageTranslations(languageOverride || "");
+  const t = languageOverride ? playerT : siteT;
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(false);
