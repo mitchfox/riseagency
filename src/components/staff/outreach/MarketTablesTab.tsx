@@ -1149,6 +1149,7 @@ export default function MarketTablesTab() {
                   links={renderContactLinks(tdContact)}
                   onConfirm={(v) => persistAndShell(club, "td", v)}
                   onEdit={() => openEdit(club, "td", tdContact)}
+                  onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1161,6 +1162,7 @@ export default function MarketTablesTab() {
                   links={renderContactLinks(csContact)}
                   onConfirm={(v) => persistAndShell(club, "cs", v)}
                   onEdit={() => openEdit(club, "cs", csContact)}
+                  onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
                 />
               </div>
               <div className="pt-1 border-t border-border/40">
