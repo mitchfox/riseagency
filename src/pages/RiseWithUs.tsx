@@ -318,7 +318,7 @@ const PILLARS: Pillar[] = [
     titleKey: "rwu_how_title", titleFallback: "How We Work With You",
     bodyKey:  "rwu_how_body",
     bodyFallback:
-      "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation and the family is included.",
+      "Direct communication, in your language. The portal, your reports and your day-to-day contact happen in the language you prefer, so nothing is lost in translation.",
   },
 ];
 
