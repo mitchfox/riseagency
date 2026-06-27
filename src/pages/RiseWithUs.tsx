@@ -1098,20 +1098,14 @@ const IntroCinematic = ({
   // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
-  const [mobileSide, setMobileSide] = useState<"left" | "right">("left");
   useEffect(() => {
     if (extraIntro.length === 0) return;
     const t = setInterval(() => {
       setIntroIdx((i) => (i + 1) % extraIntro.length);
       setSideTick((s) => s + 1);
-      setMobileSide((side) => (side === "left" ? "right" : "left"));
     }, 3200);
     return () => clearInterval(t);
   }, [extraIntro.length]);
-
-  useEffect(() => {
-    if (phase === 1 && secondaryParagraph) setMobileSide("left");
-  }, [phase, secondaryParagraph]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
     // capture click position for ripple
@@ -1244,33 +1238,41 @@ const IntroCinematic = ({
         // When the optional secondary paragraph is present, keep the image
         // clear of the copy and visibly alternate top-left then top-right.
         const hasLongSecondary = !!(secondaryParagraph && secondaryParagraph.trim().length > 0);
-        const mobileFramesFull: Array<{ vertical: "top" | "bottom"; offsetVw: number; rotate: number }> = [
-          { vertical: "top", offsetVw: -18, rotate: -3 },
-          { vertical: "bottom", offsetVw: 16, rotate: 4 },
-          { vertical: "top", offsetVw: 14, rotate: 3 },
-          { vertical: "bottom", offsetVw: -16, rotate: -4 },
-          { vertical: "top", offsetVw: 0, rotate: 0 },
-          { vertical: "bottom", offsetVw: 6, rotate: 2 },
-        ];
+        const restrictToTop = hasLongSecondary && phase === 1;
         const m = extraIntro[introIdx % extraIntro.length];
         const frame = sideFrames[sideTick % sideFrames.length];
-        const mobileFrame = mobileFramesFull[sideTick % mobileFramesFull.length];
+        // Deterministic-but-feels-random corner + jitter per tick so the
+        // mobile image hops between corners (TL/TR/BL/BR) with a tiny
+        // 4–8px offset rather than sliding in a predictable pattern.
+        // Top corners only while the long secondary paragraph is on screen
+        // so the copy never overlaps the image.
+        const rand = (seed: number) => {
+          const x = Math.sin(seed * 9301 + 49297) * 233280;
+          return x - Math.floor(x);
+        };
+        const allCorners = ["tl", "tr", "bl", "br"] as const;
+        const topCorners = ["tl", "tr"] as const;
+        const cornerPool = restrictToTop ? topCorners : allCorners;
+        // Avoid landing on the same corner twice in a row.
+        const prevCornerIdx = Math.floor(rand(sideTick) * cornerPool.length);
+        let cornerIdx = Math.floor(rand(sideTick + 1) * cornerPool.length);
+        if (cornerPool.length > 1 && cornerIdx === prevCornerIdx) {
+          cornerIdx = (cornerIdx + 1) % cornerPool.length;
+        }
+        const corner = cornerPool[cornerIdx];
+        const jitterX = 4 + rand(sideTick * 2 + 3) * 4; // 4–8px
+        const jitterY = 4 + rand(sideTick * 2 + 5) * 4; // 4–8px
+        const rotateDeg = (rand(sideTick * 2 + 7) * 8 - 4); // -4..+4deg
+        const isTop = corner === "tl" || corner === "tr";
+        const isLeft = corner === "tl" || corner === "bl";
         const sideClass = `hidden lg:block absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_42px_-12px_hsl(var(--gold)/0.72)] ${frame.className}`;
         const mobileClass = "block lg:hidden absolute object-cover rounded-2xl border border-primary/45 shadow-[0_0_36px_-12px_hsl(var(--gold)/0.72)] h-28 w-44 sm:h-36 sm:w-56";
-        const mobileStyle: React.CSSProperties = hasLongSecondary
-          ? {
-              top: "5%",
-              left: mobileSide === "left" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
-              right: mobileSide === "right" ? "clamp(0.75rem, 4vw, 1.5rem)" : undefined,
-              transform: `rotate(${mobileSide === "left" ? -4 : 4}deg)`,
-              objectPosition: m.objectPosition || "50% 35%",
-            }
-          : {
-              left: "50%",
-              transform: `translateX(calc(-50% + ${mobileFrame.offsetVw}vw)) rotate(${mobileFrame.rotate}deg)`,
-              ...(mobileFrame.vertical === "top" ? { top: "6%" } : { bottom: "10%" }),
-              objectPosition: m.objectPosition || "50% 35%",
-            };
+        const mobileStyle: React.CSSProperties = {
+          [isTop ? "top" : "bottom"]: `calc(${isTop ? "5%" : "10%"} + ${jitterY}px)`,
+          [isLeft ? "left" : "right"]: `calc(clamp(0.75rem, 4vw, 1.5rem) + ${jitterX}px)`,
+          transform: `rotate(${rotateDeg.toFixed(2)}deg)`,
+          objectPosition: m.objectPosition || "50% 35%",
+        } as React.CSSProperties;
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
             <motion.video
@@ -1303,7 +1305,7 @@ const IntroCinematic = ({
               {renderMedia(m, `desktop-${m.url}-${sideTick}`, sideClass, frame.style)}
             </AnimatePresence>
             <AnimatePresence mode="wait">
-              {renderMedia(m, `mobile-${m.url}-${sideTick}-${mobileSide}`, mobileClass, mobileStyle)}
+              {renderMedia(m, `mobile-${m.url}-${sideTick}-${corner}`, mobileClass, mobileStyle)}
             </AnimatePresence>
           </div>
         );
