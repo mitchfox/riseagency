@@ -44,6 +44,67 @@ import bulgariaFlag from "@/assets/flags/bulgaria.png";
 import belarusFlag from "@/assets/flags/belarus.png";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 
+type MapLang = "en" | "es" | "pt" | "fr" | "de" | "it" | "pl" | "cs" | "ru" | "tr" | "hr" | "no";
+
+const normaliseMapLang = (lang?: string | null): MapLang => {
+  const code = (lang || "en").toLowerCase().split("-")[0];
+  return (["en", "es", "pt", "fr", "de", "it", "pl", "cs", "ru", "tr", "hr", "no"] as MapLang[]).includes(code as MapLang)
+    ? (code as MapLang)
+    : "en";
+};
+
+const mapFallbackDict: Record<string, Partial<Record<MapLang, string>>> = {
+  "map.network_coverage": {
+    en: "NETWORK COVERAGE", es: "COBERTURA DE RED", pt: "COBERTURA DA REDE", fr: "COUVERTURE DU RÉSEAU",
+    de: "NETZWERKABDECKUNG", it: "COPERTURA DEL NETWORK", pl: "ZASIĘG SIECI", cs: "POKRYTÍ SÍTĚ",
+    ru: "ОХВАТ СЕТИ", tr: "AĞ KAPSAMI", hr: "POKRIVENOST MREŽE", no: "NETTVERKSDEKNING",
+  },
+  "map.professional_players": {
+    en: "Professional Players", es: "Jugadores profesionales", pt: "Jogadores profissionais", fr: "Joueurs professionnels",
+    de: "Profispieler", it: "Giocatori professionisti", pl: "Zawodnicy profesjonalni", cs: "Profesionální hráči",
+    ru: "Профессиональные игроки", tr: "Profesyonel Oyuncular", hr: "Profesionalni igrači", no: "Profesjonelle spillere",
+  },
+  "map.youth_prospects": {
+    en: "Youth Prospects", es: "Promesas juveniles", pt: "Prospectos jovens", fr: "Espoirs jeunes",
+    de: "Nachwuchstalente", it: "Prospetti giovanili", pl: "Młode talenty", cs: "Mládežnické talenty",
+    ru: "Молодые таланты", tr: "Genç Potansiyeller", hr: "Mladi talenti", no: "Unge talenter",
+  },
+  "map.teams": {
+    en: "Teams", es: "Equipos", pt: "Equipas", fr: "Équipes", de: "Teams", it: "Squadre",
+    pl: "Zespoły", cs: "Týmy", ru: "Команды", tr: "Takımlar", hr: "Momčadi", no: "Lag",
+  },
+  "map.coverage_regions": {
+    en: "COVERAGE REGIONS", es: "REGIONES DE COBERTURA", pt: "REGIÕES DE COBERTURA", fr: "RÉGIONS COUVERTES",
+    de: "ABGEDECKTE REGIONEN", it: "REGIONI COPERTE", pl: "REGIONY ZASIĘGU", cs: "POKRYTÉ REGIONY",
+    ru: "РЕГИОНЫ ОХВАТА", tr: "KAPSAM BÖLGELERİ", hr: "REGIJE POKRIVENOSTI", no: "DEKTE REGIONER",
+  },
+  "map.players_scouted": {
+    en: "Players Scouted", es: "Jugadores observados", pt: "Jogadores observados", fr: "Joueurs observés",
+    de: "Gescoutete Spieler", it: "Giocatori visionati", pl: "Obserwowani zawodnicy", cs: "Sledovaní hráči",
+    ru: "Просмотренные игроки", tr: "İzlenen Oyuncular", hr: "Skautirani igrači", no: "Speidede spillere",
+  },
+  "map.age_first_team": { en: "First Team", es: "Primer equipo", pt: "Equipa principal", fr: "Équipe première", de: "Erste Mannschaft", it: "Prima squadra", pl: "Pierwszy zespół", cs: "A-tým", ru: "Основная команда", tr: "A Takım", hr: "Prva momčad", no: "A-lag" },
+  "map.age_reserves": { en: "Reserves", es: "Reservas", pt: "Reservas", fr: "Réserves", de: "Reserve", it: "Riserve", pl: "Rezerwy", cs: "Rezerva", ru: "Резерв", tr: "Rezerv", hr: "Rezerve", no: "Reserver" },
+  "map.age_u19": { en: "Under 19", es: "Sub-19", pt: "Sub-19", fr: "Moins de 19", de: "U19", it: "Under 19", pl: "U19", cs: "U19", ru: "До 19", tr: "U19", hr: "U19", no: "U19" },
+  "map.age_u16": { en: "Under 16", es: "Sub-16", pt: "Sub-16", fr: "Moins de 16", de: "U16", it: "Under 16", pl: "U16", cs: "U16", ru: "До 16", tr: "U16", hr: "U16", no: "U16" },
+  "map.age_u15": { en: "Under 15", es: "Sub-15", pt: "Sub-15", fr: "Moins de 15", de: "U15", it: "Under 15", pl: "U15", cs: "U15", ru: "До 15", tr: "U15", hr: "U15", no: "U15" },
+  "map.age_u14": { en: "Under 14", es: "Sub-14", pt: "Sub-14", fr: "Moins de 14", de: "U14", it: "Under 14", pl: "U14", cs: "U14", ru: "До 14", tr: "U14", hr: "U14", no: "U14" },
+};
+
+const countryIsoCodes: Record<string, string> = {
+  Austria: "AT", Belgium: "BE", Bulgaria: "BG", Croatia: "HR", "Czech Republic": "CZ", Denmark: "DK",
+  England: "GB", France: "FR", Germany: "DE", Greece: "GR", Italy: "IT", Netherlands: "NL", Norway: "NO",
+  Poland: "PL", Portugal: "PT", Romania: "RO", Russia: "RU", Scotland: "GB", Serbia: "RS", Spain: "ES",
+  Sweden: "SE", Switzerland: "CH", Turkey: "TR", Ukraine: "UA", Ireland: "IE", Iceland: "IS", Belarus: "BY",
+  Finland: "FI", Estonia: "EE", Latvia: "LV", Lithuania: "LT",
+};
+
+const localCountryNames: Record<string, Partial<Record<MapLang, string>>> = {
+  England: { es: "Inglaterra", pt: "Inglaterra", fr: "Angleterre", de: "England", it: "Inghilterra", pl: "Anglia", cs: "Anglie", ru: "Англия", tr: "İngiltere", hr: "Engleska", no: "England" },
+  Scotland: { es: "Escocia", pt: "Escócia", fr: "Écosse", de: "Schottland", it: "Scozia", pl: "Szkocja", cs: "Skotsko", ru: "Шотландия", tr: "İskoçya", hr: "Škotska", no: "Skottland" },
+  "Czech Republic": { es: "República Checa", pt: "República Checa", fr: "République tchèque", de: "Tschechische Republik", it: "Repubblica Ceca", pl: "Czechy", cs: "Česká republika", ru: "Чехия", tr: "Çek Cumhuriyeti", hr: "Češka", no: "Tsjekkia" },
+};
+
 interface ScoutingNetworkMapProps {
   initialCountry?: string;
   hideStats?: boolean;
@@ -58,9 +119,30 @@ interface ScoutingNetworkMapProps {
 }
 
 const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle = false, onClubPositionChange, languageOverride }: ScoutingNetworkMapProps = {}) => {
-  const { t: siteT } = useLanguage();
+  const { t: siteT, language: siteLanguage } = useLanguage();
   const { t: playerT } = usePlayerLanguageTranslations(languageOverride || "");
-  const t = languageOverride ? playerT : siteT;
+  const activeLang = normaliseMapLang(languageOverride || siteLanguage);
+  const baseT = languageOverride ? playerT : siteT;
+  const t = (key: string, fallback: string) => {
+    if (mapFallbackDict[key]?.[activeLang]) return mapFallbackDict[key]![activeLang]!;
+    const translated = baseT(key, fallback);
+    if (translated && translated !== fallback && translated !== key) return translated;
+    return mapFallbackDict[key]?.en || fallback;
+  };
+  const translateCountry = (country: string) => {
+    const localOverride = localCountryNames[country]?.[activeLang];
+    if (localOverride) return localOverride;
+    const dbKey = `countries.${country.toLowerCase().replace(/ /g, '_')}`;
+    const fromDb = baseT(dbKey, country);
+    if (fromDb && fromDb !== country && fromDb !== dbKey) return fromDb;
+    const iso = countryIsoCodes[country];
+    if (!iso || activeLang === "en") return country;
+    try {
+      return new Intl.DisplayNames([activeLang === "no" ? "nb" : activeLang], { type: "region" }).of(iso) || country;
+    } catch {
+      return country;
+    }
+  };
   const [viewBox, setViewBox] = useState("0 0 1000 600");
   const [zoomLevel, setZoomLevel] = useState(0); // 0 = out, 1 = medium, 2 = fully zoomed
   const [showGrid, setShowGrid] = useState(false);
@@ -1518,7 +1600,7 @@ const ScoutingNetworkMap = ({ initialCountry, hideStats = false, hideGridToggle 
                           {flagImage && (
                             <img src={flagImage} alt={country} className="w-5 h-4 object-cover rounded-sm flex-shrink-0" />
                           )}
-                          <span className="font-medium text-sm flex-1">{t(`countries.${country.toLowerCase().replace(/ /g, '_')}`, country)}</span>
+                          <span className="font-medium text-sm flex-1">{translateCountry(country)}</span>
                           <span className="text-xs text-muted-foreground font-medium">{formatNumber(countryTotal)}</span>
                         </button>
                         

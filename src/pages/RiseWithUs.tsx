@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { enGB, es, pt, fr, de, it, pl, cs, ru, tr, hr, nb } from "date-fns/locale";
 import { insertStaffNotification } from "@/lib/staffNotifications";
 import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
@@ -928,6 +929,15 @@ const timeOfDayDict: Record<TimeOfDay, Partial<Record<Lang, string>>> = {
   any:      { en: "Any time", es: "Cualquier hora", pt: "Qualquer hora", fr: "À n'importe quelle heure", de: "Jederzeit", it: "Qualunque ora", pl: "O dowolnej porze", cs: "Kdykoli", ru: "В любое время", tr: "Her saat", hr: "Bilo kada", no: "Når som helst" },
 };
 
+const calendarLocales: Record<Lang, typeof enGB> = {
+  en: enGB, es, pt, fr, de, it, pl, cs, ru, tr, hr, no: nb,
+};
+
+const intlDateLocales: Record<Lang, string> = {
+  en: "en-GB", es: "es-ES", pt: "pt-PT", fr: "fr-FR", de: "de-DE", it: "it-IT",
+  pl: "pl-PL", cs: "cs-CZ", ru: "ru-RU", tr: "tr-TR", hr: "hr-HR", no: "nb-NO",
+};
+
 const MeetingBookerDialog = ({
   open, onOpenChange, player, lang,
 }: {
@@ -954,6 +964,7 @@ const MeetingBookerDialog = ({
 
   const labelFor = (k: TimeOfDay) =>
     timeOfDayDict[k]?.[lang as Lang] || timeOfDayDict[k]?.en || k;
+  const langCode = ((lang || "en") in calendarLocales ? lang : "en") as Lang;
 
   // Calendar window: starts tomorrow, runs for one full month.
   const tomorrow = useMemo(() => {
@@ -970,7 +981,7 @@ const MeetingBookerDialog = ({
   const formatDates = (dates: Date[]) =>
     [...dates]
       .sort((a, b) => a.getTime() - b.getTime())
-      .map((d) => d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }))
+      .map((d) => d.toLocaleDateString(intlDateLocales[langCode], { weekday: "short", day: "numeric", month: "short" }))
       .join(", ");
 
   const submit = async () => {
@@ -1092,6 +1103,7 @@ const MeetingBookerDialog = ({
                     fromDate={tomorrow}
                     toDate={oneMonthOut}
                     defaultMonth={tomorrow}
+                    locale={calendarLocales[langCode]}
                     showOutsideDays={false}
                     className="mx-auto"
                   />
@@ -1442,11 +1454,11 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, extraIntro, secondaryParagraph, onDone,
+  fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone,
 }: {
   fullName: string; lang: string; extraImages: string[];
   extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
-  secondaryParagraph?: string | null; onDone: () => void;
+  secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -1581,7 +1593,7 @@ const IntroCinematic = ({
           corners, on mobile (where there is no side room) it appears
           stacked above and below the text instead so the prospect still
           sees their own footage during the intro. */}
-      {extraIntro.length > 0 && (() => {
+      {phase !== 3 && extraIntro.length > 0 && (() => {
         const sideFrames: Array<{ className: string; style: React.CSSProperties }> = [
           { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", left: "3%", rotate: "-4deg" } },
           { className: "h-28 w-28 md:h-36 md:w-36 lg:h-36 lg:w-36 xl:h-44 xl:w-44", style: { top: "8%", right: "3%", rotate: "4deg" } },
@@ -1772,6 +1784,25 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 28px hsl(var(--gold)/0.55)" }}>
                 {offerT(lang, "rise_with_us", "Rise With Us")}
               </p>
+              <motion.div
+                className="relative mt-1 flex h-28 w-28 items-center justify-center rounded-full border-2 border-primary/70 bg-black/65 shadow-[0_0_34px_-8px_hsl(var(--gold)/0.8)] sm:h-36 sm:w-36"
+                initial={{ opacity: 0, y: 10, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt={fullName}
+                    className="h-full w-full rounded-full object-cover object-top"
+                    draggable={false}
+                  />
+                ) : (
+                  <span className="font-bebas text-4xl uppercase tracking-[0.08em] text-primary sm:text-5xl">
+                    {fullName.trim().charAt(0)}
+                  </span>
+                )}
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1951,6 +1982,11 @@ const RiseWithUs = () => {
       .map((m) => ({ kind: m.kind, url: m.url }));
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
+  const playerOfferT = (key: string, fallback: string) => {
+    if (offerDict[key]?.en) return offerT(lang, key, fallback);
+    const fromDb = t(key, fallback);
+    return fromDb && fromDb !== fallback && fromDb !== key ? fromDb : offerT(lang, key, fallback);
+  };
 
   const goPortal = () => { setStage("portal"); window.scrollTo({ top: 0, behavior: "auto" }); };
   const goNext = () => { setStage("next"); window.scrollTo({ top: 0, behavior: "auto" }); };
@@ -1991,6 +2027,7 @@ const RiseWithUs = () => {
             extraImages={extraImages}
             extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
+            profileImageUrl={player.image_url || finalFallbackImage || null}
             onDone={() => setIntroDone(true)}
           />
         )}
@@ -2006,7 +2043,7 @@ const RiseWithUs = () => {
               <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
                 <header className="relative pb-6 text-center md:pb-10">
                   <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
-                    <img src={riseLogoWhite} alt="RISE" className="h-14 md:h-20 w-auto" />
+                    <img src={riseLogoWhite} alt="RISE" className="h-16 md:h-24 w-auto" />
                     <div className="relative flex w-full items-center gap-2 md:gap-4">
                       <span className="h-px flex-1 bg-primary/45" />
                       <h1 className="whitespace-nowrap font-bebas text-2xl uppercase leading-none tracking-[0.1em] text-foreground sm:text-3xl md:text-4xl md:tracking-[0.12em] lg:text-5xl lg:tracking-[0.14em]">
@@ -2124,7 +2161,7 @@ const RiseWithUs = () => {
 
                 <BallonDorVisionCard
                   onBookMeeting={() => setMeetingOpen(true)}
-                  t={t}
+                  t={playerOfferT}
                 />
               </div>
 
@@ -2227,7 +2264,7 @@ const RiseWithUs = () => {
               lang={lang}
               ageGroup={ageGroup}
               onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
-              t={t}
+                t={playerOfferT}
             />
           )}
 
