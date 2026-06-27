@@ -224,7 +224,17 @@ const SessionTable = ({ drills }: { drills: Drill[] }) => {
   );
 };
 
-export const TechnicalProgramView = ({ playerId, initialPrograms }: { playerId: string | null; initialPrograms?: Array<Program & { sessions?: Session[] }> }) => {
+export const TechnicalProgramView = ({
+  playerId,
+  initialPrograms,
+  selectedSessionId,
+  selectedSessionKey,
+}: {
+  playerId: string | null;
+  initialPrograms?: Array<Program & { sessions?: Session[] }>;
+  selectedSessionId?: string | null;
+  selectedSessionKey?: string | null;
+}) => {
   const [programs, setPrograms] = useState<Array<Program & { sessions?: Session[] }>>([]);
   const [sessions, setSessions] = useState<Record<string, Session[]>>({});
   const [loading, setLoading] = useState(true);
@@ -277,6 +287,20 @@ export const TechnicalProgramView = ({ playerId, initialPrograms }: { playerId: 
       setLoading(false);
     })();
   }, [playerId, initialPrograms]);
+
+  useEffect(() => {
+    if (selectedSessionId) {
+      setSelectedSessionId(selectedSessionId);
+      return;
+    }
+    if (!selectedSessionKey) return;
+    const key = selectedSessionKey.trim().toLowerCase();
+    if (!key) return;
+    const matched = Object.values(sessions).flat().find((session) =>
+      String(session.session_key || "").trim().toLowerCase() === key
+    );
+    if (matched) setSelectedSessionId(matched.id);
+  }, [selectedSessionId, selectedSessionKey, sessions]);
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading technical programmes…</p>;
   if (!programs.length) return <p className="text-sm text-muted-foreground">No technical programmes yet.</p>;
