@@ -42,6 +42,7 @@ import latviaFlag from "@/assets/flags/latvia.png";
 import lithuaniaFlag from "@/assets/flags/lithuania.png";
 import bulgariaFlag from "@/assets/flags/bulgaria.png";
 import belarusFlag from "@/assets/flags/belarus.png";
+import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
 
 interface ScoutingNetworkMapProps {
   initialCountry?: string;
