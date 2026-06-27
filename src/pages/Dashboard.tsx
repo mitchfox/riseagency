@@ -2200,17 +2200,14 @@ const Dashboard = () => {
                   setActiveTab("analysis");
                   setActiveAnalysisTab("form");
                 }}
-                onNavigateToSession={(sessionKey) => {
+                onNavigateToSession={(sessionKey, sessionType, sessionRefId, sessionId) => {
                   setActiveTab("physical");
-                  setSelectedSession(sessionKey);
-                  setAccordionValue((prev) => {
-                    if (!prev.includes("sessions")) {
-                      return [...prev, "sessions"];
-                    }
-                    return prev;
-                  });
+                  handleSessionClick(sessionKey, sessionType, sessionRefId, sessionId);
                   setTimeout(() => {
-                    const element = document.getElementById(`session-${sessionKey}`);
+                    const targetSessionId = sessionId || (sessionRefId?.startsWith("tech:") ? sessionRefId.slice(5) : null);
+                    const element = document.getElementById(
+                      targetSessionId ? `technical-session-${targetSessionId}` : `session-${sessionKey}`
+                    );
                     if (element) {
                       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
