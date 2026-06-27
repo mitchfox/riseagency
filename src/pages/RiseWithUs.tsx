@@ -64,7 +64,16 @@ interface OfferSettings {
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
 const tyresePortalEmbed = (lang: string) =>
   `${TYRESE_PORTAL_EMBED_BASE}&lang=${encodeURIComponent(lang || "en")}`;
-const WHATSAPP_URL = "https://wa.me/447508342901?text=" + encodeURIComponent("Hi RISE, I just read my invitation");
+const WHATSAPP_BASE = "https://wa.me/447508342901";
+/**
+ * Translate the opening line of the WhatsApp deep link so the prospect
+ * sees a message in their own language when they tap "Message us on
+ * WhatsApp". English is the fallback so the link is always usable.
+ */
+const buildWhatsappUrl = (lang: string) => {
+  const msg = offerT(lang, "rwu_whatsapp_opener", "Hi RISE, I just read my invitation");
+  return `${WHATSAPP_BASE}?text=${encodeURIComponent(msg)}`;
+};
 const HOMEPAGE_URL = "https://www.risefootballagency.com";
 
 /* ============== TRANSLATION DICT (offer-only strings) ============== */
@@ -219,6 +228,20 @@ const portalWelcomeDict: Record<string, Partial<Record<Lang, string>>> = {
     en: "Got it", es: "Entendido", pt: "Entendido", fr: "Compris",
     de: "Verstanden", it: "Capito", pl: "Rozumiem", cs: "Rozumím",
     ru: "Понятно", tr: "Anladım", hr: "Razumijem", no: "Skjønner",
+  },
+  rwu_whatsapp_opener: {
+    en: "Hi RISE, I just read my invitation",
+    es: "Hola RISE, acabo de leer mi invitación",
+    pt: "Olá RISE, acabei de ler o meu convite",
+    fr: "Bonjour RISE, je viens de lire mon invitation",
+    de: "Hallo RISE, ich habe gerade meine Einladung gelesen",
+    it: "Ciao RISE, ho appena letto il mio invito",
+    pl: "Cześć RISE, właśnie przeczytałem moje zaproszenie",
+    cs: "Ahoj RISE, právě jsem si přečetl pozvánku",
+    ru: "Здравствуйте, RISE, я только что прочитал приглашение",
+    tr: "Merhaba RISE, davetimi az önce okudum",
+    hr: "Bok RISE, upravo sam pročitao pozivnicu",
+    no: "Hei RISE, jeg har nettopp lest invitasjonen min",
   },
 };
 const allDicts = { ...offerDict, ...portalWelcomeDict };
