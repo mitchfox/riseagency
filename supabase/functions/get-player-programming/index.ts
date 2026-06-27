@@ -114,7 +114,11 @@ Deno.serve(async (req) => {
         if (!key) continue;
         const meta = { key, title: data?.title ?? null, type: "sps" as const };
         refToSession.set(`sps:${program.id}:${rawKey}`, meta);
-        refToSession.set(`sps:${program.id}:session${key.replace(/^Pre-/i, "")}`, meta);
+        // Only alias to `sessionX` when this is a main session, not a Pre-X variant.
+        // Otherwise PRE-A would overwrite the A mapping for `sessionA` refIds.
+        if (!/^Pre-/i.test(key)) {
+          refToSession.set(`sps:${program.id}:session${key}`, meta);
+        }
       }
     }
 
