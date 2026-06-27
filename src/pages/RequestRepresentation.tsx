@@ -1347,7 +1347,7 @@ export const DetailView = ({
 
               {/* 2. The same interactive map used on the Players page. */}
               <div className="overflow-hidden rise-slant-card border border-border/60 bg-card/40">
-                <div className="h-[640px] md:h-[760px] lg:h-[860px]">
+                <div className="h-[460px] md:h-[560px] lg:h-[620px]">
                   <ScoutingNetworkMap hideGridToggle />
                 </div>
               </div>
