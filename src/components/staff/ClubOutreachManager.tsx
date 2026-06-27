@@ -462,6 +462,24 @@ export default function ClubOutreachManager() {
     scrollPanelToTop();
   };
 
+  // External trigger: Market Tables (and possibly other surfaces) dispatch
+  // this event to open the New Outreach panel with a club + contact name
+  // already filled in.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { clubId?: string; preparedFor?: string } | undefined;
+      if (!detail) return;
+      setMode('club');
+      setEditRow(null);
+      setSettingsOpen(false);
+      setNewPrefill({ clubId: detail.clubId, preparedFor: detail.preparedFor });
+      setNewOpen(true);
+      scrollPanelToTop();
+    };
+    window.addEventListener("staff:open-club-outreach-new", handler as EventListener);
+    return () => window.removeEventListener("staff:open-club-outreach-new", handler as EventListener);
+  }, []);
+
   const openSettingsPanel = () => {
     setSettingsOpen(true);
     scrollPanelToTop();
@@ -479,21 +497,22 @@ export default function ClubOutreachManager() {
   if (newOpen) {
     return (
       <div ref={rootRef} className="space-y-4">
-        <Button variant="outline" onClick={() => setNewOpen(false)} className="gap-2">
+        <Button variant="outline" onClick={() => { setNewOpen(false); setNewPrefill(null); }} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Outreach
         </Button>
         <OutreachDialog
           mode={mode}
           open={newOpen}
-          onClose={() => setNewOpen(false)}
+          onClose={() => { setNewOpen(false); setNewPrefill(null); }}
           players={players}
           clubs={clubs}
           allRows={rows}
           defaultFit={defaultFit}
           defaultSeasonDataMode={defaultSeasonDataMode}
           defaultVideoMode={defaultVideoMode}
+          prefill={newPrefill ?? undefined}
           onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
-          onSaved={() => { setNewOpen(false); load(); }}
+          onSaved={() => { setNewOpen(false); setNewPrefill(null); load(); }}
         />
       </div>
     );
