@@ -1748,7 +1748,7 @@ export const DetailView = ({
                   >
                     {widont(t(
                       "representation.director_jolon_bio",
-                      "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, obsessed with the small details that separate the best from the rest.",
+                      "Founder of Fuel For Football and lead architect of the RISE performance methodology. A decade spent building data, analysis and training programmes around Premier League and European talent, through an academic background at University of Bath. Obsessed with the small details that separate the best from the rest.",
                     ))}
                   </p>
                 </div>
