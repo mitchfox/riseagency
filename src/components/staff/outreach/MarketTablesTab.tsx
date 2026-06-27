@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -157,8 +157,6 @@ const additionalContactsForClub = (
     .filter((c) => {
       if (excludeIds.has(c.id)) return false;
       if (!contactMatchesClub(c, clubName, country)) return false;
-      if (c.position && TD_RE.test(c.position)) return false;
-      if (c.position && CS_RE.test(c.position)) return false;
       if (c.position && /\b(player|agent)\b/i.test(c.position)) return false;
       // Never surface placeholder rows whose "name" is just the club name —
       // these are shell records used to anchor the club, not real people.
