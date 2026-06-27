@@ -168,6 +168,9 @@ export default function ClubOutreachManager() {
   const [newOpen, setNewOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
+  // Prefill state for when the New Outreach panel is opened programmatically
+  // (e.g. from the Market Tables "Create outreach" buttons).
+  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; preparedFor?: string } | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
