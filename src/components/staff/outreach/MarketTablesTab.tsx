@@ -527,12 +527,55 @@ export default function MarketTablesTab() {
               },
             };
           });
+          if (payload.eventType !== "DELETE") {
+            setActivity((prev) => {
+              const next = [
+                {
+                  id: `${row.id ?? row.club_id}-${row.updated_at ?? Date.now()}`,
+                  club_id: row.club_id,
+                  td: row.technical_director_name ?? null,
+                  cs: row.chief_scout_name ?? null,
+                  at: (row.updated_at as string) ?? new Date().toISOString(),
+                  kind: (payload.eventType === "INSERT" ? "insert" : "update") as
+                    | "insert"
+                    | "update",
+                },
+                ...prev.filter((e) => e.club_id !== row.club_id || e.at !== (row.updated_at ?? "")),
+              ];
+              return next.slice(0, 60);
+            });
+          }
         },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
+  }, []);
+
+  // Seed the activity feed with the most recent saves so the popover is
+  // useful straight away rather than only after a teammate makes an edit
+  // while we're watching.
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("market_table_entries")
+        .select("id, club_id, technical_director_name, chief_scout_name, created_at, updated_at")
+        .eq("market_table_key", MARKET_TABLE_KEY)
+        .order("updated_at", { ascending: false })
+        .limit(40);
+      if (error || !data) return;
+      setActivity(
+        (data as any[]).map((r) => ({
+          id: `${r.id}-${r.updated_at}`,
+          club_id: r.club_id,
+          td: r.technical_director_name ?? null,
+          cs: r.chief_scout_name ?? null,
+          at: r.updated_at ?? r.created_at,
+          kind: r.created_at === r.updated_at ? "insert" : "update",
+        })),
+      );
+    })();
   }, []);
 
   const countries = useMemo(() => {
