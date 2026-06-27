@@ -1285,8 +1285,9 @@ const IntroCinematic = ({
                   transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.img
-                  src={riseLogoWhiteHQ} alt="RISE"
+                  src={riseLogoWhite} alt="RISE"
                   className="relative h-24 sm:h-32 md:h-40 w-auto"
+                  style={{ imageRendering: "auto" as any }}
                   initial={{ filter: "drop-shadow(0 0 0px hsl(var(--gold)))" }}
                   animate={{ filter: "drop-shadow(0 0 22px hsl(var(--gold)/0.85))" }}
                   transition={{ duration: 1.2, repeat: Infinity, repeatType: "mirror" }}
