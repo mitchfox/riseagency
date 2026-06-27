@@ -224,13 +224,24 @@ const SessionTable = ({ drills }: { drills: Drill[] }) => {
   );
 };
 
-export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) => {
-  const [programs, setPrograms] = useState<Program[]>([]);
+export const TechnicalProgramView = ({ playerId, initialPrograms }: { playerId: string | null; initialPrograms?: Array<Program & { sessions?: Session[] }> }) => {
+  const [programs, setPrograms] = useState<Array<Program & { sessions?: Session[] }>>([]);
   const [sessions, setSessions] = useState<Record<string, Session[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialPrograms) {
+      const byProgram: Record<string, Session[]> = {};
+      initialPrograms.forEach((program: any) => {
+        byProgram[program.id] = Array.isArray(program.sessions) ? program.sessions : [];
+      });
+      setPrograms(initialPrograms as any);
+      setSessions(byProgram);
+      setLoading(false);
+      return;
+    }
+
     if (!playerId) { setLoading(false); return; }
     (async () => {
       setLoading(true);
@@ -265,7 +276,7 @@ export const TechnicalProgramView = ({ playerId }: { playerId: string | null }) 
       setSessions(byProgram);
       setLoading(false);
     })();
-  }, [playerId]);
+  }, [playerId, initialPrograms]);
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading technical programmes…</p>;
   if (!programs.length) return <p className="text-sm text-muted-foreground">No technical programmes yet.</p>;

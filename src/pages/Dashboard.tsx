@@ -148,6 +148,7 @@ const Dashboard = () => {
     (typeof window !== "undefined" && (localStorage.getItem("portal.programmingTab") as any)) || "schedule"
   );
   const [hasTechnicalPrograms, setHasTechnicalPrograms] = useState<boolean>(false);
+  const [technicalPrograms, setTechnicalPrograms] = useState<any[]>([]);
   const [portalLanguageHint, setPortalLanguageHint] = useState<string>("en");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [visibleClipsCount, setVisibleClipsCount] = useState(10); // Show 10 clips initially
@@ -232,18 +233,15 @@ const Dashboard = () => {
   // Initialize push notifications with player ID
   usePushNotifications(playerData?.id);
 
-  // Detect whether this player has any technical programmes; the Technical
-  // tab is only surfaced once at least one programme exists.
+  // Reset technical programme state when the logged-in player changes. The
+  // actual programme data is loaded through get-player-programming, which is
+  // compatible with the portal's localStorage login and does not rely on a
+  // Supabase Auth JWT being present.
   useEffect(() => {
-    if (!playerData?.id) { setHasTechnicalPrograms(false); return; }
-    (async () => {
-      const { count } = await (supabase as any)
-        .from("technical_programs")
-        .select("id", { count: "exact", head: true })
-        .eq("player_id", playerData.id);
-      const has = (count ?? 0) > 0;
-      setHasTechnicalPrograms(has);
-    })();
+    if (!playerData?.id) {
+      setHasTechnicalPrograms(false);
+      setTechnicalPrograms([]);
+    }
   }, [playerData?.id]);
 
   // If the saved tab points at content that doesn't exist for this player,
@@ -1539,31 +1537,48 @@ const Dashboard = () => {
       if (playerError) throw playerError;
       if (!playerData) return;
 
-      // Fetch their programs
-      const { data: programsData, error: programsError } = await supabase
-        .from("player_programs")
-        .select("*")
-        .eq("player_id", playerData.id)
-        .order("created_at", { ascending: false });
-
-      if (programsError) throw programsError;
-
-      // Pull unified weeks from programming_weeks (single source of truth)
-      const { composeWeeklySchedulesForPlayer } = await import("@/lib/composeWeeklySchedules");
-      const unified = await composeWeeklySchedulesForPlayer(playerData.id);
-
-      // Normalize program data and prefer the unified weeks when present
-      const normalizedPrograms = (programsData || []).map(program => {
-        const unifiedWeeks = unified.byProgram.get(program.id) || [];
-        const legacy = Array.isArray(program.weekly_schedules) ? program.weekly_schedules : [];
-        return {
-          ...program,
-          weekly_schedules: unifiedWeeks.length > 0 ? unifiedWeeks : legacy,
-          sessions: program.sessions && typeof program.sessions === 'object' && !Array.isArray(program.sessions)
-            ? program.sessions
-            : {}
-        };
+      // Fetch portal programming through an edge function so player portal
+      // logins that are stored in localStorage (rather than Supabase Auth) can
+      // still see their master schedule and technical programme safely.
+      const { data: programmingPayload, error: programmingError } = await supabase.functions.invoke("get-player-programming", {
+        body: { playerId: playerData.id, email: email.trim().toLowerCase() },
       });
+
+      let normalizedPrograms: any[] = [];
+
+      if (!programmingError && programmingPayload) {
+        normalizedPrograms = Array.isArray((programmingPayload as any).programs)
+          ? (programmingPayload as any).programs
+          : [];
+        setTechnicalPrograms(Array.isArray((programmingPayload as any).technicalPrograms) ? (programmingPayload as any).technicalPrograms : []);
+        setHasTechnicalPrograms(!!(programmingPayload as any).hasTechnicalPrograms);
+      } else {
+        console.warn("Programming edge load failed, falling back to direct queries", programmingError);
+
+        // Fallback for staff/authenticated sessions.
+        const { data: programsData, error: programsError } = await supabase
+          .from("player_programs")
+          .select("*")
+          .eq("player_id", playerData.id)
+          .order("created_at", { ascending: false });
+
+        if (programsError) throw programsError;
+
+        const { composeWeeklySchedulesForPlayer } = await import("@/lib/composeWeeklySchedules");
+        const unified = await composeWeeklySchedulesForPlayer(playerData.id);
+
+        normalizedPrograms = (programsData || []).map(program => {
+          const unifiedWeeks = unified.byProgram.get(program.id) || [];
+          const legacy = Array.isArray(program.weekly_schedules) ? program.weekly_schedules : [];
+          return {
+            ...program,
+            weekly_schedules: unifiedWeeks.length > 0 ? unifiedWeeks : legacy,
+            sessions: program.sessions && typeof program.sessions === 'object' && !Array.isArray(program.sessions)
+              ? program.sessions
+              : {}
+          };
+        });
+      }
       
       setPrograms(normalizedPrograms);
       
