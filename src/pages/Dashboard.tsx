@@ -310,14 +310,14 @@ const Dashboard = () => {
     return colorMap[key] || { bg: 'hsl(0, 0%, 15%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 25%)' };
   };
 
-  // Handle clicking on a schedule day to jump to that session
-  const handleSessionClick = (sessionKey: string) => {
+  // Handle clicking on a schedule day to jump to that session.
+  // sessionType lets us route Technical days to the Technical tab instead of SPS.
+  const handleSessionClick = (sessionKey: string, sessionType?: string) => {
     setSelectedSession(sessionKey);
-    // Schedule lives in its own tab now; jump to SPS tab so the sessions accordion is visible.
-    setProgrammingMode("sps");
-    try { localStorage.setItem("portal.programmingTab", "sps"); } catch {}
+    const targetMode: "sps" | "technical" = sessionType === "technical" ? "technical" : "sps";
+    setProgrammingMode(targetMode);
+    try { localStorage.setItem("portal.programmingTab", targetMode); } catch {}
     setAccordionValue(['sessions']);
-    // Scroll to sessions section after state update
     setTimeout(() => {
       const sessionsSection = document.querySelector('[value="sessions"]');
       sessionsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
