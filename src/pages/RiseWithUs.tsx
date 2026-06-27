@@ -1543,6 +1543,25 @@ const RiseWithUs = () => {
                     hub stays focused on the prospect's own journey rather
                     than a generic stars carousel. */}
 
+                {/* Mission bio - mirrors the Representation page header so
+                    every prospect lands on the same context about RISE
+                    before tapping into the grouped cards. */}
+                <div className="mx-auto mt-1 w-full rise-slant-card-sm border border-primary/20 bg-black/80 px-4 py-3 md:max-w-3xl md:px-6 md:py-4">
+                  <p
+                    className="text-[12.4px] leading-relaxed text-foreground/85 md:text-[15.4px]"
+                    style={{
+                      textWrap: "pretty",
+                      hyphens: "none",
+                      WebkitHyphens: "none",
+                      msHyphens: "none",
+                      wordBreak: "normal",
+                      overflowWrap: "normal",
+                    } as React.CSSProperties}
+                  >
+                    {t(MISSION_BIO_KEY, MISSION_BIO_FALLBACK)}
+                  </p>
+                </div>
+
                 {GROUPS.map((g: GroupKey) => {
                   const cards = CARD_META.filter((c) => c.group === g && visibleCardKeys.has(c.key));
                   if (cards.length === 0) return null;
