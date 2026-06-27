@@ -34,8 +34,12 @@ import {
 } from "./RequestRepresentation";
 import { type ScoutingPosition } from "@/data/scoutingSkills";
 import { normalisePosition } from "@/lib/positionNormalise";
-import riseLogoWhite from "@/assets/RISEWhite.png";
+import riseLogoWhiteLowRes from "@/assets/RISEWhite.png";
 import riseLogoWhiteHQ from "@/assets/RISEWhiteHQ.png";
+// Use the high-resolution mark everywhere - the low-res file is kept around
+// only to keep the asset import graph stable.
+const riseLogoWhite = riseLogoWhiteHQ;
+void riseLogoWhiteLowRes;
 import smudgedMarbleBg from "@/assets/smudged-marble-login.png";
 import ballondorAsset from "@/assets/ballondor.png.asset.json";
 
