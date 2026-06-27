@@ -1983,6 +1983,7 @@ const RiseWithUs = () => {
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
   const playerOfferT = (key: string, fallback: string) => {
+    if (offerDict[key]?.en) return offerT(lang, key, fallback);
     const fromDb = t(key, fallback);
     return fromDb && fromDb !== fallback && fromDb !== key ? fromDb : offerT(lang, key, fallback);
   };
