@@ -1775,7 +1775,7 @@ export const DetailView = ({
                   >
                     {widont(t(
                       "representation.director_kuda_bio",
-                      "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Brings the commercial and contractual rigour that protects every player we represent.",
+                      "Director with a deep international network across European football, leading negotiation, club placement and the day to day relationships that move careers forward. Several years of experience marketing athletes and helping to establish their brand. Brings the commercial and contractual rigour that protects every player we represent.",
                     ))}
                   </p>
                 </div>
