@@ -310,14 +310,14 @@ const Dashboard = () => {
     return colorMap[key] || { bg: 'hsl(0, 0%, 15%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 25%)' };
   };
 
-  // Handle clicking on a schedule day to jump to that session
-  const handleSessionClick = (sessionKey: string) => {
+  // Handle clicking on a schedule day to jump to that session.
+  // sessionType lets us route Technical days to the Technical tab instead of SPS.
+  const handleSessionClick = (sessionKey: string, sessionType?: string) => {
     setSelectedSession(sessionKey);
-    // Schedule lives in its own tab now; jump to SPS tab so the sessions accordion is visible.
-    setProgrammingMode("sps");
-    try { localStorage.setItem("portal.programmingTab", "sps"); } catch {}
+    const targetMode: "sps" | "technical" = sessionType === "technical" ? "technical" : "sps";
+    setProgrammingMode(targetMode);
+    try { localStorage.setItem("portal.programmingTab", targetMode); } catch {}
     setAccordionValue(['sessions']);
-    // Scroll to sessions section after state update
     setTimeout(() => {
       const sessionsSection = document.querySelector('[value="sessions"]');
       sessionsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3720,6 +3720,7 @@ const Dashboard = () => {
                                                   {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day, dayIdx) => {
                                                     const sessionValue = week[day] || '';
                                                     const teamSessionValue = week[`${day}Team`] || '';
+                                                    const sessionType = week[`${day}_type`] || '';
                                                     const colors = sessionValue ? getSessionColor(sessionValue) : { bg: 'hsl(0, 0%, 10%)', text: 'hsl(0, 0%, 100%)', hover: 'hsl(0, 0%, 15%)' };
                                                     const weekDates = getWeekDates(week.week_start_date);
                                                     const dayDate = weekDates ? weekDates[day as keyof typeof weekDates] : null;
@@ -3814,7 +3815,7 @@ const Dashboard = () => {
                                                               </span>
                                                             </div>
                                                             <div 
-                                                              onClick={() => handleSessionClick(sessionValue)}
+                                                              onClick={() => handleSessionClick(sessionValue, sessionType)}
                                                               className="flex-1 flex items-center justify-center relative cursor-pointer"
                                                               style={{ backgroundColor: colors.bg }}
                                                               onMouseEnter={(e) => {
@@ -3844,7 +3845,7 @@ const Dashboard = () => {
                                                         {/* Individual Session Only or Empty - Full 100% */}
                                                         {(onlySession || (!teamSessionValue && !sessionValue)) && (
                                                           <div 
-                                                            onClick={() => sessionValue && handleSessionClick(sessionValue)}
+                                                            onClick={() => sessionValue && handleSessionClick(sessionValue, sessionType)}
                                                             className={`flex-1 flex items-center justify-center relative ${sessionValue ? 'cursor-pointer' : ''}`}
                                                             style={{ backgroundColor: colors.bg }}
                                                             onMouseEnter={(e) => {
@@ -3896,7 +3897,7 @@ const Dashboard = () => {
                                  {programmingMode !== "schedule" && program.sessions && typeof program.sessions === 'object' && Object.keys(program.sessions).length > 0 && (() => {
                                   // Define all possible sessions A-H
                                   const allSessions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                                  
+
                                   // Check which sessions have actual exercise data
                                   const hasSessionData = (sessionKey: string) => {
                                     const mainSession = program.sessions[sessionKey] || program.sessions[sessionKey.toLowerCase()];
@@ -3907,9 +3908,16 @@ const Dashboard = () => {
                                     
                                     return !!(mainHasData || preHasData);
                                   };
-                                  
-                                  // Find first session with data
-                                  const firstSessionWithData = allSessions.find(s => hasSessionData(s)) || 'A';
+
+                                  // Only show sessions that actually have content, like the Technical view.
+                                  const sessionsWithData = allSessions.filter(hasSessionData);
+                                  const firstSessionWithData = sessionsWithData[0] || 'A';
+                                  const firstRow = sessionsWithData.slice(0, 4);
+                                  const secondRow = sessionsWithData.slice(4, 8);
+                                  const gridCols = (n: number) =>
+                                    n <= 1 ? 'grid-cols-1' :
+                                    n === 2 ? 'grid-cols-2' :
+                                    n === 3 ? 'grid-cols-3' : 'grid-cols-4';
                                   
                                   return (
                                     <AccordionItem value="sessions">
@@ -3920,8 +3928,8 @@ const Dashboard = () => {
                                         {/* Main Session Tabs - Two Rows */}
                                         <div className="space-y-2 mb-4">
                                           {/* First Row: A, B, C, D */}
-                                           <div className="grid grid-cols-4 gap-2">
-                                             {['A', 'B', 'C', 'D'].map((mainKey) => {
+                                           <div className={`grid ${gridCols(firstRow.length)} gap-2`}>
+                                             {firstRow.map((mainKey) => {
                                                const colors = getSessionColor(mainKey);
                                                const hasData = hasSessionData(mainKey);
                                                const isActive = (selectedSession || firstSessionWithData) === mainKey;
@@ -3946,8 +3954,9 @@ const Dashboard = () => {
                                            </div>
                                            
                                            {/* Second Row: E, F, G, H */}
-                                           <div className="grid grid-cols-4 gap-2">
-                                             {['E', 'F', 'G', 'H'].map((mainKey) => {
+                                           {secondRow.length > 0 && (
+                                           <div className={`grid ${gridCols(secondRow.length)} gap-2`}>
+                                             {secondRow.map((mainKey) => {
                                                const colors = getSessionColor(mainKey);
                                                const hasData = hasSessionData(mainKey);
                                                const isActive = (selectedSession || firstSessionWithData) === mainKey;
@@ -3970,6 +3979,7 @@ const Dashboard = () => {
                                                );
                                              })}
                                            </div>
+                                           )}
                                         </div>
                                         
                                         {/* Main Session Content with Sub-tabs */}
