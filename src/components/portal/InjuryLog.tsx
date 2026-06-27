@@ -28,7 +28,7 @@ interface InjuryEntry {
 const BODY_AREAS = [
   "Head", "Neck", "Shoulder", "Upper Back", "Lower Back", "Chest",
   "Upper Arm", "Elbow", "Forearm", "Wrist", "Hand",
-  "Hip", "Groin", "Quadriceps", "Hamstring", "Knee",
+  "Hip", "Glutes", "Groin", "Quadriceps", "Hamstring", "Knee",
   "Calf", "Shin", "Ankle", "Foot", "Achilles"
 ];
 
