@@ -852,15 +852,6 @@ const BallonDorVisionCard = ({
                 {widont(urgency)}
               </p>
             ) : null}
-            <Button
-              type="button"
-              onClick={onBookMeeting}
-              className="mt-5 border border-primary font-bebas uppercase tracking-[0.2em] shadow-[0_0_28px_-8px_hsl(var(--gold)/0.75)] hover:brightness-95"
-              style={{ backgroundColor: "hsl(var(--gold))", color: "hsl(0 0% 4%)" }}
-            >
-              <CalendarClock className="mr-2 h-4 w-4" />
-              {cta}
-            </Button>
           </div>
         </div>
       </div>
@@ -2039,7 +2030,7 @@ const RiseWithUs = () => {
 
           {/* ============ STAGE: HUB ============ */}
           {stage === "hub" && !activeCard && !showWhyRiseDetail && (
-            <section className="relative px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 md:px-8 md:pt-8 md:pb-36 lg:px-16 bg-black">
+            <section className="relative px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:px-8 md:pt-8 md:pb-[calc(env(safe-area-inset-bottom)+6rem)] lg:px-16 bg-black">
               <div className="relative z-10 mx-auto flex w-full max-w-md flex-col md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
                 <header className="relative pb-6 text-center md:pb-10">
                   <div className="mx-auto flex flex-col items-center gap-3 md:gap-5">
@@ -2163,6 +2154,10 @@ const RiseWithUs = () => {
                   onBookMeeting={() => setMeetingOpen(true)}
                   t={playerOfferT}
                 />
+
+                <p className="mt-4 text-center text-[11px] text-muted-foreground">
+                  {offerT(lang, "rwu_private_footer", "This page is a private invitation and is not indexed by search engines.")}
+                </p>
               </div>
 
               {/* Persistent: Explore Player Portal */}
@@ -2376,12 +2371,6 @@ const RiseWithUs = () => {
                 </div>
               </div>
             </section>
-          )}
-
-          {stage === "hub" && !activeCard && !showWhyRiseDetail && (
-            <footer className="px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-2 text-center bg-black">
-              <p className="text-[11px] text-muted-foreground">{offerT(lang, "rwu_private_footer", "This page is a private invitation and is not indexed by search engines.")}</p>
-            </footer>
           )}
 
           <MeetingBookerDialog

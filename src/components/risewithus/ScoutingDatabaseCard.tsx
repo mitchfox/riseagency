@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Database, Radar, Star } from "lucide-react";
+import { Database, Radar, Star, ArrowUpDown, Search } from "lucide-react";
 
 interface Row {
   id: string;
@@ -237,29 +237,67 @@ export const ScoutingDatabaseCard = ({
       <p className="mx-auto mb-4 max-w-2xl text-center text-[12.5px] leading-relaxed text-foreground/70 md:text-sm">
         {L.sub}
       </p>
-      <div className="overflow-hidden rounded-2xl border border-primary/30 bg-black/65 shadow-[0_0_40px_-18px_hsl(var(--gold)/0.6)] backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-black/40 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">
-          <span className="inline-flex items-center gap-1.5">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/40 bg-[linear-gradient(180deg,#0b0b0d_0%,#050507_100%)] shadow-[0_0_60px_-20px_hsl(var(--gold)/0.55),inset_0_1px_0_hsl(var(--gold)/0.18)]">
+        {/* subtle CRT scanline overlay for a real terminal feel */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 1px, transparent 1px, transparent 3px)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-px left-0 right-0 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold)/0.7), transparent)" }}
+        />
+        {/* Window chrome */}
+        <div className="relative flex items-center justify-between gap-3 border-b border-white/10 bg-black/60 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:text-[11px]">
+          <span className="inline-flex items-center gap-2">
+            <span className="flex gap-1">
+              <span className="h-2 w-2 rounded-full bg-white/15" />
+              <span className="h-2 w-2 rounded-full bg-white/15" />
+              <span className="h-2 w-2 rounded-full bg-primary/70 shadow-[0_0_8px_hsl(var(--gold)/0.8)]" />
+            </span>
             <Database className="h-3 w-3 text-primary" />
-            RISE Scouting Database
+            <span className="text-foreground/80">RISE / Scouting Database</span>
+            <span className="hidden md:inline text-foreground/35">— prospects.live</span>
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Radar className="h-3 w-3 text-primary animate-pulse" />
-            Live
+          <span className="inline-flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1 text-foreground/50">
+              <Search className="h-3 w-3" /> {youRow.name.split(" ")[0]}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-primary">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+              </span>
+              Live
+            </span>
           </span>
         </div>
-        <div className="grid grid-cols-[42px_minmax(0,1.6fr)_60px_minmax(0,1.2fr)_70px_60px] gap-2 border-b border-white/10 bg-black/30 px-2.5 py-1.5 text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground md:text-[10.5px] md:px-3">
+        {/* Column headers */}
+        <div className="relative grid grid-cols-[42px_minmax(0,1.6fr)_60px_minmax(0,1.2fr)_70px_60px] gap-2 border-b border-white/10 bg-black/40 px-2.5 py-2 text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground md:text-[10.5px] md:px-3">
           <span />
-          <span>{L.name}</span>
+          <span className="inline-flex items-center gap-1">{L.name} <ArrowUpDown className="h-2.5 w-2.5 opacity-40" /></span>
           <span className="text-center">{L.pos}</span>
           <span>{L.club}</span>
           <span>{L.nat}</span>
-          <span className="text-right">{L.fit}</span>
+          <span className="text-right inline-flex items-center justify-end gap-1">{L.fit} <ArrowUpDown className="h-2.5 w-2.5 opacity-40" /></span>
         </div>
         <div className="relative">
           {before.map((r) => renderRow(r, { blurred: true }))}
           {renderRow(youRow, { highlight: true })}
           {after.map((r) => renderRow(r, { blurred: true }))}
+        </div>
+        {/* Footer status bar */}
+        <div className="relative flex items-center justify-between gap-3 border-t border-white/10 bg-black/60 px-3 py-1.5 text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground md:text-[10px]">
+          <span className="inline-flex items-center gap-1.5">
+            <Radar className="h-2.5 w-2.5 text-primary animate-pulse" />
+            Synced just now
+          </span>
+          <span className="font-mono text-foreground/50">id_{youRow.id.slice(0, 8)}</span>
         </div>
       </div>
     </section>

@@ -267,21 +267,11 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
               />
             </div>
           </div>
-          <div className="rounded-lg border p-3 space-y-1">
-            <Label className="font-medium">Scouting database card</Label>
-            <p className="text-xs text-muted-foreground">
-              Always shown on the offer page. The numeric fit score is only revealed when it sits between 60 and 100; otherwise the row appears without the number, so a soft score never undermines the pitch.
-            </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Current fit score:{" "}
-              <span className="font-mono">{playerFitScore != null ? Math.round(playerFitScore) : "—"}</span>
-            </p>
-          </div>
           <div className="rounded-lg border p-3 space-y-3">
             <div>
               <Label className="font-medium">Intro media</Label>
               <p className="text-xs text-muted-foreground">
-                Images and short video clips that play in the opening cinematic. Toggle each one's visibility and choose where it appears — the opening Intro beat, the hub Why-Us strip, or both. Drag-style reorder with the arrows. Keep clips short and silent.
+                Images and short video clips that play in the opening cinematic. Toggle each one's visibility and use the arrows to reorder. Tap a hotspot on the preview to set the focal point. Keep clips short and silent.
               </p>
             </div>
             <div className="space-y-2">
@@ -332,14 +322,6 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                         {m.show ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                         {m.show ? "Show" : "Hide"}
                       </button>
-                      <Select value={m.position} onValueChange={(v) => patchItem(m.id, { position: v as IntroMediaItem["position"] })}>
-                        <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="intro">Intro only</SelectItem>
-                          <SelectItem value="hub">Hub Why-Us only</SelectItem>
-                          <SelectItem value="both">Both</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <span className="text-[10px] text-muted-foreground">
                         Focal: <span className="font-mono">{m.objectPosition || "50% 35%"}</span>
                       </span>
