@@ -1982,6 +1982,10 @@ const RiseWithUs = () => {
       .map((m) => ({ kind: m.kind, url: m.url }));
   const lang = player.portal_language || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
+  const playerOfferT = (key: string, fallback: string) => {
+    const fromDb = t(key, fallback);
+    return fromDb && fromDb !== fallback && fromDb !== key ? fromDb : offerT(lang, key, fallback);
+  };
 
   const goPortal = () => { setStage("portal"); window.scrollTo({ top: 0, behavior: "auto" }); };
   const goNext = () => { setStage("next"); window.scrollTo({ top: 0, behavior: "auto" }); };
@@ -2156,7 +2160,7 @@ const RiseWithUs = () => {
 
                 <BallonDorVisionCard
                   onBookMeeting={() => setMeetingOpen(true)}
-                  t={t}
+                  t={playerOfferT}
                 />
               </div>
 
@@ -2259,7 +2263,7 @@ const RiseWithUs = () => {
               lang={lang}
               ageGroup={ageGroup}
               onBack={() => { setShowWhyRiseDetail(false); window.scrollTo({ top: 0, behavior: "auto" }); }}
-              t={t}
+                t={playerOfferT}
             />
           )}
 
