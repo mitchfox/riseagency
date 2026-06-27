@@ -833,6 +833,26 @@ export default function MarketTablesTab() {
     return persist(club.id, { chief_scout_name: value });
   };
 
+  // Fire a window event the Staff page + ClubOutreachManager listen for.
+  // Switches to the Club Outreach tab and opens a fresh New Outreach panel
+  // with the chosen club and contact name pre-filled.
+  const createOutreach = (club: ClubRow, contactName: string | null) => {
+    window.dispatchEvent(
+      new CustomEvent("staff:switch-section", { detail: { section: "cluboutreach" } }),
+    );
+    // Wait for the section to mount before asking the manager to open the panel.
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent("staff:open-club-outreach-new", {
+          detail: {
+            clubId: club.id,
+            preparedFor: (contactName ?? "").trim() || undefined,
+          },
+        }),
+      );
+    }, 60);
+  };
+
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
     const defaultPos = role === "td" ? "Technical Director" : "Chief Scout";
     setEditing({
