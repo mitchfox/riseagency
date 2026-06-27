@@ -1986,7 +1986,7 @@ const RiseWithUs = () => {
 
           {stage === "hub" && !activeCard && !showWhyRiseDetail && (
             <footer className="px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-2 text-center bg-black">
-              <p className="text-[11px] text-muted-foreground">This page is a private invitation and is not indexed by search engines.</p>
+              <p className="text-[11px] text-muted-foreground">{offerT(lang, "rwu_private_footer", "This page is a private invitation and is not indexed by search engines.")}</p>
             </footer>
           )}
 
