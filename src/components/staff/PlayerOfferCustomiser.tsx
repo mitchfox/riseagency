@@ -48,6 +48,13 @@ export type IntroMediaItem = {
   url: string;
   show: boolean;
   position: "intro" | "hub" | "both";
+  /**
+   * CSS object-position string ("50% 30%") that decides which part of the
+   * media is visible inside the cropped frame. Tuned against the mobile
+   * portrait preview (smallest height) so the chosen subject stays in view
+   * across every breakpoint.
+   */
+  objectPosition?: string;
 };
 
 const newId = () =>
@@ -85,12 +92,13 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
           url: String(x.url),
           show: x.show !== false,
           position: x.position === "hub" || x.position === "both" ? x.position : "intro",
+          objectPosition: typeof x.objectPosition === "string" ? x.objectPosition : "50% 35%",
         }));
       if (normalised.length === 0) {
         const legacy = (data?.section_images || {}) as Record<string, string>;
         normalised = Object.values(legacy)
           .filter(Boolean)
-          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const }));
+          .map((url) => ({ id: newId(), kind: "image" as const, url, show: true, position: "intro" as const, objectPosition: "50% 35%" }));
       }
       setIntroMedia(normalised);
       const { data: pData } = await (supabase as any)
@@ -114,42 +122,51 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
     setHidden(next);
   };
 
-  const uploadMedia = async (kind: "image" | "video", file: File) => {
+  const uploadOne = async (kind: "image" | "video", file: File): Promise<string | null> => {
+    const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+    const path = `offer-sections/${playerId}/${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from("marketing-gallery")
+      .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
+    if (error) { toast.error(`Upload failed: ${file.name}`); return null; }
+    const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
+    if (kind === "image") {
+      await (supabase as any)
+        .from("marketing_gallery")
+        .insert({
+          title: `${playerName} - offer image`,
+          description: `Rise With Us image for ${playerName}`,
+          file_url: data.publicUrl,
+          file_type: "image",
+          category: "players",
+          player_id: playerId,
+        });
+    }
+    return data.publicUrl;
+  };
+
+  const uploadMedia = async (kind: "image" | "video", files: File[]) => {
+    if (files.length === 0) return;
     setUploading(kind);
     try {
-      const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
-      const path = `offer-sections/${playerId}/${kind}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("marketing-gallery")
-        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || undefined });
-      if (error) { toast.error("Upload failed"); return; }
-      const { data } = supabase.storage.from("marketing-gallery").getPublicUrl(path);
-      if (kind === "image") {
-        await (supabase as any)
-          .from("marketing_gallery")
-          .insert({
-            title: `${playerName} - offer image`,
-            description: `Rise With Us image for ${playerName}`,
-            file_url: data.publicUrl,
-            file_type: "image",
-            category: "players",
-            player_id: playerId,
-          });
+      const urls: string[] = [];
+      for (const f of files.slice(0, 10)) {
+        const url = await uploadOne(kind, f);
+        if (url) urls.push(url);
+      }
+      if (kind === "image" && urls.length > 0) {
         const { data: existingPlayer } = await (supabase as any)
-          .from("players")
-          .select("image_url")
-          .eq("id", playerId)
-          .maybeSingle();
+          .from("players").select("image_url").eq("id", playerId).maybeSingle();
         if (!existingPlayer?.image_url) {
-          await (supabase as any)
-            .from("players")
-            .update({ image_url: data.publicUrl })
-            .eq("id", playerId);
+          await (supabase as any).from("players").update({ image_url: urls[0] }).eq("id", playerId);
         }
       }
       setIntroMedia((prev) => [
         ...prev,
-        { id: newId(), kind, url: data.publicUrl, show: true, position: "intro" },
+        ...urls.map((url) => ({
+          id: newId(), kind, url, show: true,
+          position: "intro" as const, objectPosition: "50% 35%",
+        })),
       ]);
     } finally {
       setUploading(null);
@@ -184,7 +201,11 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       hidden_sections: [...hidden],
       intro_media: introMedia,
       section_images: legacyImages,
-      show_database_card: showDatabaseCard,
+      // The scouting card is always shown. The card itself decides whether
+      // to display the numeric fit score based on the 60-100 threshold, so
+      // we always persist `true` to satisfy any older readers expecting an
+      // explicit opt-in.
+      show_database_card: true,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
