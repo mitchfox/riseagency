@@ -1194,6 +1194,16 @@ export default function MarketTablesTab() {
                           <span className="text-white">{c.name}</span>
                           {c.position && <span className="text-muted-foreground">· {c.position}</span>}
                           {renderContactLinks(c)}
+                          {outreachMode && (
+                            <button
+                              type="button"
+                              onClick={() => createOutreach(club, c.name)}
+                              title="Create club outreach addressed to this contact"
+                              className="inline-flex items-center gap-1 rounded-md border border-risegold/70 px-1.5 py-0.5 text-[10px] text-risegold hover:bg-risegold/15"
+                            >
+                              <Send className="h-3 w-3" /> Outreach
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => openExtraEdit(club, c)}
@@ -1328,6 +1338,16 @@ export default function MarketTablesTab() {
                                   <span className="text-muted-foreground">· {c.position}</span>
                                 )}
                                 {renderContactLinks(c)}
+                                {outreachMode && (
+                                  <button
+                                    type="button"
+                                    onClick={() => createOutreach(club, c.name)}
+                                    title="Create club outreach addressed to this contact"
+                                    className="inline-flex items-center gap-1 rounded-md border border-risegold/70 px-1.5 py-0.5 text-[10px] text-risegold hover:bg-risegold/15"
+                                  >
+                                    <Send className="h-3 w-3" /> Outreach
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => openExtraEdit(club, c)}
