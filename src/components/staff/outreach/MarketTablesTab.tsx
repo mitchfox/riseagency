@@ -920,6 +920,27 @@ export default function MarketTablesTab() {
           toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
         });
       }
+      // Defensive: re-pull any contacts attached to this club so the extras
+      // list is guaranteed to reflect the new row immediately (handles weird
+      // edge cases like the same contact id already being present with a
+      // different normalised club_name).
+      try {
+        const { data: refreshed } = await supabase
+          .from("club_network_contacts")
+          .select(CONTACT_SELECT)
+          .eq("club_name", club.club_name);
+        if (Array.isArray(refreshed) && refreshed.length > 0) {
+          setContacts((prev) => {
+            let next = prev;
+            (refreshed as ContactRow[]).forEach((r) => {
+              next = upsertContactRow(next, r);
+            });
+            return next;
+          });
+        }
+      } catch {
+        /* non-fatal */
+      }
       toast.success(existing ? "Contact updated" : "Contact added");
       setEditing(null);
       setExpanded((prev) => {
