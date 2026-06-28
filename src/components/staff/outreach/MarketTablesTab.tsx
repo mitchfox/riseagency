@@ -1048,6 +1048,19 @@ export default function MarketTablesTab() {
             <Send className="h-3.5 w-3.5" />
             Outreach mode {outreachMode ? "· on" : ""}
           </button>
+          <button
+            type="button"
+            onClick={() => setMissingContactMode((v) => !v)}
+            title="Show only clubs we have no identified contact for"
+            className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] transition ${
+              missingContactMode
+                ? "border-risegold bg-risegold/20 text-risegold"
+                : "border-border bg-background/60 text-muted-foreground hover:text-white hover:border-risegold/60"
+            }`}
+          >
+            <Search className="h-3.5 w-3.5" />
+            Missing contact {missingContactMode ? "· on" : ""}
+          </button>
           <Popover open={activityOpen} onOpenChange={setActivityOpen}>
             <PopoverTrigger asChild>
               <button
