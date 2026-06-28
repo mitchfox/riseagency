@@ -1536,7 +1536,7 @@ export const DetailView = ({
               className="relative overflow-hidden rise-slant-card-lg border border-border/60"
               style={solidBlackSectionStyle}
             >
-              <div className="relative grid min-h-[480px] md:min-h-[520px] md:grid-cols-2">
+              <div className="relative grid min-h-[620px] md:min-h-[520px] md:grid-cols-2">
                 {/* ===== Backgrounds: diagonal marble split (desktop) =====
                     On desktop the black marble fills the left half and the
                     white marble the right, with a diagonal clip-path so the

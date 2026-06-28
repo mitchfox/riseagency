@@ -94,6 +94,12 @@ const offerDict: Record<string, Partial<Record<Lang, string>>> = {
     pl: "Zaproszenie dla", cs: "Pozvání pro", ru: "Приглашение для",
     tr: "Bir davet", hr: "Poziv za", no: "En invitasjon til",
   },
+  and_family: {
+    en: "& family", es: "y familia", pt: "e família",
+    fr: "et famille", de: "& Familie", it: "e famiglia",
+    pl: "i rodzina", cs: "a rodina", ru: "и семья",
+    tr: "ve aile", hr: "i obitelj", no: "og familie",
+  },
   stood_out_line: {
     en: "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star.",
     es: "Como parte de nuestro extenso trabajo de scouting, nos complace decirte que destacaste con la capacidad de convertirte en una estrella.",
@@ -1445,11 +1451,11 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone,
+  fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone, isUnder18,
 }: {
   fullName: string; lang: string; extraImages: string[];
   extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
-  secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void;
+  secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void; isUnder18?: boolean;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -1686,6 +1692,11 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 30px hsl(var(--gold)/0.5)" }}>
                 {fullName.split(" ")[0]}
               </p>
+              {isUnder18 && (
+                <p className="mt-2 font-bebas text-base sm:text-lg uppercase tracking-[0.3em] text-primary">
+                  {offerT(lang, "and_family", "& family")}
+                </p>
+              )}
             </motion.div>
           )}
           {phase === 1 && (
@@ -1956,8 +1967,18 @@ const RiseWithUs = () => {
           .map((url) => ({ kind: "image" as const, url: url as string }));
   const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
   const seenIntroUrls = new Set<string>();
+  // Map URLs in intro_media to their staff-chosen focal point so the player
+  // headshot/fallback honour the focal point the staff set on that exact image.
+  const focalByUrl = new Map<string, string | undefined>();
+  for (const m of settings.intro_media) {
+    if (m?.url) focalByUrl.set(m.url, m.objectPosition);
+  }
   const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> = [
-    ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
+    ...priorityIntroImages.map((url) => ({
+      kind: "image" as const,
+      url,
+      objectPosition: focalByUrl.get(url) || "50% 50%",
+    })),
     ...baseIntro,
   ].filter((m) => {
     if (!m.url || seenIntroUrls.has(m.url)) return false;
@@ -2019,6 +2040,7 @@ const RiseWithUs = () => {
             extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
             profileImageUrl={player.image_url || finalFallbackImage || null}
+            isUnder18={!!settings.rise_with_us_under18}
             onDone={() => setIntroDone(true)}
           />
         )}
