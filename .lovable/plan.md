@@ -1,41 +1,44 @@
-Same approach as the Italy/Portugal/Romania/Russia/Scotland/Serbia batches: upsert rows into `market_table_entries` keyed on `(club_id, market_table_key='summer-26')` for every club listed across Slovakia (~29), Slovenia (~11), Spain (~52), Sweden (~36), Switzerland (~10), Turkey (~38), and USA (~25).
+## Bulk upsert: Ukraine, Conference/Champions/Europa League, Germany, Croatia + country cleanups
 
-## Mapping rules (unchanged)
+Same approach as previous batches: upsert into `market_table_entries` keyed on `(club_id, market_table_key='summer-26')`. Plus housekeeping on country labels in `club_map_positions`.
 
-- `technical_director_name` → primary sporting/technical/football-ops contact, title appended (e.g. `Martin Škrtel — Sporting Director`).
+## Mapping rules (unchanged from earlier batches)
+
+- `technical_director_name` → primary sporting/technical/football-ops contact, title appended (e.g. `Volodymyr Bezsonov — Sporting Director`).
 - `chief_scout_name` → head of scouting / recruitment lead with title.
-- Contact phones/emails (e.g. Žáčik +421 911 565 327 / andrej.zacik@astrencin.sk, Bielák lukas.bielak@gmail.com, Wennberg peter.wennberg@aikfotboll.se, Sanches +41 78 246 32 34, Castillo ncastillo@rowdiessoccer.com, role inbox recruitment@nycfc.com, scout@hif.se, scouting@fcaarau.ch) → appended into `notes` since no contact-phone/email column.
-- Secondary names (Slovan Bratislava's Švehlík alongside Vittek; NK Celje's Podkoritnik + Gobec alongside Golubin; NK Maribor's Başgül alongside Zahović; NK Olimpija's Vrhunc alongside Aygün; AIK's Miika Takkula alongside Sadi; Racing Ferrol's Rivas + Fontenla; Atlético Sanluqueño's Martín Bejarano; Hércules' Sánchez alongside Peña; Real Avilés' Cruz alongside Linares; Pendikspor's Demir/Eskiköy dual) → second name into `notes`.
-- Caveats (parent-club fallback for B-teams MŠK Žilina B / Slovan Bratislava B / RC Celta Fortuna / Real Sociedad B / Atlético Madrileño / Betis Deportivo / Bilbao Athletic / CA Osasuna Promesas, youth-only exclusions for KFC Komárno / Zemplín Michalovce / FC Petržalka / Železiarne Podbrezová / Dynamo Malženice / ÖIS / Varbergs scouting@ / Amed SK U17, future-effective entries Yverdon's Falbo 01.09.2026 + Pendikspor's 01.07.2026, "incoming/replacing" caveats for Real Oviedo's David Fernández vs Roberto Suárez, NK Bravo's Močnik departing, NK Domžale's Rosanda taking over from Oražem, departed-staff exclusions Sivasspor/Adana Demirspor/Hatayspor/Trabzonspor/Gençlerbirliği/Hammarby's Berglund/Trelleborgs/IK Oddevold/Stade Nyonnais, conflict notes for FC Winterthur Rey LinkedIn vs official, Neuchâtel Xamax Fontbonne currentness, MFK Skalica Opiela currentness, Burgos via Transfermarkt only, Çorum/Sarıyer/Van Spor via social snippets, Beşiktaş Graf dual sporting+scouting role, Galatasaray Utkucan dual title, Birmingham Legion Ruiz dual role, Loudoun Marcina title-change explanation, San Antonio FC Lizardo exclusion as facilities) → into `notes` verbatim, UK English.
-- "Not found" → leave that column blank; if the DB row already has a stale prefill flagged as departed/superseded → null that column and write the exclusion reason in `notes`.
+- Contact phones/emails (Dynamo Kyiv +38 044 278 06 28 / scout@fcdynamo.com, Alashkert info@fcalashkert.com, Ballkani nderim.nexhipi@fcballkani.com, Brann per-ove.ludvigsen@brann.no, Bravo dejan.mocnik@nk-bravo.si / +386 41 352 327, Flora Tallinn taavi@fcflora.ee, GAIS magnus.skoldmark@gais.se, Getafe stecnico@getafecf.com, Hegelmann sportsdirector@fchegelmann.com / +370 699 53166, LASK scouting@lask.at, Mjällby arvid.franzen@maif.se, Heidenheim baamann@fc-heidenheim.de, Slaven Belupo robert.kerovec@nk-slaven-belupo.hr / +385 48 220 033 / +385 91 220 0343) → appended into `notes`.
+- Dual / secondary names (Metalist 1925: Rogachevskyi as Technical Director alongside Shamardin; Bohemians: Boubín as technický ředitel alongside Držmíšek; Bayern: Kresse as Chief Scout alongside Schmadtke; Crvena zvezda: Marin as Technical Director alongside Mrkela; Dinamo Zagreb CL row: Dabac + Vlak; FC Atert Bissen: Thalamot + Holbach; Como: Bruccoleri + Torrance; Hajduk: Žaja + Boada; CSKA Sofia: Velichkov + Aleksandrov; LASK: Burić + Grubeck; Sheriff: Pascenco + Kuchuk; HNK Rijeka: Raić-Sudar + Čulina) → second name into `notes`.
+- Caveats (Bezsonov not on official page; Karpaty Rusol is GM fallback; Kryvbas Pavlov possibly broader ops; LNZ Chaban via Transfermarkt only; Metalist Polunin deceased Nov 2025; Rukh Fedyk excluded; Celtic Tisdale + LeFevre departed; AEK Larnaca Roca resigned Mar 2026; Ajax de Lang left Dec 2025; Brighton Jewell to Chelsea; CFR Cluj Mara excluded; Gent Vidarsson left Sep 2025; Hearts Lancefield left Jun 2026; Levski Kostadinov future-effective 1 Jul 2026; Győri Van Praet appointed 24 Jun 2026; Osijek Zandvliet announced 29 May 2026 / effective 1 Jul 2026; Inter D'Ottavio excluded as Milan; Milan Tare departed; Fenerbahçe Özek parted Apr 2026; AZ Huiberts contract ending 30 Jun 2026; Bournemouth Francis departed; Crystal Palace Wrigglesworth unconfirmed; Trabzonspor Mert excluded; Twente Bruggink left May 2025; Vojvodina sports director vacant; U Cluj Mara excluded; Borussia M'gladbach old/superseded roles; HSV Costa current; Elversberg Blacha left; Lokomotiva Zagreb FM-style data caveat; Gorica Šelendić includes academy; Hajduk Žaja + Boada both noted; Cibalia Bojko resigned Jun 2026; Jarun Nujić resigned Jun 2026; PAOK Savvidis old chief-scout role excluded; Karlovac no sporting director role; Aluminij Arlič via LinkedIn) → into `notes` verbatim, UK English.
+- "Not found" → leave that column blank; if DB row has stale prefill flagged as departed/superseded → null and write exclusion reason in `notes`.
 
 ## Special handling
 
-- **Slovan Bratislava** — Vittek fills both columns (Sporting Director + Head of International Relations & Scouting); Švehlík noted as Director of Football.
-- **AIK** — Sadi in chief scout column; Miika Takkula (Head of Recruitment) noted as alternative.
-- **NK Olimpija Ljubljana** — Aygün primary, Vrhunc as Technical Director noted with email, Bracović as Chief Scout.
-- **Étoile Carouge** — Sanches fills both columns (Directeur sportif + Responsable Recrutement).
-- **Beşiktaş** — Graf fills both columns (Football Technical & Scouting Director).
-- **Galatasaray** — Utkucan fills both columns (Football & Scouting Director / Chief Scout & Head of Performance Analysis).
-- **Birmingham Legion** — Ruiz fills both columns with note about role expansion from Director of Scouting → Technical Director.
-- **Loudoun United** — Marcina fills only sporting column; note clarifies Director of Scouting title was replaced.
-- **NYCFC** — Dunivant in technical column; `recruitment@nycfc.com` inbox noted, academy Head of Scouting excluded.
-- **Hartford / Rhode Island** — Head Coach & GM dual roles in technical column with caveat.
-- **B-teams** (MŠK Žilina B, Slovan Bratislava B) — parent-club structure with explicit "parent-club; no B-specific role found" caveat.
-- **Yverdon, Pendikspor** — future-effective appointments captured with start-date caveat in notes; primary column left blank or marked accordingly.
-- **NK Bravo / NK Domžale / Real Oviedo / Sivasspor / Trelleborgs / IK Oddevold / Stade Nyonnais** — incumbent leaving / vacancy / pending replacement clearly stated in notes.
-- **Spain B-teams** — Atlético Madrileño / Betis Deportivo / Bilbao Athletic / Real Sociedad B / RC Celta Fortuna handled with parent-club caveat; Real Sociedad B / CA Osasuna Promesas left blank where parent role does not clearly cover B-team.
-- **Getafe** — left blank, with Ángel Martín González + Rubén Reyes exclusion reasons in notes.
-- **Trabzonspor / Alanyaspor / Çaykur Rizespor / Kasımpaşa / Esenler Eroksporu / Serik Spor / Ümraniyespor** — both columns blank, scouting-department-only or coaching-only sources noted.
+- **Galatasaray** — Utkucan fills both columns (already in DB from Turkey batch; this re-asserts).
+- **Beşiktaş** — Graf fills both columns (already in DB; re-asserts).
+- **Bayer Leverkusen** — Rolfes primary; Falkenberg noted in both technical (secondary) and scouting (covers scouting/squad planning).
+- **Feyenoord** — Rigaux primary (effective 1 Jun 2026); Goes as scouting fallback.
+- **Dynamo Kyiv** — appears in both Ukraine and Europa League rows; single upsert per `(club_id, summer-26)` — second occurrence is idempotent.
+- **Getafe** — already handled in Spain batch with same Muñoz + technical-secretariat inbox; re-asserts.
+- **GNK Dinamo Zagreb** — Champions League row (Dabac + Vlak) and Croatia row (Dabac primary, Šokota fallback scout, Jozak exclusion) merged into one upsert with combined notes.
+- **Hajduk** — CL and Croatia rows merged (Graf + Žaja/Boada).
+- **Karlsruher SC / Dynamo Dresden / Greuther Fürth / Darmstadt / Bochum / Osnabrück / Wolfsburg / Sandhausen / Mainz / Augsburg / M'gladbach / HSV / Elversberg** — citation noise in source ignored; clean names + titles extracted.
+- **Country cleanups in `club_map_positions`**:
+  - Merge any `country` variants `USA`, `U.S.A.`, `United States of America` → `United States` (canonical).
+  - Reassign Urawa Red Diamonds row from `Urawa` to `Japan`.
+  - Merge `Czechia` → `Czech Republic`.
+  - Merge `UAE` → `United Arab Emirates`.
 
 ## Technical execution
 
-Seven `INSERT ... ON CONFLICT (club_id, market_table_key) DO UPDATE` statements (one per country), `summer-26` table key. Before writing, query `club_map_positions` filtered to each country to confirm club IDs and resolve duplicates (canonical ID kept, alternates skipped with a single note in the report). Any club not present in `club_map_positions` will be reported back so you can decide whether to add it (no auto-creation of clubs).
+1. Query `club_map_positions` filtered to each country (Ukraine, Cyprus, Armenia, Kazakhstan, Italy, Andorra, Latvia, Austria, Kosovo, Belarus, Israel, Czech Republic, Portugal, Norway, Slovenia, England, Wales, Romania, N. Ireland, Denmark, Bulgaria, Slovakia, Hungary, Montenegro, Luxembourg, Albania, Georgia, Gibraltar, Estonia, Germany, Sweden, Belgium, Spain, Poland, France, Finland, Faroe Islands, Switzerland, Croatia, Bosnia, Serbia, Turkey, Greece, Malta, San Marino, Iceland, Northern Macedonia, Moldova, Ireland, Azerbaijan, Lithuania, Scotland, Netherlands) to confirm club IDs and resolve duplicates.
+2. Build one `INSERT … ON CONFLICT (club_id, market_table_key) DO UPDATE` per country (or one combined) via `supabase--insert`.
+3. Run 4 `UPDATE`s on `club_map_positions` for the country-label merges.
+4. Report any clubs from the lists that have no matching `club_map_positions` row (no auto-creation).
 
-No schema changes. No code changes. No effect on other countries.
+No schema changes. No code changes. No effect on other market_table_keys.
 
 ## Out of scope
 
 - Not creating new clubs in `club_map_positions`.
-- Not adding any contact-phone/email schema column (contacts go in `notes`).
-- Not auto-promoting "incoming" / future-start-date / "verify after" roles past their effective date — just noted.
+- Not adding contact-phone/email schema columns (contacts stay in `notes`).
+- Not auto-promoting future-effective roles past their start date — just noted.
