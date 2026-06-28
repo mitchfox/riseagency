@@ -68,7 +68,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
     (async () => {
       setLoading(true);
       const [{ data: clubRows }, { data: stratRows }, { data: sentLinkRows }, { data: visitRows }] = await Promise.all([
-        supabase.from("club_map_positions").select("id, club_name, country, league, league_level, image_url").order("club_name"),
+        supabase.from("club_map_positions").select("id, club_name, country, league, league_level, image_url").order("club_name").limit(10000),
         (supabase as any).from("club_outreach_strategies").select("*").order("created_at", { ascending: false }),
         supabase.from("club_outreach_links").select("id, club_id, status, target_type").eq("target_type", "club").eq("status", "sent"),
         supabase.from("club_outreach_visits").select("outreach_id"),
