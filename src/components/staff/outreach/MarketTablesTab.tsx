@@ -630,15 +630,28 @@ export default function MarketTablesTab() {
         if (extras.length > 0) return true;
         return false;
       }
+      if (missingContactMode) {
+        const e = entries[c.id];
+        const hasNamed =
+          !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+          !!(e?.chief_scout_name && e.chief_scout_name.trim());
+        if (hasNamed) return false;
+        const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+        const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+        if (td || cs) return false;
+        const extras = additionalContactsForClub(contacts, c.club_name, c.country, new Set());
+        if (extras.length > 0) return false;
+        return true;
+      }
       return true;
     });
-  }, [clubs, country, league, search, outreachMode, entries, contacts]);
+  }, [clubs, country, league, search, outreachMode, missingContactMode, entries, contacts]);
 
   // Reset to first page whenever the active filter / search changes so the
   // user always sees the start of the new result set.
   useEffect(() => {
     setPage(1);
-  }, [country, league, search, outreachMode]);
+  }, [country, league, search, outreachMode, missingContactMode]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
