@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +35,7 @@ interface R90RatingsViewerProps {
   onOpenChange: (open: boolean) => void;
   initialCategory?: string;
   searchTerm?: string;
+  portalContainer?: HTMLElement | null;
 }
 
 const R90_CATEGORIES = [
