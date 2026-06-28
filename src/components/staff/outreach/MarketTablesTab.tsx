@@ -352,6 +352,10 @@ export default function MarketTablesTab() {
   // Outreach mode: filter to only clubs we have at least one contact for,
   // and surface a "Create outreach" shortcut next to each contact name.
   const [outreachMode, setOutreachMode] = useState(false);
+  // "Missing contact" filter: when on, only show clubs we have no
+  // identified contact for (no saved TD/CS name and no matching role
+  // contact in the network). Helps staff focus on the gaps.
+  const [missingContactMode, setMissingContactMode] = useState(false);
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
