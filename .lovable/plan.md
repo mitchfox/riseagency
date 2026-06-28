@@ -1,37 +1,34 @@
-# Rise With Us — alignment fixes with Representation
+# Plan: Update Italian clubs in Market Tables
 
-All changes are on `src/pages/RiseWithUs.tsx` plus two small component files. No business logic changes — purely presentation and ordering.
+I will upsert rows into `market_table_entries` (keyed on `club_id` + `market_table_key='summer-26'`) for the 47 Italian clubs you listed, using exactly the names/titles you supplied. The DB only has two name columns (`technical_director_name`, `chief_scout_name`) plus a `notes` field, so I will encode richer info there.
 
-## 1. Scouting database card shows wrong details
-`ScoutingDatabaseCard` is currently fed straight from the `player` record on the outreach link, which is the staff-typed prospect data, not what's actually in our database. Update `src/components/risewithus/ScoutingDatabaseCard.tsx` (or the parent) to look the prospect up in `prospects` / `players` by id (or name + club fallback) and render name, position, club, nationality, image and fit score from that record. Fall back to the existing props only if no match is found, so nothing ever goes blank.
+## Mapping rules
 
-## 2. "Why not you?" must match the Representation version
-The `BallonDorVisionCard` on Rise With Us renders inline with a slanted gold block; the Representation page renders the same idea inside a standard `rise-slant-card` section with eyebrow, headline, body, urgency line and CTA. Replace the bespoke `BallonDorVisionCard` markup with the same card structure used on `RequestRepresentation.tsx` (matching wrapper, paddings, typography and CTA button). Keep the same translation keys so copy stays in one place.
+- `technical_director_name` → first/primary sporting or technical director name with their title appended in plain text (e.g. `Piero Ausilio — Sporting Director`).
+- `chief_scout_name` → head of scouting / recruitment lead, same title format.
+- Secondary names (e.g. Südtirol's Hannes Fink, Modena's Daniele Placido, Sampdoria's Lorenzo Ariaudo, Avellino's Giovanni D'Agostino) → appended to `notes`.
+- Uncertainty / "verify after date" / "reported but unofficial" caveats from your source column → into `notes` verbatim (UK English, no em-dash overuse).
+- Where you flagged "No safe current fill" / "Not found" → leave that column blank (do NOT overwrite with stale prefill).
+- AC Milan: clear out the stale `Antonio D'Ottavio AC Milan SD` prefill (set technical_director_name to NULL), keep Lomonte as chief scout, add note about the May 2026 Tare/Moncada departures and Almstadt being reported only.
+- Sassuolo: replace outdated Giovanni Rossi with Francesco Palmieri / Davide Cangini.
+- LR Vicenza: replace outdated Luca Matteassi with Giorgio Zamuner.
+- Perugia: clear stale Jacopo Giugliarelli (now Dolomiti Bellunesi); set Riccardo Gaucci as note-only consultant since no safe DS.
+- Flag rows (Gubbio, Carpi, Cosenza, Foggia, Catania, Mantova, Cremonese) with the conflicting-source / verify-after-date caveat in `notes`.
 
-## 3. Move "Why not you?" to the very bottom
-Remove the `<BallonDorVisionCard />` call from above `PlayersWeWorkWith`. Render it after the last `GROUPS.map(...)` block (just before the fixed "Explore Player Portal" footer button), so it's the final section on the hub.
+## Clubs covered (47)
 
-## 4. "Who we've worked with" should match Representation
-On Representation the carousel sits inside a slanted card with body copy plus the "context" disclaimer paragraph. Wrap `<PlayersWeWorkWith />` in the same `rise-slant-card` shell used on Representation, and add the two paragraphs (`representation.worked_with_body` and `representation.worked_with_context`) underneath using the same translation keys, so both pages stay in sync.
+Serie B: AC Milan (cleanup), Inter Milan, Sassuolo, Ascoli, Benevento, Padova, Carrarese, Cesena, Empoli (blank), Südtirol, Hellas Verona, LR Vicenza, Mantova, Modena, Palermo, Pisa, Arezzo, Juve Stabia, Sampdoria, Avellino, Catanzaro, Cremonese, Virtus Entella.
 
-## 5. Intro images appearing throughout, not only on the final slide
-In `IntroCinematic`, the extra intro media is gated behind `phase === 3`. Change the gating so that whenever `extraIntro.length > 0` images render during phases 1, 2 and 3 as well. Behaviour:
+Serie C / others: AC Bra (blank w/ note), AC Carpi, AC Perugia, AC Renate, AC Trento, Alcione Milano, Arzignano, AS Cittadella, AS Giana Erminio, AS Gubbio, ASD Team Altamura, Atalanta U23, Audace Cerignola, Aurora Pro Patria, AZ Picerno (blank), Calcio Foggia, Calcio Lecco, Campobasso, Casarano, Casertana, Catania (blank + reported note), Cavese, Cosenza, CPR Ospitaletto, Dolomiti Bellunesi, FC Crotone (blank), FC Lumezzane.
 
-- Pick a random position from a small set of left/right anchor frames (e.g. top-left, mid-left, bottom-left, top-right, mid-right, bottom-right) — never centred over the logo/text.
-- One image at a time, ~3.5–4.5 s on screen with a 600 ms fade in / fade out.
-- On change, swap to the next image and a different side from the previous one so it visibly alternates left/right.
-- Videos in the intro pool keep current behaviour (muted, autoplay, loop) — only their placement uses the new alternating frames.
+## Technical execution
 
-Final-slide behaviour is unchanged; this just makes earlier phases also show imagery.
+Single `INSERT … ON CONFLICT (club_id, market_table_key) DO UPDATE` using `summer-26` as the table key (matches the existing AC Milan row). All 47 clubs already exist in `club_map_positions` — confirmed.
 
-## 6. CTA copy
-Change `t("vision.cta", "Set up our meeting")` to `t("vision.cta", "Let's Meet")`. The translation key stays the same so existing locales still resolve; only the English fallback updates.
+No schema changes. No code changes. No effect on other countries' rows.
 
-## 7. WhatsApp widget hover legibility
-In `src/components/WhatsAppWidget.tsx` the hover state currently keeps the gold background but the text inherits a colour that becomes unreadable. Lock the text to `text-black` in both states and keep the gold background on hover, so the label stays high-contrast through the expand animation.
+## Out of scope
 
-## Technical notes
-- All edits scoped to: `src/pages/RiseWithUs.tsx`, `src/components/risewithus/ScoutingDatabaseCard.tsx`, `src/components/WhatsAppWidget.tsx`.
-- No DB schema changes, no edge functions touched.
-- No changes to `RequestRepresentation.tsx` — it's already correct and is the reference.
-- Reuse existing translation keys (`vision.*`, `representation.worked_with_*`) so localisation doesn't regress.
+- Not adding new clubs (none missing).
+- Not touching youth-scouting names you excluded.
+- Not auto-creating future rows for clubs flagged "verify after date" — those just get a note.
