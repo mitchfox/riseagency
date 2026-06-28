@@ -1451,11 +1451,11 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
 const IntroCinematic = ({
-  fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone,
+  fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone, isUnder18,
 }: {
   fullName: string; lang: string; extraImages: string[];
   extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
-  secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void;
+  secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void; isUnder18?: boolean;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -1692,7 +1692,7 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 30px hsl(var(--gold)/0.5)" }}>
                 {fullName.split(" ")[0]}
               </p>
-              {settings.rise_with_us_under18 && (
+              {isUnder18 && (
                 <p className="mt-2 font-bebas text-base sm:text-lg uppercase tracking-[0.3em] text-primary">
                   {offerT(lang, "and_family", "& family")}
                 </p>
@@ -2030,6 +2030,7 @@ const RiseWithUs = () => {
             extraIntro={extraIntro}
             secondaryParagraph={settings.representation_subtitle_secondary}
             profileImageUrl={player.image_url || finalFallbackImage || null}
+            isUnder18={!!settings.rise_with_us_under18}
             onDone={() => setIntroDone(true)}
           />
         )}
