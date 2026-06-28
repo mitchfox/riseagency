@@ -529,7 +529,8 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
             </ScrollArea>
           </div>
         </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 };
