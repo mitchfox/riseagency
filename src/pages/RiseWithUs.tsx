@@ -1692,6 +1692,11 @@ const IntroCinematic = ({
                  style={{ textShadow: "0 0 30px hsl(var(--gold)/0.5)" }}>
                 {fullName.split(" ")[0]}
               </p>
+              {settings.rise_with_us_under18 && (
+                <p className="mt-2 font-bebas text-base sm:text-lg uppercase tracking-[0.3em] text-primary">
+                  {offerT(lang, "and_family", "& family")}
+                </p>
+              )}
             </motion.div>
           )}
           {phase === 1 && (
