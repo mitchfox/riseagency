@@ -3365,6 +3365,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         open={r90ViewerOpen}
         onOpenChange={(o) => { setR90ViewerOpen(o); if (!o) setR90ViewerSearch(undefined); }}
         searchTerm={r90ViewerSearch}
+        portalContainer={isPlayerFullscreen ? playerShellRef.current : null}
       />
     </div>
   );

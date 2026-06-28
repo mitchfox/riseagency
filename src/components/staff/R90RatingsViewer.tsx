@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +35,7 @@ interface R90RatingsViewerProps {
   onOpenChange: (open: boolean) => void;
   initialCategory?: string;
   searchTerm?: string;
+  portalContainer?: HTMLElement | null;
 }
 
 const R90_CATEGORIES = [
@@ -45,7 +49,7 @@ const R90_CATEGORIES = [
   'Shots'
 ];
 
-export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm }: R90RatingsViewerProps) => {
+export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTerm, portalContainer }: R90RatingsViewerProps) => {
   const [ratings, setRatings] = useState<R90Rating[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -205,7 +209,12 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col z-[500]">
+      <DialogPrimitive.Portal container={portalContainer ?? undefined}>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-[9998] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content className={cn("fixed left-[50%] top-[50%] z-[9999] grid translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg max-w-[95vw] w-full h-[90vh] flex flex-col")}>
+          <DialogPrimitive.Close className="absolute right-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-md hover:bg-primary hover:text-primary-foreground">
+            <X className="h-5 w-5" />
+          </DialogPrimitive.Close>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <LineChart className="w-5 h-5 text-primary" />
@@ -520,7 +529,8 @@ export const R90RatingsViewer = ({ open, onOpenChange, initialCategory, searchTe
             </ScrollArea>
           </div>
         </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 };
