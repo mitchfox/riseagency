@@ -352,6 +352,10 @@ export default function MarketTablesTab() {
   // Outreach mode: filter to only clubs we have at least one contact for,
   // and surface a "Create outreach" shortcut next to each contact name.
   const [outreachMode, setOutreachMode] = useState(false);
+  // "Missing contact" filter: when on, only show clubs we have no
+  // identified contact for (no saved TD/CS name and no matching role
+  // contact in the network). Helps staff focus on the gaps.
+  const [missingContactMode, setMissingContactMode] = useState(false);
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
@@ -626,15 +630,28 @@ export default function MarketTablesTab() {
         if (extras.length > 0) return true;
         return false;
       }
+      if (missingContactMode) {
+        const e = entries[c.id];
+        const hasNamed =
+          !!(e?.technical_director_name && e.technical_director_name.trim()) ||
+          !!(e?.chief_scout_name && e.chief_scout_name.trim());
+        if (hasNamed) return false;
+        const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
+        const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
+        if (td || cs) return false;
+        const extras = additionalContactsForClub(contacts, c.club_name, c.country, new Set());
+        if (extras.length > 0) return false;
+        return true;
+      }
       return true;
     });
-  }, [clubs, country, league, search, outreachMode, entries, contacts]);
+  }, [clubs, country, league, search, outreachMode, missingContactMode, entries, contacts]);
 
   // Reset to first page whenever the active filter / search changes so the
   // user always sees the start of the new result set.
   useEffect(() => {
     setPage(1);
-  }, [country, league, search, outreachMode]);
+  }, [country, league, search, outreachMode, missingContactMode]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -1030,6 +1047,19 @@ export default function MarketTablesTab() {
           >
             <Send className="h-3.5 w-3.5" />
             Outreach mode {outreachMode ? "· on" : ""}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMissingContactMode((v) => !v)}
+            title="Show only clubs we have no identified contact for"
+            className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] transition ${
+              missingContactMode
+                ? "border-risegold bg-risegold/20 text-risegold"
+                : "border-border bg-background/60 text-muted-foreground hover:text-white hover:border-risegold/60"
+            }`}
+          >
+            <Search className="h-3.5 w-3.5" />
+            Missing contact {missingContactMode ? "· on" : ""}
           </button>
           <Popover open={activityOpen} onOpenChange={setActivityOpen}>
             <PopoverTrigger asChild>
