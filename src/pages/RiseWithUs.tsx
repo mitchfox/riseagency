@@ -94,6 +94,12 @@ const offerDict: Record<string, Partial<Record<Lang, string>>> = {
     pl: "Zaproszenie dla", cs: "Pozvání pro", ru: "Приглашение для",
     tr: "Bir davet", hr: "Poziv za", no: "En invitasjon til",
   },
+  and_family: {
+    en: "& family", es: "y familia", pt: "e família",
+    fr: "et famille", de: "& Familie", it: "e famiglia",
+    pl: "i rodzina", cs: "a rodina", ru: "и семья",
+    tr: "ve aile", hr: "i obitelj", no: "og familie",
+  },
   stood_out_line: {
     en: "As part of our extensive scouting efforts, we are pleased to say that you stood out with the capability to become a star.",
     es: "Como parte de nuestro extenso trabajo de scouting, nos complace decirte que destacaste con la capacidad de convertirte en una estrella.",
