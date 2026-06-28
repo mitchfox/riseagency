@@ -1967,8 +1967,18 @@ const RiseWithUs = () => {
           .map((url) => ({ kind: "image" as const, url: url as string }));
   const priorityIntroImages = [player.image_url, finalFallbackImage].filter(Boolean) as string[];
   const seenIntroUrls = new Set<string>();
+  // Map URLs in intro_media to their staff-chosen focal point so the player
+  // headshot/fallback honour the focal point the staff set on that exact image.
+  const focalByUrl = new Map<string, string | undefined>();
+  for (const m of settings.intro_media) {
+    if (m?.url) focalByUrl.set(m.url, m.objectPosition);
+  }
   const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> = [
-    ...priorityIntroImages.map((url) => ({ kind: "image" as const, url })),
+    ...priorityIntroImages.map((url) => ({
+      kind: "image" as const,
+      url,
+      objectPosition: focalByUrl.get(url) || "50% 50%",
+    })),
     ...baseIntro,
   ].filter((m) => {
     if (!m.url || seenIntroUrls.has(m.url)) return false;
