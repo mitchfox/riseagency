@@ -56,7 +56,7 @@ const fmtEvtTime = (s: number) => {
   return r ? `${m}m${r}s` : `${m}m`;
 };
 
-function VisitDetail({ v }: { v: ProposalVisit }) {
+export function VisitDetail({ v }: { v: ProposalVisit }) {
   const [openDetail, setOpenDetail] = useState(false);
   const engaged = v.engaged_seconds ?? 0;
   const scrollMax = v.scroll_max_pct ?? 0;
