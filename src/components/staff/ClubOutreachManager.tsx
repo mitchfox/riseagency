@@ -757,7 +757,21 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
   useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
   const firstPlayerName = names[0] ?? "";
   const isAgent = (row.target_type ?? 'club') === 'agent';
-  const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
+  // Avoid the dreaded "Unknown club" label when a club_id refers to a row
+  // that has since been deleted from club_map_positions. Fall back, in
+  // order, to: prepared_for_name (often "TD Name @ Club FC"), the
+  // proposal's short_id, and finally a dash.
+  const clubFallback = (() => {
+    const prepared = (row.prepared_for_name ?? "").trim();
+    if (prepared) {
+      const m = prepared.match(/@\s*(.+)$/);
+      if (m) return m[1].trim();
+    }
+    return row.short_id ? row.short_id : "—";
+  })();
+  const targetName = isAgent
+    ? (row.agent_name ?? "Agent")
+    : (row.club?.club_name ?? clubFallback);
   const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
   const isPending = !!row.is_pending_strategy_draft;
   const copyTemplate = async (t: QuickTemplate) => {
