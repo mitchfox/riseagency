@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bell, MapPin, Clock, ExternalLink } from "lucide-react";
+import { VisitDetail } from "./ViewedVisitorsExpansion";
 
 export interface ProposalVisit {
   id: string;
@@ -145,9 +146,7 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
                 </div>
                 <ul className="pl-5 space-y-0.5">
                   {s.visits.map((v) => (
-                    <li key={v.id} className="text-[10px] text-muted-foreground truncate">
-                      • {shortPath(v.page_path)} <span className="opacity-60">· {formatDuration(v.duration)}</span>
-                    </li>
+                    <VisitDetail key={v.id} v={v} />
                   ))}
                 </ul>
               </li>
