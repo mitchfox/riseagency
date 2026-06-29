@@ -2134,6 +2134,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
 }
 
 function FormBannerCard({ cfg, rows, titleTemplate, autoT }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
@@ -2222,7 +2223,7 @@ function FormBannerCard({ cfg, rows, titleTemplate, autoT }: { cfg: { window_siz
                 >
                   <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-                    {it.label}
+                    {A(it.label)}
                   </div>
                 </div>
               ))}
@@ -2245,7 +2246,7 @@ function FormBannerCard({ cfg, rows, titleTemplate, autoT }: { cfg: { window_siz
             >
               <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
               <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-                {it.label}
+                {A(it.label)}
               </div>
             </div>
           ))}
