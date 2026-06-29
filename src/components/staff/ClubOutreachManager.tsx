@@ -1216,8 +1216,20 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   }, [players, playerQuery, selectedIds]);
   const filteredClubs = useMemo(() => {
     const n = clubQuery.trim().toLowerCase();
-    return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
-  }, [clubs, clubQuery]);
+    // Guarantee any prefill/selected club is in the list even if the
+    // parent's clubs prop hasn't merged it in yet — prevents the Market
+    // Tables → New Outreach flow from showing an empty picker.
+    const base = [...clubs];
+    if (prefill?.clubId && prefill.clubName && !base.some((c) => c.id === prefill.clubId)) {
+      base.push({ id: prefill.clubId, club_name: prefill.clubName, country: prefill.country ?? null, image_url: prefill.imageUrl ?? null });
+    }
+    if (clubId && !base.some((c) => c.id === clubId)) {
+      const fallbackName = prefill?.clubId === clubId ? prefill.clubName : null;
+      if (fallbackName) base.push({ id: clubId, club_name: fallbackName, country: prefill?.country ?? null, image_url: prefill?.imageUrl ?? null });
+    }
+    base.sort((a, b) => a.club_name.localeCompare(b.club_name));
+    return n ? base.filter((c) => c.club_name.toLowerCase().includes(n)) : base;
+  }, [clubs, clubQuery, prefill?.clubId, prefill?.clubName, prefill?.country, prefill?.imageUrl, clubId]);
   const exactMatch = useMemo(() => {
     const n = clubQuery.trim().toLowerCase();
     return n ? clubs.some(c => c.club_name.toLowerCase() === n) : true;
