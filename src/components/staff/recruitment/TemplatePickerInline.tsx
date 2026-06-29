@@ -41,7 +41,13 @@ const fillMerge = (tpl: string, vars: Record<string, string>): string =>
  */
 const applyOfferLink = (text: string, url: string): string => {
   if (!url) return text;
-  return text.replace(/https?:\/\/\S*(?:risefootballagency\.com|lovable\.app|lovableproject\.com)\S*/gi, url);
+  return text.replace(
+    /(https?:\/\/)?(?:www\.)?(?:risefootballagency\.com|lovable\.app|lovableproject\.com)[^\s<>"'`]*/gi,
+    (match) => {
+      const trail = match.match(/[.,;:!?\)\]]+$/)?.[0] ?? "";
+      return `${url}${trail}`;
+    },
+  );
 };
 
 export const TemplatePickerInline = ({ playerName, position, club, age, offerSlug, scope, preferredTargetId, compact }: Props) => {
