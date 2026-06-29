@@ -286,6 +286,10 @@ export default function ClubOutreachProposal() {
   // are more videos than fit on screen).
   const [heroCarouselStart, setHeroCarouselStart] = useState(0);
   const [heroMobileVisibleRows, setHeroMobileVisibleRows] = useState(1);
+  // Language override: proposal always opens in English. If the link has a
+  // non-English assigned language the viewer can toggle to it via the pill
+  // shown below the "To <contact>" line in the header.
+  const [langOverride, setLangOverride] = useState<string>("en");
   useEffect(() => {
     setHeroCarouselStart(0);
     setHeroMobileVisibleRows(1);
@@ -333,9 +337,8 @@ export default function ClubOutreachProposal() {
   }, [shortId]);
 
   useEffect(() => {
-    const lang = (data?.link?.language as string | undefined) || "en";
-    try { document.documentElement.lang = lang; } catch {}
-  }, [data?.link?.language]);
+    try { document.documentElement.lang = langOverride; } catch {}
+  }, [langOverride]);
 
   const slots = useMemo(() => {
     if (!data) return [] as string[];
@@ -518,7 +521,8 @@ export default function ClubOutreachProposal() {
   const club = data.club;
   const player = current.player;
 
-  const lang = (data.link.language as string | undefined) || "en";
+  const assignedLang = (data.link.language as string | undefined) || "en";
+  const lang = langOverride;
   const uiT = data.link.translations?.ui ?? {};
   const fitsT = data.link.translations?.fits ?? {};
   const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
@@ -621,8 +625,12 @@ export default function ClubOutreachProposal() {
             // If staff have explicitly picked a video selection for this
             // player, treat that as the full set — don't surface the rest as
             // "more videos".
-            if (current?.videos_explicitly_selected) return null;
-            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? current?.videos ?? [];
+            // Always surface the player's other Stars-profile match
+            // highlights here — even when staff have explicitly picked
+            // which video shows on the main hero. Only the chosen hero
+            // video is excluded below. bestClips / portal clips are
+            // already filtered out upstream in the edge function.
+            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? [];
             const shownSet = new Set(
               (current?.videos ?? [])
                 .map((v) => (v?.videoUrl ?? "").split("#")[0])
