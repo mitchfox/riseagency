@@ -1009,17 +1009,18 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     }, 80);
     return () => clearTimeout(t);
   }, [selectedClub?.id]);
-  // If Market Tables asked us to force-create the club (because it had no
-  // logo on file), pre-open the inline "Add new club" form so the user
-  // can upload a logo before the outreach is built.
+  // If Market Tables flagged this club as missing a logo, scroll the
+  // upload prompt into view (the dashed-border block under the club
+  // picker is already rendered when selectedClub has no image_url).
   useEffect(() => {
     if (!prefill?.forceCreateClub) return;
-    if (!selectedClub) return;
-    if (selectedClub.image_url) return; // already has a logo, no action needed
-    setNewClubName(selectedClub.club_name);
-    setNewClubCountry(selectedClub.country ?? "");
-    setCreatingClub(true);
-  }, [prefill?.forceCreateClub, selectedClub?.id]);
+    if (!selectedClub || selectedClub.image_url) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-missing-logo="${selectedClub.id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [prefill?.forceCreateClub, selectedClub?.id, selectedClub?.image_url]);
   const selectedIds = new Set(entries.map(e => e.player_id));
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const activeSettingsEntry = entries.find((e) => e.player_id === activeSettingsPlayerId) ?? entries[0] ?? null;
