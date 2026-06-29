@@ -209,6 +209,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       // we always persist `true` to satisfy any older readers expecting an
       // explicit opt-in.
       show_database_card: true,
+      show_have_agent: showHaveAgent,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
