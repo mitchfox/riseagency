@@ -82,7 +82,21 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         supabase.from("club_outreach_links").select("id, club_id, status, target_type").eq("target_type", "club").eq("status", "sent"),
         supabase.from("club_outreach_visits").select("outreach_id"),
       ]);
-      setClubs((clubRows ?? []) as ClubLite[]);
+      const clubList = [...((clubRows ?? []) as ClubLite[])];
+      const clubMap = new Map(clubList.map((c) => [c.id, c]));
+      const referencedClubIds = Array.from(new Set(
+        ((stratRows ?? []) as any[])
+          .flatMap((s) => s?.filters?.club_ids ?? [])
+          .filter((id: any): id is string => typeof id === "string" && !!id && !clubMap.has(id)),
+      ));
+      if (referencedClubIds.length > 0) {
+        const { data: missingClubs } = await supabase
+          .from("club_map_positions")
+          .select("id, club_name, country, league, league_level, image_url")
+          .in("id", referencedClubIds);
+        clubList.push(...(((missingClubs ?? []) as unknown) as ClubLite[]));
+      }
+      setClubs(clubList.sort((a, b) => a.club_name.localeCompare(b.club_name)));
       setStrategies((stratRows ?? []) as StrategyRow[]);
       const auto = new Set<string>();
       (sentLinkRows ?? []).forEach((r: any) => { if (r.club_id) auto.add(r.club_id); });
