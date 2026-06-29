@@ -873,6 +873,28 @@ export default function ClubOutreachProposal() {
               ? fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })
               : (player?.name ?? tr("hdr.player", "Player"))}
           </h1>
+          {!hasMultiple && player?.instagram_handle ? (() => {
+            const handle = (player.instagram_handle || "").trim().replace(/^@/, "");
+            if (!handle) return null;
+            return (
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    await navigator.clipboard.writeText(`@${handle}`);
+                    toast.success(`Copied @${handle}`);
+                  } catch {
+                    toast.error("Could not copy");
+                  }
+                }}
+                className="-mt-0.5 text-[12px] sm:text-[13px] text-white/55 hover:text-[#cbb96b] transition-colors cursor-copy"
+                title="Copy Instagram handle"
+              >
+                @{handle}
+              </button>
+            );
+          })() : null}
           {preparedFor && (
             <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
           )}
