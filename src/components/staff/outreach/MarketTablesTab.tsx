@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History, Send } from "lucide-react";
+import { MessageCircle, Mail, Phone, Search, Pencil, UserPlus, ChevronRight, Users, Check, History, Send, Linkedin, Heart, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ interface ContactRow {
   email: string | null;
   phone: string | null;
   country: string | null;
+  linkedin_url?: string | null;
 }
 
 interface Entry {
@@ -41,7 +42,7 @@ const MARKET_TABLE_KEY = "summer-26";
 const PAGE_SIZE = 50;
 const CLUB_FETCH_PAGE_SIZE = 1000;
 const CONTACT_FETCH_PAGE_SIZE = 1000;
-const CONTACT_SELECT = "id, name, club_name, position, email, phone, country";
+const CONTACT_SELECT = "id, name, club_name, position, email, phone, country, linkedin_url";
 const BELGIUM_1ST_CLUBS = [
   "RSC Anderlecht",
   "Royal Antwerp FC",
@@ -186,6 +187,99 @@ const additionalContactsForClub = (
 
 const waLink = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
+function LinkedInButton({
+  url,
+  onSave,
+  size = "sm",
+}: {
+  url: string | null | undefined;
+  onSave: (next: string | null) => Promise<void> | void;
+  size?: "sm" | "xs";
+}) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(url ?? "");
+  const [saving, setSaving] = useState(false);
+  const has = !!(url && url.trim());
+  useEffect(() => {
+    if (open) setDraft(url ?? "");
+  }, [open, url]);
+  const cls = size === "xs" ? "h-6 w-6" : "h-8 w-8";
+  const icon = size === "xs" ? "h-3 w-3" : "h-3.5 w-3.5";
+  const save = async (value: string | null) => {
+    setSaving(true);
+    try {
+      await onSave(value);
+      setOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={has ? "LinkedIn — click to open or edit" : "Add LinkedIn URL"}
+          aria-label={has ? "LinkedIn" : "Add LinkedIn URL"}
+          className={`inline-flex ${cls} shrink-0 items-center justify-center rounded-md border transition ${
+            has
+              ? "border-[#0a66c2]/60 bg-[#0a66c2]/10 text-[#0a66c2] hover:bg-[#0a66c2]/20"
+              : "border-border text-muted-foreground/50 hover:text-white hover:border-risegold/60"
+          }`}
+        >
+          <Linkedin className={icon} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[320px] p-3 space-y-2">
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          LinkedIn URL
+        </div>
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="https://www.linkedin.com/in/…"
+          autoFocus
+        />
+        <div className="flex items-center justify-between gap-2">
+          {has ? (
+            <a
+              href={url ?? "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-[#0a66c2] hover:underline truncate"
+            >
+              Open current
+            </a>
+          ) : <span />}
+          <div className="flex items-center gap-1.5">
+            {has && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
+                disabled={saving}
+                onClick={() => save(null)}
+              >
+                Remove
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={saving}
+              onClick={() => save(draft.trim() ? draft.trim() : null)}
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 const mondayOf = (d: Date): string => {
   const x = new Date(d);
   const day = x.getDay();
@@ -242,6 +336,10 @@ function MarketContactSlot({
   onConfirm,
   onEdit,
   onCreateOutreach,
+  linkedinUrl,
+  onSaveLinkedin,
+  onAddToRelationships,
+  inRelationships,
 }: {
   value: string;
   contact: ContactRow | null;
@@ -251,6 +349,10 @@ function MarketContactSlot({
   onConfirm: (value: string | null) => Promise<boolean | void>;
   onEdit: () => void;
   onCreateOutreach?: () => void;
+  linkedinUrl?: string | null;
+  onSaveLinkedin?: (next: string | null) => Promise<void> | void;
+  onAddToRelationships?: () => void;
+  inRelationships?: boolean;
 }) {
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -302,6 +404,26 @@ function MarketContactSlot({
         }}
       />
       {links}
+      {value.trim() && onSaveLinkedin && (
+        <LinkedInButton url={linkedinUrl ?? null} onSave={onSaveLinkedin} />
+      )}
+      {value.trim() && onAddToRelationships && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onAddToRelationships}
+          title={inRelationships ? "Already in Relationships" : "Add to Relationships"}
+          aria-label="Add to Relationships"
+          disabled={inRelationships}
+          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition ${
+            inRelationships
+              ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 cursor-default"
+              : "border-border text-muted-foreground hover:text-white hover:border-risegold/60"
+          }`}
+        >
+          <Heart className="h-3.5 w-3.5" fill={inRelationships ? "currentColor" : "none"} />
+        </button>
+      )}
       <button
         type="button"
         onMouseDown={(e) => e.preventDefault()}
@@ -363,6 +485,12 @@ export default function MarketTablesTab() {
     Array<{ id: string; club_id: string; td: string | null; cs: string | null; at: string; kind: "insert" | "update" }>
   >([]);
   const [activityOpen, setActivityOpen] = useState(false);
+  // Clubs we already have an active outreach for — drives the green tick
+  // next to the club name.
+  const [outreachClubIds, setOutreachClubIds] = useState<Set<string>>(new Set());
+  // Contact ids that already exist as a Relationship row — drives the
+  // "Add to relationships" button state.
+  const [relationshipContactIds, setRelationshipContactIds] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (clubId: string) =>
     setExpanded((prev) => {
@@ -597,6 +725,31 @@ export default function MarketTablesTab() {
     })();
   }, []);
 
+  // Load every active club_outreach_link so we can tick clubs that already
+  // have an outreach, and load every existing relationship contact id so we
+  // can show "added" state on the per-contact Relationships button.
+  useEffect(() => {
+    (async () => {
+      const [{ data: linkRows }, { data: relRows }] = await Promise.all([
+        supabase
+          .from("club_outreach_links")
+          .select("club_id")
+          .is("archived_at", null)
+          .limit(10000),
+        (supabase as any)
+          .from("outreach_relationships")
+          .select("contact_id")
+          .limit(10000),
+      ]);
+      const cs = new Set<string>();
+      (linkRows ?? []).forEach((r: any) => { if (r.club_id) cs.add(r.club_id); });
+      setOutreachClubIds(cs);
+      const rs = new Set<string>();
+      (relRows ?? []).forEach((r: any) => { if (r.contact_id) rs.add(r.contact_id); });
+      setRelationshipContactIds(rs);
+    })();
+  }, []);
+
   const countries = useMemo(() => {
     const set = new Set<string>();
     clubs.forEach((c) => c.country && set.add(c.country));
@@ -745,7 +898,6 @@ export default function MarketTablesTab() {
       if (error) throw error;
       return data;
     })());
-    await ensureRelationshipShell(contact.id);
     setContacts((prev) => upsertContactRow(prev, contact as ContactRow));
     return contact as ContactRow;
   };
@@ -854,6 +1006,7 @@ export default function MarketTablesTab() {
   // Switches to the Club Outreach tab and opens a fresh New Outreach panel
   // with the chosen club and contact name pre-filled.
   const createOutreach = (club: ClubRow, contactName: string | null) => {
+    const needsLogoFirst = !club.image_url || !club.image_url.trim();
     window.dispatchEvent(
       new CustomEvent("staff:switch-section", { detail: { section: "cluboutreach" } }),
     );
@@ -864,10 +1017,89 @@ export default function MarketTablesTab() {
           detail: {
             clubId: club.id,
             preparedFor: (contactName ?? "").trim() || undefined,
+            forceCreateClub: needsLogoFirst,
           },
         }),
       );
     }, 60);
+  };
+
+  // Save LinkedIn URL for any contact slot. If we already have a network
+  // contact row, write to club_network_contacts.linkedin_url. If the slot
+  // only holds a typed-in TD/CS name with no contact row yet, write to
+  // club_map_positions.{technical_director_linkedin_url|chief_scout_linkedin_url}
+  // so the URL still persists.
+  const saveLinkedIn = async (
+    club: ClubRow,
+    role: "td" | "cs" | "extra",
+    contact: ContactRow | null,
+    url: string | null,
+  ) => {
+    try {
+      if (contact) {
+        const { error } = await supabase
+          .from("club_network_contacts")
+          .update({ linkedin_url: url })
+          .eq("id", contact.id);
+        if (error) throw error;
+        setContacts((prev) => upsertContactRow(prev, { ...contact, linkedin_url: url }));
+      } else if (role === "td" || role === "cs") {
+        const column =
+          role === "td"
+            ? "technical_director_linkedin_url"
+            : "chief_scout_linkedin_url";
+        const { error } = await (supabase as any)
+          .from("club_map_positions")
+          .update({ [column]: url })
+          .eq("id", club.id);
+        if (error) throw error;
+        // Reflect locally so the button colour updates immediately.
+        setClubs((prev) =>
+          prev.map((c) =>
+            c.id === club.id ? ({ ...c, [column]: url } as ClubRow & Record<string, any>) : c,
+          ),
+        );
+      }
+      toast.success(url ? "LinkedIn saved" : "LinkedIn removed", { duration: 1200 });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save LinkedIn URL");
+    }
+  };
+
+  // Manually add a single named contact to Relationships. Creates a
+  // network contact shell if needed, then inserts an outreach_relationships
+  // row (idempotent by contact_id thanks to the unique index).
+  const addContactToRelationships = async (
+    club: ClubRow,
+    name: string | null,
+    role: "td" | "cs" | "extra",
+    existing: ContactRow | null,
+  ) => {
+    try {
+      const clean = (existing?.name ?? name ?? "").trim();
+      if (!clean) {
+        toast.error("Add a name first");
+        return;
+      }
+      const position =
+        existing?.position ??
+        (role === "td" ? "Technical Director" : role === "cs" ? "Chief Scout" : "");
+      const contact = existing ?? (await ensureContactShell(club, clean, position));
+      if (!contact) return;
+      if (relationshipContactIds.has(contact.id)) {
+        toast.info("Already in Relationships");
+        return;
+      }
+      await ensureRelationshipShell(contact.id);
+      setRelationshipContactIds((prev) => {
+        const next = new Set(prev);
+        next.add(contact.id);
+        return next;
+      });
+      toast.success(`Added ${contact.name} to Relationships`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to add to Relationships");
+    }
   };
 
   const openEdit = (club: ClubRow, role: "td" | "cs", existing: ContactRow | null) => {
@@ -933,9 +1165,6 @@ export default function MarketTablesTab() {
       }
       if (saved?.id) {
         setContacts((prev) => upsertContactRow(prev, saved as ContactRow));
-        void ensureRelationshipShell(saved.id).catch((e: any) => {
-          toast.error(e?.message ?? "Contact saved, but the network shell could not be created");
-        });
       }
       // Defensive: re-pull any contacts attached to this club so the extras
       // list is guaranteed to reflect the new row immediately (handles weird
@@ -1113,17 +1342,9 @@ export default function MarketTablesTab() {
               </ScrollArea>
             </PopoverContent>
           </Popover>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={addingToNetwork || filtered.length === 0}
-            onClick={addAllContactsToNetwork}
-            className="ml-auto h-8 text-xs gap-1.5"
-          >
-            <Users className="h-3.5 w-3.5" />
-            {addingToNetwork ? "Adding…" : "Add all contacts to Network"}
-          </Button>
+          <span className="ml-auto text-[10px] text-muted-foreground hidden md:inline">
+            Use the heart on a contact to add them to Relationships.
+          </span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -1184,7 +1405,15 @@ export default function MarketTablesTab() {
                   <div className="h-8 w-8 rounded-sm bg-muted" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-white font-medium text-sm truncate">{club.club_name}</div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-white font-medium text-sm truncate">{club.club_name}</span>
+                    {outreachClubIds.has(club.id) && (
+                      <CheckCircle2
+                        className="h-3.5 w-3.5 shrink-0 text-emerald-400"
+                        aria-label="Club outreach already created"
+                      />
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground truncate">
                     {club.country ?? "—"}{club.league ? ` · ${club.league}` : ""}
                   </div>
@@ -1201,6 +1430,10 @@ export default function MarketTablesTab() {
                   onConfirm={(v) => persistAndShell(club, "td", v)}
                   onEdit={() => openEdit(club, "td", tdContact)}
                   onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
+                  linkedinUrl={tdContact?.linkedin_url ?? (club as any).technical_director_linkedin_url ?? null}
+                  onSaveLinkedin={(v) => saveLinkedIn(club, "td", tdContact, v)}
+                  onAddToRelationships={() => addContactToRelationships(club, tdName, "td", tdContact)}
+                  inRelationships={!!(tdContact && relationshipContactIds.has(tdContact.id))}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1214,6 +1447,10 @@ export default function MarketTablesTab() {
                   onConfirm={(v) => persistAndShell(club, "cs", v)}
                   onEdit={() => openEdit(club, "cs", csContact)}
                   onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
+                  linkedinUrl={csContact?.linkedin_url ?? (club as any).chief_scout_linkedin_url ?? null}
+                  onSaveLinkedin={(v) => saveLinkedIn(club, "cs", csContact, v)}
+                  onAddToRelationships={() => addContactToRelationships(club, csName, "cs", csContact)}
+                  inRelationships={!!(csContact && relationshipContactIds.has(csContact.id))}
                 />
               </div>
               <div className="pt-1 border-t border-border/40">
@@ -1245,6 +1482,24 @@ export default function MarketTablesTab() {
                           <span className="text-white">{c.name}</span>
                           {c.position && <span className="text-muted-foreground">· {c.position}</span>}
                           {renderContactLinks(c)}
+                          <LinkedInButton
+                            url={c.linkedin_url ?? null}
+                            onSave={(v) => saveLinkedIn(club, "extra", c, v)}
+                            size="xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => addContactToRelationships(club, c.name, "extra", c)}
+                            title={relationshipContactIds.has(c.id) ? "Already in Relationships" : "Add to Relationships"}
+                            disabled={relationshipContactIds.has(c.id)}
+                            className={`inline-flex h-6 w-6 items-center justify-center rounded-md border ${
+                              relationshipContactIds.has(c.id)
+                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 cursor-default"
+                                : "border-border text-muted-foreground hover:text-white"
+                            }`}
+                          >
+                            <Heart className="h-3 w-3" fill={relationshipContactIds.has(c.id) ? "currentColor" : "none"} />
+                          </button>
                           {outreachMode && (
                             <button
                               type="button"
@@ -1319,6 +1574,12 @@ export default function MarketTablesTab() {
                         <div className="h-6 w-6 rounded-sm bg-muted" />
                       )}
                       <span className="text-white font-medium">{club.club_name}</span>
+                      {outreachClubIds.has(club.id) && (
+                        <CheckCircle2
+                          className="h-3.5 w-3.5 shrink-0 text-emerald-400"
+                          aria-label="Club outreach already created"
+                        />
+                      )}
                       {extras.length > 0 && (
                         <button
                           type="button"
@@ -1346,6 +1607,10 @@ export default function MarketTablesTab() {
                       onConfirm={(v) => persistAndShell(club, "td", v)}
                       onEdit={() => openEdit(club, "td", tdContact)}
                       onCreateOutreach={outreachMode ? () => createOutreach(club, tdName || tdContact?.name || null) : undefined}
+                      linkedinUrl={tdContact?.linkedin_url ?? (club as any).technical_director_linkedin_url ?? null}
+                      onSaveLinkedin={(v) => saveLinkedIn(club, "td", tdContact, v)}
+                      onAddToRelationships={() => addContactToRelationships(club, tdName, "td", tdContact)}
+                      inRelationships={!!(tdContact && relationshipContactIds.has(tdContact.id))}
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -1358,6 +1623,10 @@ export default function MarketTablesTab() {
                       onConfirm={(v) => persistAndShell(club, "cs", v)}
                       onEdit={() => openEdit(club, "cs", csContact)}
                       onCreateOutreach={outreachMode ? () => createOutreach(club, csName || csContact?.name || null) : undefined}
+                      linkedinUrl={csContact?.linkedin_url ?? (club as any).chief_scout_linkedin_url ?? null}
+                      onSaveLinkedin={(v) => saveLinkedIn(club, "cs", csContact, v)}
+                      onAddToRelationships={() => addContactToRelationships(club, csName, "cs", csContact)}
+                      inRelationships={!!(csContact && relationshipContactIds.has(csContact.id))}
                     />
                   </td>
                 </tr>
@@ -1389,6 +1658,24 @@ export default function MarketTablesTab() {
                                   <span className="text-muted-foreground">· {c.position}</span>
                                 )}
                                 {renderContactLinks(c)}
+                                <LinkedInButton
+                                  url={c.linkedin_url ?? null}
+                                  onSave={(v) => saveLinkedIn(club, "extra", c, v)}
+                                  size="xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => addContactToRelationships(club, c.name, "extra", c)}
+                                  title={relationshipContactIds.has(c.id) ? "Already in Relationships" : "Add to Relationships"}
+                                  disabled={relationshipContactIds.has(c.id)}
+                                  className={`inline-flex h-6 w-6 items-center justify-center rounded-md border ${
+                                    relationshipContactIds.has(c.id)
+                                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400 cursor-default"
+                                      : "border-border text-muted-foreground hover:text-white"
+                                  }`}
+                                >
+                                  <Heart className="h-3 w-3" fill={relationshipContactIds.has(c.id) ? "currentColor" : "none"} />
+                                </button>
                                 {outreachMode && (
                                   <button
                                     type="button"

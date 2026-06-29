@@ -170,7 +170,7 @@ export default function ClubOutreachManager() {
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
   // Prefill state for when the New Outreach panel is opened programmatically
   // (e.g. from the Market Tables "Create outreach" buttons).
-  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; preparedFor?: string } | null>(null);
+  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; preparedFor?: string; forceCreateClub?: boolean } | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
@@ -467,12 +467,20 @@ export default function ClubOutreachManager() {
   // already filled in.
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { clubId?: string; preparedFor?: string } | undefined;
+      const detail = (e as CustomEvent).detail as {
+        clubId?: string;
+        preparedFor?: string;
+        forceCreateClub?: boolean;
+      } | undefined;
       if (!detail) return;
       setMode('club');
       setEditRow(null);
       setSettingsOpen(false);
-      setNewPrefill({ clubId: detail.clubId, preparedFor: detail.preparedFor });
+      setNewPrefill({
+        clubId: detail.clubId,
+        preparedFor: detail.preparedFor,
+        forceCreateClub: detail.forceCreateClub,
+      });
       setNewOpen(true);
       scrollPanelToTop();
     };
@@ -749,7 +757,21 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
   useEffect(() => { setShortIdDraft(row.short_id); }, [row.short_id]);
   const firstPlayerName = names[0] ?? "";
   const isAgent = (row.target_type ?? 'club') === 'agent';
-  const targetName = isAgent ? (row.agent_name ?? "Agent") : (row.club?.club_name ?? "Unknown club");
+  // Avoid the dreaded "Unknown club" label when a club_id refers to a row
+  // that has since been deleted from club_map_positions. Fall back, in
+  // order, to: prepared_for_name (often "TD Name @ Club FC"), the
+  // proposal's short_id, and finally a dash.
+  const clubFallback = (() => {
+    const prepared = (row.prepared_for_name ?? "").trim();
+    if (prepared) {
+      const m = prepared.match(/@\s*(.+)$/);
+      if (m) return m[1].trim();
+    }
+    return row.short_id ? row.short_id : "—";
+  })();
+  const targetName = isAgent
+    ? (row.agent_name ?? "Agent")
+    : (row.club?.club_name ?? clubFallback);
   const targetLogo = isAgent ? (row.agent_logo_url ?? null) : (row.club?.image_url ?? null);
   const isPending = !!row.is_pending_strategy_draft;
   const copyTemplate = async (t: QuickTemplate) => {
@@ -931,7 +953,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string }; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string; forceCreateClub?: boolean }; }) {
   const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
@@ -990,6 +1012,29 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [savingNewClub, setSavingNewClub] = useState(false);
 
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
+  // Scroll the selected club tile into view inside the picker so the
+  // user can immediately see what was auto-chosen when arriving from
+  // Market Tables.
+  useEffect(() => {
+    if (!selectedClub) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-club-tile="${selectedClub.id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [selectedClub?.id]);
+  // If Market Tables flagged this club as missing a logo, scroll the
+  // upload prompt into view (the dashed-border block under the club
+  // picker is already rendered when selectedClub has no image_url).
+  useEffect(() => {
+    if (!prefill?.forceCreateClub) return;
+    if (!selectedClub || selectedClub.image_url) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-missing-logo="${selectedClub.id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [prefill?.forceCreateClub, selectedClub?.id, selectedClub?.image_url]);
   const selectedIds = new Set(entries.map(e => e.player_id));
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const activeSettingsEntry = entries.find((e) => e.player_id === activeSettingsPlayerId) ?? entries[0] ?? null;
@@ -1490,7 +1535,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mt-1.5" />
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
               {filteredClubs.map(c => (
-                <button key={c.id} type="button" onClick={() => setClubId(c.id)}
+                <button key={c.id} type="button" data-club-tile={c.id} onClick={() => setClubId(c.id)}
                   className={`flex items-center gap-2 rounded-md border p-2 text-left ${clubId === c.id ? "border-[#cbb96b] bg-[#cbb96b]/10" : "border-border hover:border-[#cbb96b]/40"}`}>
                   {c.image_url ? <img src={c.image_url} className="h-8 w-8 object-contain bg-white/5 rounded" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[10px]">No logo</div>}
                   <div className="min-w-0">
@@ -1540,7 +1585,10 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             </div>
           )}
             {selectedClub && !selectedClub.image_url && (
-              <div className="mt-3 rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5">
+              <div
+                data-missing-logo={selectedClub.id}
+                className="mt-3 rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5"
+              >
                 <p className="text-xs mb-2">No logo on file for <b>{selectedClub.club_name}</b>. Upload one — it will be saved into the coaching database.</p>
                 <label className="inline-flex items-center gap-2 cursor-pointer text-xs">
                   <Upload className="h-3.5 w-3.5" />
