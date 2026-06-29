@@ -70,7 +70,7 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
         visits: vs,
         city: loc.city ?? null,
         region: loc.region ?? null,
-        country: loc.country ?? "Unknown",
+        country: loc.country || "Location unknown",
         ip: loc.ip ?? null,
         totalDuration: vs.reduce((s, v) => s + (v.duration ?? 0), 0),
         device: deviceFromUA(latest.user_agent),

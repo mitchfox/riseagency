@@ -1,42 +1,47 @@
-### 1. LinkedIn button per contact on Market Tables
-- In `MarketTablesTab.tsx`, beside each named technical director / chief scout / role contact, render a LinkedIn icon button.
-- Blue brand colour when a `linkedin_url` exists on the contact (opens it in a new tab via `openExternalUrl`).
-- Greyscale (muted) when missing — click opens a small inline prompt to paste a LinkedIn URL, saved straight back to the same row (`club_map_positions` for named TD/CS, `club_network_contacts` for network role contacts) via partial upsert so we don't clobber concurrent edits.
+## Problem
 
-### 2. Green tick on clubs with an existing outreach
-- Load all active `club_outreach_links` for the current season once (already partly fetched for Outreach Mode).
-- Build a `Set<club_id>` of clubs that have at least one non-archived link.
-- Render a small green check next to the club name in the Market Tables list (and keep the existing "Create club outreach" button working).
+Club outreach visits sometimes don't show under "Viewed" even when the recipient definitely opened the link. Two things cause this:
 
-### 3. Fix "Unknown club" on Club Outreach
-- Audit the resolver in `ClubOutreachManager.tsx` (`row.club = clubMap.get(r.club_id)`).
-- Even though all current `club_id` values resolve in the DB, the card still falls back to "Unknown club" when:
-  - `target_type` is `club` but `club_id` is null and only `prepared_for_name` is set (legacy / strategy drafts), or
-  - the cached `clubMap` is stale because `load()` hasn't refreshed after a new club was created in this session.
-- Fix by:
-  - Falling back through `row.club?.club_name → row.prepared_for_name → "Unknown club"`.
-  - Re-running `load()` (or merging the new club into `clubs`) immediately after the Create-Club flow returns, so newly created clubs resolve without a refresh.
-- Apply the same fallback in `OutreachStrategyTab.tsx` (line ~302).
+1. `src/lib/visitorFilters.ts` → `isRealNonUkVisit` returns `false` whenever `location.country` is empty. Any visit where geo lookup fails (private IP, VPN, proxy, ip-api rate limit, mobile carrier NAT) is silently dropped.
+2. `supabase/functions/track-visit/index.ts` only calls free `http://ip-api.com` once. If that one call fails or times out we have no country, so the visit is hidden.
 
-### 4. Auto-created outreach from Market Tables → show selected club in the picker
-- When `MarketTablesTab.tsx` triggers "Create club outreach" for a known club, pass the `club_id` through to the new-outreach dialog and pre-select it in the Club selector so it visibly appears highlighted, not blank.
-- The same pre-selection flows into the prepared-for / club_id fields on save.
+The visit row IS being inserted into `site_visits` in those cases — it just never reaches the Viewed UI.
 
-### 5. Create-club-first flow when the club isn't in the outreach system
-- Currently every market-tables club has an `id` in `club_map_positions`, but some lack a logo / image.
-- New flow: when the user hits "Create club outreach" from Market Tables and the club has no `image_url` (or any minimum-info gap we define — logo missing is the practical case), first open the existing Create/Edit Club dialog in `ClubOutreachManager.tsx` pre-filled with the club name and id, so the user can upload a logo and confirm details.
-- On save of that dialog, automatically open the New Outreach dialog with that club pre-selected (item 4).
-- If a market-tables row truly has no `club_map_positions` entry yet, insert a stub row first using the same Create Club dialog, then continue into outreach creation.
+## Fix
 
-### 6. Manual Relationships list
-- `RelationshipsTab.tsx` currently lists every contact. Change behaviour:
-  - Default view shows only relationships the user has explicitly added (existing `outreach_relationships` rows are already the right table — we just stop auto-seeding from network contacts).
-  - Remove / disable any auto-population logic that mirrors all named TD / CS into relationships.
-  - On Market Tables, add a small "Add to Relationships" action next to each named contact (TD, CS, role contacts). Clicking it inserts an `outreach_relationships` row keyed to that contact (storing club_id + role + name + any phone/email/linkedin we already have) so the Relationships tab picks it up.
-  - Existing auto-populated rows that the user hasn't interacted with stay visible but can be removed individually; we don't bulk-delete them.
+### 1. Track even without geo (UI side)
+- Add a new predicate `isViewableProposalVisit` in `visitorFilters.ts`: passes a visit when UA is not a known bot, regardless of whether country is known. Confirmed UK visits are still excluded; **unknown country is now included** (rather than dropped).
+- `ClubOutreachManager.tsx` and `RepresentationOffers.tsx` switch their "Viewed" feeds to `isViewableProposalVisit`. The `ProposalVisitorsBell` keeps the strict non-UK filter so the pulsing bell only fires for confirmed non-UK traffic (no change there).
+- `ViewedVisitorsExpansion.tsx` shows `Location unknown` for visits with no resolved country so it's obvious why one is included.
 
-### Technical notes
-- All Supabase fetches that span clubs continue to use `.limit(10000)` to avoid the 1000-row default.
-- LinkedIn URL writes use partial upsert (only the `linkedin_url` column) so concurrent staff edits to other columns are preserved, consistent with the existing Market Tables concurrency model.
-- New "Add to Relationships" inserts are idempotent by `(club_id, contact_name, role)` to avoid duplicates.
-- No schema migrations expected if `club_network_contacts` and `club_map_positions` already have a `linkedin_url` column; I'll confirm in build mode and add a column via migration only if missing.
+### 2. Tighten the bot filter so unknown-geo doesn't flood
+- Keep current UA blocklist.
+- Add a `min duration ≥ 2s OR referrer is set OR has a real UA` guard so 0s prefetch hits don't pollute the Viewed list.
+
+### 3. Better geo on the server
+`supabase/functions/track-visit/index.ts`:
+- Use Cloudflare's `cf-ipcountry` header first (instant, no network call) and persist `location.country` from it when available.
+- If `cf-ipcountry` is missing, race the existing ip-api lookup against a 1.5s timeout with `ipapi.co/{ip}/json/` as a fallback.
+- Always insert the row even if both lookups fail (already does) — country just stays null.
+- Store the raw client IP in `location.ip` so staff can identify a visitor across pages without geo.
+
+### 4. Reliable duration write
+- Switch the unmount `supabase.functions.invoke` in `usePageTracking.ts` to `navigator.sendBeacon` to a small `track-visit-beacon` path on the same edge function (accept beacon body too) so duration updates survive tab close. Today the in-flight `invoke` is cancelled when the page unloads, so short visits look like 0s and get filtered out.
+
+### 5. Manual "Mark as viewed"
+Add a small `Mark viewed` action on every outreach card. Stores into a new `manually_viewed_at` column on `club_outreach_links`. The Viewed section unions automatic visits with manually-marked rows so you can promote a row you know was opened (e.g. the recipient told you on WhatsApp).
+
+## Technical Notes
+- New column: `club_outreach_links.manually_viewed_at timestamptz null`.
+- No change to `site_visits` schema.
+- `isRealNonUkVisit` stays in place for the notification bell to avoid pulsing on unresolved-geo noise.
+- `isViewableProposalVisit` is the new, looser predicate used only for the Viewed grouping and counts.
+
+## Files Touched
+- `src/lib/visitorFilters.ts` — add `isViewableProposalVisit`.
+- `src/components/staff/ClubOutreachManager.tsx` — use new predicate, add Mark viewed action, union manual flag.
+- `src/components/staff/RepresentationOffers.tsx` — same predicate swap + Mark viewed.
+- `src/components/staff/outreach/ViewedVisitorsExpansion.tsx` — show `Location unknown`.
+- `src/hooks/usePageTracking.ts` — `sendBeacon` on unload.
+- `supabase/functions/track-visit/index.ts` — CF header first, ipapi.co fallback, beacon body parse.
+- Migration: add `manually_viewed_at` to `club_outreach_links` and equivalent column on the offers table.

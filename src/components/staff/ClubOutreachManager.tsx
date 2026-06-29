@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft, Files } from "lucide-react";
+import { Plus, Settings, Copy, ExternalLink, Trash2, Search, Upload, MessageCircle, Shield, FileBadge2, Video, Film, FileText, X, Building2, FileEdit, Send, CheckCircle2, UserCircle2, Check, HelpCircle, Sparkles, ArrowUp, ArrowDown, GripVertical, ArrowLeft, Files, Eye } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -20,7 +20,7 @@ import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
-import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   DEFAULT_KEY_DETAILS,
@@ -142,6 +142,7 @@ interface OutreachRow {
   alternate_profile_link_ids?: string[] | null;
   alternate_profiles_blurb?: string | null;
   season_id?: string | null;
+  manually_viewed_at?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
@@ -301,7 +302,12 @@ export default function ClubOutreachManager() {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      // Use the looser predicate so genuine views with unknown/unresolved
+      // geo (private IP, mobile carrier NAT, VPN, ip-api rate limit) still
+      // surface under Viewed. Confirmed UK and obvious bots are still
+      // excluded. The notification bell continues to use the strict
+      // non-UK filter via `scopedVisits` below.
+      const real = ((data ?? []) as any[]).filter(isViewableProposalVisit);
       setVisits(real as ProposalVisit[]);
     };
     loadVisits();
@@ -448,6 +454,25 @@ export default function ClubOutreachManager() {
     }
   };
 
+  // Manually flag an outreach link as "viewed" so it surfaces under the
+  // Viewed section even when geo tracking missed the visit (private IP,
+  // VPN, recipient confirming over WhatsApp, etc.). Toggles off again on
+  // a second click.
+  const markViewed = async (row: OutreachRow) => {
+    const next = row.manually_viewed_at ? null : new Date().toISOString();
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, manually_viewed_at: next } : r)));
+    const { error } = await supabase
+      .from("club_outreach_links")
+      .update({ manually_viewed_at: next } as any)
+      .eq("id", row.id);
+    if (error) {
+      toast.error(error.message);
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, manually_viewed_at: row.manually_viewed_at ?? null } : r)));
+      return;
+    }
+    toast.success(next ? "Marked as viewed" : "Removed viewed flag");
+  };
+
   const approvePending = async (row: OutreachRow) => {
     const { error } = await supabase
       .from("club_outreach_links")
@@ -476,24 +501,34 @@ export default function ClubOutreachManager() {
   }, [filtered]);
 
   // Cards (across all statuses, in the current mode) that have at least
-  // one non-UK visit. Sorted by most recent visit first.
+  // one viewable visit, OR have been manually marked as viewed by staff.
+  // Sorted by most recent activity first.
   const viewedRows = useMemo(() => {
-    const withVisits = filtered
+    const withActivity = filtered
       .map((r) => ({ row: r, vs: visitsByShortId.get(r.short_id) ?? [] }))
-      .filter((x) => x.vs.length > 0);
-    withVisits.sort((a, b) => {
-      const ta = Math.max(...a.vs.map((v) => new Date(v.visited_at).getTime()));
-      const tb = Math.max(...b.vs.map((v) => new Date(v.visited_at).getTime()));
+      .filter((x) => x.vs.length > 0 || !!x.row.manually_viewed_at);
+    withActivity.sort((a, b) => {
+      const tsA = [
+        ...a.vs.map((v) => new Date(v.visited_at).getTime()),
+        a.row.manually_viewed_at ? new Date(a.row.manually_viewed_at).getTime() : 0,
+      ];
+      const tsB = [
+        ...b.vs.map((v) => new Date(v.visited_at).getTime()),
+        b.row.manually_viewed_at ? new Date(b.row.manually_viewed_at).getTime() : 0,
+      ];
+      const ta = Math.max(...tsA, 0);
+      const tb = Math.max(...tsB, 0);
       return tb - ta;
     });
-    return withVisits;
+    return withActivity;
   }, [filtered, visitsByShortId]);
 
   // Only visits attached to a current outreach row in this mode count
-  // towards the bell — keeps it scoped to what staff are actually working on.
+  // towards the bell — keeps it scoped to what staff are actually working
+  // on. Bell stays strict non-UK so it never pulses on unresolved geo.
   const scopedVisits = useMemo(() => {
     const shortIds = new Set(filtered.map((r) => r.short_id));
-    return visits.filter((v) => {
+    return visits.filter(isRealNonUkVisit).filter((v) => {
       const m = v.page_path.match(/^\/(?:club-proposal|clubs|agents)\/([^/]+)/);
       return m ? shortIds.has(m[1]) : false;
     });
@@ -756,6 +791,7 @@ export default function ClubOutreachManager() {
                         onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                         onApprovePending={() => approvePending(r)}
                         onRejectPending={() => rejectPending(r)}
+                        onMarkViewed={() => markViewed(r)}
                       />
                     </div>
                   );
@@ -800,6 +836,7 @@ export default function ClubOutreachManager() {
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                       onApprovePending={() => approvePending(r)}
                       onRejectPending={() => rejectPending(r)}
+                      onMarkViewed={() => markViewed(r)}
                     />
                   ))}
                 </div>
@@ -818,7 +855,7 @@ export default function ClubOutreachManager() {
   );
 }
 
-function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onDuplicate, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onDuplicate: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; }) {
+function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, onLog, onRemove, onDuplicate, onStatusChange, templates, onShortIdSave, onApprovePending, onRejectPending, onMarkViewed }: { row: OutreachRow; url: string; externalUrl: string; onOpen: () => void; players: PlayerLite[]; onCopy: () => void; onEdit: () => void; onLog: () => void; onRemove: () => void; onDuplicate: () => void; onStatusChange: (s: OutreachStatus) => void; templates: QuickTemplate[]; onShortIdSave: (next: string) => Promise<boolean>; onApprovePending?: () => void; onRejectPending?: () => void; onMarkViewed?: () => void; }) {
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const names = (row.link_players ?? []).map(lp => playerById.get(lp.player_id)?.name).filter(Boolean) as string[];
   const hasLogs = row.comm_count > 0;
@@ -986,6 +1023,17 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
         </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
         <Button size="sm" variant="outline" onClick={onDuplicate} title="Duplicate outreach"><Files className="h-3.5 w-3.5" /></Button>
+        {onMarkViewed && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onMarkViewed}
+            title={row.manually_viewed_at ? "Marked as viewed — click to undo" : "Mark as viewed (use when geo missed the visit)"}
+            className={row.manually_viewed_at ? "border-[#cbb96b] text-[#cbb96b]" : ""}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
     </div>

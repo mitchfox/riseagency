@@ -80,3 +80,32 @@ export function isRealNonUkVisit(v: {
   if (isBotVisit(v)) return false;
   return true;
 }
+
+// Looser predicate used to surface a visit under the "Viewed" section of
+// outreach / offers. Unlike `isRealNonUkVisit` this DOES NOT require a
+// resolved country — a confirmed real visit with unknown geo (private IP,
+// mobile carrier NAT, VPN, ip-api rate limit, etc.) still counts as a view.
+// We still drop confirmed UK traffic (so staff testing doesn't pollute it)
+// and obvious bot/preview UAs.
+export function isViewableProposalVisit(v: {
+  user_agent?: string | null;
+  location?: any;
+  duration?: number | null;
+  referrer?: string | null;
+}): boolean {
+  if (isUkVisit(v)) return false;
+  if (isBotVisit(v)) return false;
+  // Drop instant 0s prefetch-style hits that arrive with no referrer and no
+  // dwell time — those are almost always link-preview fetchers that slipped
+  // past the UA blocklist.
+  const dwell = Math.max(0, Number(v.duration ?? 0));
+  const hasReferrer = !!(v.referrer && String(v.referrer).trim().length > 0);
+  if (dwell < 2 && !hasReferrer) {
+    // Allow when we at least have a real-looking UA so genuine direct opens
+    // (WhatsApp tap-through with stripped referrer) still count.
+    const ua = (v.user_agent ?? "").toLowerCase();
+    const looksReal = /mozilla\/|applewebkit|gecko\/|chrome\/|safari\/|firefox\/|edg\//.test(ua);
+    if (!looksReal) return false;
+  }
+  return true;
+}

@@ -47,33 +47,87 @@ async function getLocationFromIP(request: Request): Promise<{ city?: string; reg
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIP = request.headers.get("x-real-ip");
     const cfConnectingIP = request.headers.get("cf-connecting-ip");
-    
+    // Cloudflare also injects a 2-letter country code on every request that
+    // hits the edge — use it as an instant, zero-network-call source of geo.
+    const cfCountry = (request.headers.get("cf-ipcountry") || "").toUpperCase();
+    const cfCountryName = countryNameFromIso(cfCountry);
+
     const clientIP = cfConnectingIP || (forwardedFor ? forwardedFor.split(",")[0].trim() : realIP) || "";
-    
+
     if (!clientIP || clientIP === "127.0.0.1" || clientIP.startsWith("192.168.") || clientIP.startsWith("10.")) {
-      return { ip: clientIP };
+      return { ip: clientIP, country: cfCountryName || undefined };
     }
 
-    // Use ip-api.com free tier (no API key needed, 45 requests per minute)
-    const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,city,regionName,country`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.status === "success") {
-        return {
-          city: data.city || undefined,
-          region: data.regionName || undefined,
-          country: data.country || undefined,
-          ip: clientIP,
-        };
-      }
+    // Race two free geo services with a hard 1.5s timeout so a slow
+    // lookup never blocks the visit insert. Whichever resolves first wins,
+    // and if both fail we still persist the IP + Cloudflare country fallback.
+    const lookups: Promise<{ city?: string; region?: string; country?: string } | null>[] = [
+      withTimeout(
+        fetch(`http://ip-api.com/json/${clientIP}?fields=status,city,regionName,country`)
+          .then(async (r) => {
+            if (!r.ok) return null;
+            const d = await r.json();
+            if (d?.status !== "success") return null;
+            return { city: d.city || undefined, region: d.regionName || undefined, country: d.country || undefined };
+          })
+          .catch(() => null),
+        1500,
+      ),
+      withTimeout(
+        fetch(`https://ipapi.co/${clientIP}/json/`)
+          .then(async (r) => {
+            if (!r.ok) return null;
+            const d = await r.json();
+            if (!d || d.error) return null;
+            return { city: d.city || undefined, region: d.region || undefined, country: d.country_name || undefined };
+          })
+          .catch(() => null),
+        1500,
+      ),
+    ];
+
+    const results = await Promise.all(lookups);
+    const first = results.find((r) => r && r.country) || results.find((r) => !!r) || null;
+    if (first) {
+      return { ...first, country: first.country || cfCountryName || undefined, ip: clientIP };
     }
-    
-    return { ip: clientIP };
+    return { ip: clientIP, country: cfCountryName || undefined };
   } catch (error) {
     console.error("Error getting location from IP:", error);
-    return {};
+    return {} as any;
   }
+}
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => resolve(null as any), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); }).catch(() => { clearTimeout(t); resolve(null as any); });
+  });
+}
+
+// Minimal ISO-2 → country-name map covering the countries we actually care
+// about for outreach. Anything we don't know about falls through as the raw
+// 2-letter code so we still record SOMETHING geo-shaped instead of null.
+const ISO_TO_NAME: Record<string, string> = {
+  GB: "United Kingdom", US: "United States", IE: "Ireland", FR: "France", DE: "Germany",
+  ES: "Spain", PT: "Portugal", IT: "Italy", NL: "Netherlands", BE: "Belgium", LU: "Luxembourg",
+  CH: "Switzerland", AT: "Austria", DK: "Denmark", SE: "Sweden", NO: "Norway", FI: "Finland",
+  PL: "Poland", CZ: "Czechia", SK: "Slovakia", HU: "Hungary", RO: "Romania", BG: "Bulgaria",
+  HR: "Croatia", SI: "Slovenia", RS: "Serbia", BA: "Bosnia and Herzegovina", MK: "North Macedonia",
+  AL: "Albania", ME: "Montenegro", GR: "Greece", TR: "Turkey", UA: "Ukraine", RU: "Russia",
+  BY: "Belarus", MD: "Moldova", LV: "Latvia", LT: "Lithuania", EE: "Estonia", IS: "Iceland",
+  MT: "Malta", CY: "Cyprus", CA: "Canada", MX: "Mexico", BR: "Brazil", AR: "Argentina",
+  CL: "Chile", CO: "Colombia", UY: "Uruguay", PE: "Peru", AU: "Australia", NZ: "New Zealand",
+  JP: "Japan", KR: "South Korea", CN: "China", HK: "Hong Kong", TW: "Taiwan", SG: "Singapore",
+  TH: "Thailand", ID: "Indonesia", PH: "Philippines", VN: "Vietnam", IN: "India", PK: "Pakistan",
+  ZA: "South Africa", NG: "Nigeria", EG: "Egypt", MA: "Morocco", AE: "United Arab Emirates",
+  SA: "Saudi Arabia", QA: "Qatar", KW: "Kuwait", IL: "Israel", JO: "Jordan", GE: "Georgia",
+  AM: "Armenia", AZ: "Azerbaijan", KZ: "Kazakhstan",
+};
+function countryNameFromIso(code: string | null | undefined): string {
+  if (!code) return "";
+  const c = code.toUpperCase();
+  return ISO_TO_NAME[c] || c;
 }
 
 serve(async (req) => {
@@ -82,7 +136,13 @@ serve(async (req) => {
   }
 
   try {
-    const { visitorId, pagePath, duration, referrer, isInitial, visitId } = await req.json();
+    // Accept both JSON (normal invoke) and text/plain (navigator.sendBeacon
+    // payloads use Blob "text/plain"). Falling back keeps duration writes
+    // alive even when the tab is closing.
+    const raw = await req.text();
+    let body: any = {};
+    try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
+    const { visitorId, pagePath, duration, referrer, isInitial, visitId } = body;
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
