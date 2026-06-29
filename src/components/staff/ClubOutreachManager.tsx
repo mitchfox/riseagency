@@ -52,6 +52,15 @@ const makeShortId = () => {
   for (let i = 0; i < 8; i++) out += c[Math.floor(Math.random() * c.length)];
   return out;
 };
+const makeClubShortId = (clubName: string | null | undefined) => {
+  const prefix = (clubName ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 4);
+  return prefix ? `${prefix}-${makeShortId()}` : makeShortId();
+};
 
 interface QuickTemplate { id: string; title: string; content: string; sort_order: number; }
 
@@ -170,7 +179,7 @@ export default function ClubOutreachManager() {
   const [editRow, setEditRow] = useState<OutreachRow | null>(null);
   // Prefill state for when the New Outreach panel is opened programmatically
   // (e.g. from the Market Tables "Create outreach" buttons).
-  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; preparedFor?: string; forceCreateClub?: boolean } | null>(null);
+  const [newPrefill, setNewPrefill] = useState<{ clubId?: string; clubName?: string; country?: string | null; imageUrl?: string | null; preparedFor?: string; forceCreateClub?: boolean } | null>(null);
   const [logRow, setLogRow] = useState<OutreachRow | null>(null);
   const [templates, setTemplates] = useState<QuickTemplate[]>([]);
   const [defaultFit, setDefaultFit] = useState<string>("");
@@ -194,6 +203,25 @@ export default function ClubOutreachManager() {
     if (sm === 'popup' || sm === 'link') setDefaultSeasonDataMode(sm);
     const vm = data?.default_video_selection_mode;
     if (vm === 'all' || vm === 'first' || vm === 'custom') setDefaultVideoMode(vm);
+  };
+
+  const mergeClub = (club: ClubLite) => {
+    setClubs((prev) => {
+      const next = prev.some((c) => c.id === club.id)
+        ? prev.map((c) =>
+            c.id === club.id
+              ? {
+                  ...c,
+                  ...club,
+                  club_name: club.club_name || c.club_name,
+                  country: club.country ?? c.country,
+                  image_url: club.image_url ?? c.image_url,
+                }
+              : c,
+          )
+        : [...prev, club];
+      return next.sort((a, b) => a.club_name.localeCompare(b.club_name));
+    });
   };
 
   const load = async () => {
@@ -469,15 +497,29 @@ export default function ClubOutreachManager() {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as {
         clubId?: string;
+        clubName?: string;
+        country?: string | null;
+        imageUrl?: string | null;
         preparedFor?: string;
         forceCreateClub?: boolean;
       } | undefined;
       if (!detail) return;
+      if (detail.clubId && detail.clubName) {
+        mergeClub({
+          id: detail.clubId,
+          club_name: detail.clubName,
+          country: detail.country ?? null,
+          image_url: detail.imageUrl ?? null,
+        });
+      }
       setMode('club');
       setEditRow(null);
       setSettingsOpen(false);
       setNewPrefill({
         clubId: detail.clubId,
+        clubName: detail.clubName,
+        country: detail.country ?? null,
+        imageUrl: detail.imageUrl ?? null,
         preparedFor: detail.preparedFor,
         forceCreateClub: detail.forceCreateClub,
       });
@@ -519,7 +561,7 @@ export default function ClubOutreachManager() {
           defaultSeasonDataMode={defaultSeasonDataMode}
           defaultVideoMode={defaultVideoMode}
           prefill={newPrefill ?? undefined}
-          onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
+          onClubAdded={mergeClub}
           onSaved={() => { setNewOpen(false); setNewPrefill(null); load(); }}
         />
       </div>
@@ -543,7 +585,7 @@ export default function ClubOutreachManager() {
           defaultSeasonDataMode={defaultSeasonDataMode}
           defaultVideoMode={defaultVideoMode}
           editing={editRow}
-          onClubAdded={(c) => setClubs(prev => [...prev, c].sort((a, b) => a.club_name.localeCompare(b.club_name)))}
+          onClubAdded={mergeClub}
           onSaved={() => { setEditRow(null); load(); }}
         />
       </div>
@@ -953,7 +995,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string; forceCreateClub?: boolean }; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; clubName?: string; country?: string | null; imageUrl?: string | null; preparedFor?: string; forceCreateClub?: boolean }; }) {
   const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
@@ -1012,6 +1054,16 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [savingNewClub, setSavingNewClub] = useState(false);
 
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
+  useEffect(() => {
+    if (!prefill?.clubId || !prefill.clubName) return;
+    if (clubs.some((c) => c.id === prefill.clubId)) return;
+    onClubAdded({
+      id: prefill.clubId,
+      club_name: prefill.clubName,
+      country: prefill.country ?? null,
+      image_url: prefill.imageUrl ?? null,
+    });
+  }, [prefill?.clubId, prefill?.clubName, prefill?.country, prefill?.imageUrl, clubs, onClubAdded]);
   // Scroll the selected club tile into view inside the picker so the
   // user can immediately see what was auto-chosen when arriving from
   // Market Tables.
@@ -1131,7 +1183,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       const publicUrl = data.publicUrl;
       const { error: updErr } = await supabase.from("club_map_positions").update({ image_url: publicUrl }).eq("id", selectedClub.id);
       if (updErr) throw updErr;
-      selectedClub.image_url = publicUrl;
+      onClubAdded({ ...selectedClub, image_url: publicUrl });
       toast.success("Logo saved");
     } catch (e: any) {
       toast.error(e.message ?? "Failed to upload logo");
@@ -1411,7 +1463,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         const { data: u } = await supabase.auth.getUser();
         let inserted = false;
         for (let attempt = 0; attempt < 5 && !inserted; attempt++) {
-          const short = makeShortId();
+          const short = isAgent ? makeShortId() : makeClubShortId(selectedClub?.club_name);
           const { data, error } = await supabase
             .from("club_outreach_links")
             .insert({ short_id: short, ...payload, created_by: u.user?.id ?? null })
