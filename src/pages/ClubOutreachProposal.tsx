@@ -932,7 +932,7 @@ export default function ClubOutreachProposal() {
                   <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                     <h2 className="text-xl font-semibold leading-tight">{p?.name ?? "Player"}</h2>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-white/65 mt-1">
-                      {[p?.position, playerAge ? `${playerAge}` : null, p?.club].filter(Boolean).join(" · ")}
+                      {[autoT(p?.position), playerAge ? `${playerAge}` : null, autoT(p?.club)].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                 </div>
