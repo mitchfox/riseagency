@@ -65,7 +65,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [fullDetailOpen, setFullDetailOpen] = useState(false);
   const [showUniqueOnly, setShowUniqueOnly] = useState(true); // Default to true
   const [showHidden, setShowHidden] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Default to today
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>({ from: new Date(), to: new Date() });
   const [stats, setStats] = useState({
     totalVisits: 0,
     uniqueVisitors: 0,
@@ -80,10 +80,10 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const loadVisits = async () => {
     setLoading(true);
     try {
-      // Get start and end of selected date
-      const startOfDay = new Date(selectedDate);
+      // Range support — when only "from" is set, treat it as a single day.
+      const startOfDay = new Date(dateRange.from);
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDate);
+      const endOfDay = new Date(dateRange.to ?? dateRange.from);
       endOfDay.setHours(23, 59, 59, 999);
 
       let query = supabase
@@ -199,7 +199,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     loadVisits();
     loadUniquePaths();
-  }, [pageFilter, showHidden, selectedDate]);
+  }, [pageFilter, showHidden, dateRange.from, dateRange.to]);
 
   const hideVisitor = async (visitorId: string) => {
     try {
@@ -241,20 +241,30 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const hideByIpOrLocation = async (ip?: string, location?: string) => {
     try {
-      // Find all visits matching this IP or location
+      // Find all visits matching this IP or location (include hidden so the
+      // count is honest, and so re-hiding from the hidden list still works).
       const { data: matchingVisits, error: fetchError } = await supabase
         .from("site_visits")
         .select("id, location")
-        .eq("hidden", false)
         .limit(10000);
 
       if (fetchError) throw fetchError;
 
+      const normLoc = (s: string) => (s || "").trim().toLowerCase();
+      const targetLoc = location ? normLoc(location) : "";
       const idsToHide = (matchingVisits || [])
         .filter(v => {
           const loc = v.location as any;
           if (ip && loc?.ip === ip) return true;
-          if (location && formatLocation(v.location) === location) return true;
+          if (location) {
+            const candidate = normLoc(formatLocation(v.location));
+            if (candidate === targetLoc) return true;
+            // Looser fallback — match by any non-empty part (city / region / country)
+            // so trivial formatting drift (e.g. missing region) never blocks the hide.
+            const parts = [loc?.city, loc?.region, loc?.country].filter(Boolean).map(normLoc);
+            const targetParts = targetLoc.split(",").map((p: string) => p.trim()).filter(Boolean);
+            if (targetParts.length && targetParts.every((p: string) => parts.includes(p))) return true;
+          }
           return false;
         })
         .map(v => v.id);
