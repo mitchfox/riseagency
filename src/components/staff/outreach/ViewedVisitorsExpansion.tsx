@@ -57,7 +57,7 @@ const fmtEvtTime = (s: number) => {
   return r ? `${m}m${r}s` : `${m}m`;
 };
 
-export function VisitDetail({ v, defaultOpen = false }: { v: ProposalVisit; defaultOpen?: boolean }) {
+export function VisitDetail({ v, defaultOpen = false, allTaps = false }: { v: ProposalVisit; defaultOpen?: boolean; allTaps?: boolean }) {
   const [openDetail, setOpenDetail] = useState(defaultOpen);
   const engaged = v.engaged_seconds ?? 0;
   const scrollMax = v.scroll_max_pct ?? 0;
@@ -66,8 +66,11 @@ export function VisitDetail({ v, defaultOpen = false }: { v: ProposalVisit; defa
   const videos = v.video_stats && typeof v.video_stats === "object" ? v.video_stats : {};
   const viewport = (v as any).viewport ?? null;
 
-  const clickList = events.filter((e: any) => e?.type === "click").slice(-12);
-  const sectionEntries = Object.entries(sections).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 6);
+  const allClicks = events.filter((e: any) => e?.type === "click");
+  const clickList = allTaps ? allClicks : allClicks.slice(-12);
+  const sectionEntries = allTaps
+    ? Object.entries(sections).sort((a, b) => Number(b[1]) - Number(a[1]))
+    : Object.entries(sections).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 6);
   const videoEntries = Object.entries(videos);
 
   const hasDetail =
@@ -146,9 +149,9 @@ export function VisitDetail({ v, defaultOpen = false }: { v: ProposalVisit; defa
           {clickList.length > 0 && (
             <div>
               <div className="text-[9.5px] uppercase tracking-wider text-[#cbb96b]/80 flex items-center gap-1 mb-0.5">
-                <MousePointerClick className="h-2.5 w-2.5" /> Recent taps
+                <MousePointerClick className="h-2.5 w-2.5" /> {allTaps ? `All taps (${allClicks.length})` : "Recent taps"}
               </div>
-              <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+              <ul className={`space-y-0.5 ${allTaps ? "max-h-[60vh]" : "max-h-32"} overflow-y-auto`}>
                 {clickList.slice().reverse().map((e: any, idx: number) => (
                   <li key={idx} className="flex justify-between gap-2">
                     <span className="truncate">{e.label || "element"}</span>
@@ -248,7 +251,7 @@ export function FullVisitorDetailDialog({
                 </div>
                 <ul className="pl-6 space-y-1.5">
                   {s.visits.map((v) => (
-                    <VisitDetail key={v.id} v={v} defaultOpen />
+                    <VisitDetail key={v.id} v={v} defaultOpen allTaps />
                   ))}
                 </ul>
               </li>
