@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, Clock, Eye, Globe } from "lucide-react";
+import { MapPin, Clock, Eye, Globe, MousePointerClick, ScrollText, Film, ChevronDown, ChevronUp, Layers } from "lucide-react";
 import type { ProposalVisit } from "./ProposalVisitorsBell";
 
 const fmtDuration = (s: number | null | undefined) => {
@@ -48,6 +48,125 @@ const deviceFromUA = (ua: string | null) => {
   const kind = mobile ? "Mobile" : tablet ? "Tablet" : "Desktop";
   return [kind, browser, os].filter(Boolean).join(" · ");
 };
+
+const fmtEvtTime = (s: number) => {
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r ? `${m}m${r}s` : `${m}m`;
+};
+
+function VisitDetail({ v }: { v: ProposalVisit }) {
+  const [openDetail, setOpenDetail] = useState(false);
+  const engaged = v.engaged_seconds ?? 0;
+  const scrollMax = v.scroll_max_pct ?? 0;
+  const events = Array.isArray(v.events) ? v.events : [];
+  const sections = v.sections && typeof v.sections === "object" ? v.sections : {};
+  const videos = v.video_stats && typeof v.video_stats === "object" ? v.video_stats : {};
+  const viewport = (v as any).viewport ?? null;
+
+  const clickList = events.filter((e: any) => e?.type === "click").slice(-12);
+  const sectionEntries = Object.entries(sections).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 6);
+  const videoEntries = Object.entries(videos);
+
+  const hasDetail =
+    engaged > 0 || scrollMax > 0 || events.length > 0 ||
+    sectionEntries.length > 0 || videoEntries.length > 0 || !!viewport;
+
+  return (
+    <li className="text-[10.5px] text-muted-foreground/90">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate flex-1">• {pageLabel(v.page_path)}</span>
+        <span className="opacity-70 whitespace-nowrap">{fmtDuration(v.duration)} · {fmtWhen(v.visited_at)}</span>
+        {hasDetail && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setOpenDetail((o) => !o); }}
+            className="ml-1 text-[#cbb96b]/80 hover:text-[#cbb96b]"
+            aria-label={openDetail ? "Hide details" : "Show details"}
+          >
+            {openDetail ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+        )}
+      </div>
+      {hasDetail && (
+        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground/80">
+          {engaged > 0 && (
+            <span className="inline-flex items-center gap-1"><Clock className="h-2.5 w-2.5" />Engaged {fmtDuration(engaged)}</span>
+          )}
+          {scrollMax > 0 && (
+            <span className="inline-flex items-center gap-1"><ScrollText className="h-2.5 w-2.5" />Scrolled {scrollMax}%</span>
+          )}
+          {clickList.length > 0 && (
+            <span className="inline-flex items-center gap-1"><MousePointerClick className="h-2.5 w-2.5" />{clickList.length} taps</span>
+          )}
+          {videoEntries.length > 0 && (
+            <span className="inline-flex items-center gap-1"><Film className="h-2.5 w-2.5" />{videoEntries.length} video{videoEntries.length === 1 ? "" : "s"}</span>
+          )}
+        </div>
+      )}
+      {openDetail && (
+        <div className="mt-2 ml-3 space-y-2 border-l border-[#cbb96b]/20 pl-2">
+          {sectionEntries.length > 0 && (
+            <div>
+              <div className="text-[9.5px] uppercase tracking-wider text-[#cbb96b]/80 flex items-center gap-1 mb-0.5">
+                <Layers className="h-2.5 w-2.5" /> Time on sections
+              </div>
+              <ul className="space-y-0.5">
+                {sectionEntries.map(([name, secs]) => (
+                  <li key={name} className="flex justify-between gap-2">
+                    <span className="truncate">{name}</span>
+                    <span className="opacity-70">{fmtDuration(Number(secs))}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {videoEntries.length > 0 && (
+            <div>
+              <div className="text-[9.5px] uppercase tracking-wider text-[#cbb96b]/80 flex items-center gap-1 mb-0.5">
+                <Film className="h-2.5 w-2.5" /> Video engagement
+              </div>
+              <ul className="space-y-0.5">
+                {videoEntries.map(([key, raw]) => {
+                  const s: any = raw ?? {};
+                  return (
+                    <li key={key} className="flex justify-between gap-2">
+                      <span className="truncate">{s.label || key}</span>
+                      <span className="opacity-70 whitespace-nowrap">
+                        {s.plays ?? 0}× · {fmtDuration(s.watched ?? 0)} · {s.maxPct ?? 0}%
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          {clickList.length > 0 && (
+            <div>
+              <div className="text-[9.5px] uppercase tracking-wider text-[#cbb96b]/80 flex items-center gap-1 mb-0.5">
+                <MousePointerClick className="h-2.5 w-2.5" /> Recent taps
+              </div>
+              <ul className="space-y-0.5 max-h-32 overflow-y-auto">
+                {clickList.slice().reverse().map((e: any, idx: number) => (
+                  <li key={idx} className="flex justify-between gap-2">
+                    <span className="truncate">{e.label || "element"}</span>
+                    <span className="opacity-60 whitespace-nowrap">{fmtEvtTime(Number(e.t) || 0)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {viewport && (
+            <div className="opacity-70 text-[9.5px]">
+              Viewport {viewport.w}×{viewport.h} · {viewport.orientation}
+            </div>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
 
 export default function ViewedVisitorsExpansion({ visits, children }: { visits: ProposalVisit[]; children: ReactNode }) {
   // Group by visitor_id so each card row is a single person.
@@ -159,10 +278,7 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
               </div>
               <ul className="pl-5 space-y-0.5">
                 {s.visits.map((v) => (
-                  <li key={v.id} className="text-[10.5px] text-muted-foreground/90 flex items-center justify-between gap-2">
-                    <span className="truncate">• {pageLabel(v.page_path)}</span>
-                    <span className="opacity-70 whitespace-nowrap">{fmtDuration(v.duration)} · {fmtWhen(v.visited_at)}</span>
-                  </li>
+                  <VisitDetail key={v.id} v={v} />
                 ))}
               </ul>
             </li>
