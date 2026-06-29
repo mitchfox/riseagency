@@ -537,6 +537,9 @@ export const RepresentationOffers = () => {
         <Button onClick={() => setCreateOpen(true)} className="shrink-0">
           <Plus className="h-4 w-4 mr-1.5" /> Create offer
         </Button>
+        <Button onClick={() => setTemplatesOpen(true)} variant="outline" className="shrink-0">
+          <MessageSquare className="h-4 w-4 mr-1.5" /> Templates
+        </Button>
         <ProposalVisitorsBell visits={scopedVisits} />
       </div>
 
