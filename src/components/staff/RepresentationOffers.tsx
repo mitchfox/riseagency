@@ -77,6 +77,35 @@ const groupFor = (p: OfferPlayer): OfferStatus => {
   return "draft";
 };
 
+const OfferStatusToggle = ({ status, onChange }: { status: OfferStatus; onChange: (s: OfferStatus) => void }) => {
+  const opts: { value: OfferStatus; label: string; icon: any }[] = [
+    { value: "draft", label: "Draft", icon: FileEdit },
+    { value: "ready", label: "Ready", icon: Send },
+    { value: "sent",  label: "Sent",  icon: CheckCircle2 },
+  ];
+  return (
+    <div className="grid grid-cols-3 rounded-md border border-border p-0.5 bg-muted/30">
+      {opts.map((o) => {
+        const active = status === o.value;
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(o.value); }}
+            className={`flex items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition ${
+              active ? "bg-[#cbb96b] text-black font-semibold" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3 w-3" />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 export const RepresentationOffers = () => {
   const [players, setPlayers] = useState<OfferPlayer[]>([]);
   const [loading, setLoading] = useState(true);
