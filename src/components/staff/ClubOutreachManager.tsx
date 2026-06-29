@@ -105,7 +105,17 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 // specific outreach URL, so old pasted links get rewritten on copy.
 function applyOutreachLink(text: string, url: string): string {
   if (!url) return text;
-  return text.replace(/https?:\/\/\S*(?:risefootballagency\.com|lovable\.app|lovableproject\.com)\S*/gi, url);
+  // Match links with or without protocol, e.g. "risefootballagency.com/x"
+  // as well as the lovable preview hosts. Trailing punctuation is left in
+  // place because \S* stops at whitespace only — strip a final ".,;:!?)" so
+  // sentences like "...visit risefootballagency.com." stay tidy.
+  return text.replace(
+    /(https?:\/\/)?(?:www\.)?(?:risefootballagency\.com|lovable\.app|lovableproject\.com)[^\s<>"'`]*/gi,
+    (match) => {
+      const trail = match.match(/[.,;:!?\)\]]+$/)?.[0] ?? "";
+      return `${url}${trail}`;
+    },
+  );
 }
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
@@ -265,14 +275,14 @@ export default function ClubOutreachManager() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: linkRows }, { data: playerRows }, { data: clubRows }, { data: linkPlayerRows }, { data: commRows }] = await Promise.all([
+    const [{ data: linkRows }, { data: playerRows }, clubRowsAll, { data: linkPlayerRows }, { data: commRows }] = await Promise.all([
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
-      supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name").limit(10000),
+      fetchAllOutreachClubs().catch((e) => { console.error("fetchAllOutreachClubs failed", e); return [] as ClubLite[]; }),
       supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
-    const clubList = [...((clubRows ?? []) as ClubLite[])];
+    const clubList = [...((clubRowsAll ?? []) as ClubLite[])];
     const clubMap = new Map<string, ClubLite>(clubList.map((c) => [c.id, c]));
     const missingClubIds = Array.from(new Set(
       ((linkRows ?? []) as any[])
@@ -3054,8 +3064,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
     return n ? players.filter(p => p.name.toLowerCase().includes(n)) : players;
   }, [players, playerQuery]);
   const filteredClubs = useMemo(() => {
-    const n = clubQuery.trim().toLowerCase();
-    return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
+    const n = normaliseSearch(clubQuery);
+    return n ? clubs.filter(c => normaliseSearch(c.club_name).includes(n)) : clubs;
   }, [clubs, clubQuery]);
 
   useEffect(() => {
