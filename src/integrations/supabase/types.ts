@@ -4724,6 +4724,7 @@ export type Database = {
           id: string
           is_archived: boolean
           last_outreach_at: string | null
+          manually_added: boolean
           nudge_dates: string[]
           nudge_week_start: string | null
           rapport_level: Database["public"]["Enums"]["outreach_rapport_level"]
@@ -4736,6 +4737,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           last_outreach_at?: string | null
+          manually_added?: boolean
           nudge_dates?: string[]
           nudge_week_start?: string | null
           rapport_level?: Database["public"]["Enums"]["outreach_rapport_level"]
@@ -4748,6 +4750,7 @@ export type Database = {
           id?: string
           is_archived?: boolean
           last_outreach_at?: string | null
+          manually_added?: boolean
           nudge_dates?: string[]
           nudge_week_start?: string | null
           rapport_level?: Database["public"]["Enums"]["outreach_rapport_level"]

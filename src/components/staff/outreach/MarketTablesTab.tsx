@@ -739,6 +739,7 @@ export default function MarketTablesTab() {
         (supabase as any)
           .from("outreach_relationships")
           .select("contact_id")
+          .eq("manually_added", true)
           .limit(10000),
       ]);
       const cs = new Set<string>();
@@ -858,11 +859,18 @@ export default function MarketTablesTab() {
   const ensureRelationshipShell = async (contactId: string) => {
     const { data: existing, error: existingErr } = await (supabase as any)
       .from("outreach_relationships")
-      .select("id")
+      .select("id, manually_added")
       .eq("contact_id", contactId)
       .maybeSingle();
     if (existingErr) throw existingErr;
-    if (existing?.id) return;
+    if (existing?.id) {
+      const { error } = await (supabase as any)
+        .from("outreach_relationships")
+        .update({ manually_added: true, is_archived: false })
+        .eq("id", existing.id);
+      if (error) throw error;
+      return;
+    }
     const { error } = await (supabase as any)
       .from("outreach_relationships")
       .insert({
@@ -870,6 +878,7 @@ export default function MarketTablesTab() {
         rapport_level: "cold",
         nudge_week_start: mondayOf(new Date()),
         nudge_dates: [],
+        manually_added: true,
       });
     if (error) throw error;
   };
@@ -1016,6 +1025,9 @@ export default function MarketTablesTab() {
         new CustomEvent("staff:open-club-outreach-new", {
           detail: {
             clubId: club.id,
+            clubName: club.club_name,
+            country: club.country,
+            imageUrl: club.image_url,
             preparedFor: (contactName ?? "").trim() || undefined,
             forceCreateClub: needsLogoFirst,
           },

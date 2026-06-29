@@ -31,6 +31,7 @@ type Contact = {
 type Relationship = {
   id: string;
   contact_id: string;
+  manually_added?: boolean;
   rapport_level: Rapport;
   nudge_week_start: string | null;
   nudge_dates: string[];
@@ -95,6 +96,7 @@ export default function RelationshipsTab() {
     const { data: rels, error } = await supabase
       .from("outreach_relationships" as any)
       .select("*")
+      .eq("manually_added", true)
       .order("updated_at", { ascending: false });
     if (error) { toast.error(error.message); return; }
     const list = (rels ?? []) as any as Relationship[];
@@ -148,12 +150,23 @@ export default function RelationshipsTab() {
 
   const addRelationship = async (contactId: string) => {
     const monday = mondayOf(new Date());
-    const { error } = await supabase.from("outreach_relationships" as any).insert({
-      contact_id: contactId,
+    const { data: existing, error: existingErr } = await supabase
+      .from("outreach_relationships" as any)
+      .select("id")
+      .eq("contact_id", contactId)
+      .maybeSingle();
+    if (existingErr) { toast.error(existingErr.message); return; }
+    const payload = {
       rapport_level: "cold",
       nudge_week_start: monday,
       nudge_dates: generateWeeklyNudges(),
-    });
+      manually_added: true,
+      is_archived: false,
+    };
+    const existingId = (existing as any)?.id as string | undefined;
+    const { error } = existingId
+      ? await supabase.from("outreach_relationships" as any).update(payload).eq("id", existingId)
+      : await supabase.from("outreach_relationships" as any).insert({ contact_id: contactId, ...payload });
     if (error) { toast.error(error.message); return; }
     setAddOpen(false);
     toast.success("Relationship added");
