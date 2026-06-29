@@ -998,6 +998,28 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [savingNewClub, setSavingNewClub] = useState(false);
 
   const selectedClub = clubs.find(c => c.id === clubId) ?? null;
+  // Scroll the selected club tile into view inside the picker so the
+  // user can immediately see what was auto-chosen when arriving from
+  // Market Tables.
+  useEffect(() => {
+    if (!selectedClub) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-club-tile="${selectedClub.id}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [selectedClub?.id]);
+  // If Market Tables asked us to force-create the club (because it had no
+  // logo on file), pre-open the inline "Add new club" form so the user
+  // can upload a logo before the outreach is built.
+  useEffect(() => {
+    if (!prefill?.forceCreateClub) return;
+    if (!selectedClub) return;
+    if (selectedClub.image_url) return; // already has a logo, no action needed
+    setNewClubName(selectedClub.club_name);
+    setNewClubCountry(selectedClub.country ?? "");
+    setCreatingClub(true);
+  }, [prefill?.forceCreateClub, selectedClub?.id]);
   const selectedIds = new Set(entries.map(e => e.player_id));
   const playerById = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
   const activeSettingsEntry = entries.find((e) => e.player_id === activeSettingsPlayerId) ?? entries[0] ?? null;
