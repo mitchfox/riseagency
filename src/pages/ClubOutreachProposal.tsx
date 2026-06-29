@@ -12,6 +12,7 @@ import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import { rankGames } from "@/lib/matchByMatchOrder";
+import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -565,6 +566,84 @@ export default function ClubOutreachProposal() {
     tryAutoplay(video);
   }, [heroPrefetchFailed, heroPreparing, current?.first_highlight_url]);
 
+  // ---- Runtime AI translation for everything dynamic ---------------------
+  // The pre-baked `translations.ui` bundle only covers a handful of static
+  // keys. Anything else the proposal renders in English (stat labels, key
+  // detail values, situation paragraph, strengths bullets, etc.) gets
+  // translated on the fly via the AI batch translator and cached in
+  // localStorage per language.
+  const STAT_LABEL_LOOKUP: Record<string, string> = {
+    goals: "Goals", assists: "Assists", xg: "xG", xa: "xA",
+    shots: "Shots", shots_on_target: "Shots on Target",
+    key_passes: "Key Passes", chances_created: "Chances Created",
+    passes_total_per90: "Passes /90", pass_accuracy_pct: "Pass %",
+    successful_dribbles_per90: "Dribbles /90", dribble_success_pct: "Dribble %",
+    tackles_per90: "Tackles /90", tackle_success_pct: "Tackle %",
+    interceptions_per90: "Interceptions /90", duels_won_pct: "Duels Won %",
+    aerial_duels_won_pct: "Aerial %", minutes_played: "Minutes",
+  };
+  const humanizeStat = (k: string) =>
+    STAT_LABEL_LOOKUP[k] ??
+    k.replace(/_per90/gi, " /90").replace(/_pct$/i, " %").replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  const dynamicStringsForTranslation = useMemo<string[]>(() => {
+    if (langOverride === "en") return [];
+    const arr: string[] = [];
+    const push = (s?: string | null) => { if (s && typeof s === "string" && s.trim()) arr.push(s); };
+    // Static UI strings (fallback for links missing the new bundle keys)
+    [
+      "To", "Back to all players offered", "Learn more",
+      "Club", "Position", "Nationality", "League", "Years old",
+      "Contract expiry", "Current salary", "Salary expectations",
+      "Transfer fee", "Height", "Preferred foot", "Status", "Detail",
+      "Key Details", "Situation", "Strengths & Play Style",
+      "In Numbers", "Season Stats",
+    ].forEach(push);
+    if (data && current) {
+      const p = current.player;
+      push(p?.position);
+      push(p?.nationality);
+      push(p?.league);
+      data.players.forEach((e: any) => push(e?.position_slot));
+      (current.form_config?.stats || []).forEach((s: any) => {
+        const k = typeof s === "string" ? s : s?.key;
+        if (k) push(humanizeStat(k));
+      });
+      (current.top_stats || []).forEach((s: any) => {
+        push(s?.label); push(s?.description);
+      });
+      (current.season_stats || []).forEach((s: any) => {
+        if (s?.header) push(humanizeStat(s.header));
+      });
+      const strData: any = current.strengths_and_play_style;
+      const strItems: string[] = Array.isArray(strData)
+        ? strData.map((x: any) => typeof x === "string" ? x : (x?.title ?? x?.label ?? "")).filter(Boolean)
+        : typeof strData === "string" ? strData.split(/\n+/).filter(Boolean) : [];
+      strItems.forEach(push);
+      const sit = (current.situation ?? "").trim();
+      push(sit);
+      const kd = normaliseKeyDetails(current.key_details ?? data.link.key_details);
+      (kd || []).forEach((it: any) => {
+        push(it?.label);
+        if (it?.value && typeof it.value === "string" && /[a-zA-Z]/.test(it.value)) push(it.value);
+      });
+      const fitEn = (current.fit_recommendation ?? "").trim();
+      const fits = data.link.translations?.fits ?? {};
+      if (fitEn && !fits[current.player?.id ?? ""]) push(fitEn);
+    }
+    return arr;
+  }, [langOverride, data, current]);
+  const { translate: aiTranslate } = useAutoTranslateStrings(
+    dynamicStringsForTranslation,
+    langOverride === "en" ? null : langOverride,
+  );
+  const autoT = (s?: string | null): string => {
+    if (!s) return s || "";
+    if (langOverride === "en") return s;
+    const v = aiTranslate(s);
+    return v || s;
+  };
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
@@ -590,12 +669,17 @@ export default function ClubOutreachProposal() {
   const lang = langOverride;
   const uiT = data.link.translations?.ui ?? {};
   const fitsT = data.link.translations?.fits ?? {};
-  const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
+  const tr = (key: string, en: string) => {
+    if (lang === "en") return en;
+    const v = uiT[key];
+    if (typeof v === "string" && v.trim()) return v;
+    return autoT(en);
+  };
   const fillTpl = (s: string, vars: Record<string, string | number>) =>
     s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
   const trFit = (playerId: string | undefined, en: string) => {
     if (!playerId || lang === "en") return en;
-    return fitsT[playerId] ?? en;
+    return fitsT[playerId] ?? autoT(en);
   };
 
   const revealHeroVideo = (video: HTMLVideoElement) => {
@@ -713,13 +797,13 @@ export default function ClubOutreachProposal() {
             );
           })()}
           {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
-            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} autoT={autoT} />
           )}
           {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
-            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} autoT={autoT} />
           )}
           {!showSeasonStatsForCurrent && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
-            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} autoT={autoT} />
           )}
           {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
             <MatchByMatchCard
@@ -848,7 +932,7 @@ export default function ClubOutreachProposal() {
                   <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                     <h2 className="text-xl font-semibold leading-tight">{p?.name ?? "Player"}</h2>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-white/65 mt-1">
-                      {[p?.position, playerAge ? `${playerAge}` : null, p?.club].filter(Boolean).join(" · ")}
+                      {[autoT(p?.position), playerAge ? `${playerAge}` : null, autoT(p?.club)].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                 </div>
@@ -991,7 +1075,7 @@ export default function ClubOutreachProposal() {
               onClick={() => { hapticTap(); setActiveSlot(s); }}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
-              {s}
+              {autoT(s)}
             </button>
           ))}
         </div>
@@ -1038,7 +1122,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} autoT={autoT} />
       </section>
 
       {/* Hero - first Stars highlight video, falls back to player image */}
@@ -1278,7 +1362,7 @@ export default function ClubOutreachProposal() {
             <section key="situation" className="max-w-3xl mx-auto px-6 mt-4">
               <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] p-5">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("situation.title", "Situation")}</p>
-                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{situationText}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{autoT(situationText)}</p>
               </div>
             </section>
           ) : null,
@@ -1335,22 +1419,22 @@ export default function ClubOutreachProposal() {
           ),
           form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
-              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} autoT={autoT} />
             </section>
           ) : null,
           in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
             <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
-              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} autoT={autoT} />
             </section>
           ) : null,
           season_stats: () => (showSeasonStatsForCurrent && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
             <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
-              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} autoT={autoT} />
             </section>
           ) : null,
           strengths: () => (showStrengthsForCurrent && current.strengths_and_play_style) ? (
             <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
-              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
+              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} autoT={autoT} />
             </section>
           ) : null,
         };
@@ -1837,14 +1921,17 @@ function KeyDetailsCard({
   age,
   tr,
   items,
+  autoT,
 }: {
   entry: PlayerEntry;
   age: number | null;
   tr?: (key: string, en: string) => string;
   items?: KeyDetailItem[];
+  autoT?: (s?: string | null) => string;
 }) {
   const player = entry.player;
   const T = (k: string, en: string) => (tr ? tr(k, en) : en);
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const tiles = (items && items.length ? items : DEFAULT_KEY_DETAILS);
 
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -1906,7 +1993,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.club", "Club")}
-            secondary={player?.club ?? "-"}
+            secondary={A(player?.club) || "-"}
             visual={clubLogo ? (
               <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
             ) : (
@@ -1927,7 +2014,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.nationality", "Nationality")}
-            secondary={player?.nationality ?? "-"}
+            secondary={A(player?.nationality) || "-"}
             visual={nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1940,7 +2027,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.league", "League")}
-            secondary={player?.league ?? "-"}
+            secondary={A(player?.league) || "-"}
             visual={leagueFlag ? (
               <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -1949,25 +2036,25 @@ function KeyDetailsCard({
           />
         );
       case "position":
-        return <Tile key={idx} label={T("key.position", "Position")} visual={<TextValue value={player?.position ?? "-"} />} />;
+        return <Tile key={idx} label={T("key.position", "Position")} visual={<TextValue value={A(player?.position) || "-"} />} />;
       case "contract_expiry":
         return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={fmtDate(player?.contract_end_date)} />} />;
       case "current_salary":
         return <Tile key={idx} label={T("key.currentSalary", "Current salary")} visual={<TextValue value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} />} />;
       case "salary_expectations":
-        return <Tile key={idx} label={T("key.salaryExpectations", "Salary expectations")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.salaryExpectations", "Salary expectations")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "transfer_fee":
-        return <Tile key={idx} label={T("key.transferFee", "Transfer fee")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.transferFee", "Transfer fee")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "contract_expiry_override":
-        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "height":
-        return <Tile key={idx} label={T("key.height", "Height")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.height", "Height")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "preferred_foot":
-        return <Tile key={idx} label={T("key.preferredFoot", "Preferred foot")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.preferredFoot", "Preferred foot")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "status":
-        return <Tile key={idx} label={T("key.status", "Status")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.status", "Status")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "custom":
-        return <Tile key={idx} label={(item.label ?? "").trim() || T("key.custom", "Detail")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={A((item.label ?? "").trim()) || T("key.custom", "Detail")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       default:
         return null;
     }
@@ -2046,7 +2133,8 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
-function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
+function FormBannerCard({ cfg, rows, titleTemplate, autoT }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
@@ -2135,7 +2223,7 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
                 >
                   <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
                   <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-                    {it.label}
+                    {A(it.label)}
                   </div>
                 </div>
               ))}
@@ -2158,7 +2246,7 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
             >
               <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{fmt(it.value, it.key)}</div>
               <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">
-                {it.label}
+                {A(it.label)}
               </div>
             </div>
           ))}
@@ -2168,7 +2256,8 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
   );
 }
 
-function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
+function InNumbersCard({ stats, title, autoT }: { stats: any[]; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const count = stats.length;
   const cols = count >= 4 ? "sm:grid-cols-4" : count === 3 ? "sm:grid-cols-3" : count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
   return (
@@ -2183,11 +2272,11 @@ function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
               {s.value}
             </div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-white/75 leading-tight break-words whitespace-normal">
-              {s.label}
+              {A(s.label)}
             </div>
             {s.description && (
               <p className="text-[11px] text-white/55 leading-snug break-words whitespace-normal">
-                {s.description}
+                {A(s.description)}
               </p>
             )}
           </div>
@@ -2197,7 +2286,8 @@ function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   );
 }
 
-function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
+function SeasonStatsCard({ stats, title, autoT }: { stats: any[]; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const prettify = (s: string) =>
     (s ?? "")
       .replace(/_per90/gi, " /90")
@@ -2210,7 +2300,7 @@ function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
         {stats.map((s, i) => (
           <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{prettify(s.header)}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{A(prettify(s.header))}</div>
           </div>
         ))}
       </div>
@@ -2218,7 +2308,8 @@ function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
   );
 }
 
-function StrengthsCard({ data, title }: { data: any; title?: string }) {
+function StrengthsCard({ data, title, autoT }: { data: any; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const items: string[] = Array.isArray(data)
     ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
     : typeof data === "string"
@@ -2231,7 +2322,7 @@ function StrengthsCard({ data, title }: { data: any; title?: string }) {
         {items.map((s, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-white/85">
             <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#cbb96b] flex-shrink-0" />
-            <span>{s}</span>
+            <span>{A(s)}</span>
           </li>
         ))}
       </ul>
