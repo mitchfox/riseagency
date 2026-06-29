@@ -1993,7 +1993,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.club", "Club")}
-            secondary={player?.club ?? "-"}
+            secondary={A(player?.club) || "-"}
             visual={clubLogo ? (
               <img src={clubLogo} alt={player?.club ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-12 w-12 object-contain" />
             ) : (
@@ -2014,7 +2014,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.nationality", "Nationality")}
-            secondary={player?.nationality ?? "-"}
+            secondary={A(player?.nationality) || "-"}
             visual={nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -2027,7 +2027,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.league", "League")}
-            secondary={player?.league ?? "-"}
+            secondary={A(player?.league) || "-"}
             visual={leagueFlag ? (
               <img src={leagueFlag} alt={player?.league ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -2036,25 +2036,25 @@ function KeyDetailsCard({
           />
         );
       case "position":
-        return <Tile key={idx} label={T("key.position", "Position")} visual={<TextValue value={player?.position ?? "-"} />} />;
+        return <Tile key={idx} label={T("key.position", "Position")} visual={<TextValue value={A(player?.position) || "-"} />} />;
       case "contract_expiry":
         return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={fmtDate(player?.contract_end_date)} />} />;
       case "current_salary":
         return <Tile key={idx} label={T("key.currentSalary", "Current salary")} visual={<TextValue value={fmtMoney(player?.current_salary_annual, player?.preferred_currency)} />} />;
       case "salary_expectations":
-        return <Tile key={idx} label={T("key.salaryExpectations", "Salary expectations")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.salaryExpectations", "Salary expectations")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "transfer_fee":
-        return <Tile key={idx} label={T("key.transferFee", "Transfer fee")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.transferFee", "Transfer fee")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "contract_expiry_override":
-        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.contractExpiry", "Contract expiry")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "height":
-        return <Tile key={idx} label={T("key.height", "Height")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.height", "Height")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "preferred_foot":
-        return <Tile key={idx} label={T("key.preferredFoot", "Preferred foot")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.preferredFoot", "Preferred foot")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "status":
-        return <Tile key={idx} label={T("key.status", "Status")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={T("key.status", "Status")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       case "custom":
-        return <Tile key={idx} label={(item.label ?? "").trim() || T("key.custom", "Detail")} visual={<TextValue value={item.value ?? ""} />} />;
+        return <Tile key={idx} label={A((item.label ?? "").trim()) || T("key.custom", "Detail")} visual={<TextValue value={A(item.value) ?? ""} />} />;
       default:
         return null;
     }
