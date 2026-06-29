@@ -20,10 +20,11 @@ serve(async (req) => {
       );
     }
 
-    // Limit batch size
-    if (texts.length > 20) {
+    // Limit batch size. The client chunker sends 20 at a time, but we accept
+    // a bit more headroom so a slightly larger batch never silently fails.
+    if (texts.length > 40) {
       return new Response(
-        JSON.stringify({ error: "Maximum 20 texts per batch" }),
+        JSON.stringify({ error: "Maximum 40 texts per batch" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

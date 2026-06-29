@@ -48,7 +48,10 @@ export function useAutoTranslateStrings(strings: (string | null | undefined)[], 
 
     (async () => {
       try {
-        const CHUNK = 60;
+        // Edge function caps each batch — keep chunks comfortably under the
+        // server limit so requests never silently 400 and leave strings in
+        // English on the live proposal page.
+        const CHUNK = 18;
         const chunks: string[][] = [];
         for (let i = 0; i < missing.length; i += CHUNK) chunks.push(missing.slice(i, i + CHUNK));
         // Fire all chunks in parallel — the edge function handles batching

@@ -6,27 +6,45 @@ import { Search, X, Download } from "lucide-react";
 
 export type AnalyticsResponseStatus =
   | "none"
+  | "awaiting_view"
+  | "viewed_no_reply"
+  | "follow_up_sent"
   | "replied"
   | "interested"
+  | "negotiating"
+  | "offer_made"
   | "meeting"
   | "signed"
+  | "declined"
   | "not_interested";
 
 const RESPONSE_LABELS: Record<AnalyticsResponseStatus, string> = {
-  none: "No reply",
+  none: "Not set",
+  awaiting_view: "Awaiting view",
+  viewed_no_reply: "Viewed - no reply",
+  follow_up_sent: "Follow-up sent",
   replied: "Replied",
   interested: "Interested",
+  negotiating: "Negotiating",
+  offer_made: "Offer made",
   meeting: "Meeting booked",
   signed: "Signed",
+  declined: "Declined",
   not_interested: "Not interested",
 };
 
 const RESPONSE_ORDER: AnalyticsResponseStatus[] = [
   "none",
+  "awaiting_view",
+  "viewed_no_reply",
+  "follow_up_sent",
   "replied",
   "interested",
+  "negotiating",
+  "offer_made",
   "meeting",
   "signed",
+  "declined",
   "not_interested",
 ];
 
@@ -88,21 +106,27 @@ export default function OutreachAnalyticsPanel({
     const totalCreated = rows.length;
     const totalSent = sentRows.length;
     const viewed = sentRows.filter((r) => r.viewCount > 0).length;
-    const replied = sentRows.filter((r) => r.responseStatus !== "none").length;
+    const REPLIED_SET = new Set<AnalyticsResponseStatus>([
+      "replied", "interested", "negotiating", "offer_made",
+      "meeting", "signed", "declined", "not_interested",
+    ]);
+    const replied = sentRows.filter((r) => REPLIED_SET.has(r.responseStatus)).length;
+    const awaitingView = sentRows.filter((r) => r.viewCount === 0 && !REPLIED_SET.has(r.responseStatus)).length;
+    const viewedNoReply = sentRows.filter((r) => r.viewCount > 0 && !REPLIED_SET.has(r.responseStatus)).length;
     const interested = sentRows.filter((r) =>
-      ["interested", "meeting", "signed"].includes(r.responseStatus),
+      ["interested", "negotiating", "offer_made", "meeting", "signed"].includes(r.responseStatus),
     ).length;
     const meetings = sentRows.filter((r) =>
       ["meeting", "signed"].includes(r.responseStatus),
     ).length;
     const signed = sentRows.filter((r) => r.responseStatus === "signed").length;
     const totalViews = sentRows.reduce((sum, r) => sum + r.viewCount, 0);
-    return { totalCreated, totalSent, viewed, replied, interested, meetings, signed, totalViews };
+    return { totalCreated, totalSent, viewed, awaitingView, viewedNoReply, replied, interested, meetings, signed, totalViews };
   }, [rows, sentRows]);
 
   const visible = useMemo(() => {
     const ql = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const filtered = rows.filter((r) => {
       if (filter === "sent" && !sentRows.includes(r)) return false;
       if (filter === "viewed" && r.viewCount === 0) return false;
       if (RESPONSE_ORDER.includes(filter as AnalyticsResponseStatus) && r.responseStatus !== filter) return false;
@@ -111,6 +135,12 @@ export default function OutreachAnalyticsPanel({
         r.label.toLowerCase().includes(ql) ||
         (r.sub || "").toLowerCase().includes(ql)
       );
+    });
+    // Most recent first - falls back to lastViewedAt when createdAt missing.
+    return filtered.slice().sort((a, b) => {
+      const ad = new Date(a.createdAt || a.lastViewedAt || 0).getTime();
+      const bd = new Date(b.createdAt || b.lastViewedAt || 0).getTime();
+      return bd - ad;
     });
   }, [rows, sentRows, q, filter]);
 
@@ -156,6 +186,8 @@ export default function OutreachAnalyticsPanel({
     { label: "Created", value: String(totals.totalCreated) },
     { label: "Sent", value: String(totals.totalSent), sub: pct(totals.totalSent, totals.totalCreated) + " of created" },
     { label: "Viewed", value: String(totals.viewed), sub: pct(totals.viewed, totals.totalSent) + " of sent" },
+    { label: "Awaiting view", value: String(totals.awaitingView) },
+    { label: "Viewed, no reply", value: String(totals.viewedNoReply) },
     { label: "Replied", value: String(totals.replied), sub: pct(totals.replied, totals.viewed) + " of viewed" },
     { label: "Interested", value: String(totals.interested), sub: pct(totals.interested, totals.replied) + " of replied" },
     { label: "Meetings", value: String(totals.meetings) },
@@ -182,7 +214,7 @@ export default function OutreachAnalyticsPanel({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2">
         {tiles.map((t) => (
           <div key={t.label} className="rounded-lg border border-border bg-muted/20 p-3">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.label}</div>
