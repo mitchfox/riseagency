@@ -1710,6 +1710,39 @@ const IntroCinematic = ({
                   {offerT(lang, "and_family", "& family")}
                 </p>
               )}
+              {assignedLang && assignedLang !== "en" && onSwitchToEnglish && (() => {
+                const assigned = getExampleLanguage(assignedLang);
+                const english = getExampleLanguage("en")!;
+                return (
+                  <div className="mt-3 flex justify-center">
+                    <div
+                      className="pointer-events-auto relative flex w-full max-w-[280px] items-stretch overflow-hidden rounded-full border border-primary/60 bg-black/70 shadow-[0_0_24px_-8px_hsl(var(--gold)/0.7)] backdrop-blur-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); pickLanguage(false); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
+                        aria-label={assigned?.label ?? assignedLang}
+                        className="relative z-10 flex flex-1 items-center justify-center px-5 py-3 text-2xl transition-colors hover:bg-[hsl(var(--gold)/0.18)]"
+                      >
+                        <span>{assigned?.flag ?? "🌐"}</span>
+                      </button>
+                      <div aria-hidden="true" className="w-px bg-primary/40" />
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); pickLanguage(true); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
+                        aria-label="English"
+                        className="relative z-10 flex flex-1 items-center justify-center px-5 py-3 text-2xl transition-colors hover:bg-[hsl(var(--gold)/0.18)]"
+                      >
+                        <span>{english.flag}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </motion.div>
           )}
           {phase === 1 && (
