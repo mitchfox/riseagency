@@ -261,6 +261,71 @@ function goToPublicHomepage() {
   window.location.assign(PUBLIC_HOME_URL);
 }
 
+const LANG_FLAG_META: Record<string, { flagCode: string; native: string }> = {
+  en: { flagCode: "gb", native: "English" },
+  es: { flagCode: "es", native: "Español" },
+  pt: { flagCode: "pt", native: "Português" },
+  fr: { flagCode: "fr", native: "Français" },
+  de: { flagCode: "de", native: "Deutsch" },
+  it: { flagCode: "it", native: "Italiano" },
+  pl: { flagCode: "pl", native: "Polski" },
+  cs: { flagCode: "cz", native: "Čeština" },
+  ru: { flagCode: "ru", native: "Русский" },
+  tr: { flagCode: "tr", native: "Türkçe" },
+  hr: { flagCode: "hr", native: "Hrvatski" },
+  no: { flagCode: "no", native: "Norsk" },
+};
+
+function LanguagePill({
+  assignedLang,
+  currentLang,
+  onChange,
+}: {
+  assignedLang: string;
+  currentLang: string;
+  onChange: (lang: string) => void;
+}) {
+  if (!assignedLang || assignedLang === "en") return null;
+  const assigned = LANG_FLAG_META[assignedLang] ?? { flagCode: "un", native: assignedLang };
+  const english = LANG_FLAG_META.en;
+  const isEnglishActive = currentLang === "en";
+  return (
+    <div className="mt-3 flex justify-center">
+      <div className="relative flex w-full max-w-[300px] items-stretch overflow-hidden rounded-full border border-[#cbb96b]/60 bg-black/70 shadow-[0_0_18px_-8px_rgba(203,185,107,0.7)]">
+        <button
+          type="button"
+          onClick={() => onChange("en")}
+          aria-pressed={isEnglishActive}
+          className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold transition-colors ${isEnglishActive ? "bg-[rgba(203,185,107,0.22)] text-white" : "text-white/80 hover:bg-[rgba(203,185,107,0.12)]"}`}
+        >
+          <img
+            src={`https://flagcdn.com/w40/${english.flagCode}.png`}
+            srcSet={`https://flagcdn.com/w80/${english.flagCode}.png 2x`}
+            alt=""
+            className="h-3.5 w-auto rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+          />
+          <span>{english.native}</span>
+        </button>
+        <div aria-hidden="true" className="w-px bg-[#cbb96b]/40" />
+        <button
+          type="button"
+          onClick={() => onChange(assignedLang)}
+          aria-pressed={!isEnglishActive}
+          className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-3 py-2 text-xs sm:text-sm font-semibold transition-colors ${!isEnglishActive ? "bg-[rgba(203,185,107,0.22)] text-white" : "text-white/80 hover:bg-[rgba(203,185,107,0.12)]"}`}
+        >
+          <img
+            src={`https://flagcdn.com/w40/${assigned.flagCode}.png`}
+            srcSet={`https://flagcdn.com/w80/${assigned.flagCode}.png 2x`}
+            alt=""
+            className="h-3.5 w-auto rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+          />
+          <span>{assigned.native}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ClubOutreachProposal() {
   const { shortId } = useParams<{ shortId: string }>();
   const [data, setData] = useState<Payload | null>(null);
@@ -286,6 +351,10 @@ export default function ClubOutreachProposal() {
   // are more videos than fit on screen).
   const [heroCarouselStart, setHeroCarouselStart] = useState(0);
   const [heroMobileVisibleRows, setHeroMobileVisibleRows] = useState(1);
+  // Language override: proposal always opens in English. If the link has a
+  // non-English assigned language the viewer can toggle to it via the pill
+  // shown below the "To <contact>" line in the header.
+  const [langOverride, setLangOverride] = useState<string>("en");
   useEffect(() => {
     setHeroCarouselStart(0);
     setHeroMobileVisibleRows(1);
@@ -333,9 +402,8 @@ export default function ClubOutreachProposal() {
   }, [shortId]);
 
   useEffect(() => {
-    const lang = (data?.link?.language as string | undefined) || "en";
-    try { document.documentElement.lang = lang; } catch {}
-  }, [data?.link?.language]);
+    try { document.documentElement.lang = langOverride; } catch {}
+  }, [langOverride]);
 
   const slots = useMemo(() => {
     if (!data) return [] as string[];
@@ -518,7 +586,8 @@ export default function ClubOutreachProposal() {
   const club = data.club;
   const player = current.player;
 
-  const lang = (data.link.language as string | undefined) || "en";
+  const assignedLang = (data.link.language as string | undefined) || "en";
+  const lang = langOverride;
   const uiT = data.link.translations?.ui ?? {};
   const fitsT = data.link.translations?.fits ?? {};
   const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
@@ -621,8 +690,12 @@ export default function ClubOutreachProposal() {
             // If staff have explicitly picked a video selection for this
             // player, treat that as the full set — don't surface the rest as
             // "more videos".
-            if (current?.videos_explicitly_selected) return null;
-            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? current?.videos ?? [];
+            // Always surface the player's other Stars-profile match
+            // highlights here — even when staff have explicitly picked
+            // which video shows on the main hero. Only the chosen hero
+            // video is excluded below. bestClips / portal clips are
+            // already filtered out upstream in the edge function.
+            const allV = current?.stars_ordered_videos ?? current?.all_videos ?? [];
             const shownSet = new Set(
               (current?.videos ?? [])
                 .map((v) => (v?.videoUrl ?? "").split("#")[0])
@@ -730,6 +803,7 @@ export default function ClubOutreachProposal() {
             {preparedFor && (
               <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
             )}
+            <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
           </div>
         </header>
         <section className="max-w-5xl mx-auto px-6 mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -898,6 +972,7 @@ export default function ClubOutreachProposal() {
           {preparedFor && (
             <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
           )}
+          <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
         </div>
       </header>
 

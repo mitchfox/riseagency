@@ -1,39 +1,27 @@
-## Fix three Club/Player Outreach failures
+## 1. Fix "Video & Data" inline more-videos list
 
-### 1. Market Table clubs missing from Club Outreach search (e.g. "Slezský FC Opava")
+**File:** `src/pages/ClubOutreachProposal.tsx` (around line 616-641)
 
-**Cause:** The outreach club picker fetches `market_table_entries` with Supabase's default 1,000-row cap, and the search compares raw strings, so diacritics ("Slezský") don't match plain typing ("Slezsky").
+Currently when a player has an explicit video selection (`videos_explicitly_selected`), the inline "Match-By-Match Video" card returns `null` so no other clips show. That's why the inline player looks empty after clicking Video & Data.
 
-**Fix in `src/components/staff/ClubOutreachManager.tsx` (and the shared picker it uses):**
-- Replace the single `select()` call with a paginated loop (`range(0,999)`, `range(1000,1999)`…) until all rows are returned, cached in React Query.
-- Add a `normaliseSearch(str)` helper that lowercases and strips diacritics via `String.prototype.normalize('NFD').replace(/\p{Diacritic}/gu, '')`, applied to both the club name and the query.
-- When opening outreach from Market Tables ("Outreach Mode" → Create Outreach), pass the chosen club id straight into the picker's `value`, and render the selected club label at the top of the dialog so it's clearly pre-selected.
-- If the club id isn't yet in the cached list (rare), fetch that single row by id and inject it so it's always visible as selected.
+Change: remove the early `if (current?.videos_explicitly_selected) return null;` guard. Keep the rest of the logic — it already builds `remaining` from `stars_ordered_videos` (which the edge function `get-club-outreach/index.ts` already restricts to `matchHighlights` only, never `bestClips` or portal clips) and excludes whatever the hero is showing. Result: the main hero plays the chosen video; the inline card lists the player's other Stars-profile match highlights.
 
-### 2. Player Outreach template links not swapped
+No edge-function changes needed — `stars_ordered_videos` is already scoped to Stars match highlights only.
 
-**Cause:** `TemplatePickerInline` only rewrites Club Outreach URLs. The Player Outreach path uses the same component but the regex only matches `/club/...`, so the generic `risefootballagency.com` link in a player template is left untouched.
+## 2. Language toggle on the proposal header
 
-**Fix in `src/components/staff/recruitment/TemplatePickerInline.tsx` (or the player-outreach equivalent):**
-- Detect context (`type: 'player' | 'club'`) and, for player templates, replace any URL matching `https?://(www\.)?risefootballagency\.com\S*` (and bare `risefootballagency.com/...`) with the current player's `risewithus` link built from their slug/id, the same way Club Outreach already does.
-- Keep the existing club-link behaviour unchanged.
-- Also strip a trailing punctuation char from the match so links followed by `.` or `,` aren't broken.
+**File:** `src/pages/ClubOutreachProposal.tsx`
 
-### 3. Instagram usernames not displayed on Player Outreach cards
+Mirror the Phase-0 EN ↔ assigned-language ovular pill we already ship on `RiseWithUs.tsx` (lines ~1750-1810), but inline directly under the "To {contactName}" line in the proposal header (lines 731 and 899) so it sits exactly where the user asked.
 
-**Cause:** The card reads `players.instagram_handle`, which is null for most records. The handle actually lives in one of: `player_outreach_pro.ig_handle`, `player_outreach_youth.ig_handle`, or the linked `players.instagram_handle`. Diacritic-insensitive name matching previously added still doesn't help when the field source itself is wrong.
+Changes:
+- Add `const [langOverride, setLangOverride] = useState<string>("en");` so the proposal **defaults to English** regardless of the link's saved language.
+- Replace the existing `const lang = (data.link.language as string) || "en";` (line 521) and the document-lang effect (335-338) to use `langOverride` as the active language.
+- Resolve `assignedLang = data.link.language` and only render the toggle when `assignedLang && assignedLang !== "en"` (otherwise there's nothing to switch to).
+- Render the pill right below the `To <name>` line, both on the players-grid header (~731) and on the single-player header (~899). Two buttons inside a rounded pill: left = English (gb flag), right = assigned language (flag + native name from the existing language map used by RiseWithUs). Active side gets the gold tint exactly like RiseWithUs.
+- Switching updates `langOverride`, which flows into the existing `tr(...)` translation lookup and `document.documentElement.lang` effect — so every translated string on the proposal updates instantly, same as on player outreach.
 
-**Fix in `src/components/staff/RepresentationOffers.tsx` and the card component:**
-- When loading an offer row, resolve the handle in this order and use the first non-empty value:
-  1. The outreach row's own `ig_handle` (pro or youth table, whichever the offer came from).
-  2. The matched `players.instagram_handle`.
-  3. Any handle stored on `player_outreach_pro` / `player_outreach_youth` for the same normalised name + DOB.
-- Normalise the displayed handle (strip leading `@`, lowercase) and render it as small copyable text directly under the player name, with a click-to-copy toast.
-- Add a tiny defensive log (dev only) when none of the three sources have a handle so we can spot future data gaps without affecting UX.
+No backend or schema changes; reuses the link's existing `language` value and the proposal's existing translation map.
 
-### Verification
-- Open Club Outreach → search "Opava" and "Slezsky" → confirm Slezský FC Opava appears; trigger Outreach Mode from Market Tables for that club and confirm it's pre-selected in the dialog.
-- Send a Player Outreach template containing `risefootballagency.com` and confirm the sent message contains the player's `risewithus` URL.
-- Open three Player Outreach cards with known IG handles (one pro, one youth, one only on `players`) and confirm the @handle shows under the name and copies on click.
-
-No database migrations required.
+## Out of scope
+Only the two items above. No other proposal behaviour, styling, or data changes.
