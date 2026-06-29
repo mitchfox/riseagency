@@ -32,6 +32,15 @@ const makeShortId = () => {
   for (let i = 0; i < 8; i++) out += c[Math.floor(Math.random() * c.length)];
   return out;
 };
+const makeClubShortId = (clubName: string | null | undefined) => {
+  const prefix = (clubName ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 4);
+  return prefix ? `${prefix}-${makeShortId()}` : makeShortId();
+};
 
 export default function OutreachStrategyTab({ players, onDraftsCreated }: Props) {
   const [clubs, setClubs] = useState<ClubLite[]>([]);
@@ -219,7 +228,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
         let inserted = false;
         let linkId: string | null = null;
         for (let attempt = 0; attempt < 5 && !inserted; attempt++) {
-          const short = makeShortId();
+          const short = makeClubShortId(club.club_name);
           const { data, error } = await supabase
             .from("club_outreach_links")
             .insert({
@@ -299,7 +308,7 @@ export default function OutreachStrategyTab({ players, onDraftsCreated }: Props)
     const ids: string[] = s.filters?.club_ids ?? [];
     for (const cid of ids) {
       const c = clubs.find((x) => x.id === cid);
-      out.push({ key: `id:${cid}`, name: c?.club_name ?? "Unknown club", club_id: cid, isExtra: false });
+      out.push({ key: `id:${cid}`, name: c?.club_name ?? `Club ${cid.slice(0, 8)}`, club_id: cid, isExtra: false });
     }
     (s.defaults?.extra_clubs ?? []).forEach((ec: any, i: number) => {
       const key = ec.id ? `id:${ec.id}` : `name:${(ec.name || "").toLowerCase()}`;
