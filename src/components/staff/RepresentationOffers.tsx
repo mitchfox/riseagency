@@ -16,7 +16,7 @@ import { CreateOfferButton } from "./recruitment/CreateOfferButton";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
-import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
 import { SearchWithSuggestions } from "./SearchWithSuggestions";
 
 type OfferPlayer = {
@@ -174,7 +174,10 @@ export const RepresentationOffers = () => {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      // Looser predicate so views with unresolved geo still count.
+      // `isRealNonUkVisit` stays available for the strict bell-pulse path.
+      const real = ((data ?? []) as any[]).filter(isViewableProposalVisit);
+      void isRealNonUkVisit;
       setVisits(real as ProposalVisit[]);
     };
     loadVisits();
