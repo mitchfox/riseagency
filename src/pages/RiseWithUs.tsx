@@ -1909,13 +1909,28 @@ const RiseWithUs = () => {
   useEffect(() => {
     if (isPickerMode) { setNotFound(true); setLoading(false); return; }
     (async () => {
+      const normalize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, "-");
+      const target = normalize(decodeURIComponent(slug));
       const searchName = slug.replace(/-/g, " ");
-      const { data, error } = await supabase
+      // Try a fast diacritic-free ilike first, then fall back to a
+      // normalized scan so accented names (e.g. "Jan Drašnář") still
+      // resolve from the stripped slug ("jan-drasnar") that is the
+      // live link we've already sent out.
+      let { data, error } = await supabase
         .from("players")
         .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
         .or("has_representation_offer.eq.true,representation_status.eq.prospect")
         .ilike("name", searchName)
         .maybeSingle();
+      if (!data) {
+        const { data: candidates } = await supabase
+          .from("players")
+          .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
+          .or("has_representation_offer.eq.true,representation_status.eq.prospect");
+        data = (candidates || []).find((c: any) => normalize(c.name || "") === target) || null;
+        error = null as any;
+      }
       if (error || !data) { setNotFound(true); }
       else {
         setPlayer(data);
