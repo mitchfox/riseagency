@@ -454,6 +454,25 @@ export default function ClubOutreachManager() {
     }
   };
 
+  // Manually flag an outreach link as "viewed" so it surfaces under the
+  // Viewed section even when geo tracking missed the visit (private IP,
+  // VPN, recipient confirming over WhatsApp, etc.). Toggles off again on
+  // a second click.
+  const markViewed = async (row: OutreachRow) => {
+    const next = row.manually_viewed_at ? null : new Date().toISOString();
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, manually_viewed_at: next } : r)));
+    const { error } = await supabase
+      .from("club_outreach_links")
+      .update({ manually_viewed_at: next } as any)
+      .eq("id", row.id);
+    if (error) {
+      toast.error(error.message);
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, manually_viewed_at: row.manually_viewed_at ?? null } : r)));
+      return;
+    }
+    toast.success(next ? "Marked as viewed" : "Removed viewed flag");
+  };
+
   const approvePending = async (row: OutreachRow) => {
     const { error } = await supabase
       .from("club_outreach_links")
