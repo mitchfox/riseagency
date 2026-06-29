@@ -136,6 +136,7 @@ export const RepresentationOffers = () => {
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
 
   // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
