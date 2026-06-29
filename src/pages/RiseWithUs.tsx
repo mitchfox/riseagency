@@ -21,6 +21,7 @@ import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
+import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
 import {
@@ -1460,6 +1461,14 @@ const IntroCinematic = ({
   assignedLang?: string; currentLang?: string; onSwitchToEnglish?: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
+  // Translate the optional free-text second paragraph on the fly when the
+  // offer language isn't English. Falls back to the original string while
+  // the translation is in flight.
+  const { translate: translateSecondary } = useAutoTranslateStrings(
+    secondaryParagraph ? [secondaryParagraph] : [],
+    lang,
+  );
+  const translatedSecondary = secondaryParagraph ? translateSecondary(secondaryParagraph) : secondaryParagraph;
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
@@ -1794,7 +1803,7 @@ const IntroCinematic = ({
                   className="mx-auto max-w-[40ch] text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90 sm:max-w-[46ch] md:max-w-[50ch]"
                   style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
                 >
-                  {widont(secondaryParagraph)}
+                  {widont(translatedSecondary || secondaryParagraph)}
                 </p>
               )}
             </motion.div>
