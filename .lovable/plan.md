@@ -1,27 +1,52 @@
-## 1. Fix "Video & Data" inline more-videos list
+## Goal
 
-**File:** `src/pages/ClubOutreachProposal.tsx` (around line 616-641)
+When the viewer toggles the language pill on `/club-proposal/...`, every visible string should switch to the contact's language — not just the small set currently pre-translated.
 
-Currently when a player has an explicit video selection (`videos_explicitly_selected`), the inline "Match-By-Match Video" card returns `null` so no other clips show. That's why the inline player looks empty after clicking Video & Data.
+## What's broken today
 
-Change: remove the early `if (current?.videos_explicitly_selected) return null;` guard. Keep the rest of the logic — it already builds `remaining` from `stars_ordered_videos` (which the edge function `get-club-outreach/index.ts` already restricts to `matchHighlights` only, never `bestClips` or portal clips) and excludes whatever the hero is showing. Result: the main hero plays the chosen video; the inline card lists the player's other Stars-profile match highlights.
+`ClubOutreachProposal.tsx` builds `tr(key, en)` from `data.link.translations.ui`, which is a pre-baked bundle written by the `translate-club-outreach` edge function. That bundle (`UI_BUNDLE`) only contains ~25 keys and the function only translates what's listed. Everything else — including the labels the user called out — either has no matching key, lives in a sub-component that ignores `tr`, or is freeform copy written per player.
 
-No edge-function changes needed — `stars_ordered_videos` is already scoped to Stars match highlights only.
+## Plan
 
-## 2. Language toggle on the proposal header
+### 1. Expand the canonical UI bundle (`supabase/functions/translate-club-outreach/index.ts`)
 
-**File:** `src/pages/ClubOutreachProposal.tsx`
+Add the missing static keys so they get pre-translated next time a link is saved:
 
-Mirror the Phase-0 EN ↔ assigned-language ovular pill we already ship on `RiseWithUs.tsx` (lines ~1750-1810), but inline directly under the "To {contactName}" line in the proposal header (lines 731 and 899) so it sits exactly where the user asked.
+- `hdr.to` → "To"
+- `picker.backToPlayers` → "Back to all players offered"
+- `picker.learnMore` → "Learn more"
+- `key.title` → "Key Details"
+- `key.club`, `key.position`, `key.nationality`, `key.league`
+- `key.contractExpiry`, `key.currentSalary`, `key.salaryExpectations`, `key.transferFee`, `key.height`, `key.preferredFoot`, `key.status`, `key.custom`
+- `situation.title` → "Situation"
+- `form.stat.<key>` for every entry in `STAT_LABELS` (Goals, Assists, Dribbles /90, Pass %, etc.) — both the FormBannerCard set and the MatchByMatchCard set, deduped.
+- `season.stat.<header>` is unbounded (freeform), so we leave it to the runtime fallback in step 3.
 
-Changes:
-- Add `const [langOverride, setLangOverride] = useState<string>("en");` so the proposal **defaults to English** regardless of the link's saved language.
-- Replace the existing `const lang = (data.link.language as string) || "en";` (line 521) and the document-lang effect (335-338) to use `langOverride` as the active language.
-- Resolve `assignedLang = data.link.language` and only render the toggle when `assignedLang && assignedLang !== "en"` (otherwise there's nothing to switch to).
-- Render the pill right below the `To <name>` line, both on the players-grid header (~731) and on the single-player header (~899). Two buttons inside a rounded pill: left = English (gb flag), right = assigned language (flag + native name from the existing language map used by RiseWithUs). Active side gets the gold tint exactly like RiseWithUs.
-- Switching updates `langOverride`, which flows into the existing `tr(...)` translation lookup and `document.documentElement.lang` effect — so every translated string on the proposal updates instantly, same as on player outreach.
+After re-deploy, also trigger a one-off backfill: invoke `translate-club-outreach` for every existing `club_outreach_links` row that already has a non-en `language`, so old links pick up the new keys without the user re-saving each one.
 
-No backend or schema changes; reuses the link's existing `language` value and the proposal's existing translation map.
+### 2. Wire the new keys into the page (`src/pages/ClubOutreachProposal.tsx`)
 
-## Out of scope
-Only the two items above. No other proposal behaviour, styling, or data changes.
+- Pass `tr` into `FormBannerCard`, `SeasonStatsCard`, `InNumbersCard`, `StrengthsCard` and use `tr(\`form.stat.${key}\`, humanizedFallback)` for every stat label rendered.
+- Replace the hardcoded `"To"` literal under the contact name with `tr("hdr.to", "To")` (the key already exists in the JSX — it just needs to be added to the bundle).
+- Translate the position chips at the top and the Position tile's value through a small `translatePosition()` helper that maps `player.position` / `position_slot` against `portalTranslations` (`goalkeeper`, `centre_back`, `full_back`, `midfielder`, `winger`, `striker` and the abbreviations GK/CB/FB/CM/WG/ST/CF). Codes stay as codes; full English names get localised.
+
+### 3. Runtime AI fallback for everything dynamic
+
+The freeform content — Key Details descriptions, In Numbers labels & descriptions, Season Stat headers, Strengths bullet points, Situation paragraph, and any UI key the stored bundle is missing — must translate on the fly when `langOverride !== "en"`.
+
+- Use the existing `useAutoTranslateStrings(strings, lang)` hook (already used elsewhere). Collect every dynamic string for the active player into one array, call the hook with `langOverride`, then wrap each render site in `translate(value)`.
+- Strings to feed it: each `key_details` description/label/value, each `top_stats` label + description, each `season_stats` header (humanised), each strengths bullet, the `situation` paragraph, and the FormBannerCard stat labels (so old links without the new bundle keys still translate). The hook caches in localStorage, so the second load is instant.
+- Skip numbers, dates, currency, flags and the position abbreviations — only translate human-readable English copy.
+
+### 4. Verify
+
+After deploying:
+- Open the current proposal route, toggle the pill — confirm "To", "Back to all players offered", Key Details labels, position, form stat labels, In Numbers labels, Season Stats headers, Strengths bullets and Situation paragraph all switch language.
+- Toggle back to English — everything returns to the original copy.
+- Reload — translated copy appears immediately from cache.
+
+## Technical notes
+
+- `UI_BUNDLE` lives at `supabase/functions/translate-club-outreach/index.ts` and is consumed via `club_outreach_links.translations.ui`. New keys take effect for old links only after re-running the function for that row — that's why step 1 includes a backfill loop.
+- `useAutoTranslateStrings` already exists at `src/hooks/useAutoTranslateStrings.ts` and uses `ai-translate-batch`. It accepts a portal-language code and caches per language in localStorage, so adding it to this page is cheap and idempotent.
+- No schema changes required.
