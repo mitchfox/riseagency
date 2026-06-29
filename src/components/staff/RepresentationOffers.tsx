@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2, MessageSquare, BarChart3 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
@@ -17,6 +17,7 @@ import { CreateOfferButton } from "./recruitment/CreateOfferButton";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
+import OutreachAnalyticsPanel, { type AnalyticsResponseStatus, type AnalyticsRow } from "./outreach/OutreachAnalyticsPanel";
 import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
 import { SearchWithSuggestions } from "./SearchWithSuggestions";
 
@@ -37,6 +38,9 @@ type OfferPlayer = {
   offer_status?: string | null;
   created_at?: string | null;
   instagram_handle?: string | null;
+  outreach_response_status?: string | null;
+  outreach_response_notes?: string | null;
+  outreach_response_at?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
