@@ -1477,6 +1477,9 @@ const IntroCinematic = ({
   }, [extraIntro.length]);
 
   const advance = (e: React.MouseEvent | React.TouchEvent) => {
+    // On phase 0, if a language choice is required, the prospect must tap
+    // one of the flag pills below the name — taps elsewhere do nothing.
+    if (phase === 0 && assignedLang && assignedLang !== "en") return;
     // capture click position for ripple
     let x = window.innerWidth / 2;
     let y = window.innerHeight / 2;
@@ -1492,6 +1495,13 @@ const IntroCinematic = ({
 
     if (phase >= totalPhases - 1) onDone();
     else setPhase((p) => p + 1);
+  };
+
+  const pickLanguage = (toEnglish: boolean) => {
+    if (toEnglish && onSwitchToEnglish) onSwitchToEnglish();
+    // Fire the same audio-unlock event the parent listens for.
+    try { window.dispatchEvent(new Event("rep-intro-start")); } catch {}
+    setPhase((p) => Math.min(totalPhases - 1, p + 1));
   };
 
   return (
