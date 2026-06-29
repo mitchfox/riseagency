@@ -467,12 +467,20 @@ export default function ClubOutreachManager() {
   // already filled in.
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { clubId?: string; preparedFor?: string } | undefined;
+      const detail = (e as CustomEvent).detail as {
+        clubId?: string;
+        preparedFor?: string;
+        forceCreateClub?: boolean;
+      } | undefined;
       if (!detail) return;
       setMode('club');
       setEditRow(null);
       setSettingsOpen(false);
-      setNewPrefill({ clubId: detail.clubId, preparedFor: detail.preparedFor });
+      setNewPrefill({
+        clubId: detail.clubId,
+        preparedFor: detail.preparedFor,
+        forceCreateClub: detail.forceCreateClub,
+      });
       setNewOpen(true);
       scrollPanelToTop();
     };
