@@ -1016,6 +1016,17 @@ export default function MarketTablesTab() {
   // with the chosen club and contact name pre-filled.
   const createOutreach = (club: ClubRow, contactName: string | null) => {
     const needsLogoFirst = !club.image_url || !club.image_url.trim();
+    const detail = {
+      clubId: club.id,
+      clubName: club.club_name,
+      country: club.country,
+      imageUrl: club.image_url,
+      preparedFor: (contactName ?? "").trim() || undefined,
+      forceCreateClub: needsLogoFirst,
+    };
+    // Stash so ClubOutreachManager can pick it up reliably on mount,
+    // independent of the dispatched-event timing race.
+    try { sessionStorage.setItem("staff:pending-club-outreach-new", JSON.stringify({ at: Date.now(), detail })); } catch { /* noop */ }
     window.dispatchEvent(
       new CustomEvent("staff:switch-section", { detail: { section: "cluboutreach" } }),
     );
@@ -1023,17 +1034,10 @@ export default function MarketTablesTab() {
     setTimeout(() => {
       window.dispatchEvent(
         new CustomEvent("staff:open-club-outreach-new", {
-          detail: {
-            clubId: club.id,
-            clubName: club.club_name,
-            country: club.country,
-            imageUrl: club.image_url,
-            preparedFor: (contactName ?? "").trim() || undefined,
-            forceCreateClub: needsLogoFirst,
-          },
+          detail,
         }),
       );
-    }, 60);
+    }, 80);
   };
 
   // Save LinkedIn URL for any contact slot. If we already have a network
