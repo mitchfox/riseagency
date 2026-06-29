@@ -975,7 +975,7 @@ export default function ClubOutreachProposal() {
               {fillTpl(tr("hdr.players", "{count} players"), { count: data.players.length })}
             </h1>
             {preparedFor && (
-              <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
+              <p className="text-[11px] sm:text-xs text-white/40">{translateToWord()} <span className="text-white/85">{preparedFor}</span></p>
             )}
             <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
           </div>
