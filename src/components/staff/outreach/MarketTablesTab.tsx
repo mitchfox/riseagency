@@ -1458,11 +1458,19 @@ export default function MarketTablesTab() {
           return (
             <div key={`m-${club.id}`} className="rounded-xl border border-border bg-card p-3 space-y-3">
               <div className="flex items-center gap-2">
-                {club.image_url ? (
-                  <img src={club.image_url} alt="" className="h-8 w-8 object-contain rounded-sm bg-white/5" />
-                ) : (
-                  <div className="h-8 w-8 rounded-sm bg-muted" />
-                )}
+                <button
+                  type="button"
+                  onClick={() => triggerLogoUpload(club)}
+                  title={club.image_url ? "Replace club logo" : "Upload club logo"}
+                  className="relative h-8 w-8 rounded-sm bg-white/5 overflow-hidden hover:ring-2 hover:ring-[#C6A332] transition shrink-0"
+                  disabled={logoUploadingClubId === club.id}
+                >
+                  {club.image_url ? (
+                    <img src={club.image_url} alt="" className="h-full w-full object-contain" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">＋</span>
+                  )}
+                </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-white font-medium text-sm truncate">{club.club_name}</span>
@@ -1627,11 +1635,19 @@ export default function MarketTablesTab() {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2 min-w-[180px]">
-                      {club.image_url ? (
-                        <img src={club.image_url} alt="" className="h-6 w-6 object-contain rounded-sm bg-white/5" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-sm bg-muted" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => triggerLogoUpload(club)}
+                        title={club.image_url ? "Replace club logo" : "Upload club logo"}
+                        className="relative h-6 w-6 rounded-sm bg-white/5 overflow-hidden hover:ring-2 hover:ring-[#C6A332] transition shrink-0 flex items-center justify-center"
+                        disabled={logoUploadingClubId === club.id}
+                      >
+                        {club.image_url ? (
+                          <img src={club.image_url} alt="" className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground leading-none">＋</span>
+                        )}
+                      </button>
                       <span className="text-white font-medium">{club.club_name}</span>
                       {outreachClubIds.has(club.id) && (
                         <CheckCircle2
