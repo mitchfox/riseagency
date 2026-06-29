@@ -1214,6 +1214,9 @@ export type Database = {
           manually_viewed_at: string | null
           player_id: string | null
           prepared_for_name: string | null
+          response_at: string | null
+          response_notes: string | null
+          response_status: string
           season_data_mode: string
           season_id: string | null
           section_order: Json | null
@@ -1259,6 +1262,9 @@ export type Database = {
           manually_viewed_at?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
+          response_at?: string | null
+          response_notes?: string | null
+          response_status?: string
           season_data_mode?: string
           season_id?: string | null
           section_order?: Json | null
@@ -1304,6 +1310,9 @@ export type Database = {
           manually_viewed_at?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
+          response_at?: string | null
+          response_notes?: string | null
+          response_status?: string
           season_data_mode?: string
           season_id?: string | null
           section_order?: Json | null
@@ -6768,6 +6777,9 @@ export type Database = {
           nutrition_next_program_notes: string | null
           nutrition_programming_notes: string | null
           offer_status: string | null
+          outreach_response_at: string | null
+          outreach_response_notes: string | null
+          outreach_response_status: string
           player_list_order: number | null
           portal_language: string | null
           position: string
@@ -6827,6 +6839,9 @@ export type Database = {
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           offer_status?: string | null
+          outreach_response_at?: string | null
+          outreach_response_notes?: string | null
+          outreach_response_status?: string
           player_list_order?: number | null
           portal_language?: string | null
           position: string
@@ -6886,6 +6901,9 @@ export type Database = {
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
           offer_status?: string | null
+          outreach_response_at?: string | null
+          outreach_response_notes?: string | null
+          outreach_response_status?: string
           player_list_order?: number | null
           portal_language?: string | null
           position?: string

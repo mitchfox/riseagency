@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2, MessageSquare, BarChart3 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
@@ -17,6 +17,7 @@ import { CreateOfferButton } from "./recruitment/CreateOfferButton";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
+import OutreachAnalyticsPanel, { type AnalyticsResponseStatus, type AnalyticsRow } from "./outreach/OutreachAnalyticsPanel";
 import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
 import { SearchWithSuggestions } from "./SearchWithSuggestions";
 
@@ -37,6 +38,9 @@ type OfferPlayer = {
   offer_status?: string | null;
   created_at?: string | null;
   instagram_handle?: string | null;
+  outreach_response_status?: string | null;
+  outreach_response_notes?: string | null;
+  outreach_response_at?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
@@ -132,6 +136,7 @@ export const RepresentationOffers = () => {
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
 
   // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
@@ -171,11 +176,21 @@ export const RepresentationOffers = () => {
     }
   };
 
+  const setOutreachResponse = async (id: string, status: AnalyticsResponseStatus, notes: string | null) => {
+    const at = new Date().toISOString();
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, outreach_response_status: status, outreach_response_notes: notes, outreach_response_at: at } : p)));
+    const { error } = await (supabase as any)
+      .from("players")
+      .update({ outreach_response_status: status, outreach_response_notes: notes, outreach_response_at: at })
+      .eq("id", id);
+    if (error) { toast.error("Could not save response", { description: error.message }); load(); }
+  };
+
   const load = async () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle, outreach_response_status, outreach_response_notes, outreach_response_at")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
@@ -559,8 +574,41 @@ export const RepresentationOffers = () => {
         <Button onClick={() => setTemplatesOpen(true)} variant="outline" className="shrink-0">
           <MessageSquare className="h-4 w-4 mr-1.5" /> Templates
         </Button>
+        <Button
+          onClick={() => setAnalyticsOpen((v) => !v)}
+          variant="outline"
+          className={`shrink-0 ${analyticsOpen ? "border-[#cbb96b] text-[#cbb96b]" : ""}`}
+        >
+          <BarChart3 className="h-4 w-4 mr-1.5" /> Analytics
+        </Button>
         <ProposalVisitorsBell visits={scopedVisits} />
       </div>
+
+      {analyticsOpen && (
+        <OutreachAnalyticsPanel
+          title="Player Outreach Analytics"
+          onClose={() => setAnalyticsOpen(false)}
+          onUpdateResponse={setOutreachResponse}
+          rows={filtered.map<AnalyticsRow>((p) => {
+            const vs = visitsBySlug.get(slugFor(p.name)) ?? [];
+            const lastVisit = vs.length
+              ? vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b)).visited_at
+              : null;
+            return {
+              id: p.id,
+              label: p.name,
+              sub: [p.position, p.club, p.nationality].filter(Boolean).join(' • ') || null,
+              status: (p.offer_status || groupFor(p)) as string,
+              createdAt: p.created_at ?? null,
+              viewCount: vs.length,
+              lastViewedAt: lastVisit,
+              responseStatus: ((p.outreach_response_status as AnalyticsResponseStatus) || 'none'),
+              responseNotes: p.outreach_response_notes ?? null,
+              responseAt: p.outreach_response_at ?? null,
+            };
+          })}
+        />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading offers...</div>
