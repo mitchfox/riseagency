@@ -52,6 +52,33 @@ const makeShortId = () => {
   for (let i = 0; i < 8; i++) out += c[Math.floor(Math.random() * c.length)];
   return out;
 };
+
+const normaliseSearch = (s: string | null | undefined) =>
+  (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const fetchAllOutreachClubs = async (): Promise<ClubLite[]> => {
+  const pageSize = 1000;
+  let from = 0;
+  const out: ClubLite[] = [];
+  while (true) {
+    const { data, error } = await supabase
+      .from("club_map_positions")
+      .select("id, club_name, country, image_url")
+      .order("club_name")
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const batch = (data ?? []) as ClubLite[];
+    out.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+};
+
 const makeClubShortId = (clubName: string | null | undefined) => {
   const cleanedName = (clubName ?? "")
     .toLowerCase()
@@ -1142,7 +1169,17 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   const [newClubLogoFile, setNewClubLogoFile] = useState<File | null>(null);
   const [savingNewClub, setSavingNewClub] = useState(false);
 
-  const selectedClub = clubs.find(c => c.id === clubId) ?? null;
+  const selectedClub = clubs.find(c => c.id === clubId)
+    ?? (prefill?.clubId === clubId && prefill.clubName
+      ? { id: prefill.clubId, club_name: prefill.clubName, country: prefill.country ?? null, image_url: prefill.imageUrl ?? null }
+      : null);
+
+  useEffect(() => {
+    if (!prefill) return;
+    if (prefill.clubId) setClubId(prefill.clubId);
+    if (typeof prefill.preparedFor === "string") setPreparedFor(prefill.preparedFor);
+    if (prefill.clubName) setClubQuery(prefill.clubName);
+  }, [prefill?.clubId, prefill?.clubName, prefill?.preparedFor]);
   useEffect(() => {
     if (!prefill?.clubId || !prefill.clubName) return;
     if (clubs.some((c) => c.id === prefill.clubId)) return;
@@ -1215,7 +1252,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     return n ? pool.filter(p => p.name.toLowerCase().includes(n)) : pool;
   }, [players, playerQuery, selectedIds]);
   const filteredClubs = useMemo(() => {
-    const n = clubQuery.trim().toLowerCase();
+    const n = normaliseSearch(clubQuery);
     // Guarantee any prefill/selected club is in the list even if the
     // parent's clubs prop hasn't merged it in yet — prevents the Market
     // Tables → New Outreach flow from showing an empty picker.
@@ -1228,12 +1265,12 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
       if (fallbackName) base.push({ id: clubId, club_name: fallbackName, country: prefill?.country ?? null, image_url: prefill?.imageUrl ?? null });
     }
     base.sort((a, b) => a.club_name.localeCompare(b.club_name));
-    return n ? base.filter((c) => c.club_name.toLowerCase().includes(n)) : base;
+    return n ? base.filter((c) => normaliseSearch(c.club_name).includes(n)) : base;
   }, [clubs, clubQuery, prefill?.clubId, prefill?.clubName, prefill?.country, prefill?.imageUrl, clubId]);
   const exactMatch = useMemo(() => {
-    const n = clubQuery.trim().toLowerCase();
-    return n ? clubs.some(c => c.club_name.toLowerCase() === n) : true;
-  }, [clubs, clubQuery]);
+    const n = normaliseSearch(clubQuery);
+    return n ? filteredClubs.some(c => normaliseSearch(c.club_name) === n) : true;
+  }, [filteredClubs, clubQuery]);
 
   const createNewClub = async () => {
     const name = newClubName.trim();
@@ -1686,6 +1723,11 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
           <div>
             <Label>Club</Label>
             <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mt-1.5" />
+            {selectedClub && (
+              <div className="mt-2 rounded-md border border-[#cbb96b]/50 bg-[#cbb96b]/10 px-3 py-2 text-xs text-[#f3e7a3]">
+                Selected club: <b>{selectedClub.club_name}</b>{selectedClub.country ? ` · ${selectedClub.country}` : ""}
+              </div>
+            )}
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
               {filteredClubs.map(c => (
                 <button key={c.id} type="button" data-club-tile={c.id} onClick={() => setClubId(c.id)}
