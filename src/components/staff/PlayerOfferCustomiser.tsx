@@ -70,6 +70,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
   const [secondaryParagraph, setSecondaryParagraph] = useState("");
   const [showDatabaseCard, setShowDatabaseCard] = useState<boolean | null>(null);
   const [playerFitScore, setPlayerFitScore] = useState<number | null>(null);
+  const [showHaveAgent, setShowHaveAgent] = useState<boolean>(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "image" | "video">(null);
@@ -81,6 +82,8 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       const { data } = await (supabase as any).from("player_offer_settings").select("*").eq("player_id", playerId).maybeSingle();
       setHidden(new Set((data?.hidden_sections || []) as string[]));
       setShowDatabaseCard(data?.show_database_card ?? null);
+      // Default ON so the "I already have an agent" button shows unless staff opt out.
+      setShowHaveAgent(data?.show_have_agent !== false);
       // Prefer the new intro_media list. Fall back to the legacy section_images
       // record so older players don't lose their pictures on first open.
       const rawList = Array.isArray(data?.intro_media) ? data!.intro_media : [];
@@ -206,6 +209,7 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
       // we always persist `true` to satisfy any older readers expecting an
       // explicit opt-in.
       show_database_card: true,
+      show_have_agent: showHaveAgent,
     };
     const { error } = await (supabase as any)
       .from("player_offer_settings")
@@ -265,6 +269,13 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                 placeholder="Add an extra paragraph under the main Rise With Us introduction..."
                 rows={4}
               />
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
+              <div>
+                <Label className="font-medium">Show "I already have an agent" button</Label>
+                <p className="text-xs text-muted-foreground">On by default. Appears on the final WhatsApp screen — when tapped, the player sees a friendly acknowledgement and staff get a notification.</p>
+              </div>
+              <Switch checked={showHaveAgent} onCheckedChange={setShowHaveAgent} />
             </div>
           </div>
           <div className="rounded-lg border p-3 space-y-3">

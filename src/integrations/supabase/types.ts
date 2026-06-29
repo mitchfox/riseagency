@@ -5882,6 +5882,7 @@ export type Database = {
           player_id: string
           section_images: Json
           show_database_card: boolean | null
+          show_have_agent: boolean
           updated_at: string
         }
         Insert: {
@@ -5892,6 +5893,7 @@ export type Database = {
           player_id: string
           section_images?: Json
           show_database_card?: boolean | null
+          show_have_agent?: boolean
           updated_at?: string
         }
         Update: {
@@ -5902,6 +5904,7 @@ export type Database = {
           player_id?: string
           section_images?: Json
           show_database_card?: boolean | null
+          show_have_agent?: boolean
           updated_at?: string
         }
         Relationships: []

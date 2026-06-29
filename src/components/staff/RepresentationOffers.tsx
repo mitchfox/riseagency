@@ -7,7 +7,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
@@ -129,17 +130,26 @@ export const RepresentationOffers = () => {
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
   const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
 
   // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
   // we already have on the player row, then to the outreach tables (youth /
   // pro) where the IG handle was originally entered.
+  // Normalise names so "Drašnář" and "Drasnar" both resolve to the same key —
+  // the players table and the outreach tables don't always agree on diacritics.
+  const normaliseName = (s: string | null | undefined) =>
+    (s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
   const instagramByName = useMemo(() => {
     const m = new Map<string, string>();
     allPlayers.forEach((p) => {
       const handle = (p.ig_handle || "").trim().replace(/^@/, "");
-      const key = (p.name || "").trim().toLowerCase();
+      const key = normaliseName(p.name);
       if (handle && key && !m.has(key)) m.set(key, handle);
     });
     return m;
@@ -148,7 +158,7 @@ export const RepresentationOffers = () => {
   const igHandleFor = (p: OfferPlayer): string | null => {
     const direct = (p.instagram_handle || "").trim().replace(/^@/, "");
     if (direct) return direct;
-    const fromLookup = instagramByName.get((p.name || "").trim().toLowerCase());
+    const fromLookup = instagramByName.get(normaliseName(p.name));
     return fromLookup || null;
   };
 
@@ -527,6 +537,9 @@ export const RepresentationOffers = () => {
         <Button onClick={() => setCreateOpen(true)} className="shrink-0">
           <Plus className="h-4 w-4 mr-1.5" /> Create offer
         </Button>
+        <Button onClick={() => setTemplatesOpen(true)} variant="outline" className="shrink-0">
+          <MessageSquare className="h-4 w-4 mr-1.5" /> Templates
+        </Button>
         <ProposalVisitorsBell visits={scopedVisits} />
       </div>
 
@@ -612,6 +625,8 @@ export const RepresentationOffers = () => {
         />
       )}
 
+      <PlayerOutreachTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader><DialogTitle>Create representation offer</DialogTitle></DialogHeader>
@@ -668,5 +683,131 @@ export const RepresentationOffers = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+// -------------------------------------------------------------------------
+// Quick template manager — mirrors the Club Outreach editor so staff can
+// add / edit / delete the WhatsApp templates that show on each player card.
+// Templates live in `whatsapp_quick_messages` (same table TemplatePickerInline
+// reads from). Use `{first_name}`, `{name}`, `{offer_link}` placeholders;
+// any hard-coded risefootballagency URL is auto-rewritten to the active
+// player's offer link on copy.
+// -------------------------------------------------------------------------
+type QuickTpl = { id: string; title: string; message_content: string; category: string | null; scope: string | null; target_id: string | null; position_tags: string[] | null };
+
+const PlayerOutreachTemplatesDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
+  const [items, setItems] = useState<QuickTpl[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await (supabase as any)
+      .from("whatsapp_quick_messages")
+      .select("id,title,message_content,category,scope,target_id,position_tags")
+      .order("title");
+    setItems((data || []) as QuickTpl[]);
+    setLoading(false);
+  };
+  useEffect(() => { if (open) load(); }, [open]);
+
+  const updateLocal = (id: string, patch: Partial<QuickTpl>) =>
+    setItems(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+
+  const saveOne = async (t: QuickTpl) => {
+    setSaving(t.id);
+    const { error } = await (supabase as any)
+      .from("whatsapp_quick_messages")
+      .update({ title: t.title, message_content: t.message_content })
+      .eq("id", t.id);
+    setSaving(null);
+    if (error) toast.error("Could not save", { description: error.message });
+    else toast.success("Template saved");
+  };
+
+  const deleteOne = async (id: string) => {
+    if (!window.confirm("Delete this template?")) return;
+    const { error } = await (supabase as any).from("whatsapp_quick_messages").delete().eq("id", id);
+    if (error) { toast.error("Could not delete", { description: error.message }); return; }
+    setItems(prev => prev.filter(t => t.id !== id));
+  };
+
+  const addOne = async () => {
+    if (!newTitle.trim() || !newContent.trim()) {
+      toast.error("Title and message required");
+      return;
+    }
+    setSaving("__new__");
+    const { data, error } = await (supabase as any)
+      .from("whatsapp_quick_messages")
+      .insert({ title: newTitle.trim(), message_content: newContent, scope: "pro" })
+      .select("id,title,message_content,category,scope,target_id,position_tags")
+      .single();
+    setSaving(null);
+    if (error) { toast.error("Could not add", { description: error.message }); return; }
+    setItems(prev => [...prev, data as QuickTpl]);
+    setNewTitle("");
+    setNewContent("");
+    toast.success("Template added");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Player outreach templates</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Templates appear on every player card with a one-tap copy button. Use <code>{`{first_name}`}</code>, <code>{`{name}`}</code>, <code>{`{position}`}</code>, <code>{`{club}`}</code> and <code>{`{offer_link}`}</code> as merge fields. Any hard-coded risefootballagency URL is automatically rewritten to that player's offer link when copied.
+        </p>
+        {loading ? (
+          <div className="flex items-center justify-center py-8"><Loader2 className="h-4 w-4 animate-spin" /></div>
+        ) : (
+          <div className="space-y-3">
+            {items.map(t => (
+              <div key={t.id} className="rounded-md border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={t.title}
+                    onChange={e => updateLocal(t.id, { title: e.target.value })}
+                    className="flex-1"
+                    placeholder="Template title"
+                  />
+                  <Button size="sm" variant="outline" disabled={saving === t.id} onClick={() => saveOne(t)}>
+                    {saving === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => deleteOne(t.id)} title="Delete">
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+                <Textarea
+                  value={t.message_content}
+                  onChange={e => updateLocal(t.id, { message_content: e.target.value })}
+                  rows={5}
+                  placeholder="Message body — supports {first_name}, {offer_link}…"
+                />
+              </div>
+            ))}
+            <div className="rounded-md border border-dashed p-3 space-y-2">
+              <Label className="text-xs">Add a new template</Label>
+              <Input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Title (e.g. Cold intro)" />
+              <Textarea value={newContent} onChange={e => setNewContent(e.target.value)} rows={5} placeholder={"Hi {first_name}, …\n{offer_link}"} />
+              <div className="flex justify-end">
+                <Button size="sm" onClick={addOne} disabled={saving === "__new__"} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+                  {saving === "__new__" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                  Add template
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -61,6 +61,7 @@ interface OfferSettings {
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
   show_database_card?: boolean | null;
+  show_have_agent?: boolean;
 }
 
 const TYRESE_PORTAL_EMBED_BASE = "/portal?staff_login=tyelanders%40gmail.com&hide_invoices=1&hide_logout=1&hide_music=1";
@@ -176,6 +177,34 @@ const offerDict: Record<string, Partial<Record<Lang, string>>> = {
     pl: "Napisz do nas na WhatsApp", cs: "Napiš nám na WhatsApp",
     ru: "Напишите нам в WhatsApp", tr: "WhatsApp'tan bize yaz",
     hr: "Poruka na WhatsApp", no: "Send oss en WhatsApp",
+  },
+  i_already_have_agent: {
+    en: "I already have an agent",
+    es: "Ya tengo agente",
+    pt: "Já tenho agente",
+    fr: "J'ai déjà un agent",
+    de: "Ich habe bereits einen Berater",
+    it: "Ho già un agente",
+    pl: "Mam już agenta",
+    cs: "Už mám agenta",
+    ru: "У меня уже есть агент",
+    tr: "Zaten bir menajerim var",
+    hr: "Već imam agenta",
+    no: "Jeg har allerede en agent",
+  },
+  already_agent_thank_you: {
+    en: "Thank you for letting us know. We want to support your long-term career, so please don't hesitate to reach out to us at a later date if your situation changes.",
+    es: "Gracias por avisarnos. Queremos apoyar tu carrera a largo plazo, así que no dudes en escribirnos más adelante si tu situación cambia.",
+    pt: "Obrigado por nos avisares. Queremos apoiar a tua carreira a longo prazo, por isso não hesites em contactar-nos mais tarde se a tua situação mudar.",
+    fr: "Merci de nous l'avoir dit. Nous voulons soutenir ta carrière sur le long terme, alors n'hésite pas à nous recontacter plus tard si ta situation évolue.",
+    de: "Danke für die Info. Wir möchten deine langfristige Karriere unterstützen — melde dich gerne wieder, falls sich deine Situation ändert.",
+    it: "Grazie per averci avvisati. Vogliamo sostenere la tua carriera a lungo termine, quindi non esitare a contattarci più avanti se la tua situazione cambia.",
+    pl: "Dziękujemy za informację. Chcemy wspierać Twoją karierę długofalowo, więc nie wahaj się napisać do nas w przyszłości, jeśli sytuacja się zmieni.",
+    cs: "Děkujeme, žes nám dal vědět. Chceme podpořit tvou dlouhodobou kariéru, takže se na nás neváhej ozvat později, pokud se tvá situace změní.",
+    ru: "Спасибо, что сообщили. Мы хотим поддержать вашу карьеру в долгосрочной перспективе, поэтому, если ситуация изменится, обязательно напишите нам позже.",
+    tr: "Bildirdiğin için teşekkürler. Uzun vadeli kariyerini desteklemek istiyoruz, durumun değişirse ileride bize ulaşmaktan çekinme.",
+    hr: "Hvala što si nam javio. Želimo podržati tvoju dugoročnu karijeru pa nas slobodno kontaktiraj kasnije ako se situacija promijeni.",
+    no: "Takk for at du gir oss beskjed. Vi vil støtte karrieren din på lang sikt, så ikke nøl med å ta kontakt senere hvis situasjonen endrer seg.",
   },
   visit_homepage: {
     en: "Visit our homepage", es: "Visita nuestra web",
@@ -1914,7 +1943,7 @@ const IntroCinematic = ({
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
-  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null, show_database_card: null });
+  const [settings, setSettings] = useState<OfferSettings>({ hidden_sections: [], section_images: {}, intro_media: [], rise_with_us_under18: false, representation_subtitle_secondary: null, show_database_card: null, show_have_agent: true });
   const [fitScore, setFitScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -1925,6 +1954,10 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
+  // "I already have an agent" acknowledgement state. Once flipped we hide the
+  // button and show a translated thank-you note in its place.
+  const [haveAgentAck, setHaveAgentAck] = useState(false);
+  const [haveAgentSubmitting, setHaveAgentSubmitting] = useState(false);
   // Fallback profile image for the final "Next Step" screen when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
@@ -1974,7 +2007,7 @@ const RiseWithUs = () => {
         setFitScore(typeof (data as any).fit_score === "number" ? (data as any).fit_score : null);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images, intro_media, show_database_card")
+          .select("hidden_sections, section_images, intro_media, show_database_card, show_have_agent")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -2000,6 +2033,7 @@ const RiseWithUs = () => {
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
           show_database_card: sData?.show_database_card ?? null,
+          show_have_agent: sData?.show_have_agent !== false,
         });
         // NOTE: We do NOT call switchLanguage here. It would redirect to a
         // different language subdomain on production and break the offer
@@ -2468,6 +2502,53 @@ const RiseWithUs = () => {
                       </a>
                     </Button>
                   </div>
+                  {settings.show_have_agent && (
+                    <div className="pt-4 flex flex-col items-center gap-3">
+                      {haveAgentAck ? (
+                        <p className="max-w-xl text-sm sm:text-base text-foreground/80 leading-relaxed border-t border-border/40 pt-4">
+                          {ot(
+                            "already_agent_thank_you",
+                            "Thank you for letting us know. We want to support your long-term career, so please don't hesitate to reach out to us at a later date if your situation changes.",
+                          )}
+                        </p>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={haveAgentSubmitting}
+                          onClick={async () => {
+                            if (haveAgentSubmitting) return;
+                            setHaveAgentSubmitting(true);
+                            // Optimistically show the thank-you so the player
+                            // never sees a loading spinner — even if the
+                            // notification call fails we still want them to
+                            // feel acknowledged.
+                            setHaveAgentAck(true);
+                            try {
+                              await insertStaffNotification({
+                                eventType: "offer_have_agent",
+                                title: `Already has an agent: ${player.name}`,
+                                body: `${player.name} confirmed they already have an agent from their Rise With Us page.`,
+                                eventData: {
+                                  player_id: player.id,
+                                  player_name: player.name,
+                                  language: lang,
+                                  source: "rise_with_us",
+                                },
+                              });
+                            } catch (err) {
+                              console.error("Failed to log 'already have agent'", err);
+                            } finally {
+                              setHaveAgentSubmitting(false);
+                            }
+                          }}
+                          className="font-bebas uppercase tracking-[0.18em] text-xs text-foreground/70 hover:text-foreground border-border/60 hover:bg-muted/40"
+                        >
+                          {ot("i_already_have_agent", "I already have an agent")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -1,0 +1,1 @@
+ALTER TABLE public.player_offer_settings ADD COLUMN IF NOT EXISTS show_have_agent boolean NOT NULL DEFAULT true;
