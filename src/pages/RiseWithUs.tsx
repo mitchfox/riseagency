@@ -2003,7 +2003,7 @@ const RiseWithUs = () => {
         setFitScore(typeof (data as any).fit_score === "number" ? (data as any).fit_score : null);
         const { data: sData } = await (supabase as any)
           .from("player_offer_settings")
-          .select("hidden_sections, section_images, intro_media, show_database_card")
+          .select("hidden_sections, section_images, intro_media, show_database_card, show_have_agent")
           .eq("player_id", data.id)
           .maybeSingle();
         const { data: portalData } = await (supabase as any)
@@ -2029,6 +2029,7 @@ const RiseWithUs = () => {
           rise_with_us_under18: !!portalData?.rise_with_us_under18,
           representation_subtitle_secondary: portalData?.representation_subtitle_secondary || null,
           show_database_card: sData?.show_database_card ?? null,
+          show_have_agent: sData?.show_have_agent !== false,
         });
         // NOTE: We do NOT call switchLanguage here. It would redirect to a
         // different language subdomain on production and break the offer
