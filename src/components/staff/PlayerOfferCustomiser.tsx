@@ -270,6 +270,13 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                 rows={4}
               />
             </div>
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
+              <div>
+                <Label className="font-medium">Show "I already have an agent" button</Label>
+                <p className="text-xs text-muted-foreground">On by default. Appears on the final WhatsApp screen — when tapped, the player sees a friendly acknowledgement and staff get a notification.</p>
+              </div>
+              <Switch checked={showHaveAgent} onCheckedChange={setShowHaveAgent} />
+            </div>
           </div>
           <div className="rounded-lg border p-3 space-y-3">
             <div>
