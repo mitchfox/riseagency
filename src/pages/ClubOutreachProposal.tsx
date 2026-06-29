@@ -901,6 +901,9 @@ export default function ClubOutreachProposal() {
               defaultCategory={current?.match_by_match_default_category ?? null}
               statOrders={current?.match_by_match_stat_orders ?? null}
               gameOrder={current?.match_by_match_game_order ?? null}
+              tr={tr}
+              autoT={autoT}
+              translateMbmLabel={translateMbmLabel}
             />
           )}
           {current?.stars_url && (
@@ -1019,7 +1022,7 @@ export default function ClubOutreachProposal() {
                   <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                     <h2 className="text-xl font-semibold leading-tight">{p?.name ?? "Player"}</h2>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-white/65 mt-1">
-                      {[autoT(p?.position), playerAge ? `${playerAge}` : null, autoT(p?.club)].filter(Boolean).join(" · ")}
+                       {[translatePosition(p?.position), playerAge ? `${playerAge}` : null, autoT(p?.club)].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                 </div>
@@ -1141,7 +1144,7 @@ export default function ClubOutreachProposal() {
             );
           })() : null}
           {preparedFor && (
-            <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
+            <p className="text-[11px] sm:text-xs text-white/40">{translateToWord()} <span className="text-white/85">{preparedFor}</span></p>
           )}
           <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
         </div>
@@ -1162,7 +1165,7 @@ export default function ClubOutreachProposal() {
               onClick={() => { hapticTap(); setActiveSlot(s); }}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
-              {autoT(s)}
+              {translatePosition(s)}
             </button>
           ))}
         </div>
