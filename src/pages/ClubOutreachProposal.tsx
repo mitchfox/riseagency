@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { calculateAge } from "@/lib/ageUtils";
 import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
-import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
+import { getCountryCode, getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import { rankGames } from "@/lib/matchByMatchOrder";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { normalisePosition } from "@/lib/positionNormalise";
@@ -34,6 +34,97 @@ import whyUsP5 from "@/assets/whyus/player-5.jpg";
 import whyUsP6 from "@/assets/whyus/player-6.jpg";
 
 const WHY_US_IMAGERY = [whyUsP1, whyUsP2, whyUsP3, whyUsP4, whyUsP5, whyUsP6];
+
+const LOCALE_BY_LANG: Record<string, string> = {
+  es: "es-ES",
+  pt: "pt-PT",
+  fr: "fr-FR",
+  de: "de-DE",
+  it: "it-IT",
+  pl: "pl-PL",
+  cs: "cs-CZ",
+  ru: "ru-RU",
+  tr: "tr-TR",
+  hr: "hr-HR",
+  no: "nb-NO",
+};
+
+const STATIC_PHRASE_TRANSLATIONS: Record<string, Record<string, string>> = {
+  "Back to all players offered": { es: "Volver a todos los jugadores ofrecidos", pt: "Voltar a todos os jogadores apresentados", fr: "Retour à tous les joueurs proposés", de: "Zurück zu allen angebotenen Spielern", it: "Torna a tutti i giocatori proposti", pl: "Wróć do wszystkich oferowanych zawodników", cs: "Zpět na všechny nabídnuté hráče", ru: "Назад ко всем предложенным игрокам", tr: "Sunulan tüm oyunculara dön", hr: "Natrag na sve ponuđene igrače", no: "Tilbake til alle tilbudte spillere" },
+  "Learn more": { es: "Más información", pt: "Saber mais", fr: "En savoir plus", de: "Mehr erfahren", it: "Scopri di più", pl: "Dowiedz się więcej", cs: "Zjistit více", ru: "Узнать больше", tr: "Daha fazla bilgi", hr: "Saznaj više", no: "Les mer" },
+  "Fit & Recommendation": { es: "Encaje y recomendación", pt: "Encaixe e recomendação", fr: "Profil et recommandation", de: "Eignung und Empfehlung", it: "Profilo e raccomandazione", pl: "Dopasowanie i rekomendacja", cs: "Vhodnost a doporučení", ru: "Соответствие и рекомендация", tr: "Uygunluk ve öneri", hr: "Uklapanje i preporuka", no: "Passform og anbefaling" },
+  "Key Details": { es: "Datos clave", pt: "Detalhes principais", fr: "Détails clés", de: "Kerndaten", it: "Dettagli chiave", pl: "Kluczowe informacje", cs: "Klíčové detaily", ru: "Ключевые данные", tr: "Temel bilgiler", hr: "Ključni detalji", no: "Nøkkeldetaljer" },
+  "Club": { es: "Club", pt: "Clube", fr: "Club", de: "Verein", it: "Club", pl: "Klub", cs: "Klub", ru: "Клуб", tr: "Kulüp", hr: "Klub", no: "Klubb" },
+  "Position": { es: "Posición", pt: "Posição", fr: "Poste", de: "Position", it: "Ruolo", pl: "Pozycja", cs: "Pozice", ru: "Позиция", tr: "Pozisyon", hr: "Pozicija", no: "Posisjon" },
+  "Years old": { es: "años", pt: "anos", fr: "ans", de: "Jahre alt", it: "anni", pl: "lat", cs: "let", ru: "лет", tr: "yaşında", hr: "godina", no: "år" },
+  "Nationality": { es: "Nacionalidad", pt: "Nacionalidade", fr: "Nationalité", de: "Nationalität", it: "Nazionalità", pl: "Narodowość", cs: "Národnost", ru: "Гражданство", tr: "Uyruk", hr: "Nacionalnost", no: "Nasjonalitet" },
+  "League": { es: "Liga", pt: "Liga", fr: "Championnat", de: "Liga", it: "Campionato", pl: "Liga", cs: "Liga", ru: "Лига", tr: "Lig", hr: "Liga", no: "Liga" },
+  "Situation": { es: "Situación", pt: "Situação", fr: "Situation", de: "Situation", it: "Situazione", pl: "Sytuacja", cs: "Situace", ru: "Ситуация", tr: "Durum", hr: "Situacija", no: "Situasjon" },
+  "Video & Data": { es: "Vídeo y datos", pt: "Vídeo e dados", fr: "Vidéo et données", de: "Video & Daten", it: "Video e dati", pl: "Wideo i dane", cs: "Video a data", ru: "Видео и данные", tr: "Video ve veri", hr: "Video i podaci", no: "Video og data" },
+  "Back to proposal": { es: "Volver a la propuesta", pt: "Voltar à proposta", fr: "Retour à la proposition", de: "Zurück zum Vorschlag", it: "Torna alla proposta", pl: "Wróć do propozycji", cs: "Zpět k nabídce", ru: "Назад к предложению", tr: "Teklife dön", hr: "Natrag na prijedlog", no: "Tilbake til forslaget" },
+  "Match-By-Match Video": { es: "Vídeo partido a partido", pt: "Vídeo jogo a jogo", fr: "Vidéo match par match", de: "Video Spiel für Spiel", it: "Video partita per partita", pl: "Wideo mecz po meczu", cs: "Video zápas po zápase", ru: "Видео матч за матчем", tr: "Maç maç video", hr: "Video utakmicu po utakmicu", no: "Video kamp for kamp" },
+  "Match-By-Match Data": { es: "Datos partido a partido", pt: "Dados jogo a jogo", fr: "Données match par match", de: "Daten Spiel für Spiel", it: "Dati partita per partita", pl: "Dane mecz po meczu", cs: "Data zápas po zápase", ru: "Данные матч за матчем", tr: "Maç maç veriler", hr: "Podaci utakmicu po utakmicu", no: "Data kamp for kamp" },
+  "Possession": { es: "Posesión", pt: "Posse", fr: "Possession", de: "Ballbesitz", it: "Possesso", pl: "Posiadanie", cs: "Držení míče", ru: "Владение", tr: "Topa sahip olma", hr: "Posjed", no: "Ballbesittelse" },
+  "Passing": { es: "Pase", pt: "Passe", fr: "Passes", de: "Passspiel", it: "Passaggi", pl: "Podania", cs: "Přihrávky", ru: "Передачи", tr: "Pas", hr: "Dodavanja", no: "Pasninger" },
+  "Shooting": { es: "Finalización", pt: "Finalização", fr: "Tirs", de: "Abschluss", it: "Tiri", pl: "Strzały", cs: "Střelba", ru: "Удары", tr: "Şut", hr: "Udarci", no: "Avslutninger" },
+  "Defending": { es: "Defensa", pt: "Defesa", fr: "Défense", de: "Defensive", it: "Difesa", pl: "Obrona", cs: "Bránění", ru: "Оборона", tr: "Savunma", hr: "Obrana", no: "Forsvar" },
+  "Per 90": { es: "Por 90", pt: "Por 90", fr: "Par 90", de: "Pro 90", it: "Per 90", pl: "Na 90", cs: "Za 90", ru: "За 90", tr: "90 başına", hr: "Po 90", no: "Per 90" },
+  "per 90": { es: "por 90", pt: "por 90", fr: "par 90", de: "pro 90", it: "per 90", pl: "na 90", cs: "za 90", ru: "за 90", tr: "90 başına", hr: "po 90", no: "per 90" },
+  "Raw": { es: "Total", pt: "Total", fr: "Total", de: "Gesamt", it: "Totale", pl: "Razem", cs: "Celkem", ru: "Всего", tr: "Toplam", hr: "Ukupno", no: "Totalt" },
+  "raw": { es: "total", pt: "total", fr: "total", de: "gesamt", it: "totale", pl: "razem", cs: "celkem", ru: "всего", tr: "toplam", hr: "ukupno", no: "totalt" },
+  "Goals": { es: "Goles", pt: "Golos", fr: "Buts", de: "Tore", it: "Gol", pl: "Gole", cs: "Góly", ru: "Голы", tr: "Goller", hr: "Golovi", no: "Mål" },
+  "Match": { es: "Partido", pt: "Jogo", fr: "Match", de: "Spiel", it: "Partita", pl: "Mecz", cs: "Zápas", ru: "Матч", tr: "Maç", hr: "Utakmica", no: "Kamp" },
+  "Play video report": { es: "Reproducir informe de vídeo", pt: "Reproduzir relatório em vídeo", fr: "Lire le rapport vidéo", de: "Videobericht abspielen", it: "Riproduci report video", pl: "Odtwórz raport wideo", cs: "Přehrát video report", ru: "Воспроизвести видеоотчёт", tr: "Video raporu oynat", hr: "Reproducir video izvješće", no: "Spill av videorapport" },
+  "No data available.": { es: "No hay datos disponibles.", pt: "Sem dados disponíveis.", fr: "Aucune donnée disponible.", de: "Keine Daten verfügbar.", it: "Nessun dato disponibile.", pl: "Brak dostępnych danych.", cs: "Nejsou k dispozici žádná data.", ru: "Данные недоступны.", tr: "Veri yok.", hr: "Nema dostupnih podataka.", no: "Ingen data tilgjengelig." },
+};
+
+const RESULT_INITIALS_BY_LANG: Record<string, Record<"W" | "D" | "L", string>> = {
+  en: { W: "W", D: "D", L: "L" },
+  es: { W: "V", D: "E", L: "D" },
+  pt: { W: "V", D: "E", L: "D" },
+  fr: { W: "V", D: "N", L: "D" },
+  de: { W: "S", D: "U", L: "N" },
+  it: { W: "V", D: "P", L: "S" },
+  pl: { W: "Z", D: "R", L: "P" },
+  cs: { W: "V", D: "R", L: "P" },
+  ru: { W: "В", D: "Н", L: "П" },
+  tr: { W: "G", D: "B", L: "M" },
+  hr: { W: "P", D: "N", L: "I" },
+  no: { W: "S", D: "U", L: "T" },
+};
+
+const translateStaticPhrase = (phrase: string, lang: string): string | null => {
+  if (!phrase || lang === "en") return null;
+  return STATIC_PHRASE_TRANSLATIONS[phrase]?.[lang] ?? null;
+};
+
+const translateCountryName = (raw: string | null | undefined, lang: string): string => {
+  const value = (raw ?? "").trim();
+  if (!value || lang === "en") return value;
+  const code = getCountryCode(value);
+  const locale = LOCALE_BY_LANG[lang];
+  if (!code || !locale) return translateStaticPhrase(value, lang) ?? value;
+  const special: Record<string, Record<string, string>> = {
+    "gb-eng": { es: "Inglaterra", pt: "Inglaterra", fr: "Angleterre", de: "England", it: "Inghilterra", pl: "Anglia", cs: "Anglie", ru: "Англия", tr: "İngiltere", hr: "Engleska", no: "England" },
+    "gb-sct": { es: "Escocia", pt: "Escócia", fr: "Écosse", de: "Schottland", it: "Scozia", pl: "Szkocja", cs: "Skotsko", ru: "Шотландия", tr: "İskoçya", hr: "Škotska", no: "Skottland" },
+    "gb-wls": { es: "Gales", pt: "País de Gales", fr: "Pays de Galles", de: "Wales", it: "Galles", pl: "Walia", cs: "Wales", ru: "Уэльс", tr: "Galler", hr: "Wales", no: "Wales" },
+    "gb-nir": { es: "Irlanda del Norte", pt: "Irlanda do Norte", fr: "Irlande du Nord", de: "Nordirland", it: "Irlanda del Nord", pl: "Irlandia Północna", cs: "Severní Irsko", ru: "Северная Ирландия", tr: "Kuzey İrlanda", hr: "Sjeverna Irska", no: "Nord-Irland" },
+  };
+  const specialHit = special[code]?.[lang];
+  if (specialHit) return specialHit;
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code.toUpperCase()) ?? value;
+  } catch {
+    return value;
+  }
+};
+
+const translateResultInitials = (result: string | null | undefined, lang: string): string => {
+  const value = result ?? "";
+  if (!value || lang === "en") return value;
+  const initials = RESULT_INITIALS_BY_LANG[lang] ?? RESULT_INITIALS_BY_LANG.en;
+  return value.replace(/\(([WDL])\)/gi, (_, letter: string) => `(${initials[letter.toUpperCase() as "W" | "D" | "L"] ?? letter})`);
+};
 
 const AGENT_FIFA_LICENCES: Record<string, { number: string; imageUrl: string }> = {
   "jolon levene": { number: "202304-1453", imageUrl: jolonFifaLicenseAsset.url },
@@ -657,6 +748,8 @@ export default function ClubOutreachProposal() {
   };
   const translateMbmLabel = (label: string): string => {
     if (langOverride === "en") return label;
+    const staticHit = translateStaticPhrase(label, langOverride);
+    if (staticHit) return staticHit;
     const map = MBM_STAT_LABELS_BY_LANG[langOverride];
     if (map && map[label]) return map[label];
     return autoT(label);
@@ -678,6 +771,10 @@ export default function ClubOutreachProposal() {
       "Transfer fee", "Height", "Preferred foot", "Status", "Detail",
       "Key Details", "Situation", "Strengths & Play Style",
       "In Numbers", "Season Stats",
+      "Video & Data", "Back to proposal", "Match-By-Match Video",
+      "Match-By-Match Data", "Possession", "Passing", "Shooting", "Defending",
+      "Per 90", "per 90", "Raw", "raw", "Goals", "Match", "Play video report",
+      "No data available.",
     ].forEach(push);
     if (data && current) {
       const p = current.player;
@@ -732,6 +829,8 @@ export default function ClubOutreachProposal() {
   const autoT = (s?: string | null): string => {
     if (!s) return s || "";
     if (langOverride === "en") return s;
+    const staticHit = translateStaticPhrase(s, langOverride);
+    if (staticHit) return staticHit;
     const v = aiTranslate(s);
     return v || s;
   };
@@ -763,6 +862,8 @@ export default function ClubOutreachProposal() {
   const fitsT = data.link.translations?.fits ?? {};
   const tr = (key: string, en: string) => {
     if (lang === "en") return en;
+    const staticHit = translateStaticPhrase(en, lang);
+    if (staticHit) return staticHit;
     const v = uiT[key];
     if (typeof v === "string" && v.trim()) return v;
     return autoT(en);
@@ -909,6 +1010,7 @@ export default function ClubOutreachProposal() {
               tr={tr}
               autoT={autoT}
               translateMbmLabel={translateMbmLabel}
+              translateResult={(result) => translateResultInitials(result, langOverride)}
             />
           )}
           {current?.stars_url && (
@@ -1217,7 +1319,14 @@ export default function ClubOutreachProposal() {
 
       {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} autoT={autoT} />
+        <KeyDetailsCard
+          entry={current}
+          age={age}
+          tr={tr}
+          items={keyDetailsForCurrent}
+          autoT={autoT}
+          activeLang={langOverride}
+        />
       </section>
 
       {/* Hero - first Stars highlight video, falls back to player image */}
@@ -2017,16 +2126,19 @@ function KeyDetailsCard({
   tr,
   items,
   autoT,
+  activeLang = "en",
 }: {
   entry: PlayerEntry;
   age: number | null;
   tr?: (key: string, en: string) => string;
   items?: KeyDetailItem[];
   autoT?: (s?: string | null) => string;
+  activeLang?: string;
 }) {
   const player = entry.player;
   const T = (k: string, en: string) => (tr ? tr(k, en) : en);
   const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
+  const C = (s?: string | null) => translateCountryName(s, activeLang);
   const tiles = (items && items.length ? items : DEFAULT_KEY_DETAILS);
 
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
@@ -2109,7 +2221,7 @@ function KeyDetailsCard({
           <Tile
             key={idx}
             label={T("key.nationality", "Nationality")}
-            secondary={A(player?.nationality) || "-"}
+            secondary={C(player?.nationality) || "-"}
             visual={nationalityFlag ? (
               <img src={nationalityFlag} alt={player?.nationality ?? ""} onError={(e) => ((e.currentTarget.style.display = "none"))} className="h-10 w-14 object-cover rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
             ) : (
@@ -2436,6 +2548,7 @@ function MatchByMatchCard({
   tr,
   autoT,
   translateMbmLabel,
+  translateResult,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
@@ -2447,10 +2560,12 @@ function MatchByMatchCard({
   tr?: (key: string, en: string) => string;
   autoT?: (s?: string | null) => string;
   translateMbmLabel?: (label: string) => string;
+  translateResult?: (result?: string | null) => string;
 }) {
   const T = (key: string, en: string) => (tr ? tr(key, en) : en);
   const A = (s?: string | null) => (autoT ? autoT(s) : (s ?? ""));
   const L = (label: string) => (translateMbmLabel ? translateMbmLabel(label) : label);
+  const R = (result?: string | null) => (translateResult ? translateResult(result) : (result ?? ""));
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
   // Outreach-specific Match by Match categories — fixed order driven by
@@ -2798,7 +2913,7 @@ function MatchByMatchCard({
                             </div>
                             {a.result ? (
                               <div className="text-white/40 text-[10px] whitespace-nowrap">
-                                {a.result}
+                                {R(a.result)}
                               </div>
                             ) : null}
                           </div>
@@ -2856,7 +2971,7 @@ function MatchByMatchCard({
         clips={clipsForOpen as any}
         mode="playlist"
         hideScores
-        title={openMatch ? `${openMatch.opponent ?? "Match"}${openMatch.result ? ` · ${openMatch.result}` : ""}` : undefined}
+        title={openMatch ? `${A(openMatch.opponent) || T("mbm.match", "Match")}${openMatch.result ? ` · ${R(openMatch.result)}` : ""}` : undefined}
       />
     </SectionShell>
   );

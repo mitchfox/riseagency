@@ -76,7 +76,12 @@ const UI_BUNDLE: Record<string, string> = {
   "mbm.cat.Shooting": "Shooting",
   "mbm.cat.Defending": "Defending",
   "inline.back": "Back to proposal",
+  "inline.moreVideos": "Match-By-Match Video",
   "card.openFull": "View Full Stars Profile",
+  "mbm.playVideo": "Play video report",
+  "mbm.result.win": "Win",
+  "mbm.result.draw": "Draw",
+  "mbm.result.loss": "Loss",
 };
 
 Deno.serve(async (req) => {
