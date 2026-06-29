@@ -566,6 +566,84 @@ export default function ClubOutreachProposal() {
     tryAutoplay(video);
   }, [heroPrefetchFailed, heroPreparing, current?.first_highlight_url]);
 
+  // ---- Runtime AI translation for everything dynamic ---------------------
+  // The pre-baked `translations.ui` bundle only covers a handful of static
+  // keys. Anything else the proposal renders in English (stat labels, key
+  // detail values, situation paragraph, strengths bullets, etc.) gets
+  // translated on the fly via the AI batch translator and cached in
+  // localStorage per language.
+  const STAT_LABEL_LOOKUP: Record<string, string> = {
+    goals: "Goals", assists: "Assists", xg: "xG", xa: "xA",
+    shots: "Shots", shots_on_target: "Shots on Target",
+    key_passes: "Key Passes", chances_created: "Chances Created",
+    passes_total_per90: "Passes /90", pass_accuracy_pct: "Pass %",
+    successful_dribbles_per90: "Dribbles /90", dribble_success_pct: "Dribble %",
+    tackles_per90: "Tackles /90", tackle_success_pct: "Tackle %",
+    interceptions_per90: "Interceptions /90", duels_won_pct: "Duels Won %",
+    aerial_duels_won_pct: "Aerial %", minutes_played: "Minutes",
+  };
+  const humanizeStat = (k: string) =>
+    STAT_LABEL_LOOKUP[k] ??
+    k.replace(/_per90/gi, " /90").replace(/_pct$/i, " %").replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  const dynamicStringsForTranslation = useMemo<string[]>(() => {
+    if (langOverride === "en") return [];
+    const arr: string[] = [];
+    const push = (s?: string | null) => { if (s && typeof s === "string" && s.trim()) arr.push(s); };
+    // Static UI strings (fallback for links missing the new bundle keys)
+    [
+      "To", "Back to all players offered", "Learn more",
+      "Club", "Position", "Nationality", "League", "Years old",
+      "Contract expiry", "Current salary", "Salary expectations",
+      "Transfer fee", "Height", "Preferred foot", "Status", "Detail",
+      "Key Details", "Situation", "Strengths & Play Style",
+      "In Numbers", "Season Stats",
+    ].forEach(push);
+    if (data && current) {
+      const p = current.player;
+      push(p?.position);
+      push(p?.nationality);
+      push(p?.league);
+      data.players.forEach((e: any) => push(e?.position_slot));
+      (current.form_config?.stats || []).forEach((s: any) => {
+        const k = typeof s === "string" ? s : s?.key;
+        if (k) push(humanizeStat(k));
+      });
+      (current.top_stats || []).forEach((s: any) => {
+        push(s?.label); push(s?.description);
+      });
+      (current.season_stats || []).forEach((s: any) => {
+        if (s?.header) push(humanizeStat(s.header));
+      });
+      const strData: any = current.strengths_and_play_style;
+      const strItems: string[] = Array.isArray(strData)
+        ? strData.map((x: any) => typeof x === "string" ? x : (x?.title ?? x?.label ?? "")).filter(Boolean)
+        : typeof strData === "string" ? strData.split(/\n+/).filter(Boolean) : [];
+      strItems.forEach(push);
+      const sit = (current.situation ?? "").trim();
+      push(sit);
+      const kd = normaliseKeyDetails(current.key_details ?? data.link.key_details);
+      (kd || []).forEach((it: any) => {
+        push(it?.label);
+        if (it?.value && typeof it.value === "string" && /[a-zA-Z]/.test(it.value)) push(it.value);
+      });
+      const fitEn = (current.fit_recommendation ?? "").trim();
+      const fits = data.link.translations?.fits ?? {};
+      if (fitEn && !fits[current.player?.id ?? ""]) push(fitEn);
+    }
+    return arr;
+  }, [langOverride, data, current]);
+  const { translate: aiTranslate } = useAutoTranslateStrings(
+    dynamicStringsForTranslation,
+    langOverride === "en" ? null : langOverride,
+  );
+  const autoT = (s?: string | null): string => {
+    if (!s) return s || "";
+    if (langOverride === "en") return s;
+    const v = aiTranslate(s);
+    return v || s;
+  };
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-black flex items-center justify-center">
