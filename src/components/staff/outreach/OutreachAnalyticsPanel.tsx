@@ -214,7 +214,7 @@ export default function OutreachAnalyticsPanel({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2">
         {tiles.map((t) => (
           <div key={t.label} className="rounded-lg border border-border bg-muted/20 p-3">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.label}</div>
