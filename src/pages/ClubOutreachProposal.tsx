@@ -669,12 +669,17 @@ export default function ClubOutreachProposal() {
   const lang = langOverride;
   const uiT = data.link.translations?.ui ?? {};
   const fitsT = data.link.translations?.fits ?? {};
-  const tr = (key: string, en: string) => (lang === "en" ? en : (uiT[key] ?? en));
+  const tr = (key: string, en: string) => {
+    if (lang === "en") return en;
+    const v = uiT[key];
+    if (typeof v === "string" && v.trim()) return v;
+    return autoT(en);
+  };
   const fillTpl = (s: string, vars: Record<string, string | number>) =>
     s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
   const trFit = (playerId: string | undefined, en: string) => {
     if (!playerId || lang === "en") return en;
-    return fitsT[playerId] ?? en;
+    return fitsT[playerId] ?? autoT(en);
   };
 
   const revealHeroVideo = (video: HTMLVideoElement) => {
