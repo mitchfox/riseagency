@@ -32,17 +32,8 @@ import { Eye, MapPin, Clock, RefreshCw, EyeOff, CalendarIcon, ShieldOff, Activit
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { VisitorDiagnostics } from "./VisitorDiagnostics";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { VisitDetail, FullVisitorDetailDialog } from "./outreach/ViewedVisitorsExpansion";
+import type { ProposalVisit } from "./outreach/ProposalVisitorsBell";
 
 interface SiteVisit {
   id: string;
@@ -54,6 +45,12 @@ interface SiteVisit {
   referrer: string | null;
   visited_at: string;
   hidden: boolean;
+  events?: any[] | null;
+  sections?: any;
+  scroll_max_pct?: number | null;
+  engaged_seconds?: number | null;
+  viewport?: any;
+  video_stats?: any;
 }
 
 export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -65,6 +62,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   const [uniquePaths, setUniquePaths] = useState<string[]>([]);
   const [selectedVisitor, setSelectedVisitor] = useState<string | null>(null);
   const [visitorDetails, setVisitorDetails] = useState<SiteVisit[]>([]);
+  const [fullDetailOpen, setFullDetailOpen] = useState(false);
   const [showUniqueOnly, setShowUniqueOnly] = useState(true); // Default to true
   const [showHidden, setShowHidden] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Default to today
@@ -108,7 +106,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
-      setVisits(data || []);
+      setVisits((data || []) as unknown as SiteVisit[]);
       
       // Calculate daily stats (excluding 0-duration visits from average)
       const uniqueVisitorIds = new Set(data?.map((v) => v.visitor_id) || []);
@@ -171,21 +169,26 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { data, error } = await supabase
         .from("site_visits")
-        .select("*")
+        .select("id,visitor_id,page_path,duration,location,user_agent,referrer,visited_at,hidden,events,sections,scroll_max_pct,engaged_seconds,viewport,video_stats")
         .eq("visitor_id", visitorId)
         .order("visited_at", { ascending: false });
 
       if (error) throw error;
 
-      // Group by page and take the entry with highest duration for each page
+      // Keep every visit so behavioural detail (events, scroll, sections) is preserved.
+      // Then de-dupe by page, choosing the entry richest in behavioural data, then duration.
+      const score = (v: any) =>
+        (Array.isArray(v.events) ? v.events.length : 0) * 5 +
+        (v.engaged_seconds || 0) +
+        (v.scroll_max_pct || 0) +
+        (v.duration || 0);
       const pageMap = new Map<string, SiteVisit>();
-      data?.forEach((visit) => {
+      (data || []).forEach((visit: any) => {
         const existing = pageMap.get(visit.page_path);
-        if (!existing || visit.duration > existing.duration) {
+        if (!existing || score(visit) > score(existing)) {
           pageMap.set(visit.page_path, visit);
         }
       });
-
       setVisitorDetails(Array.from(pageMap.values()));
     } catch (error) {
       console.error("Error loading visitor details:", error);
@@ -242,7 +245,8 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       const { data: matchingVisits, error: fetchError } = await supabase
         .from("site_visits")
         .select("id, location")
-        .eq("hidden", false);
+        .eq("hidden", false)
+        .limit(10000);
 
       if (fetchError) throw fetchError;
 
@@ -271,7 +275,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       }
 
       toast.success(`Hidden ${idsToHide.length} visits from ${ip || location}`);
+      // Refresh both the table and the open visitor detail so the row instantly reflects hidden state.
       loadVisits();
+      if (selectedVisitor) loadVisitorDetails(selectedVisitor);
     } catch (error) {
       console.error("Error hiding by IP:", error);
       toast.error("Failed to hide visits");
@@ -361,51 +367,41 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             {visitorDetails.length > 0 && visitorDetails[0].location && (
               <>
                 {(visitorDetails[0].location as any)?.ip && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <ShieldOff className="h-4 w-4 mr-2" />
-                        Hide IP ({(visitorDetails[0].location as any).ip})
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Hide all visits from this IP?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will hide all visits from IP {(visitorDetails[0].location as any).ip} across all dates.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => hideByIpOrLocation((visitorDetails[0].location as any).ip)}>
-                          Hide All
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const ip = (visitorDetails[0].location as any).ip;
+                      if (window.confirm(`Hide ALL visits from IP ${ip} across every date?`)) {
+                        hideByIpOrLocation(ip);
+                      }
+                    }}
+                  >
+                    <ShieldOff className="h-4 w-4 mr-2" />
+                    Hide IP ({(visitorDetails[0].location as any).ip})
+                  </Button>
                 )}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Hide Location ({formatLocation(visitorDetails[0].location)})
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Hide all visits from this location?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will hide all visits from {formatLocation(visitorDetails[0].location)} across all dates.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => hideByIpOrLocation(undefined, formatLocation(visitorDetails[0].location))}>
-                        Hide All
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const loc = formatLocation(visitorDetails[0].location);
+                    if (window.confirm(`Hide ALL visits from ${loc} across every date?`)) {
+                      hideByIpOrLocation(undefined, loc);
+                    }
+                  }}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Hide Location ({formatLocation(visitorDetails[0].location)})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFullDetailOpen(true)}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Full breakdown
+                </Button>
               </>
             )}
 
@@ -436,6 +432,19 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 sm:p-6">
+            {/* Rich behaviour breakdown — clicks, scroll, section dwell, video. */}
+            {visitorDetails.length > 0 && (
+              <div className="mb-4 rounded-md border border-[#cbb96b]/30 bg-muted/30 p-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[#cbb96b] font-semibold mb-2 flex items-center gap-1.5">
+                  <Activity className="h-3 w-3" /> Behaviour breakdown
+                </div>
+                <ul className="space-y-1.5">
+                  {visitorDetails.map((v) => (
+                    <VisitDetail key={v.id} v={v as unknown as ProposalVisit} defaultOpen />
+                  ))}
+                </ul>
+              </div>
+            )}
             <ScrollArea className="w-full h-[500px]">
               <div className="rounded-md border min-w-full">
                 <Table>
@@ -477,6 +486,12 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
           </ScrollArea>
         </CardContent>
         </Card>
+        <FullVisitorDetailDialog
+          visits={visitorDetails as unknown as ProposalVisit[]}
+          open={fullDetailOpen}
+          onOpenChange={setFullDetailOpen}
+          title={`Visitor ${selectedVisitor?.slice(0, 16)}… — full breakdown`}
+        />
       </div>
     );
   }

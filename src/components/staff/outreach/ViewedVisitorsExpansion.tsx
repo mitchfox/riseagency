@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, Clock, Eye, Globe, MousePointerClick, ScrollText, Film, ChevronDown, ChevronUp, Layers } from "lucide-react";
+import { MapPin, Clock, Eye, Globe, MousePointerClick, ScrollText, Film, ChevronDown, ChevronUp, Layers, Maximize2 } from "lucide-react";
 import type { ProposalVisit } from "./ProposalVisitorsBell";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const fmtDuration = (s: number | null | undefined) => {
   const v = Math.max(0, Math.round(s ?? 0));
@@ -56,8 +57,8 @@ const fmtEvtTime = (s: number) => {
   return r ? `${m}m${r}s` : `${m}m`;
 };
 
-export function VisitDetail({ v }: { v: ProposalVisit }) {
-  const [openDetail, setOpenDetail] = useState(false);
+export function VisitDetail({ v, defaultOpen = false }: { v: ProposalVisit; defaultOpen?: boolean }) {
+  const [openDetail, setOpenDetail] = useState(defaultOpen);
   const engaged = v.engaged_seconds ?? 0;
   const scrollMax = v.scroll_max_pct ?? 0;
   const events = Array.isArray(v.events) ? v.events : [];
@@ -168,37 +169,103 @@ export function VisitDetail({ v }: { v: ProposalVisit }) {
   );
 }
 
+function buildSessions(visits: ProposalVisit[]) {
+  const map = new Map<string, ProposalVisit[]>();
+  [...visits]
+    .sort((a, b) => new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime())
+    .forEach((v) => {
+      const key = v.visitor_id || v.id;
+      const arr = map.get(key) ?? [];
+      arr.push(v);
+      map.set(key, arr);
+    });
+  return Array.from(map.entries()).map(([key, vs]) => {
+    const latest = vs[0];
+    const loc = (latest.location ?? {}) as any;
+    return {
+      key,
+      latest,
+      visits: vs,
+      city: loc.city ?? null,
+      region: loc.region ?? null,
+      country: loc.country || "Location unknown",
+      ip: loc.ip ?? null,
+      totalDuration: vs.reduce((s, v) => s + (v.duration ?? 0), 0),
+      device: deviceFromUA(latest.user_agent),
+      referrer: latest.referrer,
+    };
+  });
+}
+
+export function FullVisitorDetailDialog({
+  visits,
+  open,
+  onOpenChange,
+  title = "Full visitor breakdown",
+}: {
+  visits: ProposalVisit[];
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  title?: string;
+}) {
+  const sessions = useMemo(() => buildSessions(visits), [visits]);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[88vh] overflow-y-auto p-0 border-[#cbb96b]/40">
+        <DialogHeader className="px-5 pt-4 pb-2 border-b border-border/60">
+          <DialogTitle className="text-sm text-[#cbb96b] uppercase tracking-[0.18em] font-semibold flex items-center gap-2">
+            <Eye className="h-3.5 w-3.5" /> {title}
+            <span className="text-[10px] text-muted-foreground normal-case tracking-normal">{sessions.length} visitor{sessions.length === 1 ? "" : "s"}</span>
+          </DialogTitle>
+        </DialogHeader>
+        {sessions.length === 0 ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">No visitor activity recorded yet.</div>
+        ) : (
+          <ul className="divide-y divide-border/50">
+            {sessions.map((s) => (
+              <li key={s.key} className="px-5 py-4 text-xs space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#cbb96b]" />
+                    <div className="min-w-0">
+                      <div className="font-medium text-foreground">
+                        {[s.city, s.region].filter(Boolean).join(", ") || s.country}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        {s.country}{s.ip ? ` · ${s.ip}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">{fmtWhen(s.latest.visited_at)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground pl-6">
+                  <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{fmtDuration(s.totalDuration)} total</span>
+                  <span>{s.device}</span>
+                  {s.referrer && (
+                    <span className="truncate max-w-[260px]" title={s.referrer}>via {(() => { try { return new URL(s.referrer!).hostname; } catch { return s.referrer; } })()}</span>
+                  )}
+                </div>
+                <ul className="pl-6 space-y-1.5">
+                  {s.visits.map((v) => (
+                    <VisitDetail key={v.id} v={v} defaultOpen />
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ViewedVisitorsExpansion({ visits, children }: { visits: ProposalVisit[]; children: ReactNode }) {
   // Group by visitor_id so each card row is a single person.
-  const sessions = useMemo(() => {
-    const map = new Map<string, ProposalVisit[]>();
-    [...visits]
-      .sort((a, b) => new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime())
-      .forEach((v) => {
-        const key = v.visitor_id || v.id;
-        const arr = map.get(key) ?? [];
-        arr.push(v);
-        map.set(key, arr);
-      });
-    return Array.from(map.entries()).map(([key, vs]) => {
-      const latest = vs[0];
-      const loc = (latest.location ?? {}) as any;
-      return {
-        key,
-        latest,
-        visits: vs,
-        city: loc.city ?? null,
-        region: loc.region ?? null,
-        country: loc.country || "Location unknown",
-        ip: loc.ip ?? null,
-        totalDuration: vs.reduce((s, v) => s + (v.duration ?? 0), 0),
-        device: deviceFromUA(latest.user_agent),
-        referrer: latest.referrer,
-      };
-    });
-  }, [visits]);
+  const sessions = useMemo(() => buildSessions(visits), [visits]);
 
   const [open, setOpen] = useState(false);
+  const [fullOpen, setFullOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const closeTimer = useRef<number | null>(null);
@@ -247,9 +314,18 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
           <span className="text-[10px] uppercase tracking-[0.18em] text-[#cbb96b] font-semibold flex items-center gap-1.5">
             <Eye className="h-3 w-3" /> Visitor detail
           </span>
-          <span className="text-[10px] text-muted-foreground">
-            {sessions.length} visitor{sessions.length === 1 ? "" : "s"}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setFullOpen(true); }}
+              className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-[#cbb96b]/50 text-[#cbb96b] hover:bg-[#cbb96b]/10"
+            >
+              <Maximize2 className="h-2.5 w-2.5" /> Full detail
+            </button>
+            <span className="text-[10px] text-muted-foreground">
+              {sessions.length} visitor{sessions.length === 1 ? "" : "s"}
+            </span>
+          </div>
         </div>
         <ul className="divide-y divide-border/50 max-h-[360px] overflow-y-auto">
           {sessions.map((s) => (
@@ -287,6 +363,7 @@ export default function ViewedVisitorsExpansion({ visits, children }: { visits: 
         </div>,
         document.body,
       )}
+      <FullVisitorDetailDialog visits={visits} open={fullOpen} onOpenChange={setFullOpen} />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bell, MapPin, Clock, ExternalLink } from "lucide-react";
-import { VisitDetail } from "./ViewedVisitorsExpansion";
+import { Bell, MapPin, Clock, ExternalLink, Maximize2 } from "lucide-react";
+import { VisitDetail, FullVisitorDetailDialog } from "./ViewedVisitorsExpansion";
 
 export interface ProposalVisit {
   id: string;
@@ -54,6 +54,7 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
     return raw ? Number(raw) || 0 : 0;
   });
   const [open, setOpen] = useState(false);
+  const [fullOpen, setFullOpen] = useState(false);
 
   const sorted = useMemo(
     () => [...visits].sort((a, b) => new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime()),
@@ -97,6 +98,7 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
   const pulsing = newCount > 0;
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
@@ -120,7 +122,16 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
       <PopoverContent align="end" className="w-[460px] max-w-[92vw] max-h-[540px] overflow-y-auto p-0">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between sticky top-0 bg-popover z-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-[#cbb96b]">Non-UK Proposal Visitors</span>
-          <span className="text-[11px] text-muted-foreground">{total} total · click ▾ for details</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setFullOpen(true); setOpen(false); }}
+              className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-[#cbb96b]/50 text-[#cbb96b] hover:bg-[#cbb96b]/10"
+            >
+              <Maximize2 className="h-2.5 w-2.5" /> Full detail
+            </button>
+            <span className="text-[11px] text-muted-foreground">{total} total</span>
+          </div>
         </div>
         {sessions.length === 0 ? (
           <div className="p-4 text-xs text-muted-foreground text-center">No non-UK visitors yet.</div>
@@ -155,5 +166,8 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
         )}
       </PopoverContent>
     </Popover>
+    {/* Wide inline dialog with every visitor expanded for easy scrolling */}
+    <FullVisitorDetailDialog visits={sorted} open={fullOpen} onOpenChange={setFullOpen} title="Non-UK proposal visitors — full breakdown" />
+    </>
   );
 }
