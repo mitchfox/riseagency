@@ -53,10 +53,16 @@ const makeShortId = () => {
   return out;
 };
 const makeClubShortId = (clubName: string | null | undefined) => {
-  const prefix = (clubName ?? "")
+  const cleanedName = (clubName ?? "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((part, index) => index > 0 || !["fc", "afc", "cf", "sc", "ac", "as", "sv", "sk", "fk", "cd", "ud", "us", "nk", "bk", "ifk"].includes(part))
+    .join("");
+  const prefix = cleanedName
     .replace(/[^a-z0-9]/g, "")
     .slice(0, 4);
   return prefix ? `${prefix}-${makeShortId()}` : makeShortId();
