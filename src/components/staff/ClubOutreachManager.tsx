@@ -939,7 +939,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
   );
 }
 
-function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string }; }) {
+function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; preparedFor?: string; forceCreateClub?: boolean }; }) {
   const isAgent = mode === 'agent';
   const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
