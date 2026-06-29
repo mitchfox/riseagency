@@ -117,10 +117,10 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[360px] max-h-[480px] overflow-y-auto p-0">
+      <PopoverContent align="end" className="w-[460px] max-w-[92vw] max-h-[540px] overflow-y-auto p-0">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between sticky top-0 bg-popover z-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-[#cbb96b]">Non-UK Proposal Visitors</span>
-          <span className="text-[11px] text-muted-foreground">{total} total</span>
+          <span className="text-[11px] text-muted-foreground">{total} total · click ▾ for details</span>
         </div>
         {sessions.length === 0 ? (
           <div className="p-4 text-xs text-muted-foreground text-center">No non-UK visitors yet.</div>
