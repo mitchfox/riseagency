@@ -20,8 +20,9 @@ import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
+import OutreachAnalyticsPanel, { type AnalyticsResponseStatus, type AnalyticsRow } from "@/components/staff/outreach/OutreachAnalyticsPanel";
 import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, BarChart3 } from "lucide-react";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -180,6 +181,9 @@ interface OutreachRow {
   alternate_profiles_blurb?: string | null;
   season_id?: string | null;
   manually_viewed_at?: string | null;
+  response_status?: AnalyticsResponseStatus | null;
+  response_notes?: string | null;
+  response_at?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
