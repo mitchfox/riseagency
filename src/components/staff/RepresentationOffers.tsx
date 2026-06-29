@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
@@ -35,6 +35,7 @@ type OfferPlayer = {
   last_contact_at?: string | null;
   offer_status?: string | null;
   created_at?: string | null;
+  instagram_handle?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
@@ -52,29 +53,57 @@ const isLovablePreviewHost = () => {
     || h.endsWith(".lovable.dev");
 };
 
-const GROUPS: { id: string; label: string; defaultOpen: boolean }[] = [
-  { id: "drafts", label: "Drafts — not sent yet", defaultOpen: true },
-  { id: "needs_followup", label: "Needs follow-up", defaultOpen: true },
-  { id: "sent", label: "Offer sent — awaiting reply", defaultOpen: true },
-  { id: "in_conversation", label: "In conversation", defaultOpen: true },
-  { id: "signed", label: "Signed", defaultOpen: false },
-  { id: "declined", label: "Declined / paused", defaultOpen: false },
+// Mirror Club Outreach exactly: draft / ready / sent at the top, with
+// signed + declined kept underneath for completed offers.
+type OfferStatus = "draft" | "ready" | "sent" | "signed" | "declined";
+const GROUPS: { id: OfferStatus; label: string; defaultOpen: boolean }[] = [
+  { id: "draft",    label: "Draft — not sent yet",         defaultOpen: true },
+  { id: "ready",    label: "Ready to send",                defaultOpen: true },
+  { id: "sent",     label: "Sent — awaiting reply",        defaultOpen: true },
+  { id: "signed",   label: "Signed",                       defaultOpen: false },
+  { id: "declined", label: "Declined / paused",            defaultOpen: false },
 ];
 
-const groupFor = (p: OfferPlayer): string => {
-  const status = (p.offer_status || p.representation_status || "").toLowerCase();
-  if (status.includes("sign")) return "signed";
-  if (status.includes("declin") || status.includes("paus") || status.includes("lost")) return "declined";
-  if (status.includes("convers") || status.includes("interest")) return "in_conversation";
-  // Needs follow-up = last contact older than 7 days
-  if (p.last_contact_at) {
-    const days = (Date.now() - new Date(p.last_contact_at).getTime()) / 86400000;
-    if (days >= 7) return "needs_followup";
-    return "sent";
+const groupFor = (p: OfferPlayer): OfferStatus => {
+  const explicit = (p.offer_status || "").toLowerCase().trim();
+  if (explicit === "draft" || explicit === "ready" || explicit === "sent" || explicit === "signed" || explicit === "declined") {
+    return explicit as OfferStatus;
   }
-  // No evidence of having sent yet → keep as draft.
-  if ((p.offer_status || "").toLowerCase().includes("sent")) return "sent";
-  return "drafts";
+  // Fallback inference for legacy rows that never set offer_status.
+  const repStatus = (p.representation_status || "").toLowerCase();
+  if (repStatus.includes("sign")) return "signed";
+  if (repStatus.includes("declin") || repStatus.includes("paus") || repStatus.includes("lost")) return "declined";
+  if (p.last_contact_at) return "sent";
+  return "draft";
+};
+
+const OfferStatusToggle = ({ status, onChange }: { status: OfferStatus; onChange: (s: OfferStatus) => void }) => {
+  const opts: { value: OfferStatus; label: string; icon: any }[] = [
+    { value: "draft", label: "Draft", icon: FileEdit },
+    { value: "ready", label: "Ready", icon: Send },
+    { value: "sent",  label: "Sent",  icon: CheckCircle2 },
+  ];
+  return (
+    <div className="grid grid-cols-3 rounded-md border border-border p-0.5 bg-muted/30">
+      {opts.map((o) => {
+        const active = status === o.value;
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(o.value); }}
+            className={`flex items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-[11px] uppercase tracking-wider transition ${
+              active ? "bg-[#cbb96b] text-black font-semibold" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3 w-3" />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 };
 
 export const RepresentationOffers = () => {
@@ -88,13 +117,42 @@ export const RepresentationOffers = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
-  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
+  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
+
+  // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
+  // we already have on the player row, then to the outreach tables (youth /
+  // pro) where the IG handle was originally entered.
+  const instagramByName = useMemo(() => {
+    const m = new Map<string, string>();
+    allPlayers.forEach((p) => {
+      const handle = (p.ig_handle || "").trim().replace(/^@/, "");
+      const key = (p.name || "").trim().toLowerCase();
+      if (handle && key && !m.has(key)) m.set(key, handle);
+    });
+    return m;
+  }, [allPlayers]);
+
+  const igHandleFor = (p: OfferPlayer): string | null => {
+    const direct = (p.instagram_handle || "").trim().replace(/^@/, "");
+    if (direct) return direct;
+    const fromLookup = instagramByName.get((p.name || "").trim().toLowerCase());
+    return fromLookup || null;
+  };
+
+  const setOfferStatus = async (player: OfferPlayer, status: OfferStatus) => {
+    setPlayers((prev) => prev.map((p) => (p.id === player.id ? { ...p, offer_status: status } : p)));
+    const { error } = await (supabase as any).from("players").update({ offer_status: status }).eq("id", player.id);
+    if (error) {
+      toast.error("Could not update status", { description: error.message });
+      load();
+    }
+  };
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
@@ -141,9 +199,9 @@ export const RepresentationOffers = () => {
   useEffect(() => {
     (async () => {
       const [{ data: corePlayers }, { data: youth }, { data: pro }, { data: scouts }] = await Promise.all([
-        (supabase as any).from("players").select("id, name, position, club, nationality, date_of_birth"),
-        (supabase as any).from("player_outreach_youth").select("id, player_name, position, current_club, nationality, date_of_birth"),
-        (supabase as any).from("player_outreach_pro").select("id, player_name, position, current_club, nationality, date_of_birth"),
+        (supabase as any).from("players").select("id, name, position, club, nationality, date_of_birth, instagram_handle"),
+        (supabase as any).from("player_outreach_youth").select("id, player_name, position, current_club, nationality, date_of_birth, ig_handle"),
+        (supabase as any).from("player_outreach_pro").select("id, player_name, position, current_club, nationality, date_of_birth, ig_handle"),
         (supabase as any).from("scouting_reports").select("id, player_name, position, current_club, nationality, date_of_birth"),
       ]);
       const combined: any[] = [];
@@ -154,9 +212,9 @@ export const RepresentationOffers = () => {
         seen.add(key);
         combined.push(row);
       };
-      (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'players' }));
-      (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'youth' }));
-      (pro || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'pro' }));
+      (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.instagram_handle, source: 'players' }));
+      (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.ig_handle, source: 'youth' }));
+      (pro || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.ig_handle, source: 'pro' }));
       (scouts || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'scout' }));
       combined.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       setAllPlayers(combined);
@@ -211,14 +269,15 @@ export const RepresentationOffers = () => {
   }, [players, query]);
 
   const grouped = useMemo(() => {
-    const map: Record<string, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]]));
+    const map: Record<OfferStatus, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]])) as any;
     const viewedIds = new Set<string>();
     filtered.forEach(p => {
       if ((visitsBySlug.get(slugFor(p.name)) ?? []).length > 0) viewedIds.add(p.id);
     });
     filtered.forEach(p => {
       if (viewedIds.has(p.id)) return; // Shown in the Viewed section instead.
-      (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p);
+      const g = groupFor(p);
+      (map[g] || (map[g] = [])).push(p);
     });
     return map;
   }, [filtered, visitsBySlug]);
@@ -352,6 +411,19 @@ export const RepresentationOffers = () => {
 
   const renderCard = (player: OfferPlayer, opts?: { showDelete?: boolean }) => {
     const slug = slugFor(player.name);
+    const ig = igHandleFor(player);
+    const currentStatus = groupFor(player);
+    const copyIg = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!ig) return;
+      try {
+        await navigator.clipboard.writeText(`@${ig}`);
+        toast.success(`Copied @${ig}`);
+      } catch {
+        toast.error("Clipboard unavailable");
+      }
+    };
     return (
       <Card key={player.id} className="overflow-hidden">
         <CardHeader className="pb-3">
@@ -359,13 +431,29 @@ export const RepresentationOffers = () => {
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md border bg-muted shrink-0">
               {player.image_url ? <img src={player.image_url} alt={player.name} className="h-full w-full object-cover object-top" /> : <UserRoundCheck className="h-5 w-5 text-muted-foreground" />}
             </div>
-            <span className="min-w-0 flex-1 truncate">{player.name}</span>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate">{player.name}</span>
+              {ig && (
+                <button
+                  type="button"
+                  onClick={copyIg}
+                  title="Click to copy"
+                  className="mt-0.5 inline-flex items-center gap-1 text-[10.5px] font-normal text-muted-foreground hover:text-primary transition-colors select-all"
+                >
+                  <span className="font-mono">@{ig}</span>
+                  <Copy className="h-2.5 w-2.5 opacity-60" />
+                </button>
+              )}
+            </div>
             <FitScoreBadge
               player={player as any}
             />
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Draft / Ready / Sent toggle — mirrors Club Outreach exactly so
+              the staff workflow stays consistent across both boards. */}
+          <OfferStatusToggle status={currentStatus} onChange={(s) => setOfferStatus(player, s)} />
           <div className="flex flex-wrap gap-2 text-xs">
             {player.position && <Badge variant="outline">{player.position}</Badge>}
             {player.club && <Badge variant="secondary" className="max-w-[180px] truncate">{player.club}</Badge>}
@@ -468,7 +556,7 @@ export const RepresentationOffers = () => {
           )}
           {GROUPS.map(g => {
             let items = grouped[g.id] || [];
-            if (g.id === "drafts") {
+            if (g.id === "draft") {
               items = [...items].sort((a, b) => {
                 const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
                 const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -488,7 +576,7 @@ export const RepresentationOffers = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {items.map(p => renderCard(p, { showDelete: g.id === "drafts" }))}
+                    {items.map(p => renderCard(p, { showDelete: g.id === "draft" }))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>

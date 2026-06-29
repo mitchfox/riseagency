@@ -21,6 +21,7 @@ import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
+import { getExampleLanguage } from "@/lib/exampleLanguages";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
 import {
@@ -1452,10 +1453,12 @@ const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.ma
 
 const IntroCinematic = ({
   fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone, isUnder18,
+  assignedLang, currentLang, onSwitchToEnglish,
 }: {
   fullName: string; lang: string; extraImages: string[];
   extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
   secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void; isUnder18?: boolean;
+  assignedLang?: string; currentLang?: string; onSwitchToEnglish?: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
@@ -1820,6 +1823,49 @@ const IntroCinematic = ({
           {offerT(lang, "tap_to_continue", "Tap anywhere to continue")}
         </motion.span>
       </div>
+
+      {/* Language switcher — only shown when the prospect's assigned
+          language isn't English. A wide, ovular pill with their assigned
+          language on the left and English on the right; tapping the
+          English side switches the entire offer to English instantly. */}
+      {assignedLang && assignedLang !== "en" && onSwitchToEnglish && (() => {
+        const assigned = getExampleLanguage(assignedLang);
+        const english = getExampleLanguage("en")!;
+        const isEnglish = currentLang === "en";
+        return (
+          <div
+            className="absolute inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-30 flex justify-center px-4"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <div className="pointer-events-auto relative flex w-full max-w-[320px] items-stretch overflow-hidden rounded-full border border-primary/45 bg-black/70 shadow-[0_0_24px_-8px_hsl(var(--gold)/0.65)] backdrop-blur-sm">
+              <motion.div
+                aria-hidden="true"
+                className="absolute inset-y-0 w-1/2 rounded-full bg-[hsl(var(--gold))/0.92]"
+                style={{ background: "hsl(var(--gold) / 0.92)" }}
+                animate={{ x: isEnglish ? "100%" : "0%" }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+              />
+              <button
+                type="button"
+                onClick={() => { /* assigned side is the default; no-op */ }}
+                className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm uppercase tracking-[0.18em] transition-colors ${isEnglish ? "text-foreground/80" : "text-black font-semibold"}`}
+              >
+                <span>{assigned?.flag ?? "🌐"}</span>
+                <span className="truncate">{assigned?.label ?? assignedLang.toUpperCase()}</span>
+              </button>
+              <button
+                type="button"
+                onClick={onSwitchToEnglish}
+                className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm uppercase tracking-[0.18em] transition-colors ${isEnglish ? "text-black font-semibold" : "text-foreground/80"}`}
+              >
+                <span>{english.flag}</span>
+                <span>{english.label}</span>
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </motion.div>
   );
 };
@@ -1850,7 +1896,11 @@ const RiseWithUs = () => {
   // Translator scoped to THIS player's portal_language so each prospect's
   // offer page renders in their language regardless of the visitor's
   // current site language preference.
-  const playerLang = player?.portal_language || "en";
+  const assignedLang = player?.portal_language || "en";
+  // Visitor-side override so the prospect can opt to view the page in
+  // English if their assigned language isn't comfortable for them.
+  const [langOverride, setLangOverride] = useState<string | null>(null);
+  const playerLang = langOverride || assignedLang;
   const { t } = usePlayerLanguageTranslations(playerLang);
 
   useEffect(() => {
@@ -2041,6 +2091,9 @@ const RiseWithUs = () => {
             secondaryParagraph={settings.representation_subtitle_secondary}
             profileImageUrl={player.image_url || finalFallbackImage || null}
             isUnder18={!!settings.rise_with_us_under18}
+            assignedLang={assignedLang}
+            currentLang={lang}
+            onSwitchToEnglish={() => setLangOverride("en")}
             onDone={() => setIntroDone(true)}
           />
         )}
