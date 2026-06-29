@@ -143,6 +143,8 @@ serve(async (req) => {
     let body: any = {};
     try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
     const { visitorId, pagePath, duration, referrer, isInitial, visitId, kind, partial } = body;
+    // v2 — behaviour kind handler. Log on entry so we can confirm deploy.
+    if (kind) console.log("track-visit kind=", kind, "visitId?", !!visitId, "partial?", !!partial);
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
