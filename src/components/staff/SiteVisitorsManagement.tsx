@@ -550,7 +550,9 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       {/* Daily Stats Cards */}
       <div>
         <h3 className="text-sm font-medium text-muted-foreground mb-3">
-          {format(selectedDate, "MMMM d, yyyy")}
+          {dateRange.to && dateRange.to.toDateString() !== dateRange.from.toDateString()
+            ? `${format(dateRange.from, "MMM d, yyyy")} – ${format(dateRange.to, "MMM d, yyyy")}`
+            : format(dateRange.from, "MMMM d, yyyy")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
@@ -647,18 +649,25 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   variant="outline"
                   className={cn(
                     "md:w-1/4 justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
+                    !dateRange.from && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  {dateRange.from
+                    ? dateRange.to && dateRange.to.toDateString() !== dateRange.from.toDateString()
+                      ? `${format(dateRange.from, "LLL d, y")} – ${format(dateRange.to, "LLL d, y")}`
+                      : format(dateRange.from, "PPP")
+                    : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
+                  mode="range"
+                  selected={dateRange as any}
+                  onSelect={(range: any) => {
+                    if (range?.from) setDateRange({ from: range.from, to: range.to ?? range.from });
+                  }}
+                  numberOfMonths={2}
                   initialFocus
                   className="p-3 pointer-events-auto"
                 />
