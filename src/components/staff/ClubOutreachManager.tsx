@@ -265,14 +265,14 @@ export default function ClubOutreachManager() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: linkRows }, { data: playerRows }, { data: clubRows }, { data: linkPlayerRows }, { data: commRows }] = await Promise.all([
+    const [{ data: linkRows }, { data: playerRows }, clubRowsAll, { data: linkPlayerRows }, { data: commRows }] = await Promise.all([
       supabase.from("club_outreach_links").select("*").is("archived_at", null).order("created_at", { ascending: false }),
       supabase.from("players").select("id, name, image_url, position, representation_status").not("representation_status", "in", "(Scouted,Fuel For Football)").order("name"),
-      supabase.from("club_map_positions").select("id, club_name, country, image_url").order("club_name").limit(10000),
+      fetchAllOutreachClubs().catch((e) => { console.error("fetchAllOutreachClubs failed", e); return [] as ClubLite[]; }),
       supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
-    const clubList = [...((clubRows ?? []) as ClubLite[])];
+    const clubList = [...((clubRowsAll ?? []) as ClubLite[])];
     const clubMap = new Map<string, ClubLite>(clubList.map((c) => [c.id, c]));
     const missingClubIds = Array.from(new Set(
       ((linkRows ?? []) as any[])
