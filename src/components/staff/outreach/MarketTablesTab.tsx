@@ -1891,17 +1891,6 @@ export default function MarketTablesTab() {
         onOpenChange={setAddTeamOpen}
         defaultCountry={country !== "all" ? country : null}
         defaultLeague={league !== "all" ? league : null}
-      />
-      <input
-        ref={logoInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleLogoFileChosen}
-      />
-      <AddTeamDialog
-        open={false}
-        onOpenChange={() => {}}
         onCreated={async (team: AddedTeam) => {
           // Insert a market_table_entries row so the new club shows up on this
           // table immediately, then push the enriched row into local state.
@@ -1934,6 +1923,13 @@ export default function MarketTablesTab() {
             return a.club_name.localeCompare(b.club_name);
           }));
         }}
+      />
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleLogoFileChosen}
       />
     </div>
   );
