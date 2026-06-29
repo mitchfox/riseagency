@@ -515,6 +515,16 @@ export default function ClubOutreachManager() {
     toast.success(next ? "Marked as viewed" : "Removed viewed flag");
   };
 
+  const setResponse = async (id: string, status: AnalyticsResponseStatus, notes: string | null) => {
+    const at = new Date().toISOString();
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, response_status: status, response_notes: notes, response_at: at } : r)));
+    const { error } = await (supabase as any)
+      .from("club_outreach_links")
+      .update({ response_status: status, response_notes: notes, response_at: at })
+      .eq("id", id);
+    if (error) { toast.error(error.message); load(); }
+  };
+
   const approvePending = async (row: OutreachRow) => {
     const { error } = await supabase
       .from("club_outreach_links")
