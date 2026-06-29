@@ -1021,6 +1021,17 @@ function OutreachCard({ row, url, externalUrl, onOpen, players, onCopy, onEdit, 
         </Button>
         <Button size="sm" variant="outline" onClick={onEdit} title="Edit">Edit</Button>
         <Button size="sm" variant="outline" onClick={onDuplicate} title="Duplicate outreach"><Files className="h-3.5 w-3.5" /></Button>
+        {onMarkViewed && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onMarkViewed}
+            title={row.manually_viewed_at ? "Marked as viewed — click to undo" : "Mark as viewed (use when geo missed the visit)"}
+            className={row.manually_viewed_at ? "border-[#cbb96b] text-[#cbb96b]" : ""}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={onRemove} title="Archive"><Trash2 className="h-3.5 w-3.5" /></Button>
       </div>
     </div>
