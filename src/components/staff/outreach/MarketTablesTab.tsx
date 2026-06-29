@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -478,6 +478,49 @@ export default function MarketTablesTab() {
   // identified contact for (no saved TD/CS name and no matching role
   // contact in the network). Helps staff focus on the gaps.
   const [missingContactMode, setMissingContactMode] = useState(false);
+  // Logo upload (click a club crest to upload one). Writes to the
+  // shared `club-logos` bucket and updates club_map_positions.image_url
+  // so the same logo appears in the Coaching Database → Club Ratings tab.
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const [logoUploadingClubId, setLogoUploadingClubId] = useState<string | null>(null);
+  const [pendingLogoClub, setPendingLogoClub] = useState<ClubRow | null>(null);
+
+  const triggerLogoUpload = (club: ClubRow) => {
+    setPendingLogoClub(club);
+    setTimeout(() => logoInputRef.current?.click(), 30);
+  };
+
+  const handleLogoFileChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const club = pendingLogoClub;
+    if (logoInputRef.current) logoInputRef.current.value = "";
+    setPendingLogoClub(null);
+    if (!file || !club) return;
+    setLogoUploadingClubId(club.id);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const slug = club.club_name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+      const path = `${slug}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("club-logos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("club-logos").getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase
+        .from("club_map_positions")
+        .update({ image_url: publicUrl })
+        .eq("id", club.id);
+      if (updateError) throw updateError;
+      setClubs((prev) => prev.map((c) => (c.id === club.id ? { ...c, image_url: publicUrl } : c)));
+      toast.success(`Logo uploaded for ${club.club_name}`);
+    } catch (err: any) {
+      console.error("Logo upload failed:", err);
+      toast.error(err?.message ?? "Failed to upload logo");
+    } finally {
+      setLogoUploadingClubId(null);
+    }
+  };
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
@@ -1415,11 +1458,19 @@ export default function MarketTablesTab() {
           return (
             <div key={`m-${club.id}`} className="rounded-xl border border-border bg-card p-3 space-y-3">
               <div className="flex items-center gap-2">
-                {club.image_url ? (
-                  <img src={club.image_url} alt="" className="h-8 w-8 object-contain rounded-sm bg-white/5" />
-                ) : (
-                  <div className="h-8 w-8 rounded-sm bg-muted" />
-                )}
+                <button
+                  type="button"
+                  onClick={() => triggerLogoUpload(club)}
+                  title={club.image_url ? "Replace club logo" : "Upload club logo"}
+                  className="relative h-8 w-8 rounded-sm bg-white/5 overflow-hidden hover:ring-2 hover:ring-[#C6A332] transition shrink-0"
+                  disabled={logoUploadingClubId === club.id}
+                >
+                  {club.image_url ? (
+                    <img src={club.image_url} alt="" className="h-full w-full object-contain" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">＋</span>
+                  )}
+                </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-white font-medium text-sm truncate">{club.club_name}</span>
@@ -1584,11 +1635,19 @@ export default function MarketTablesTab() {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2 min-w-[180px]">
-                      {club.image_url ? (
-                        <img src={club.image_url} alt="" className="h-6 w-6 object-contain rounded-sm bg-white/5" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-sm bg-muted" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => triggerLogoUpload(club)}
+                        title={club.image_url ? "Replace club logo" : "Upload club logo"}
+                        className="relative h-6 w-6 rounded-sm bg-white/5 overflow-hidden hover:ring-2 hover:ring-[#C6A332] transition shrink-0 flex items-center justify-center"
+                        disabled={logoUploadingClubId === club.id}
+                      >
+                        {club.image_url ? (
+                          <img src={club.image_url} alt="" className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground leading-none">＋</span>
+                        )}
+                      </button>
                       <span className="text-white font-medium">{club.club_name}</span>
                       {outreachClubIds.has(club.id) && (
                         <CheckCircle2
@@ -1864,6 +1923,13 @@ export default function MarketTablesTab() {
             return a.club_name.localeCompare(b.club_name);
           }));
         }}
+      />
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleLogoFileChosen}
       />
     </div>
   );

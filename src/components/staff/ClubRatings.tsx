@@ -96,6 +96,14 @@ export const ClubRatings = () => {
           }
         });
       });
+      // Also seed every club from the Market Tables source so each club
+      // is rateable (and gets a logo upload slot) in the Coaching DB.
+      logosResult.data?.forEach((row: any) => {
+        const name = row.club_name?.trim();
+        if (name && name !== 'Unknown' && name !== '-' && name !== '') {
+          allClubNames.add(name);
+        }
+      });
 
       const missingClubs: { name: string; country: string }[] = [];
       allClubNames.forEach(clubName => {
