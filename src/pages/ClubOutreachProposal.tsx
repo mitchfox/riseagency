@@ -12,6 +12,7 @@ import { heroCropStyle } from "@/lib/videoCropUtils";
 import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import { rankGames } from "@/lib/matchByMatchOrder";
+import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
