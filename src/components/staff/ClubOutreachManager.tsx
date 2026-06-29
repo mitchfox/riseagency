@@ -790,11 +790,51 @@ export default function ClubOutreachManager() {
           <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setAnalyticsOpen((v) => !v)}
+            className={`w-full sm:w-auto ${analyticsOpen ? "border-[#cbb96b] text-[#cbb96b]" : ""}`}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" /> Analytics
+          </Button>
           <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
             <ProposalVisitorsBell visits={scopedVisits} />
           </div>
         </div>
       </div>
+
+      {analyticsOpen && (
+        <OutreachAnalyticsPanel
+          title={mode === 'agent' ? 'Agent Outreach Analytics' : 'Club Outreach Analytics'}
+          onClose={() => setAnalyticsOpen(false)}
+          onUpdateResponse={setResponse}
+          rows={filtered.map<AnalyticsRow>((r) => {
+            const vs = visitsByShortId.get(r.short_id) ?? [];
+            const lastVisit = vs.length
+              ? vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b)).visited_at
+              : r.manually_viewed_at ?? null;
+            const targetLabel = (r.target_type ?? 'club') === 'agent'
+              ? (r.agent_name || 'Agent')
+              : (r.club?.club_name || 'Club unknown');
+            const playerNames = (r.link_players ?? [])
+              .map((lp) => playerById.get(lp.player_id)?.name)
+              .filter(Boolean)
+              .join(', ');
+            return {
+              id: r.id,
+              label: targetLabel,
+              sub: [r.club_contact_name, playerNames].filter(Boolean).join(' • ') || null,
+              status: r.status,
+              createdAt: r.created_at,
+              viewCount: vs.length + (r.manually_viewed_at && vs.length === 0 ? 1 : 0),
+              lastViewedAt: lastVisit,
+              responseStatus: (r.response_status as AnalyticsResponseStatus) || 'none',
+              responseNotes: r.response_notes ?? null,
+              responseAt: r.response_at ?? null,
+            };
+          })}
+        />
+      )}
 
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
