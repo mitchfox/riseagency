@@ -3054,8 +3054,8 @@ function SettingsDialog({ open, onClose, players, clubs }: { open: boolean; onCl
     return n ? players.filter(p => p.name.toLowerCase().includes(n)) : players;
   }, [players, playerQuery]);
   const filteredClubs = useMemo(() => {
-    const n = clubQuery.trim().toLowerCase();
-    return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
+    const n = normaliseSearch(clubQuery);
+    return n ? clubs.filter(c => normaliseSearch(c.club_name).includes(n)) : clubs;
   }, [clubs, clubQuery]);
 
   useEffect(() => {
