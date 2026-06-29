@@ -235,6 +235,7 @@ export default function ClubOutreachManager() {
   const [defaultVideoMode, setDefaultVideoMode] = useState<'all' | 'first' | 'custom'>('all');
   const [mode, setMode] = useState<OutreachMode>('club');
   const [topTab, setTopTab] = useState<'outreach' | 'strategy' | 'relationships' | 'markettables'>('outreach');
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   const loadTemplates = async () => {
     const { data } = await supabase.from("club_outreach_quick_templates").select("id,title,content,sort_order").order("sort_order").order("created_at");
