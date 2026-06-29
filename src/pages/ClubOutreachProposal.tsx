@@ -797,13 +797,13 @@ export default function ClubOutreachProposal() {
             );
           })()}
           {!showFormForCurrent && current?.form_config && Array.isArray(current?.form_analyses) && current.form_analyses.length > 0 && (
-            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
+            <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} autoT={autoT} />
           )}
           {!showInNumbersForCurrent && Array.isArray(current?.top_stats) && current.top_stats.length > 0 && (
-            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+            <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} autoT={autoT} />
           )}
           {!showSeasonStatsForCurrent && Array.isArray(current?.season_stats) && current.season_stats.length > 0 && (
-            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+            <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} autoT={autoT} />
           )}
           {Array.isArray(current?.match_by_match) && current.match_by_match.length > 0 && (
             <MatchByMatchCard
@@ -1122,7 +1122,7 @@ export default function ClubOutreachProposal() {
 
       {/* Key details - moved above the hero video */}
       <section className="max-w-3xl mx-auto px-6 mt-4">
-        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} />
+        <KeyDetailsCard entry={current} age={age} tr={tr} items={keyDetailsForCurrent} autoT={autoT} />
       </section>
 
       {/* Hero - first Stars highlight video, falls back to player image */}
@@ -1419,22 +1419,22 @@ export default function ClubOutreachProposal() {
           ),
           form: () => (showFormForCurrent && current.form_config && current.form_analyses) ? (
             <section key="form" className="max-w-3xl mx-auto px-6 mt-4">
-              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} />
+              <FormBannerCard cfg={current.form_config} rows={current.form_analyses} titleTemplate={tr("form.titlePrefix", "Form · Last {n} games")} autoT={autoT} />
             </section>
           ) : null,
           in_numbers: () => (showInNumbersForCurrent && Array.isArray(current.top_stats) && current.top_stats.length > 0) ? (
             <section key="in_numbers" className="max-w-3xl mx-auto px-6 mt-4">
-              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} />
+              <InNumbersCard stats={current.top_stats} title={tr("section.inNumbers", "In Numbers")} autoT={autoT} />
             </section>
           ) : null,
           season_stats: () => (showSeasonStatsForCurrent && Array.isArray(current.season_stats) && current.season_stats.length > 0) ? (
             <section key="season_stats" className="max-w-3xl mx-auto px-6 mt-4">
-              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} />
+              <SeasonStatsCard stats={current.season_stats} title={tr("section.seasonStats", "Season Stats")} autoT={autoT} />
             </section>
           ) : null,
           strengths: () => (showStrengthsForCurrent && current.strengths_and_play_style) ? (
             <section key="strengths" className="max-w-3xl mx-auto px-6 mt-4">
-              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} />
+              <StrengthsCard data={current.strengths_and_play_style} title={tr("section.strengths", "Strengths & Play Style")} autoT={autoT} />
             </section>
           ) : null,
         };
