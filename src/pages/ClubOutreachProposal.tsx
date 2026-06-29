@@ -80,6 +80,7 @@ interface PlayerEntry {
     contract_end_date?: string | null;
     current_salary_annual?: number | null;
     preferred_currency?: string | null;
+    instagram_handle?: string | null;
   } | null;
   position_slot: string | null;
   fit_recommendation: string | null;
