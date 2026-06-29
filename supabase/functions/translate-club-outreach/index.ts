@@ -65,6 +65,18 @@ const UI_BUNDLE: Record<string, string> = {
   "section.seasonStats": "Season Stats",
   "section.strengths": "Strengths & Play Style",
   "footer.visit": "Visit RISE Football Agency",
+  // Match-By-Match (Video & Data inline view)
+  "mbm.title": "Match-By-Match Data",
+  "mbm.match": "Match",
+  "mbm.per90": "Per 90",
+  "mbm.raw": "Raw",
+  "mbm.empty": "No data available.",
+  "mbm.cat.Possession": "Possession",
+  "mbm.cat.Passing": "Passing",
+  "mbm.cat.Shooting": "Shooting",
+  "mbm.cat.Defending": "Defending",
+  "inline.back": "Back to proposal",
+  "card.openFull": "View Full Stars Profile",
 };
 
 Deno.serve(async (req) => {

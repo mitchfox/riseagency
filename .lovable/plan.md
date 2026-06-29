@@ -1,52 +1,73 @@
 ## Goal
 
-When the viewer toggles the language pill on `/club-proposal/...`, every visible string should switch to the contact's language — not just the small set currently pre-translated.
+Fix the remaining English text on `/club-proposal/...` when the viewer switches language: position abbreviations on the multi-player picker, the "To" preposition, the entire Video & Data (inline) view, and all Match-By-Match Data labels.
 
-## What's broken today
+## Issues to fix
 
-`ClubOutreachProposal.tsx` builds `tr(key, en)` from `data.link.translations.ui`, which is a pre-baked bundle written by the `translate-club-outreach` edge function. That bundle (`UI_BUNDLE`) only contains ~25 keys and the function only translates what's listed. Everything else — including the labels the user called out — either has no matching key, lives in a sub-component that ignores `tr`, or is freeform copy written per player.
+1. **Position abbreviations stay in English on the multi-player cards.** `autoT(p?.position)` is called on values like "RW"/"CF"/"CB". The runtime AI translator doesn't translate two-letter codes, so they pass through unchanged.
+2. **"To" stays in English before a player is selected.** The `hdr.to` key was added to `UI_BUNDLE` but existing `club_outreach_links` rows have an older `translations.ui` snapshot that doesn't include it, and the runtime `autoT` fallback for "To" is producing the wrong output in step 3 anyway.
+3. **"To" in Czech is rendering as "Pro (k)".** The AI batch translator gives a literal/dictionary answer for the bare word "To" with a parenthetical hint. We need a curated map per language for this single short word.
+4. **Video & Data (inline) view is fully English.** The `MatchByMatchCard` component (Match-By-Match Data title, the Possession/Passing/Shooting/Defending tabs, the Per 90 / Raw toggle, all column labels like "Dribbles /90", the "Match" header, "No data available", and the tooltip "Play video report") never receives `tr`/`autoT` and renders hardcoded English. The "Match-By-Match Video" card title and `card.openFull` ("View Full Stars Profile") also rely on bundle keys that aren't in `UI_BUNDLE`.
 
 ## Plan
 
-### 1. Expand the canonical UI bundle (`supabase/functions/translate-club-outreach/index.ts`)
+### 1. Add a curated position + preposition map
 
-Add the missing static keys so they get pre-translated next time a link is saved:
+Create a small lookup table in `src/pages/ClubOutreachProposal.tsx` (or extend `src/lib/portalTranslations.ts` if it already houses similar data) covering:
 
-- `hdr.to` → "To"
-- `picker.backToPlayers` → "Back to all players offered"
-- `picker.learnMore` → "Learn more"
-- `key.title` → "Key Details"
-- `key.club`, `key.position`, `key.nationality`, `key.league`
-- `key.contractExpiry`, `key.currentSalary`, `key.salaryExpectations`, `key.transferFee`, `key.height`, `key.preferredFoot`, `key.status`, `key.custom`
-- `situation.title` → "Situation"
-- `form.stat.<key>` for every entry in `STAT_LABELS` (Goals, Assists, Dribbles /90, Pass %, etc.) — both the FormBannerCard set and the MatchByMatchCard set, deduped.
-- `season.stat.<header>` is unbounded (freeform), so we leave it to the runtime fallback in step 3.
+- All 14 position abbreviations (GK, CB, LB, RB, LWB, RWB, CDM, CM, CAM, RM, LM, LW, RW, CF) for each of the 11 non-English languages.
+- The single word "To" used before the contact name, translated as the natural short preposition only (cs: "Pro", es: "Para", pt: "Para", fr: "À l'attention de" → too long, use "Pour", de: "An", it: "A", pl: "Do", ru: "Кому:", tr: "Sayın", hr: "Za", no: "Til").
 
-After re-deploy, also trigger a one-off backfill: invoke `translate-club-outreach` for every existing `club_outreach_links` row that already has a non-en `language`, so old links pick up the new keys without the user re-saving each one.
+Strategy is map-first, AI-last:
 
-### 2. Wire the new keys into the page (`src/pages/ClubOutreachProposal.tsx`)
+- New helper `translatePosition(code, lang)` returns the mapped value when `code` matches an abbreviation; otherwise falls through to `autoT`.
+- New helper `translateToWord(lang)` returns the curated preposition directly; the JSX stops using `tr("hdr.to", ...)` for this string and uses the helper, so it works on old links too.
 
-- Pass `tr` into `FormBannerCard`, `SeasonStatsCard`, `InNumbersCard`, `StrengthsCard` and use `tr(\`form.stat.${key}\`, humanizedFallback)` for every stat label rendered.
-- Replace the hardcoded `"To"` literal under the contact name with `tr("hdr.to", "To")` (the key already exists in the JSX — it just needs to be added to the bundle).
-- Translate the position chips at the top and the Position tile's value through a small `translatePosition()` helper that maps `player.position` / `position_slot` against `portalTranslations` (`goalkeeper`, `centre_back`, `full_back`, `midfielder`, `winger`, `striker` and the abbreviations GK/CB/FB/CM/WG/ST/CF). Codes stay as codes; full English names get localised.
+### 2. Wire the helpers into the multi-player picker and single-player header
 
-### 3. Runtime AI fallback for everything dynamic
+In `src/pages/ClubOutreachProposal.tsx`:
 
-The freeform content — Key Details descriptions, In Numbers labels & descriptions, Season Stat headers, Strengths bullet points, Situation paragraph, and any UI key the stored bundle is missing — must translate on the fly when `langOverride !== "en"`.
+- Replace `autoT(p?.position)` on the multi-player card subtitle (around line 935) with `translatePosition(p?.position, lang)`.
+- Replace both `tr("hdr.to", "To")` call sites (lines 888 and 1057) with `translateToWord(lang)`.
+- Also pass `translatePosition` to anywhere position chips render in the single-player view (the `slots.map` chip row and any `position_slot` rendering) so they localise consistently.
 
-- Use the existing `useAutoTranslateStrings(strings, lang)` hook (already used elsewhere). Collect every dynamic string for the active player into one array, call the hook with `langOverride`, then wrap each render site in `translate(value)`.
-- Strings to feed it: each `key_details` description/label/value, each `top_stats` label + description, each `season_stats` header (humanised), each strengths bullet, the `situation` paragraph, and the FormBannerCard stat labels (so old links without the new bundle keys still translate). The hook caches in localStorage, so the second load is instant.
-- Skip numbers, dates, currency, flags and the position abbreviations — only translate human-readable English copy.
+### 3. Localise the entire Video & Data (inline) view and Match-By-Match Data
+
+Add the missing pieces to the proposal's translation surface so the inline view is no longer English:
+
+a. **Extend `UI_BUNDLE` in `supabase/functions/translate-club-outreach/index.ts`** with the static labels currently rendered as English literals:
+
+- `inline.title` → "Video & Data"
+- `inline.back` → "Back to proposal"
+- `inline.moreVideos` → "Match-By-Match Video"
+- `card.openFull` → "View Full Stars Profile"
+- `mbm.title` → "Match-By-Match Data"
+- `mbm.cat.possession`, `mbm.cat.passing`, `mbm.cat.shooting`, `mbm.cat.defending`
+- `mbm.viewPer90` → "Per 90", `mbm.viewRaw` → "Raw"
+- `mbm.match` → "Match", `mbm.noData` → "No data available.", `mbm.playReport` → "Play video report"
+- `mbm.stat.<key>` for every metric key listed in the Possession/Passing/Shooting/Defending arrays in `MatchByMatchCard` (~30 keys, e.g. `dribbles_per90` → "Dribbles /90").
+
+b. **Trigger a one-shot backfill loop** (small inline migration or a script) that calls `translate-club-outreach` for every existing `club_outreach_links` row with a non-`en` language, so old links pick up the new bundle keys without each one being re-saved.
+
+c. **Pass `tr` and `autoT` into `MatchByMatchCard`** from the call sites (the inline view around line 809). Inside the component:
+
+- Replace the hardcoded `"Match-By-Match Data"`, `"Match"`, `"No data available."`, `"Play video report"`, `"Per 90"`, `"Raw"`, and each tab's `c.category` label with `tr("mbm.…", english)`.
+- Replace each `m.label` in the column header with `tr(\`mbm.stat.${m.key}\`, m.label)` so freeform keys still fall through to AI via `tr`'s autoT fallback.
+- Wrap `a.opponent` and `a.result` in `autoT` so opponent names + result text translate.
+
+d. **Wire `autoT`'s dynamic-string collection** (`dynamicStringsForTranslation` around line 580) to also include every `m.label` from the active player's `match_by_match` rows and every `a.opponent` / `a.result`, so the AI fallback warms before render.
 
 ### 4. Verify
 
-After deploying:
-- Open the current proposal route, toggle the pill — confirm "To", "Back to all players offered", Key Details labels, position, form stat labels, In Numbers labels, Season Stats headers, Strengths bullets and Situation paragraph all switch language.
-- Toggle back to English — everything returns to the original copy.
-- Reload — translated copy appears immediately from cache.
+- Open the Slezský FC Opava proposal route and the Tyrese Omotoye proposal route used in the user's reproduction.
+- Toggle the language pill to Czech (and a second language, e.g. Spanish):
+  - Multi-player cards: position abbreviations show as Czech words (e.g. "Pravé křídlo" or the chosen short form), "To" reads as "Pro".
+  - Single player Video & Data inline view: section title, "Back to proposal", "Match-By-Match Video", "View Full Stars Profile", Match-By-Match Data title, the four category tabs, Per 90/Raw toggle, table column labels, "Match" header, opponent + result text, "No data available." all switch language.
+- Toggle back to English: everything returns to the original copy.
+- Reload: translated copy appears immediately (AI fallback hits localStorage cache; bundle keys ship pre-translated).
 
 ## Technical notes
 
-- `UI_BUNDLE` lives at `supabase/functions/translate-club-outreach/index.ts` and is consumed via `club_outreach_links.translations.ui`. New keys take effect for old links only after re-running the function for that row — that's why step 1 includes a backfill loop.
-- `useAutoTranslateStrings` already exists at `src/hooks/useAutoTranslateStrings.ts` and uses `ai-translate-batch`. It accepts a portal-language code and caches per language in localStorage, so adding it to this page is cheap and idempotent.
+- The new helpers live in `src/pages/ClubOutreachProposal.tsx` (or `src/lib/portalTranslations.ts` if a shared map already exists there) and stay map-first so we never blow AI credits on stable strings.
+- The backfill loop should be idempotent: skip rows whose `translations.ui` already contains the new keys.
 - No schema changes required.
