@@ -11,6 +11,13 @@ export interface ProposalVisit {
   user_agent: string | null;
   referrer: string | null;
   visited_at: string;
+  scroll_max_pct?: number | null;
+  engaged_seconds?: number | null;
+  events?: any[] | null;
+  sections?: Record<string, number> | null;
+  viewport?: any;
+  utm?: any;
+  video_stats?: Record<string, any> | null;
 }
 
 const LS_KEY = "proposal_visitors_last_seen_v1";

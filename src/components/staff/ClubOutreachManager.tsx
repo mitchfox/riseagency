@@ -297,7 +297,7 @@ export default function ClubOutreachManager() {
     const loadVisits = async () => {
       const { data } = await supabase
         .from("site_visits")
-        .select("id, visitor_id, page_path, duration, location, user_agent, referrer, visited_at")
+        .select("id, visitor_id, page_path, duration, location, user_agent, referrer, visited_at, scroll_max_pct, engaged_seconds, events, sections, viewport, utm, video_stats")
         .or("page_path.like./club-proposal/%,page_path.like./clubs/%,page_path.like./agents/%")
         .order("visited_at", { ascending: false })
         .limit(500);

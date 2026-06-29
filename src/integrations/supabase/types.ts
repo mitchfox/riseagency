@@ -8541,36 +8541,57 @@ export type Database = {
         Row: {
           created_at: string
           duration: number | null
+          engaged_seconds: number | null
+          events: Json
           hidden: boolean | null
           id: string
           location: Json | null
           page_path: string
           referrer: string | null
+          scroll_max_pct: number | null
+          sections: Json
           user_agent: string | null
+          utm: Json | null
+          video_stats: Json
+          viewport: Json | null
           visited_at: string
           visitor_id: string
         }
         Insert: {
           created_at?: string
           duration?: number | null
+          engaged_seconds?: number | null
+          events?: Json
           hidden?: boolean | null
           id?: string
           location?: Json | null
           page_path: string
           referrer?: string | null
+          scroll_max_pct?: number | null
+          sections?: Json
           user_agent?: string | null
+          utm?: Json | null
+          video_stats?: Json
+          viewport?: Json | null
           visited_at?: string
           visitor_id: string
         }
         Update: {
           created_at?: string
           duration?: number | null
+          engaged_seconds?: number | null
+          events?: Json
           hidden?: boolean | null
           id?: string
           location?: Json | null
           page_path?: string
           referrer?: string | null
+          scroll_max_pct?: number | null
+          sections?: Json
           user_agent?: string | null
+          utm?: Json | null
+          video_stats?: Json
+          viewport?: Json | null
           visited_at?: string
           visitor_id?: string
         }
