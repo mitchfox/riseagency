@@ -1711,12 +1711,27 @@ const IntroCinematic = ({
                 </p>
               )}
               {assignedLang && assignedLang !== "en" && onSwitchToEnglish && (() => {
-                const assigned = getExampleLanguage(assignedLang);
-                const english = getExampleLanguage("en")!;
+                const FLAG_META: Record<string, { flagCode: string; native: string }> = {
+                  en: { flagCode: "gb", native: "English" },
+                  es: { flagCode: "es", native: "Español" },
+                  pt: { flagCode: "pt", native: "Português" },
+                  fr: { flagCode: "fr", native: "Français" },
+                  de: { flagCode: "de", native: "Deutsch" },
+                  it: { flagCode: "it", native: "Italiano" },
+                  pl: { flagCode: "pl", native: "Polski" },
+                  cs: { flagCode: "cz", native: "Čeština" },
+                  ru: { flagCode: "ru", native: "Русский" },
+                  tr: { flagCode: "tr", native: "Türkçe" },
+                  hr: { flagCode: "hr", native: "Hrvatski" },
+                  no: { flagCode: "no", native: "Norsk" },
+                };
+                const assigned = FLAG_META[assignedLang] ?? { flagCode: "un", native: assignedLang };
+                const english = FLAG_META.en;
+                const isEnglishActive = currentLang === "en";
                 return (
                   <div className="mt-3 flex justify-center">
                     <div
-                      className="pointer-events-auto relative flex w-full max-w-[280px] items-stretch overflow-hidden rounded-full border border-primary/60 bg-black/70 shadow-[0_0_24px_-8px_hsl(var(--gold)/0.7)] backdrop-blur-sm"
+                      className="pointer-events-auto relative flex w-full max-w-[320px] items-stretch overflow-hidden rounded-full border border-primary/60 bg-black/70 shadow-[0_0_24px_-8px_hsl(var(--gold)/0.7)] backdrop-blur-sm"
                       onClick={(e) => e.stopPropagation()}
                       onTouchStart={(e) => e.stopPropagation()}
                     >
@@ -1724,20 +1739,34 @@ const IntroCinematic = ({
                         type="button"
                         onClick={(e) => { e.stopPropagation(); pickLanguage(false); }}
                         onTouchStart={(e) => { e.stopPropagation(); }}
-                        aria-label={assigned?.label ?? assignedLang}
-                        className="relative z-10 flex flex-1 items-center justify-center px-5 py-3 text-2xl transition-colors hover:bg-[hsl(var(--gold)/0.18)]"
+                        aria-label={assigned.native}
+                        aria-pressed={!isEnglishActive}
+                        className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${!isEnglishActive ? "bg-[hsl(var(--gold)/0.22)] text-foreground" : "text-foreground/85 hover:bg-[hsl(var(--gold)/0.12)]"}`}
                       >
-                        <span>{assigned?.flag ?? "🌐"}</span>
+                        <img
+                          src={`https://flagcdn.com/w40/${assigned.flagCode}.png`}
+                          srcSet={`https://flagcdn.com/w80/${assigned.flagCode}.png 2x`}
+                          alt=""
+                          className="h-4 w-auto rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+                        />
+                        <span>{assigned.native}</span>
                       </button>
                       <div aria-hidden="true" className="w-px bg-primary/40" />
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); pickLanguage(true); }}
                         onTouchStart={(e) => { e.stopPropagation(); }}
-                        aria-label="English"
-                        className="relative z-10 flex flex-1 items-center justify-center px-5 py-3 text-2xl transition-colors hover:bg-[hsl(var(--gold)/0.18)]"
+                        aria-label={english.native}
+                        aria-pressed={isEnglishActive}
+                        className={`relative z-10 flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${isEnglishActive ? "bg-[hsl(var(--gold)/0.22)] text-foreground" : "text-foreground/85 hover:bg-[hsl(var(--gold)/0.12)]"}`}
                       >
-                        <span>{english.flag}</span>
+                        <img
+                          src={`https://flagcdn.com/w40/${english.flagCode}.png`}
+                          srcSet={`https://flagcdn.com/w80/${english.flagCode}.png 2x`}
+                          alt=""
+                          className="h-4 w-auto rounded-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
+                        />
+                        <span>{english.native}</span>
                       </button>
                     </div>
                   </div>
