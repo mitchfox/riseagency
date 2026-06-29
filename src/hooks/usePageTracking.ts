@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useBehaviourTracking } from "@/hooks/useBehaviourTracking";
 
 const EXCLUDED_ROUTES = ['/staff', '/dashboard', '/login', '/portal'];
 
@@ -11,6 +12,7 @@ const shouldTrackRoute = (pathname: string): boolean => {
 export const usePageTracking = () => {
   const location = useLocation();
   const visitorIdRef = useRef<string>("");
+  const [visitId, setVisitId] = useState<string | null>(null);
 
   useEffect(() => {
     let visitorId = localStorage.getItem("visitor_id");
@@ -26,11 +28,13 @@ export const usePageTracking = () => {
 
   useEffect(() => {
     if (!shouldTrackRoute(location.pathname)) {
+      setVisitId(null);
       return;
     }
 
     const startTime = Date.now();
     let localVisitId: string | null = null;
+    setVisitId(null);
 
     const trackPageView = async (): Promise<string | null> => {
       try {
@@ -54,6 +58,7 @@ export const usePageTracking = () => {
 
     const trackingPromise = trackPageView().then(id => {
       localVisitId = id;
+      if (id) setVisitId(id);
     });
 
     return () => {
@@ -90,4 +95,6 @@ export const usePageTracking = () => {
       sendDuration();
     };
   }, [location.pathname]);
+
+  useBehaviourTracking(visitId, location.pathname);
 };
