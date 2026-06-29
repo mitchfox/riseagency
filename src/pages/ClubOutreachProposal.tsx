@@ -2428,6 +2428,9 @@ function MatchByMatchCard({
   defaultCategory: defaultCategoryProp,
   statOrders,
   gameOrder,
+  tr,
+  autoT,
+  translateMbmLabel,
 }: {
   analyses: NonNullable<PlayerEntry["match_by_match"]>;
   position: string | null;
@@ -2436,7 +2439,13 @@ function MatchByMatchCard({
   defaultCategory?: string | null;
   statOrders?: Record<string, string[]> | null;
   gameOrder?: string[] | null;
+  tr?: (key: string, en: string) => string;
+  autoT?: (s?: string | null) => string;
+  translateMbmLabel?: (label: string) => string;
 }) {
+  const T = (key: string, en: string) => (tr ? tr(key, en) : en);
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s ?? ""));
+  const L = (label: string) => (translateMbmLabel ? translateMbmLabel(label) : label);
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const STRONG_GRADES = new Set(["B", "B+", "A-", "A", "A+", "A*"]);
   // Outreach-specific Match by Match categories — fixed order driven by
