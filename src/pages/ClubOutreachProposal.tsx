@@ -1075,7 +1075,7 @@ export default function ClubOutreachProposal() {
               onClick={() => { hapticTap(); setActiveSlot(s); }}
               className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${activeSlot === s ? "bg-[#cbb96b] text-black border-[#cbb96b]" : "border-white/15 text-white/70 hover:border-white/40"}`}
             >
-              {s}
+              {autoT(s)}
             </button>
           ))}
         </div>
@@ -1362,7 +1362,7 @@ export default function ClubOutreachProposal() {
             <section key="situation" className="max-w-3xl mx-auto px-6 mt-4">
               <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.01] p-5">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-[#cbb96b]">{tr("situation.title", "Situation")}</p>
-                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{situationText}</p>
+                <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-white/85 whitespace-pre-wrap">{autoT(situationText)}</p>
               </div>
             </section>
           ) : null,
