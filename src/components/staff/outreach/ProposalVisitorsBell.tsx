@@ -98,6 +98,7 @@ export default function ProposalVisitorsBell({ visits }: { visits: ProposalVisit
   const pulsing = newCount > 0;
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
