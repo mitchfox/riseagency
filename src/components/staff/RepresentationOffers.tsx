@@ -574,8 +574,41 @@ export const RepresentationOffers = () => {
         <Button onClick={() => setTemplatesOpen(true)} variant="outline" className="shrink-0">
           <MessageSquare className="h-4 w-4 mr-1.5" /> Templates
         </Button>
+        <Button
+          onClick={() => setAnalyticsOpen((v) => !v)}
+          variant="outline"
+          className={`shrink-0 ${analyticsOpen ? "border-[#cbb96b] text-[#cbb96b]" : ""}`}
+        >
+          <BarChart3 className="h-4 w-4 mr-1.5" /> Analytics
+        </Button>
         <ProposalVisitorsBell visits={scopedVisits} />
       </div>
+
+      {analyticsOpen && (
+        <OutreachAnalyticsPanel
+          title="Player Outreach Analytics"
+          onClose={() => setAnalyticsOpen(false)}
+          onUpdateResponse={setOutreachResponse}
+          rows={filtered.map<AnalyticsRow>((p) => {
+            const vs = visitsBySlug.get(slugFor(p.name)) ?? [];
+            const lastVisit = vs.length
+              ? vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b)).visited_at
+              : null;
+            return {
+              id: p.id,
+              label: p.name,
+              sub: [p.position, p.club, p.nationality].filter(Boolean).join(' • ') || null,
+              status: (p.offer_status || groupFor(p)) as string,
+              createdAt: p.created_at ?? null,
+              viewCount: vs.length,
+              lastViewedAt: lastVisit,
+              responseStatus: ((p.outreach_response_status as AnalyticsResponseStatus) || 'none'),
+              responseNotes: p.outreach_response_notes ?? null,
+              responseAt: p.outreach_response_at ?? null,
+            };
+          })}
+        />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-10 text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading offers...</div>
