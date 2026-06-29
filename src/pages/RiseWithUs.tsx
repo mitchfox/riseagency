@@ -1850,7 +1850,11 @@ const RiseWithUs = () => {
   // Translator scoped to THIS player's portal_language so each prospect's
   // offer page renders in their language regardless of the visitor's
   // current site language preference.
-  const playerLang = player?.portal_language || "en";
+  const assignedLang = player?.portal_language || "en";
+  // Visitor-side override so the prospect can opt to view the page in
+  // English if their assigned language isn't comfortable for them.
+  const [langOverride, setLangOverride] = useState<string | null>(null);
+  const playerLang = langOverride || assignedLang;
   const { t } = usePlayerLanguageTranslations(playerLang);
 
   useEffect(() => {
