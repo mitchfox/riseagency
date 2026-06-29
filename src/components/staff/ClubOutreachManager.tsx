@@ -791,6 +791,7 @@ export default function ClubOutreachManager() {
                         onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                         onApprovePending={() => approvePending(r)}
                         onRejectPending={() => rejectPending(r)}
+                        onMarkViewed={() => markViewed(r)}
                       />
                     </div>
                   );
@@ -835,6 +836,7 @@ export default function ClubOutreachManager() {
                       onShortIdSave={(next) => updateShortId(r.id, r.short_id, next)}
                       onApprovePending={() => approvePending(r)}
                       onRejectPending={() => rejectPending(r)}
+                      onMarkViewed={() => markViewed(r)}
                     />
                   ))}
                 </div>
