@@ -450,7 +450,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 </div>
                 <ul className="space-y-1.5">
                   {visitorDetails.map((v) => (
-                    <VisitDetail key={v.id} v={v as unknown as ProposalVisit} defaultOpen />
+                    <VisitDetail key={v.id} v={v as unknown as ProposalVisit} defaultOpen allTaps />
                   ))}
                 </ul>
               </div>
