@@ -21,6 +21,7 @@ import NotFound from "./NotFound";
 import { RiseBrandedLoader } from "@/components/RiseBrandedLoader";
 import { RepresentationAudio } from "@/components/RepresentationAudio";
 import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslations";
+import { getExampleLanguage } from "@/lib/exampleLanguages";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
 import {
