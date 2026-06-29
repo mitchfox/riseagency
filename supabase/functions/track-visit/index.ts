@@ -142,13 +142,81 @@ serve(async (req) => {
     const raw = await req.text();
     let body: any = {};
     try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
-    const { visitorId, pagePath, duration, referrer, isInitial, visitId } = body;
+    const { visitorId, pagePath, duration, referrer, isInitial, visitId, kind, partial } = body;
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const userAgent = req.headers.get("user-agent") || "unknown";
+
+    // Behavioural flush: merge scroll/clicks/sections/etc into the existing row.
+    if (kind === "behaviour" && visitId && partial) {
+      try {
+        const { data: existing } = await supabase
+          .from("site_visits")
+          .select("events, sections, scroll_max_pct, engaged_seconds, viewport, utm, video_stats, duration")
+          .eq("id", visitId)
+          .maybeSingle();
+
+        const prevEvents: any[] = Array.isArray((existing as any)?.events) ? (existing as any).events : [];
+        const newEvents: any[] = Array.isArray(partial.events) ? partial.events : [];
+        const mergedEvents = [...prevEvents, ...newEvents];
+        // Cap at 400 — keep first 80 + last 320 so we always see opening + ending.
+        const cappedEvents = mergedEvents.length > 400
+          ? [...mergedEvents.slice(0, 80), ...mergedEvents.slice(-320)]
+          : mergedEvents;
+
+        const prevSections: Record<string, number> = (existing as any)?.sections && typeof (existing as any).sections === "object" ? (existing as any).sections : {};
+        const incSections: Record<string, number> = partial.sections && typeof partial.sections === "object" ? partial.sections : {};
+        const mergedSections: Record<string, number> = { ...prevSections };
+        for (const k of Object.keys(incSections)) {
+          mergedSections[k] = Math.round((mergedSections[k] ?? 0) + (Number(incSections[k]) || 0));
+        }
+
+        const prevVideo: Record<string, any> = (existing as any)?.video_stats && typeof (existing as any).video_stats === "object" ? (existing as any).video_stats : {};
+        const incVideo: Record<string, any> = partial.videoStats && typeof partial.videoStats === "object" ? partial.videoStats : {};
+        const mergedVideo: Record<string, any> = { ...prevVideo };
+        for (const k of Object.keys(incVideo)) {
+          const a = mergedVideo[k] ?? {};
+          const b = incVideo[k] ?? {};
+          mergedVideo[k] = {
+            label: b.label ?? a.label ?? k,
+            plays: (Number(a.plays) || 0) + (Number(b.plays) || 0),
+            watched: Math.round((Number(a.watched) || 0) + (Number(b.watched) || 0)),
+            maxPct: Math.max(Number(a.maxPct) || 0, Number(b.maxPct) || 0),
+            duration: Number(b.duration) || Number(a.duration) || 0,
+            fullscreen: Boolean(a.fullscreen || b.fullscreen),
+          };
+        }
+
+        const update: any = {
+          events: cappedEvents,
+          sections: mergedSections,
+          video_stats: mergedVideo,
+        };
+        if (typeof partial.scrollMax === "number") {
+          update.scroll_max_pct = Math.max(Number((existing as any)?.scroll_max_pct) || 0, Math.min(100, Math.round(partial.scrollMax)));
+        }
+        if (typeof partial.engagedSeconds === "number") {
+          update.engaged_seconds = Math.max(Number((existing as any)?.engaged_seconds) || 0, Math.round(partial.engagedSeconds));
+          // Mirror engaged time into duration so legacy readers show meaningful time.
+          update.duration = Math.max(Number((existing as any)?.duration) || 0, Math.round(partial.engagedSeconds));
+        }
+        if (partial.viewport && !(existing as any)?.viewport) update.viewport = partial.viewport;
+        if (partial.utm && !(existing as any)?.utm) update.utm = partial.utm;
+
+        await supabase.from("site_visits").update(update).eq("id", visitId);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (e) {
+        console.error("behaviour merge error", e);
+        return new Response(JSON.stringify({ success: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     if (isInitial) {
       // Get location from IP
