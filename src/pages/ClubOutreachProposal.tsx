@@ -738,6 +738,7 @@ export default function ClubOutreachProposal() {
             {preparedFor && (
               <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
             )}
+            <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
           </div>
         </header>
         <section className="max-w-5xl mx-auto px-6 mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -906,6 +907,7 @@ export default function ClubOutreachProposal() {
           {preparedFor && (
             <p className="text-[11px] sm:text-xs text-white/40">{tr("hdr.to", "To")} <span className="text-white/85">{preparedFor}</span></p>
           )}
+          <LanguagePill assignedLang={assignedLang} currentLang={lang} onChange={setLangOverride} />
         </div>
       </header>
 
