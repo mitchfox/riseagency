@@ -228,12 +228,31 @@ export const RepresentationOffers = () => {
         (supabase as any).from("scouting_reports").select("id, player_name, position, current_club, nationality, date_of_birth"),
       ]);
       const combined: any[] = [];
-      const seen = new Set<string>();
+      // Diacritic-insensitive key so "Drašnář" / "Drasnar" collapse together,
+      // matching how `instagramByName` looks handles up later.
+      const keyFor = (name: string | null | undefined) =>
+        (name || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .toLowerCase();
+      const seen = new Map<string, any>();
       const push = (row: any) => {
-        const key = (row.name || "").trim().toLowerCase();
-        if (!key || seen.has(key)) return;
-        seen.add(key);
-        combined.push(row);
+        const key = keyFor(row.name);
+        if (!key) return;
+        const existing = seen.get(key);
+        if (!existing) {
+          seen.set(key, row);
+          combined.push(row);
+          return;
+        }
+        // Merge — never lose an IG handle just because the `players` row
+        // (which has no IG column populated) was loaded first.
+        if (!existing.ig_handle && row.ig_handle) existing.ig_handle = row.ig_handle;
+        if (!existing.position && row.position) existing.position = row.position;
+        if (!existing.club && row.club) existing.club = row.club;
+        if (!existing.nationality && row.nationality) existing.nationality = row.nationality;
+        if (!existing.date_of_birth && row.date_of_birth) existing.date_of_birth = row.date_of_birth;
       };
       (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.instagram_handle, source: 'players' }));
       (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.ig_handle, source: 'youth' }));
