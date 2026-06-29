@@ -590,6 +590,19 @@ export default function ClubOutreachManager() {
       scrollPanelToTop();
     };
     window.addEventListener("staff:open-club-outreach-new", handler as EventListener);
+    // Also pick up any pending request that was stashed before this manager
+    // had a chance to mount (e.g. created from Market Tables on a different
+    // tab). Anything within the last 30s is still considered fresh.
+    try {
+      const raw = sessionStorage.getItem("staff:pending-club-outreach-new");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.detail && Date.now() - Number(parsed.at || 0) < 30_000) {
+          handler(new CustomEvent("staff:open-club-outreach-new", { detail: parsed.detail }) as Event);
+        }
+        sessionStorage.removeItem("staff:pending-club-outreach-new");
+      }
+    } catch { /* noop */ }
     return () => window.removeEventListener("staff:open-club-outreach-new", handler as EventListener);
   }, []);
 
