@@ -625,6 +625,8 @@ export const RepresentationOffers = () => {
         />
       )}
 
+      <PlayerOutreachTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader><DialogTitle>Create representation offer</DialogTitle></DialogHeader>
