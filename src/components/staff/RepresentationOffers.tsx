@@ -382,6 +382,19 @@ export const RepresentationOffers = () => {
 
   const renderCard = (player: OfferPlayer, opts?: { showDelete?: boolean }) => {
     const slug = slugFor(player.name);
+    const ig = igHandleFor(player);
+    const currentStatus = groupFor(player);
+    const copyIg = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!ig) return;
+      try {
+        await navigator.clipboard.writeText(`@${ig}`);
+        toast.success(`Copied @${ig}`);
+      } catch {
+        toast.error("Clipboard unavailable");
+      }
+    };
     return (
       <Card key={player.id} className="overflow-hidden">
         <CardHeader className="pb-3">
@@ -389,13 +402,29 @@ export const RepresentationOffers = () => {
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md border bg-muted shrink-0">
               {player.image_url ? <img src={player.image_url} alt={player.name} className="h-full w-full object-cover object-top" /> : <UserRoundCheck className="h-5 w-5 text-muted-foreground" />}
             </div>
-            <span className="min-w-0 flex-1 truncate">{player.name}</span>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate">{player.name}</span>
+              {ig && (
+                <button
+                  type="button"
+                  onClick={copyIg}
+                  title="Click to copy"
+                  className="mt-0.5 inline-flex items-center gap-1 text-[10.5px] font-normal text-muted-foreground hover:text-primary transition-colors select-all"
+                >
+                  <span className="font-mono">@{ig}</span>
+                  <Copy className="h-2.5 w-2.5 opacity-60" />
+                </button>
+              )}
+            </div>
             <FitScoreBadge
               player={player as any}
             />
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Draft / Ready / Sent toggle — mirrors Club Outreach exactly so
+              the staff workflow stays consistent across both boards. */}
+          <OfferStatusToggle status={currentStatus} onChange={(s) => setOfferStatus(player, s)} />
           <div className="flex flex-wrap gap-2 text-xs">
             {player.position && <Badge variant="outline">{player.position}</Badge>}
             {player.club && <Badge variant="secondary" className="max-w-[180px] truncate">{player.club}</Badge>}
