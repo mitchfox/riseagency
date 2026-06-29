@@ -1211,6 +1211,7 @@ export type Database = {
           mandated_agent_name: string | null
           mandated_agent_phone: string | null
           mandated_agent_role: string | null
+          manually_viewed_at: string | null
           player_id: string | null
           prepared_for_name: string | null
           season_data_mode: string
@@ -1255,6 +1256,7 @@ export type Database = {
           mandated_agent_name?: string | null
           mandated_agent_phone?: string | null
           mandated_agent_role?: string | null
+          manually_viewed_at?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
           season_data_mode?: string
@@ -1299,6 +1301,7 @@ export type Database = {
           mandated_agent_name?: string | null
           mandated_agent_phone?: string | null
           mandated_agent_role?: string | null
+          manually_viewed_at?: string | null
           player_id?: string | null
           prepared_for_name?: string | null
           season_data_mode?: string
@@ -5992,6 +5995,7 @@ export type Database = {
           initial_message: string | null
           is_starred: boolean
           last_contact_at: string | null
+          manually_viewed_at: string | null
           messaged: boolean | null
           national_team: boolean
           nationality: string | null
@@ -6025,6 +6029,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          manually_viewed_at?: string | null
           messaged?: boolean | null
           national_team?: boolean
           nationality?: string | null
@@ -6058,6 +6063,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          manually_viewed_at?: string | null
           messaged?: boolean | null
           national_team?: boolean
           nationality?: string | null
@@ -6102,6 +6108,7 @@ export type Database = {
           initial_message: string | null
           is_starred: boolean
           last_contact_at: string | null
+          manually_viewed_at: string | null
           messaged: boolean | null
           national_team: boolean
           nationality: string | null
@@ -6138,6 +6145,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          manually_viewed_at?: string | null
           messaged?: boolean | null
           national_team?: boolean
           nationality?: string | null
@@ -6174,6 +6182,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          manually_viewed_at?: string | null
           messaged?: boolean | null
           national_team?: boolean
           nationality?: string | null
