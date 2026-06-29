@@ -13,6 +13,7 @@ import { shouldCropHeroVideo } from "@/lib/videoCropUtils";
 import { getCountryFlagUrl, getLeagueFlagUrl } from "@/lib/countryFlags";
 import { rankGames } from "@/lib/matchByMatchOrder";
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
+import { normalisePosition } from "@/lib/positionNormalise";
 import {
   DEFAULT_KEY_DETAILS,
   DEFAULT_SECTION_ORDER,
@@ -586,6 +587,80 @@ export default function ClubOutreachProposal() {
     STAT_LABEL_LOOKUP[k] ??
     k.replace(/_per90/gi, " /90").replace(/_pct$/i, " %").replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
+  // ---- Curated map-first translations ------------------------------------
+  // Short strings the AI batch translator handles poorly (e.g. "To" → "Pro (k)")
+  // or position codes ("RW", "CB") it leaves untouched. Localised once, used
+  // everywhere the proposal renders these specific strings.
+  const POSITION_TRANSLATIONS: Record<string, Record<string, string>> = {
+    GK: { cs: "Brankář", es: "Portero", pt: "Guarda-redes", fr: "Gardien", de: "Torwart", it: "Portiere", pl: "Bramkarz", ru: "Вратарь", tr: "Kaleci", hr: "Vratar", no: "Keeper" },
+    CB: { cs: "Stoper", es: "Defensa central", pt: "Defesa central", fr: "Défenseur central", de: "Innenverteidiger", it: "Difensore centrale", pl: "Środkowy obrońca", ru: "Центральный защитник", tr: "Stoper", hr: "Stoper", no: "Midtstopper" },
+    LB: { cs: "Levý obránce", es: "Lateral izquierdo", pt: "Lateral esquerdo", fr: "Arrière gauche", de: "Linksverteidiger", it: "Terzino sinistro", pl: "Lewy obrońca", ru: "Левый защитник", tr: "Sol bek", hr: "Lijevi bek", no: "Venstreback" },
+    RB: { cs: "Pravý obránce", es: "Lateral derecho", pt: "Lateral direito", fr: "Arrière droit", de: "Rechtsverteidiger", it: "Terzino destro", pl: "Prawy obrońca", ru: "Правый защитник", tr: "Sağ bek", hr: "Desni bek", no: "Høyreback" },
+    LWB: { cs: "Levý wingbek", es: "Carrilero izquierdo", pt: "Ala esquerdo", fr: "Piston gauche", de: "Linker Flügelverteidiger", it: "Esterno sinistro", pl: "Lewy wahadłowy", ru: "Левый латераль", tr: "Sol kanat bek", hr: "Lijevi wing-back", no: "Venstre vingback" },
+    RWB: { cs: "Pravý wingbek", es: "Carrilero derecho", pt: "Ala direito", fr: "Piston droit", de: "Rechter Flügelverteidiger", it: "Esterno destro", pl: "Prawy wahadłowy", ru: "Правый латераль", tr: "Sağ kanat bek", hr: "Desni wing-back", no: "Høyre vingback" },
+    CDM: { cs: "Defenzivní záložník", es: "Mediocentro defensivo", pt: "Médio defensivo", fr: "Milieu défensif", de: "Defensiver Mittelfeldspieler", it: "Mediano", pl: "Defensywny pomocnik", ru: "Опорный полузащитник", tr: "Defansif orta saha", hr: "Defenzivni vezni", no: "Defensiv midtbane" },
+    CM: { cs: "Středový záložník", es: "Mediocentro", pt: "Médio centro", fr: "Milieu central", de: "Zentraler Mittelfeldspieler", it: "Centrocampista centrale", pl: "Środkowy pomocnik", ru: "Центральный полузащитник", tr: "Orta saha", hr: "Središnji vezni", no: "Sentral midtbane" },
+    CAM: { cs: "Ofenzivní záložník", es: "Mediapunta", pt: "Médio ofensivo", fr: "Milieu offensif", de: "Offensiver Mittelfeldspieler", it: "Trequartista", pl: "Ofensywny pomocnik", ru: "Атакующий полузащитник", tr: "Ofansif orta saha", hr: "Ofenzivni vezni", no: "Offensiv midtbane" },
+    RM: { cs: "Pravý záložník", es: "Centrocampista derecho", pt: "Médio direito", fr: "Milieu droit", de: "Rechter Mittelfeldspieler", it: "Centrocampista destro", pl: "Prawy pomocnik", ru: "Правый полузащитник", tr: "Sağ orta saha", hr: "Desni vezni", no: "Høyre midtbane" },
+    LM: { cs: "Levý záložník", es: "Centrocampista izquierdo", pt: "Médio esquerdo", fr: "Milieu gauche", de: "Linker Mittelfeldspieler", it: "Centrocampista sinistro", pl: "Lewy pomocnik", ru: "Левый полузащитник", tr: "Sol orta saha", hr: "Lijevi vezni", no: "Venstre midtbane" },
+    LW: { cs: "Levé křídlo", es: "Extremo izquierdo", pt: "Extremo esquerdo", fr: "Ailier gauche", de: "Linksaußen", it: "Ala sinistra", pl: "Lewoskrzydłowy", ru: "Левый вингер", tr: "Sol kanat", hr: "Lijevo krilo", no: "Venstre ving" },
+    RW: { cs: "Pravé křídlo", es: "Extremo derecho", pt: "Extremo direito", fr: "Ailier droit", de: "Rechtsaußen", it: "Ala destra", pl: "Prawoskrzydłowy", ru: "Правый вингер", tr: "Sağ kanat", hr: "Desno krilo", no: "Høyre ving" },
+    CF: { cs: "Útočník", es: "Delantero centro", pt: "Avançado", fr: "Avant-centre", de: "Mittelstürmer", it: "Centravanti", pl: "Napastnik", ru: "Центральный нападающий", tr: "Forvet", hr: "Napadač", no: "Spiss" },
+  };
+  const TO_WORD: Record<string, string> = {
+    cs: "Pro", es: "Para", pt: "Para", fr: "Pour", de: "An", it: "A", pl: "Do", ru: "Кому", tr: "Sayın", hr: "Za", no: "Til",
+  };
+  const translatePosition = (raw?: string | null): string => {
+    const v = (raw ?? "").toString().trim();
+    if (!v) return "";
+    if (langOverride === "en") return v;
+    const code = normalisePosition(v) || v.toUpperCase();
+    const hit = POSITION_TRANSLATIONS[code]?.[langOverride];
+    if (hit) return hit;
+    // Fallback to runtime AI for unmapped values.
+    return autoT(v);
+  };
+  const translateToWord = (): string => {
+    if (langOverride === "en") return "To";
+    return TO_WORD[langOverride] || "To";
+  };
+  // ---- Match-By-Match stat label translations (curated) ------------------
+  // Pre-translates every metric label rendered in the inline Video & Data
+  // table so the column headers switch language without an AI roundtrip.
+  const MBM_STAT_LABELS_BY_LANG: Record<string, Record<string, string>> = {
+    cs: {
+      "Goals": "Góly", "Assists": "Asistence", "xG": "xG", "xA": "xA",
+      "npxG /90": "npxG /90", "xA /90": "xA /90", "xG Chain /90": "xG Chain /90",
+      "xT (live passes) /90": "xT (živé přihrávky) /90", "xT (prog carries) /90": "xT (prog. driblinky) /90",
+      "Shots": "Střely", "Shots on Target /90": "Střely na branku /90",
+      "On Target %": "Na branku %", "Shots /90": "Střely /90",
+      "Shots in Box /90": "Střely z VP /90", "Shots out of Box /90": "Střely mimo VP /90",
+      "Self-Created Shots /90": "Vlastní střely /90", "Touches in Box /90": "Doteky ve VP /90",
+      "Key Passes /90": "Klíčové přihrávky /90", "Pass %": "Přihrávky %",
+      "Accurate Passes /90": "Přesné přihrávky /90", "Forward Passes /90": "Přihrávky vpřed /90",
+      "Passes into Final 3rd /90": "Přihrávky do třetiny /90",
+      "Progressive Passes /90": "Progresivní přihrávky /90",
+      "Passes in Opp Half /90": "Přihrávky v polovině soupeře /90",
+      "Passes in Own Half /90": "Přihrávky ve vlastní pol. /90",
+      "Long Ball %": "Dlouhé míče %", "Long Balls /90": "Dlouhé míče /90",
+      "Crosses /90": "Centry /90", "Cross %": "Centry %",
+      "Dribble %": "Driblinky %", "Dribbles /90": "Driblinky /90",
+      "Dribbles Att. /90": "Pokusy o driblink /90",
+      "Carries into Final 3rd /90": "Driblinky do třetiny /90",
+      "Progressive Carries /90": "Progresivní driblinky /90",
+      "Fouls Drawn /90": "Vynucené fauly /90",
+      "Tackles /90": "Skluzy /90", "Tackles Won %": "Úspěšné skluzy %",
+      "Interceptions /90": "Zachycení /90", "Clearances /90": "Odkopy /90",
+      "Duels Won %": "Souboje %", "Duels Won /90": "Souboje /90",
+      "Aerial Duels Won %": "Hlavičkové souboje %", "Aerials Won /90": "Hlavičkové souboje /90",
+    },
+  };
+  const translateMbmLabel = (label: string): string => {
+    if (langOverride === "en") return label;
+    const map = MBM_STAT_LABELS_BY_LANG[langOverride];
+    if (map && map[label]) return map[label];
+    return autoT(label);
+  };
   const dynamicStringsForTranslation = useMemo<string[]>(() => {
     if (langOverride === "en") return [];
     const arr: string[] = [];
@@ -605,6 +680,18 @@ export default function ClubOutreachProposal() {
       push(p?.nationality);
       push(p?.league);
       data.players.forEach((e: any) => push(e?.position_slot));
+      // Warm AI cache for Match-By-Match labels, opponents and results so
+      // they appear translated on first render rather than after a flash.
+      (current.match_by_match || []).forEach((a: any) => {
+        push(a?.opponent);
+        push(a?.result);
+      });
+      // Common Match-By-Match column headers fed to the AI fallback so
+      // unmapped languages still translate.
+      [
+        "Match-By-Match Data", "Match", "Play video report", "No data available.",
+        "Per 90", "Raw", "Possession", "Passing", "Shooting", "Defending",
+      ].forEach(push);
       (current.form_config?.stats || []).forEach((s: any) => {
         const k = typeof s === "string" ? s : s?.key;
         if (k) push(humanizeStat(k));
