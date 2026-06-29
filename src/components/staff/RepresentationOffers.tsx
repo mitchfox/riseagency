@@ -88,7 +88,36 @@ export const RepresentationOffers = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
-  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
+  const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
+
+  // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
+  // we already have on the player row, then to the outreach tables (youth /
+  // pro) where the IG handle was originally entered.
+  const instagramByName = useMemo(() => {
+    const m = new Map<string, string>();
+    allPlayers.forEach((p) => {
+      const handle = (p.ig_handle || "").trim().replace(/^@/, "");
+      const key = (p.name || "").trim().toLowerCase();
+      if (handle && key && !m.has(key)) m.set(key, handle);
+    });
+    return m;
+  }, [allPlayers]);
+
+  const igHandleFor = (p: OfferPlayer): string | null => {
+    const direct = (p.instagram_handle || "").trim().replace(/^@/, "");
+    if (direct) return direct;
+    const fromLookup = instagramByName.get((p.name || "").trim().toLowerCase());
+    return fromLookup || null;
+  };
+
+  const setOfferStatus = async (player: OfferPlayer, status: OfferStatus) => {
+    setPlayers((prev) => prev.map((p) => (p.id === player.id ? { ...p, offer_status: status } : p)));
+    const { error } = await (supabase as any).from("players").update({ offer_status: status }).eq("id", player.id);
+    if (error) {
+      toast.error("Could not update status", { description: error.message });
+      load();
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -469,7 +498,7 @@ export const RepresentationOffers = () => {
           )}
           {GROUPS.map(g => {
             let items = grouped[g.id] || [];
-            if (g.id === "drafts") {
+            if (g.id === "draft") {
               items = [...items].sort((a, b) => {
                 const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
                 const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -489,7 +518,7 @@ export const RepresentationOffers = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {items.map(p => renderCard(p, { showDelete: g.id === "drafts" }))}
+                    {items.map(p => renderCard(p, { showDelete: g.id === "draft" }))}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
