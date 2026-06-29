@@ -105,7 +105,17 @@ function fillTemplate(tpl: string, vars: Record<string, string>): string {
 // specific outreach URL, so old pasted links get rewritten on copy.
 function applyOutreachLink(text: string, url: string): string {
   if (!url) return text;
-  return text.replace(/https?:\/\/\S*(?:risefootballagency\.com|lovable\.app|lovableproject\.com)\S*/gi, url);
+  // Match links with or without protocol, e.g. "risefootballagency.com/x"
+  // as well as the lovable preview hosts. Trailing punctuation is left in
+  // place because \S* stops at whitespace only — strip a final ".,;:!?)" so
+  // sentences like "...visit risefootballagency.com." stay tidy.
+  return text.replace(
+    /(https?:\/\/)?(?:www\.)?(?:risefootballagency\.com|lovable\.app|lovableproject\.com)[^\s<>"'`]*/gi,
+    (match) => {
+      const trail = match.match(/[.,;:!?\)\]]+$/)?.[0] ?? "";
+      return `${url}${trail}`;
+    },
+  );
 }
 
 interface PlayerLite { id: string; name: string; image_url: string | null; position: string | null; representation_status: string | null; }
