@@ -163,8 +163,9 @@ export default function RelationshipsTab() {
       manually_added: true,
       is_archived: false,
     };
-    const { error } = existing?.id
-      ? await supabase.from("outreach_relationships" as any).update(payload).eq("id", existing.id)
+    const existingId = (existing as any)?.id as string | undefined;
+    const { error } = existingId
+      ? await supabase.from("outreach_relationships" as any).update(payload).eq("id", existingId)
       : await supabase.from("outreach_relationships" as any).insert({ contact_id: contactId, ...payload });
     if (error) { toast.error(error.message); return; }
     setAddOpen(false);
