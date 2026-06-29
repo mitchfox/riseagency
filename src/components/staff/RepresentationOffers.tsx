@@ -176,11 +176,21 @@ export const RepresentationOffers = () => {
     }
   };
 
+  const setOutreachResponse = async (id: string, status: AnalyticsResponseStatus, notes: string | null) => {
+    const at = new Date().toISOString();
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, outreach_response_status: status, outreach_response_notes: notes, outreach_response_at: at } : p)));
+    const { error } = await (supabase as any)
+      .from("players")
+      .update({ outreach_response_status: status, outreach_response_notes: notes, outreach_response_at: at })
+      .eq("id", id);
+    if (error) { toast.error("Could not save response", { description: error.message }); load(); }
+  };
+
   const load = async () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle, outreach_response_status, outreach_response_notes, outreach_response_at")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
