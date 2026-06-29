@@ -302,7 +302,12 @@ export default function ClubOutreachManager() {
         .order("visited_at", { ascending: false })
         .limit(500);
       if (cancelled) return;
-      const real = ((data ?? []) as any[]).filter(isRealNonUkVisit);
+      // Use the looser predicate so genuine views with unknown/unresolved
+      // geo (private IP, mobile carrier NAT, VPN, ip-api rate limit) still
+      // surface under Viewed. Confirmed UK and obvious bots are still
+      // excluded. The notification bell continues to use the strict
+      // non-UK filter via `scopedVisits` below.
+      const real = ((data ?? []) as any[]).filter(isViewableProposalVisit);
       setVisits(real as ProposalVisit[]);
     };
     loadVisits();
