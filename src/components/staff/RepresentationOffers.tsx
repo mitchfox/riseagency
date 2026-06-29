@@ -135,11 +135,19 @@ export const RepresentationOffers = () => {
   // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
   // we already have on the player row, then to the outreach tables (youth /
   // pro) where the IG handle was originally entered.
+  // Normalise names so "Drašnář" and "Drasnar" both resolve to the same key —
+  // the players table and the outreach tables don't always agree on diacritics.
+  const normaliseName = (s: string | null | undefined) =>
+    (s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
   const instagramByName = useMemo(() => {
     const m = new Map<string, string>();
     allPlayers.forEach((p) => {
       const handle = (p.ig_handle || "").trim().replace(/^@/, "");
-      const key = (p.name || "").trim().toLowerCase();
+      const key = normaliseName(p.name);
       if (handle && key && !m.has(key)) m.set(key, handle);
     });
     return m;
@@ -148,7 +156,7 @@ export const RepresentationOffers = () => {
   const igHandleFor = (p: OfferPlayer): string | null => {
     const direct = (p.instagram_handle || "").trim().replace(/^@/, "");
     if (direct) return direct;
-    const fromLookup = instagramByName.get((p.name || "").trim().toLowerCase());
+    const fromLookup = instagramByName.get(normaliseName(p.name));
     return fromLookup || null;
   };
 
