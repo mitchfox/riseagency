@@ -388,7 +388,8 @@ export default function ClubOutreachManager() {
       .maybeSingle();
     if (e1 || !src) return toast.error(e1?.message || "Source not found");
     const { id: _id, short_id: _sid, created_at: _c, updated_at: _u, created_by: _cb, ...rest } = src as any;
-    const newShort = makeShortId();
+    const sourceClub = src.club_id ? clubs.find((c) => c.id === src.club_id) : null;
+    const newShort = (src.target_type ?? 'club') === 'agent' ? makeShortId() : makeClubShortId(sourceClub?.club_name);
     const { data: inserted, error: e2 } = await (supabase as any)
       .from("club_outreach_links")
       .insert({
