@@ -39,7 +39,20 @@ type OfferPlayer = {
 };
 
 const slugFor = (name: string | null | undefined) =>
-  (name || "").toLowerCase().trim().replace(/\s+/g, "-");
+  (name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
+
+const slugFromPath = (raw: string) =>
+  (() => {
+    try { return decodeURIComponent(raw); } catch { return raw; }
+  })()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
 // Mirror ClubOutreachManager.openProposalLink — on Lovable preview hosts
 // keep navigation same-origin so the Rise With Us page renders inside the
@@ -57,9 +70,9 @@ const isLovablePreviewHost = () => {
 // signed + declined kept underneath for completed offers.
 type OfferStatus = "draft" | "ready" | "sent" | "signed" | "declined";
 const GROUPS: { id: OfferStatus; label: string; defaultOpen: boolean }[] = [
+  { id: "sent",     label: "Sent — awaiting reply",        defaultOpen: true },
   { id: "draft",    label: "Draft — not sent yet",         defaultOpen: true },
   { id: "ready",    label: "Ready to send",                defaultOpen: true },
-  { id: "sent",     label: "Sent — awaiting reply",        defaultOpen: true },
   { id: "signed",   label: "Signed",                       defaultOpen: false },
   { id: "declined", label: "Declined / paused",            defaultOpen: false },
 ];
