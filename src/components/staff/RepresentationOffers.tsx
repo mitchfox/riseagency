@@ -130,6 +130,7 @@ export const RepresentationOffers = () => {
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [newPlayer, setNewPlayer] = useState({ name: "", position: "", nationality: "", club: "", date_of_birth: "" });
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
   const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
 
