@@ -1921,14 +1921,17 @@ function KeyDetailsCard({
   age,
   tr,
   items,
+  autoT,
 }: {
   entry: PlayerEntry;
   age: number | null;
   tr?: (key: string, en: string) => string;
   items?: KeyDetailItem[];
+  autoT?: (s?: string | null) => string;
 }) {
   const player = entry.player;
   const T = (k: string, en: string) => (tr ? tr(k, en) : en);
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const tiles = (items && items.length ? items : DEFAULT_KEY_DETAILS);
 
   const nationalityFlag = player?.nationality ? getCountryFlagUrl(player.nationality) : null;
