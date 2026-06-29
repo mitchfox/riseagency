@@ -2502,6 +2502,53 @@ const RiseWithUs = () => {
                       </a>
                     </Button>
                   </div>
+                  {settings.show_have_agent && (
+                    <div className="pt-4 flex flex-col items-center gap-3">
+                      {haveAgentAck ? (
+                        <p className="max-w-xl text-sm sm:text-base text-foreground/80 leading-relaxed border-t border-border/40 pt-4">
+                          {ot(
+                            "already_agent_thank_you",
+                            "Thank you for letting us know. We want to support your long-term career, so please don't hesitate to reach out to us at a later date if your situation changes.",
+                          )}
+                        </p>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={haveAgentSubmitting}
+                          onClick={async () => {
+                            if (haveAgentSubmitting) return;
+                            setHaveAgentSubmitting(true);
+                            // Optimistically show the thank-you so the player
+                            // never sees a loading spinner — even if the
+                            // notification call fails we still want them to
+                            // feel acknowledged.
+                            setHaveAgentAck(true);
+                            try {
+                              await insertStaffNotification({
+                                eventType: "offer_have_agent",
+                                title: `Already has an agent: ${player.name}`,
+                                body: `${player.name} confirmed they already have an agent from their Rise With Us page.`,
+                                eventData: {
+                                  player_id: player.id,
+                                  player_name: player.name,
+                                  language: lang,
+                                  source: "rise_with_us",
+                                },
+                              });
+                            } catch (err) {
+                              console.error("Failed to log 'already have agent'", err);
+                            } finally {
+                              setHaveAgentSubmitting(false);
+                            }
+                          }}
+                          className="font-bebas uppercase tracking-[0.18em] text-xs text-foreground/70 hover:text-foreground border-border/60 hover:bg-muted/40"
+                        >
+                          {ot("i_already_have_agent", "I already have an agent")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
