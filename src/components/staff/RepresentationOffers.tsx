@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, ExternalLink, Loader2, Plus, Search, UserRoundCheck, Settings2, Trash2, FileEdit, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
@@ -35,6 +35,7 @@ type OfferPlayer = {
   last_contact_at?: string | null;
   offer_status?: string | null;
   created_at?: string | null;
+  instagram_handle?: string | null;
 };
 
 const slugFor = (name: string | null | undefined) =>
@@ -52,29 +53,28 @@ const isLovablePreviewHost = () => {
     || h.endsWith(".lovable.dev");
 };
 
-const GROUPS: { id: string; label: string; defaultOpen: boolean }[] = [
-  { id: "drafts", label: "Drafts — not sent yet", defaultOpen: true },
-  { id: "needs_followup", label: "Needs follow-up", defaultOpen: true },
-  { id: "sent", label: "Offer sent — awaiting reply", defaultOpen: true },
-  { id: "in_conversation", label: "In conversation", defaultOpen: true },
-  { id: "signed", label: "Signed", defaultOpen: false },
-  { id: "declined", label: "Declined / paused", defaultOpen: false },
+// Mirror Club Outreach exactly: draft / ready / sent at the top, with
+// signed + declined kept underneath for completed offers.
+type OfferStatus = "draft" | "ready" | "sent" | "signed" | "declined";
+const GROUPS: { id: OfferStatus; label: string; defaultOpen: boolean }[] = [
+  { id: "draft",    label: "Draft — not sent yet",         defaultOpen: true },
+  { id: "ready",    label: "Ready to send",                defaultOpen: true },
+  { id: "sent",     label: "Sent — awaiting reply",        defaultOpen: true },
+  { id: "signed",   label: "Signed",                       defaultOpen: false },
+  { id: "declined", label: "Declined / paused",            defaultOpen: false },
 ];
 
-const groupFor = (p: OfferPlayer): string => {
-  const status = (p.offer_status || p.representation_status || "").toLowerCase();
-  if (status.includes("sign")) return "signed";
-  if (status.includes("declin") || status.includes("paus") || status.includes("lost")) return "declined";
-  if (status.includes("convers") || status.includes("interest")) return "in_conversation";
-  // Needs follow-up = last contact older than 7 days
-  if (p.last_contact_at) {
-    const days = (Date.now() - new Date(p.last_contact_at).getTime()) / 86400000;
-    if (days >= 7) return "needs_followup";
-    return "sent";
+const groupFor = (p: OfferPlayer): OfferStatus => {
+  const explicit = (p.offer_status || "").toLowerCase().trim();
+  if (explicit === "draft" || explicit === "ready" || explicit === "sent" || explicit === "signed" || explicit === "declined") {
+    return explicit as OfferStatus;
   }
-  // No evidence of having sent yet → keep as draft.
-  if ((p.offer_status || "").toLowerCase().includes("sent")) return "sent";
-  return "drafts";
+  // Fallback inference for legacy rows that never set offer_status.
+  const repStatus = (p.representation_status || "").toLowerCase();
+  if (repStatus.includes("sign")) return "signed";
+  if (repStatus.includes("declin") || repStatus.includes("paus") || repStatus.includes("lost")) return "declined";
+  if (p.last_contact_at) return "sent";
+  return "draft";
 };
 
 export const RepresentationOffers = () => {
@@ -94,7 +94,7 @@ export const RepresentationOffers = () => {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("players")
-      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at")
+      .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle")
       .or("has_representation_offer.eq.true,representation_status.eq.prospect")
       .order("name");
     if (error) {
@@ -141,9 +141,9 @@ export const RepresentationOffers = () => {
   useEffect(() => {
     (async () => {
       const [{ data: corePlayers }, { data: youth }, { data: pro }, { data: scouts }] = await Promise.all([
-        (supabase as any).from("players").select("id, name, position, club, nationality, date_of_birth"),
-        (supabase as any).from("player_outreach_youth").select("id, player_name, position, current_club, nationality, date_of_birth"),
-        (supabase as any).from("player_outreach_pro").select("id, player_name, position, current_club, nationality, date_of_birth"),
+        (supabase as any).from("players").select("id, name, position, club, nationality, date_of_birth, instagram_handle"),
+        (supabase as any).from("player_outreach_youth").select("id, player_name, position, current_club, nationality, date_of_birth, ig_handle"),
+        (supabase as any).from("player_outreach_pro").select("id, player_name, position, current_club, nationality, date_of_birth, ig_handle"),
         (supabase as any).from("scouting_reports").select("id, player_name, position, current_club, nationality, date_of_birth"),
       ]);
       const combined: any[] = [];
@@ -154,9 +154,9 @@ export const RepresentationOffers = () => {
         seen.add(key);
         combined.push(row);
       };
-      (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'players' }));
-      (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'youth' }));
-      (pro || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'pro' }));
+      (corePlayers || []).forEach((p: any) => push({ id: p.id, name: p.name, position: p.position, club: p.club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.instagram_handle, source: 'players' }));
+      (youth || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.ig_handle, source: 'youth' }));
+      (pro || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, ig_handle: p.ig_handle, source: 'pro' }));
       (scouts || []).forEach((p: any) => push({ id: p.id, name: p.player_name, position: p.position, club: p.current_club, nationality: p.nationality, date_of_birth: p.date_of_birth, source: 'scout' }));
       combined.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       setAllPlayers(combined);
@@ -211,14 +211,15 @@ export const RepresentationOffers = () => {
   }, [players, query]);
 
   const grouped = useMemo(() => {
-    const map: Record<string, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]]));
+    const map: Record<OfferStatus, OfferPlayer[]> = Object.fromEntries(GROUPS.map(g => [g.id, [] as OfferPlayer[]])) as any;
     const viewedIds = new Set<string>();
     filtered.forEach(p => {
       if ((visitsBySlug.get(slugFor(p.name)) ?? []).length > 0) viewedIds.add(p.id);
     });
     filtered.forEach(p => {
       if (viewedIds.has(p.id)) return; // Shown in the Viewed section instead.
-      (map[groupFor(p)] || (map[groupFor(p)] = [])).push(p);
+      const g = groupFor(p);
+      (map[g] || (map[g] = [])).push(p);
     });
     return map;
   }, [filtered, visitsBySlug]);
