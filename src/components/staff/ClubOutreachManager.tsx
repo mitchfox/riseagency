@@ -590,6 +590,19 @@ export default function ClubOutreachManager() {
       scrollPanelToTop();
     };
     window.addEventListener("staff:open-club-outreach-new", handler as EventListener);
+    // Also pick up any pending request that was stashed before this manager
+    // had a chance to mount (e.g. created from Market Tables on a different
+    // tab). Anything within the last 30s is still considered fresh.
+    try {
+      const raw = sessionStorage.getItem("staff:pending-club-outreach-new");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.detail && Date.now() - Number(parsed.at || 0) < 30_000) {
+          handler(new CustomEvent("staff:open-club-outreach-new", { detail: parsed.detail }) as Event);
+        }
+        sessionStorage.removeItem("staff:pending-club-outreach-new");
+      }
+    } catch { /* noop */ }
     return () => window.removeEventListener("staff:open-club-outreach-new", handler as EventListener);
   }, []);
 
@@ -1203,8 +1216,20 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   }, [players, playerQuery, selectedIds]);
   const filteredClubs = useMemo(() => {
     const n = clubQuery.trim().toLowerCase();
-    return n ? clubs.filter(c => c.club_name.toLowerCase().includes(n)) : clubs;
-  }, [clubs, clubQuery]);
+    // Guarantee any prefill/selected club is in the list even if the
+    // parent's clubs prop hasn't merged it in yet — prevents the Market
+    // Tables → New Outreach flow from showing an empty picker.
+    const base = [...clubs];
+    if (prefill?.clubId && prefill.clubName && !base.some((c) => c.id === prefill.clubId)) {
+      base.push({ id: prefill.clubId, club_name: prefill.clubName, country: prefill.country ?? null, image_url: prefill.imageUrl ?? null });
+    }
+    if (clubId && !base.some((c) => c.id === clubId)) {
+      const fallbackName = prefill?.clubId === clubId ? prefill.clubName : null;
+      if (fallbackName) base.push({ id: clubId, club_name: fallbackName, country: prefill?.country ?? null, image_url: prefill?.imageUrl ?? null });
+    }
+    base.sort((a, b) => a.club_name.localeCompare(b.club_name));
+    return n ? base.filter((c) => c.club_name.toLowerCase().includes(n)) : base;
+  }, [clubs, clubQuery, prefill?.clubId, prefill?.clubName, prefill?.country, prefill?.imageUrl, clubId]);
   const exactMatch = useMemo(() => {
     const n = clubQuery.trim().toLowerCase();
     return n ? clubs.some(c => c.club_name.toLowerCase() === n) : true;
