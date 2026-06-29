@@ -1521,7 +1521,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             <Input placeholder="Search clubs" value={clubQuery} onChange={(e) => setClubQuery(e.target.value)} className="mt-1.5" />
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
               {filteredClubs.map(c => (
-                <button key={c.id} type="button" onClick={() => setClubId(c.id)}
+                <button key={c.id} type="button" data-club-tile={c.id} onClick={() => setClubId(c.id)}
                   className={`flex items-center gap-2 rounded-md border p-2 text-left ${clubId === c.id ? "border-[#cbb96b] bg-[#cbb96b]/10" : "border-border hover:border-[#cbb96b]/40"}`}>
                   {c.image_url ? <img src={c.image_url} className="h-8 w-8 object-contain bg-white/5 rounded" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[10px]">No logo</div>}
                   <div className="min-w-0">
@@ -1571,7 +1571,10 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
             </div>
           )}
             {selectedClub && !selectedClub.image_url && (
-              <div className="mt-3 rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5">
+              <div
+                data-missing-logo={selectedClub.id}
+                className="mt-3 rounded-md border border-dashed border-[#cbb96b]/40 p-3 bg-[#cbb96b]/5"
+              >
                 <p className="text-xs mb-2">No logo on file for <b>{selectedClub.club_name}</b>. Upload one — it will be saved into the coaching database.</p>
                 <label className="inline-flex items-center gap-2 cursor-pointer text-xs">
                   <Upload className="h-3.5 w-3.5" />
