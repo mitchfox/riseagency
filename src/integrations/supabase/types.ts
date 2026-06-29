@@ -6753,6 +6753,7 @@ export type Database = {
           identification_reference_image_url: string | null
           identification_reference_images: string[]
           image_url: string | null
+          instagram_handle: string | null
           is_starred: boolean
           league: string | null
           links: Json | null
@@ -6763,6 +6764,7 @@ export type Database = {
           not_to_confuse_with: string | null
           nutrition_next_program_notes: string | null
           nutrition_programming_notes: string | null
+          offer_status: string | null
           player_list_order: number | null
           portal_language: string | null
           position: string
@@ -6810,6 +6812,7 @@ export type Database = {
           identification_reference_image_url?: string | null
           identification_reference_images?: string[]
           image_url?: string | null
+          instagram_handle?: string | null
           is_starred?: boolean
           league?: string | null
           links?: Json | null
@@ -6820,6 +6823,7 @@ export type Database = {
           not_to_confuse_with?: string | null
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
+          offer_status?: string | null
           player_list_order?: number | null
           portal_language?: string | null
           position: string
@@ -6867,6 +6871,7 @@ export type Database = {
           identification_reference_image_url?: string | null
           identification_reference_images?: string[]
           image_url?: string | null
+          instagram_handle?: string | null
           is_starred?: boolean
           league?: string | null
           links?: Json | null
@@ -6877,6 +6882,7 @@ export type Database = {
           not_to_confuse_with?: string | null
           nutrition_next_program_notes?: string | null
           nutrition_programming_notes?: string | null
+          offer_status?: string | null
           player_list_order?: number | null
           portal_language?: string | null
           position?: string
