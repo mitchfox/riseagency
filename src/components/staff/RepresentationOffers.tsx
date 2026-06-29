@@ -260,9 +260,9 @@ export const RepresentationOffers = () => {
   const visitsBySlug = useMemo(() => {
     const map = new Map<string, ProposalVisit[]>();
     visits.forEach((v) => {
-      const m = v.page_path.match(/^\/risewithus\/([^/]+)/);
+      const m = v.page_path.match(/^\/risewithus\/([^/?#]+)/);
       if (!m) return;
-      const slug = m[1];
+      const slug = slugFromPath(m[1]);
       if (!slug || slug.startsWith(":")) return;
       const arr = map.get(slug) ?? [];
       arr.push(v);
@@ -313,8 +313,8 @@ export const RepresentationOffers = () => {
   const scopedVisits = useMemo(() => {
     const slugs = new Set(filtered.map((p) => slugFor(p.name)));
     return visits.filter((v) => {
-      const m = v.page_path.match(/^\/risewithus\/([^/]+)/);
-      return m ? slugs.has(m[1]) : false;
+      const m = v.page_path.match(/^\/risewithus\/([^/?#]+)/);
+      return m ? slugs.has(slugFromPath(m[1])) : false;
     });
   }, [filtered, visits]);
 
