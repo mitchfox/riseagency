@@ -1460,6 +1460,14 @@ const IntroCinematic = ({
   assignedLang?: string; currentLang?: string; onSwitchToEnglish?: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
+  // Translate the optional free-text second paragraph on the fly when the
+  // offer language isn't English. Falls back to the original string while
+  // the translation is in flight.
+  const { translate: translateSecondary } = useAutoTranslateStrings(
+    secondaryParagraph ? [secondaryParagraph] : [],
+    lang,
+  );
+  const translatedSecondary = secondaryParagraph ? translateSecondary(secondaryParagraph) : secondaryParagraph;
   const totalPhases = 4;
   const [pulses, setPulses] = useState<PulsePoint[]>([]);
   const pulseId = useRef(0);
