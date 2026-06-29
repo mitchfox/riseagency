@@ -1803,7 +1803,7 @@ const IntroCinematic = ({
                   className="mx-auto max-w-[40ch] text-sm sm:text-lg md:text-xl leading-relaxed text-foreground/90 sm:max-w-[46ch] md:max-w-[50ch]"
                   style={{ textWrap: "pretty", hyphens: "none", overflowWrap: "normal" } as React.CSSProperties}
                 >
-                  {widont(secondaryParagraph)}
+                  {widont(translatedSecondary || secondaryParagraph)}
                 </p>
               )}
             </motion.div>
