@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
         ? supabase
             .from("players")
             .select(
-              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights, bio, contract_end_date, current_salary_annual, preferred_currency"
+              "id, name, position, age, date_of_birth, nationality, image_url, club, club_logo, league, highlights, bio, contract_end_date, current_salary_annual, preferred_currency, instagram_handle"
             )
             .in("id", playerIds)
         : Promise.resolve({ data: [] as any[] }),
