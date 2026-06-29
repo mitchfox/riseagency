@@ -2045,6 +2045,9 @@ const RiseWithUs = () => {
             secondaryParagraph={settings.representation_subtitle_secondary}
             profileImageUrl={player.image_url || finalFallbackImage || null}
             isUnder18={!!settings.rise_with_us_under18}
+            assignedLang={assignedLang}
+            currentLang={lang}
+            onSwitchToEnglish={() => setLangOverride("en")}
             onDone={() => setIntroDone(true)}
           />
         )}
