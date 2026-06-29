@@ -2133,7 +2133,7 @@ function SectionShell({ title, eyebrow, children }: { title: string; eyebrow: st
   );
 }
 
-function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string }) {
+function FormBannerCard({ cfg, rows, titleTemplate, autoT }: { cfg: { window_size: number; stats: any[] }; rows: any[]; titleTemplate?: string; autoT?: (s?: string | null) => string }) {
   const { getGradeForScore, hasThresholds } = useFormGradeConfigs();
   const isPct = (k: string) => k.endsWith("_pct") || k.endsWith("%");
   const SUM = new Set(["goals", "assists", "xg", "xa"]);
@@ -2255,7 +2255,8 @@ function FormBannerCard({ cfg, rows, titleTemplate }: { cfg: { window_size: numb
   );
 }
 
-function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
+function InNumbersCard({ stats, title, autoT }: { stats: any[]; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const count = stats.length;
   const cols = count >= 4 ? "sm:grid-cols-4" : count === 3 ? "sm:grid-cols-3" : count === 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
   return (
@@ -2284,7 +2285,8 @@ function InNumbersCard({ stats, title }: { stats: any[]; title?: string }) {
   );
 }
 
-function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
+function SeasonStatsCard({ stats, title, autoT }: { stats: any[]; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const prettify = (s: string) =>
     (s ?? "")
       .replace(/_per90/gi, " /90")
@@ -2305,7 +2307,8 @@ function SeasonStatsCard({ stats, title }: { stats: any[]; title?: string }) {
   );
 }
 
-function StrengthsCard({ data, title }: { data: any; title?: string }) {
+function StrengthsCard({ data, title, autoT }: { data: any; title?: string; autoT?: (s?: string | null) => string }) {
+  const A = (s?: string | null) => (autoT ? autoT(s) : (s || ""));
   const items: string[] = Array.isArray(data)
     ? data.map((x) => (typeof x === "string" ? x : x?.title ?? x?.label ?? "")).filter(Boolean)
     : typeof data === "string"
