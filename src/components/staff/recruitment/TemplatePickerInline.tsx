@@ -33,6 +33,17 @@ let cached: Template[] | null = null;
 const fillMerge = (tpl: string, vars: Record<string, string>): string =>
   tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 
+/**
+ * Mirror ClubOutreachManager.applyOutreachLink — if a template was copied
+ * from a previous player it'll still contain that player's URL hard-coded.
+ * Rewrite any Rise/Lovable URL to the current player's offer link so the
+ * recipient always lands on the right invitation.
+ */
+const applyOfferLink = (text: string, url: string): string => {
+  if (!url) return text;
+  return text.replace(/https?:\/\/\S*(?:risefootballagency\.com|lovable\.app|lovableproject\.com)\S*/gi, url);
+};
+
 export const TemplatePickerInline = ({ playerName, position, club, age, offerSlug, scope, preferredTargetId, compact }: Props) => {
   const { targets } = useRecruitmentTargets();
   const [templates, setTemplates] = useState<Template[]>(cached || []);
@@ -77,7 +88,7 @@ export const TemplatePickerInline = ({ playerName, position, club, age, offerSlu
   const filled = useMemo(() => {
     if (!current) return "";
     const offerLink = offerSlug ? `https://risefootballagency.com/risewithus/${offerSlug}` : "";
-    return fillMerge(current.message_content, {
+    const merged = fillMerge(current.message_content, {
       name: playerName,
       first_name: playerName.split(" ")[0] || playerName,
       position: position || "",
@@ -85,6 +96,7 @@ export const TemplatePickerInline = ({ playerName, position, club, age, offerSlu
       age: age != null ? String(age) : "",
       offer_link: offerLink,
     });
+    return applyOfferLink(merged, offerLink);
   }, [current, playerName, position, club, age, offerSlug]);
 
   const copy = async () => {
