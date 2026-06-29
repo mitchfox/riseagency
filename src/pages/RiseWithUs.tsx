@@ -2089,7 +2089,7 @@ const RiseWithUs = () => {
     settings.intro_media
       .filter((m) => m.show && (m.position === "hub" || m.position === "both"))
       .map((m) => ({ kind: m.kind, url: m.url }));
-  const lang = player.portal_language || "en";
+  const lang = playerLang || "en";
   const ot = (key: string, fallback: string) => offerT(lang, key, fallback);
   const playerOfferT = (key: string, fallback: string) => {
     if (offerDict[key]?.en) return offerT(lang, key, fallback);
