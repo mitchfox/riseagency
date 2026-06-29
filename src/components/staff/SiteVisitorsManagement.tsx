@@ -46,11 +46,11 @@ interface SiteVisit {
   visited_at: string;
   hidden: boolean;
   events?: any[] | null;
-  sections?: Record<string, number> | null;
+  sections?: any;
   scroll_max_pct?: number | null;
   engaged_seconds?: number | null;
   viewport?: any;
-  video_stats?: Record<string, any> | null;
+  video_stats?: any;
 }
 
 export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
@@ -106,7 +106,7 @@ export const SiteVisitorsManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (error) throw error;
 
-      setVisits(data || []);
+      setVisits((data || []) as unknown as SiteVisit[]);
       
       // Calculate daily stats (excluding 0-duration visits from average)
       const uniqueVisitorIds = new Set(data?.map((v) => v.visitor_id) || []);
