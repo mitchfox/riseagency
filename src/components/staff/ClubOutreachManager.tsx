@@ -222,6 +222,11 @@ export default function ClubOutreachManager() {
         : [...prev, club];
       return next.sort((a, b) => a.club_name.localeCompare(b.club_name));
     });
+    setRows((prev) => prev.map((row) => (
+      row.club_id === club.id
+        ? { ...row, club: { ...(row.club ?? {}), ...club } as ClubLite }
+        : row
+    )));
   };
 
   const load = async () => {
@@ -233,7 +238,23 @@ export default function ClubOutreachManager() {
       supabase.from("club_outreach_link_players").select("link_id, player_id, position_slot, fit_recommendation, situation, sort_order, show_form, show_in_numbers, show_season_stats, show_strengths, season_data_mode, season_id, selected_video_ids, key_details, section_order"),
       supabase.from("club_outreach_communications").select("outreach_id"),
     ]);
-    const clubMap = new Map((clubRows ?? []).map((c: any) => [c.id, c]));
+    const clubList = [...((clubRows ?? []) as ClubLite[])];
+    const clubMap = new Map<string, ClubLite>(clubList.map((c) => [c.id, c]));
+    const missingClubIds = Array.from(new Set(
+      ((linkRows ?? []) as any[])
+        .map((r) => r.club_id)
+        .filter((id): id is string => !!id && !clubMap.has(id)),
+    ));
+    if (missingClubIds.length > 0) {
+      const { data: missingClubs } = await supabase
+        .from("club_map_positions")
+        .select("id, club_name, country, image_url")
+        .in("id", missingClubIds);
+      ((missingClubs ?? []) as ClubLite[]).forEach((c) => {
+        clubMap.set(c.id, c);
+        clubList.push(c);
+      });
+    }
     const byLink = new Map<string, LinkPlayerRow[]>();
     (linkPlayerRows ?? []).forEach((lp: any) => {
       const arr = byLink.get(lp.link_id) ?? [];
@@ -254,7 +275,7 @@ export default function ClubOutreachManager() {
       is_pending_strategy_draft: !!r.is_pending_strategy_draft,
     })));
     setPlayers((playerRows ?? []) as PlayerLite[]);
-    setClubs((clubRows ?? []) as ClubLite[]);
+    setClubs(clubList.sort((a, b) => a.club_name.localeCompare(b.club_name)));
     setLoading(false);
   };
 
