@@ -2272,11 +2272,11 @@ function InNumbersCard({ stats, title, autoT }: { stats: any[]; title?: string; 
               {s.value}
             </div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-white/75 leading-tight break-words whitespace-normal">
-              {s.label}
+              {A(s.label)}
             </div>
             {s.description && (
               <p className="text-[11px] text-white/55 leading-snug break-words whitespace-normal">
-                {s.description}
+                {A(s.description)}
               </p>
             )}
           </div>
@@ -2300,7 +2300,7 @@ function SeasonStatsCard({ stats, title, autoT }: { stats: any[]; title?: string
         {stats.map((s, i) => (
           <div key={i} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 flex flex-col items-center text-center min-w-0">
             <div className="text-2xl font-semibold text-[#cbb96b] leading-none">{s.value || "0"}</div>
-            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{prettify(s.header)}</div>
+            <div className="mt-1 text-[10px] uppercase tracking-wider text-white/60 leading-tight break-words whitespace-normal">{A(prettify(s.header))}</div>
           </div>
         ))}
       </div>
@@ -2322,7 +2322,7 @@ function StrengthsCard({ data, title, autoT }: { data: any; title?: string; auto
         {items.map((s, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-white/85">
             <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#cbb96b] flex-shrink-0" />
-            <span>{s}</span>
+            <span>{A(s)}</span>
           </li>
         ))}
       </ul>
