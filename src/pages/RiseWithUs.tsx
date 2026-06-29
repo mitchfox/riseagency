@@ -1954,6 +1954,10 @@ const RiseWithUs = () => {
   const [stage, setStage] = useState<"hub" | "portal" | "next">("hub");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [showWhyRiseDetail, setShowWhyRiseDetail] = useState(false);
+  // "I already have an agent" acknowledgement state. Once flipped we hide the
+  // button and show a translated thank-you note in its place.
+  const [haveAgentAck, setHaveAgentAck] = useState(false);
+  const [haveAgentSubmitting, setHaveAgentSubmitting] = useState(false);
   // Fallback profile image for the final "Next Step" screen when the
   // player has no `image_url` saved, we look up the first image they have
   // uploaded to the marketing gallery so the lockup never shows a blank
