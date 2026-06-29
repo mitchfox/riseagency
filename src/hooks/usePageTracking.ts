@@ -62,13 +62,28 @@ export const usePageTracking = () => {
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         if (duration >= 1 && localVisitId) {
-          supabase.functions.invoke("track-visit", {
-            body: {
-              visitId: localVisitId,
-              duration,
-              isInitial: false,
-            },
+          // Prefer sendBeacon — it's the only transport guaranteed to
+          // survive a tab close / navigation, which is exactly when this
+          // unmount fires for proposal pages. Falls back to fetch (which
+          // most browsers still ship through during pagehide) if beacon
+          // isn't available.
+          const fnUrl = `${(import.meta as any).env?.VITE_SUPABASE_URL ?? ""}/functions/v1/track-visit`;
+          const payload = JSON.stringify({
+            visitId: localVisitId,
+            duration,
+            isInitial: false,
           });
+          try {
+            if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function" && fnUrl) {
+              navigator.sendBeacon(fnUrl, new Blob([payload], { type: "text/plain" }));
+            } else {
+              supabase.functions.invoke("track-visit", {
+                body: { visitId: localVisitId, duration, isInitial: false },
+              });
+            }
+          } catch {
+            // Best-effort — ignore if the browser refuses the beacon.
+          }
         }
       };
 
