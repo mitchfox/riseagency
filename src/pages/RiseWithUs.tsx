@@ -1452,10 +1452,12 @@ const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.ma
 
 const IntroCinematic = ({
   fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone, isUnder18,
+  assignedLang, currentLang, onSwitchToEnglish,
 }: {
   fullName: string; lang: string; extraImages: string[];
   extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
   secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void; isUnder18?: boolean;
+  assignedLang?: string; currentLang?: string; onSwitchToEnglish?: () => void;
 }) => {
   const [phase, setPhase] = useState(0);
   const totalPhases = 4;
