@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -478,6 +478,49 @@ export default function MarketTablesTab() {
   // identified contact for (no saved TD/CS name and no matching role
   // contact in the network). Helps staff focus on the gaps.
   const [missingContactMode, setMissingContactMode] = useState(false);
+  // Logo upload (click a club crest to upload one). Writes to the
+  // shared `club-logos` bucket and updates club_map_positions.image_url
+  // so the same logo appears in the Coaching Database → Club Ratings tab.
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const [logoUploadingClubId, setLogoUploadingClubId] = useState<string | null>(null);
+  const [pendingLogoClub, setPendingLogoClub] = useState<ClubRow | null>(null);
+
+  const triggerLogoUpload = (club: ClubRow) => {
+    setPendingLogoClub(club);
+    setTimeout(() => logoInputRef.current?.click(), 30);
+  };
+
+  const handleLogoFileChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const club = pendingLogoClub;
+    if (logoInputRef.current) logoInputRef.current.value = "";
+    setPendingLogoClub(null);
+    if (!file || !club) return;
+    setLogoUploadingClubId(club.id);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const slug = club.club_name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+      const path = `${slug}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("club-logos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("club-logos").getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase
+        .from("club_map_positions")
+        .update({ image_url: publicUrl })
+        .eq("id", club.id);
+      if (updateError) throw updateError;
+      setClubs((prev) => prev.map((c) => (c.id === club.id ? { ...c, image_url: publicUrl } : c)));
+      toast.success(`Logo uploaded for ${club.club_name}`);
+    } catch (err: any) {
+      console.error("Logo upload failed:", err);
+      toast.error(err?.message ?? "Failed to upload logo");
+    } finally {
+      setLogoUploadingClubId(null);
+    }
+  };
   // Live activity log of additions / changes to the market table. Seeded with
   // the most recent saves and kept in sync via the realtime channel below so
   // every staff member sees teammates' edits as they happen.
