@@ -1,47 +1,42 @@
-## 1. Mobile vertical room for "Our Background" headshots
+### 1. LinkedIn button per contact on Market Tables
+- In `MarketTablesTab.tsx`, beside each named technical director / chief scout / role contact, render a LinkedIn icon button.
+- Blue brand colour when a `linkedin_url` exists on the contact (opens it in a new tab via `openExternalUrl`).
+- Greyscale (muted) when missing — click opens a small inline prompt to paste a LinkedIn URL, saved straight back to the same row (`club_map_positions` for named TD/CS, `club_network_contacts` for network role contacts) via partial upsert so we don't clobber concurrent edits.
 
-Both `RiseWithUs` (Our Background card on hub) and `RequestRepresentation.tsx` use the same split director card. On mobile only, increase the card's overall vertical height so the cutout heads have more breathing room without changing the desktop layout:
+### 2. Green tick on clubs with an existing outreach
+- Load all active `club_outreach_links` for the current season once (already partly fetched for Outreach Mode).
+- Build a `Set<club_id>` of clubs that have at least one non-archived link.
+- Render a small green check next to the club name in the Market Tables list (and keep the existing "Create club outreach" button working).
 
-- Bump the mobile card min-height (currently effectively driven by `h-[58%]` halves on a tight aspect ratio) so the diagonal halves can grow by ~80–120px.
-- Increase the mobile top/bottom half heights from `h-[58%]` to a taller share, and lift the headshot `h-[88%]` images so the head sits clearly inside its half rather than crowding the diagonal seam.
-- Apply the exact same change in both files so the mobile Our Background section matches across Rise With Us and Representation.
+### 3. Fix "Unknown club" on Club Outreach
+- Audit the resolver in `ClubOutreachManager.tsx` (`row.club = clubMap.get(r.club_id)`).
+- Even though all current `club_id` values resolve in the DB, the card still falls back to "Unknown club" when:
+  - `target_type` is `club` but `club_id` is null and only `prepared_for_name` is set (legacy / strategy drafts), or
+  - the cached `clubMap` is stale because `load()` hasn't refreshed after a new club was created in this session.
+- Fix by:
+  - Falling back through `row.club?.club_name → row.prepared_for_name → "Unknown club"`.
+  - Re-running `load()` (or merging the new club into `clubs`) immediately after the Create-Club flow returns, so newly created clubs resolve without a refresh.
+- Apply the same fallback in `OutreachStrategyTab.tsx` (line ~302).
 
-## 2. "& family" line for under-18 invitations (RiseWithUs only)
+### 4. Auto-created outreach from Market Tables → show selected club in the picker
+- When `MarketTablesTab.tsx` triggers "Create club outreach" for a known club, pass the `club_id` through to the new-outreach dialog and pre-select it in the Club selector so it visibly appears highlighted, not blank.
+- The same pre-selection flows into the prepared-for / club_id fields on save.
 
-In `src/pages/RiseWithUs.tsx` the phase 0 intro renders:
+### 5. Create-club-first flow when the club isn't in the outreach system
+- Currently every market-tables club has an `id` in `club_map_positions`, but some lack a logo / image.
+- New flow: when the user hits "Create club outreach" from Market Tables and the club has no `image_url` (or any minimum-info gap we define — logo missing is the practical case), first open the existing Create/Edit Club dialog in `ClubOutreachManager.tsx` pre-filled with the club name and id, so the user can upload a logo and confirm details.
+- On save of that dialog, automatically open the New Outreach dialog with that club pre-selected (item 4).
+- If a market-tables row truly has no `club_map_positions` entry yet, insert a stub row first using the same Create Club dialog, then continue into outreach creation.
 
-```
-An invitation to
-NAME
-```
+### 6. Manual Relationships list
+- `RelationshipsTab.tsx` currently lists every contact. Change behaviour:
+  - Default view shows only relationships the user has explicitly added (existing `outreach_relationships` rows are already the right table — we just stop auto-seeding from network contacts).
+  - Remove / disable any auto-population logic that mirrors all named TD / CS into relationships.
+  - On Market Tables, add a small "Add to Relationships" action next to each named contact (TD, CS, role contacts). Clicking it inserts an `outreach_relationships` row keyed to that contact (storing club_id + role + name + any phone/email/linkedin we already have) so the Relationships tab picks it up.
+  - Existing auto-populated rows that the user hasn't interacted with stay visible but can be removed individually; we don't bulk-delete them.
 
-When `settings.rise_with_us_under18` is true, render an additional line directly under the name, styled identically to the "An invitation to" eyebrow (same `font-bebas text-base sm:text-lg uppercase tracking-[0.3em] text-primary`):
-
-```
-& family
-```
-
-Add a new translation key `and_family` to the `offerDict` block (lines ~82–130) covering all 12 supported languages (en, es, pt, fr, de, it, pl, cs, ru, tr, hr, no), e.g. en "& family", es "y familia", pt "e família", fr "et famille", de "& Familie", it "e famiglia", pl "i rodzina", cs "a rodina", ru "и семья", tr "ve aile", hr "i obitelj", no "og familie". Render via `offerT(lang, "and_family", "& family")`.
-
-## 3. Focal point actually applies to the intro images
-
-The focal point set in `PlayerOfferCustomiser` is saved as `objectPosition: "x% y%"` per intro media item, but in `RiseWithUs.tsx` the `extraIntro` array prepends `player.image_url` and `finalFallbackImage` (lines 1957–1966) without any `objectPosition`. Those priority items get cycled first, so when staff set a focal point on an intro image, what shows on screen is still the un-cropped player/fallback image with the default `50% 35%`.
-
-Fix:
-
-- When building `priorityIntroImages`, attach the matching `objectPosition` from `settings.intro_media` if a row with the same `url` exists, so the player headshot honours the focal point chosen for it.
-- For player/fallback images not present in `intro_media`, fall back to `50% 50%` (true centre) instead of the current `50% 35%` so portrait shots aren't always cropped low.
-- Make sure the `objectPosition` is the source of truth: pass it through the `motion.img`/`motion.video` style and stop letting the `mobileStyle` default override it (line 1634 already passes it, but confirm the merged style in `renderMedia` uses the per-image value rather than `mobileStyle`'s fallback).
-
-This way the focal point selected in the staff customiser visibly recenters the image on the live Rise With Us page.
-
-## 4. Shared scouting translations on Representation page
-
-`RequestRepresentation.tsx` is missing the localised "scouting" copy that Rise With Us uses (e.g. `stood_out_line`, `differentiate_line`, `rwu_private_footer`, scouting hub strings). Wire the representation page to read the same translation keys from `offerDict`/`playerOfferT` so the equivalent paragraphs render in the player's `portal_language` instead of hard-coded English. Specifically:
-
-- Reuse `offerT(lang, "stood_out_line", ...)` and `offerT(lang, "differentiate_line", ...)` wherever the representation page repeats those scouting paragraphs.
-- Ensure section labels that exist in both pages (Our Background subtitle, Meet our Directors, Vision, Network coverage, calendar day/month names) read from the shared dictionary so the representation page matches the Rise With Us localisation.
-
-## 5. Out of scope
-
-No changes to staff portal, database schema, or non-presentation logic. Only the two public pages and the shared translation dictionary entry for `and_family`.
+### Technical notes
+- All Supabase fetches that span clubs continue to use `.limit(10000)` to avoid the 1000-row default.
+- LinkedIn URL writes use partial upsert (only the `linkedin_url` column) so concurrent staff edits to other columns are preserved, consistent with the existing Market Tables concurrency model.
+- New "Add to Relationships" inserts are idempotent by `(club_id, contact_name, role)` to avoid duplicates.
+- No schema migrations expected if `club_network_contacts` and `club_map_positions` already have a `linkedin_url` column; I'll confirm in build mode and add a column via migration only if missing.

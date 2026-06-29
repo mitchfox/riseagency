@@ -807,6 +807,7 @@ export type Database = {
       }
       club_map_positions: {
         Row: {
+          chief_scout_linkedin_url: string | null
           club_name: string
           country: string | null
           created_at: string
@@ -817,11 +818,13 @@ export type Database = {
           league: string | null
           league_level: string | null
           longitude: number | null
+          technical_director_linkedin_url: string | null
           updated_at: string
           x_position: number | null
           y_position: number | null
         }
         Insert: {
+          chief_scout_linkedin_url?: string | null
           club_name: string
           country?: string | null
           created_at?: string
@@ -832,11 +835,13 @@ export type Database = {
           league?: string | null
           league_level?: string | null
           longitude?: number | null
+          technical_director_linkedin_url?: string | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
         }
         Update: {
+          chief_scout_linkedin_url?: string | null
           club_name?: string
           country?: string | null
           created_at?: string
@@ -847,6 +852,7 @@ export type Database = {
           league?: string | null
           league_level?: string | null
           longitude?: number | null
+          technical_director_linkedin_url?: string | null
           updated_at?: string
           x_position?: number | null
           y_position?: number | null
@@ -866,6 +872,7 @@ export type Database = {
           is_favourite: boolean
           last_contacted_at: string | null
           latitude: number | null
+          linkedin_url: string | null
           longitude: number | null
           name: string
           notes: string | null
@@ -890,6 +897,7 @@ export type Database = {
           is_favourite?: boolean
           last_contacted_at?: string | null
           latitude?: number | null
+          linkedin_url?: string | null
           longitude?: number | null
           name: string
           notes?: string | null
@@ -914,6 +922,7 @@ export type Database = {
           is_favourite?: boolean
           last_contacted_at?: string | null
           latitude?: number | null
+          linkedin_url?: string | null
           longitude?: number | null
           name?: string
           notes?: string | null
