@@ -661,8 +661,13 @@ export default function ClubOutreachProposal() {
     if (map && map[label]) return map[label];
     return autoT(label);
   };
+  // Pre-warm: translations run against the proposal's assigned language as
+  // soon as the payload loads, regardless of whether the viewer has toggled
+  // the language pill. That way the toggle is instant and nothing flips
+  // mid-scroll.
+  const assignedLangEarly = (data?.link?.language as string | undefined) || "en";
   const dynamicStringsForTranslation = useMemo<string[]>(() => {
-    if (langOverride === "en") return [];
+    if (assignedLangEarly === "en") return [];
     const arr: string[] = [];
     const push = (s?: string | null) => { if (s && typeof s === "string" && s.trim()) arr.push(s); };
     // Static UI strings (fallback for links missing the new bundle keys)
@@ -719,10 +724,10 @@ export default function ClubOutreachProposal() {
       if (fitEn && !fits[current.player?.id ?? ""]) push(fitEn);
     }
     return arr;
-  }, [langOverride, data, current]);
+  }, [assignedLangEarly, data, current]);
   const { translate: aiTranslate } = useAutoTranslateStrings(
     dynamicStringsForTranslation,
-    langOverride === "en" ? null : langOverride,
+    assignedLangEarly === "en" ? null : assignedLangEarly,
   );
   const autoT = (s?: string | null): string => {
     if (!s) return s || "";

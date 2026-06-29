@@ -48,11 +48,22 @@ export function useAutoTranslateStrings(strings: (string | null | undefined)[], 
 
     (async () => {
       try {
+        const CHUNK = 60;
+        const chunks: string[][] = [];
+        for (let i = 0; i < missing.length; i += CHUNK) chunks.push(missing.slice(i, i + CHUNK));
+        // Fire all chunks in parallel — the edge function handles batching
+        // fine and serial round-trips were the bottleneck.
+        const results = await Promise.all(
+          chunks.map((chunk) =>
+            supabase.functions
+              .invoke("ai-translate-batch", { body: { texts: chunk } })
+              .then((r) => ({ chunk, data: r.data, error: r.error }))
+              .catch((error) => ({ chunk, data: null, error }))
+          )
+        );
         const next: Record<string, string> = { ...map };
-        for (let i = 0; i < missing.length; i += 18) {
-          const chunk = missing.slice(i, i + 18);
-          const { data, error } = await supabase.functions.invoke("ai-translate-batch", { body: { texts: chunk } });
-          if (error) throw error;
+        for (const { chunk, data, error } of results) {
+          if (error || !data) continue;
           const translations = (data?.translations as Array<Record<string, string>>) || [];
           chunk.forEach((src, idx) => {
             const v = translations[idx]?.[col];
