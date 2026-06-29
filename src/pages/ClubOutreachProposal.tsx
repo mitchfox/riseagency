@@ -2711,7 +2711,7 @@ function MatchByMatchCard({
   };
 
   return (
-    <SectionShell title="Match-By-Match Data" eyebrow="06">
+    <SectionShell title={T("mbm.title", "Match-By-Match Data")} eyebrow="06">
       <Tabs defaultValue={defaultCat}>
         <div className="flex flex-wrap items-center gap-2">
           <TabsList className="bg-white/[0.04] border border-white/10 flex flex-wrap h-auto">
@@ -2721,7 +2721,7 @@ function MatchByMatchCard({
                 value={c.category}
                 className="text-[11px] data-[state=active]:bg-[#cbb96b]/20 data-[state=active]:text-[#cbb96b]"
               >
-                {c.category}
+                {T(`mbm.cat.${c.category}`, c.category)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -2737,7 +2737,7 @@ function MatchByMatchCard({
                     : "text-white/60 hover:text-white/80"
                 }`}
               >
-                {m === "per90" ? "Per 90" : "Raw"}
+                {m === "per90" ? T("mbm.per90", "Per 90") : T("mbm.raw", "Raw")}
               </button>
             ))}
           </div>
@@ -2756,7 +2756,7 @@ function MatchByMatchCard({
             if (visibleMetrics.length === 0) {
               return (
                 <div className="rounded-lg border border-white/10 px-3 py-4 text-center text-[11px] text-white/40">
-                  No data available.
+                  {T("mbm.empty", "No data available.")}
                 </div>
               );
             }
@@ -2765,11 +2765,11 @@ function MatchByMatchCard({
               <table className="w-full text-[11px] min-w-[640px]">
                 <thead>
                   <tr className="bg-white/[0.04] text-white/60">
-                    <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">Match</th>
+                    <th className="text-left px-2.5 py-2 font-medium sticky left-0 bg-white/[0.04] z-10">{T("mbm.match", "Match")}</th>
                     <th className="px-1.5 py-2 font-medium w-9" aria-label="Play"></th>
                     {visibleMetrics.map((m) => (
                       <th key={m.key} className="text-center px-2.5 py-2 font-medium whitespace-nowrap">
-                        {m.label}
+                        {L(m.label)}
                       </th>
                     ))}
                   </tr>
@@ -2789,7 +2789,7 @@ function MatchByMatchCard({
                           ) : null}
                           <div>
                             <div className="text-white/90 whitespace-nowrap">
-                              {a.opponent || "-"}
+                              {A(a.opponent) || "-"}
                             </div>
                             {a.result ? (
                               <div className="text-white/40 text-[10px] whitespace-nowrap">
