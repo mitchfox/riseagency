@@ -20,7 +20,7 @@ import RelationshipsTab from "@/components/staff/outreach/RelationshipsTab";
 import MarketTablesTab from "@/components/staff/outreach/MarketTablesTab";
 import ProposalVisitorsBell, { type ProposalVisit } from "@/components/staff/outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "@/components/staff/outreach/ViewedVisitorsExpansion";
-import { isRealNonUkVisit } from "@/lib/visitorFilters";
+import { isRealNonUkVisit, isViewableProposalVisit } from "@/lib/visitorFilters";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   DEFAULT_KEY_DETAILS,
@@ -142,6 +142,7 @@ interface OutreachRow {
   alternate_profile_link_ids?: string[] | null;
   alternate_profiles_blurb?: string | null;
   season_id?: string | null;
+  manually_viewed_at?: string | null;
 }
 
 type OutreachMode = 'club' | 'agent';
