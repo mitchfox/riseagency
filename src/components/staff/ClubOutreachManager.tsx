@@ -482,24 +482,34 @@ export default function ClubOutreachManager() {
   }, [filtered]);
 
   // Cards (across all statuses, in the current mode) that have at least
-  // one non-UK visit. Sorted by most recent visit first.
+  // one viewable visit, OR have been manually marked as viewed by staff.
+  // Sorted by most recent activity first.
   const viewedRows = useMemo(() => {
-    const withVisits = filtered
+    const withActivity = filtered
       .map((r) => ({ row: r, vs: visitsByShortId.get(r.short_id) ?? [] }))
-      .filter((x) => x.vs.length > 0);
-    withVisits.sort((a, b) => {
-      const ta = Math.max(...a.vs.map((v) => new Date(v.visited_at).getTime()));
-      const tb = Math.max(...b.vs.map((v) => new Date(v.visited_at).getTime()));
+      .filter((x) => x.vs.length > 0 || !!x.row.manually_viewed_at);
+    withActivity.sort((a, b) => {
+      const tsA = [
+        ...a.vs.map((v) => new Date(v.visited_at).getTime()),
+        a.row.manually_viewed_at ? new Date(a.row.manually_viewed_at).getTime() : 0,
+      ];
+      const tsB = [
+        ...b.vs.map((v) => new Date(v.visited_at).getTime()),
+        b.row.manually_viewed_at ? new Date(b.row.manually_viewed_at).getTime() : 0,
+      ];
+      const ta = Math.max(...tsA, 0);
+      const tb = Math.max(...tsB, 0);
       return tb - ta;
     });
-    return withVisits;
+    return withActivity;
   }, [filtered, visitsByShortId]);
 
   // Only visits attached to a current outreach row in this mode count
-  // towards the bell — keeps it scoped to what staff are actually working on.
+  // towards the bell — keeps it scoped to what staff are actually working
+  // on. Bell stays strict non-UK so it never pulses on unresolved geo.
   const scopedVisits = useMemo(() => {
     const shortIds = new Set(filtered.map((r) => r.short_id));
-    return visits.filter((v) => {
+    return visits.filter(isRealNonUkVisit).filter((v) => {
       const m = v.page_path.match(/^\/(?:club-proposal|clubs|agents)\/([^/]+)/);
       return m ? shortIds.has(m[1]) : false;
     });
