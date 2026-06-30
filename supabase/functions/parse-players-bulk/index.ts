@@ -8,24 +8,41 @@ const corsHeaders = {
 
 interface ImageInput { base64: string; mimeType?: string }
 
-const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of football players from the supplied text and/or screenshots. For each player infer the most likely values for: name, position (use short codes like GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF, ST), nationality (country name in English), date_of_birth (YYYY-MM-DD if visible, otherwise null), age (integer if visible, otherwise null), club, league, instagram_handle (without @), notes (short free-form text with anything else useful).
+const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of football players from the supplied text and/or screenshots. For each player infer the most likely values for: name, position (use short codes like GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF, ST), nationality (country name in English), date_of_birth (YYYY-MM-DD if visible, otherwise null), age (integer if visible, otherwise null), club, league, instagram_handle (without @), shirt_number (integer if visible, otherwise null), team_side ("left" or "right" if the image shows two teams, otherwise null), name_is_stub (true if the label is only an initial + surname like "B. Szywała", otherwise false), notes (short free-form text with anything else useful).
 
 Rules:
 - Use UK English.
 - Never invent a date of birth, club or league if not present in the source or supplied context; leave null.
 - Position must be a recognised football abbreviation.
-- If the screenshot is a formation graphic, infer positions from the player's spatial role even when no position label is printed. Read the pitch like a football line-up: keeper closest to goal, centre backs central in the defensive line, full backs wide, holding midfielders behind central/attacking midfielders, wingers wide high, striker/centre forward highest central.
-- If a formation is shown, map each name to the nearest football role from that formation instead of returning null positions.
+- If the screenshot is a formation graphic, ALWAYS infer positions from each player's spatial role even when no position label is printed. Read the pitch like a football line-up: keeper closest to goal, centre backs central in the defensive line, full backs wide, holding midfielders behind central/attacking midfielders, wingers wide high, striker/centre forward highest central. Position must never be null when a formation is visible.
+- Formation graphics often show TWO teams split by a vertical halfway line. Treat each half as its own team: names on the left half are team_side "left", names on the right half are team_side "right". Each team has its own goalkeeper, defence, midfield and attack — do not merge them.
 - If a club, team, age group, competition or league header is visible, apply that context to every player it clearly belongs to.
 - Extract dates of birth from any visible DOB/birth/date column or player card and normalise formats like DD.MM.YYYY, DD/MM/YYYY, DD-MM-YYYY or Month-name dates to YYYY-MM-DD.
+- Capture shirt numbers when shown next to the name (e.g. "10 B. Szywała" → shirt_number 10).
+- When a label is just an initial + surname (e.g. "B. Szywała", "(c) K. Cecuła", "Š. Žužić"), set name_is_stub = true and keep the surname intact with diacritics. Strip captain markers like "(c)" from the name itself but keep them in notes.
 - If a row clearly isn't a player (e.g. header, total), skip it.
 - Return STRICT JSON only, matching the schema. No prose, no code fences.
 
-Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "notes": string|null } ] }`;
+Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "shirt_number": number|null, "team_side": string|null, "name_is_stub": boolean, "notes": string|null } ] }`;
+
+const LOOKUP_SYSTEM_PROMPT = `You are a football database lookup. Given an "Initial. Surname" stub plus any context (shirt number, team side, league/age-group hint), identify the most likely real footballer this refers to using your training knowledge of professional and youth football worldwide.
+
+Rules:
+- Prefer well-documented players (senior pros, full youth internationals, top-tier academy players).
+- Use diacritics correctly in the full name (e.g. "Bartosz Szywała", "Karol Cecuła", "Šimun Žužić").
+- Return null for any field you are not confident about. Do NOT guess clubs or dates.
+- Position must be a short code (GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF, ST).
+- date_of_birth in YYYY-MM-DD.
+- confidence is 0.0–1.0; only return data you would defend.
+- Return STRICT JSON only.
+
+Schema: { "full_name": string|null, "date_of_birth": string|null, "nationality": string|null, "current_club": string|null, "current_league": string|null, "position": string|null, "confidence": number }`;
 
 const cleanName = (value: unknown) => String(value || '').trim().replace(/\s+/g, ' ');
 const normName = (value: unknown) => cleanName(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const hasValue = (value: unknown) => value !== null && value !== undefined && String(value).trim() !== '';
+
+const isInitialStub = (name: string) => /^\(?[A-Za-zÀ-ž]\)?\.?\s*[A-Za-zÀ-ž'’\-]+/.test(name.trim()) && name.trim().split(/\s+/).filter((part) => part.replace(/[().]/g, '').length > 1).length <= 1;
 
 const mergePlayer = (player: any, match: any) => {
   if (!match) return player;
@@ -172,6 +189,67 @@ const enrichFromTransfermarkt = async (player: any): Promise<any> => {
   return next;
 };
 
+const lookupCache = new Map<string, any>();
+
+const webLookupPlayer = async (player: any, apiKey: string, instruction?: string): Promise<any> => {
+  const rawName = cleanName(player?.name);
+  if (!rawName) return player;
+  const stub = player?.name_is_stub === true || isInitialStub(rawName);
+  // Run lookup for stubs OR when we are missing important fields
+  const missing = !hasValue(player.club) || !hasValue(player.league) || !hasValue(player.date_of_birth) || !hasValue(player.nationality);
+  if (!stub && !missing) return player;
+
+  const key = `${normName(rawName)}|${player?.shirt_number ?? ''}|${player?.team_side ?? ''}`;
+  let lookup: any = lookupCache.get(key);
+  if (!lookup) {
+    const context: string[] = [];
+    if (player?.shirt_number) context.push(`shirt #${player.shirt_number}`);
+    if (player?.team_side) context.push(`${player.team_side} team in the formation graphic`);
+    if (player?.position) context.push(`position ${player.position}`);
+    if (player?.club) context.push(`club ${player.club}`);
+    if (player?.league) context.push(`league ${player.league}`);
+    if (instruction) context.push(`extra context: ${instruction}`);
+    const userMsg = `Stub name: ${rawName}\n${context.length ? 'Context: ' + context.join('; ') : 'No extra context.'}\nReturn the matching footballer as JSON.`;
+    try {
+      const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: LOOKUP_SYSTEM_PROMPT },
+            { role: 'user', content: userMsg },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        const raw = j?.choices?.[0]?.message?.content || '{}';
+        try { lookup = JSON.parse(raw); } catch { lookup = null; }
+      }
+    } catch (err) {
+      console.error('webLookupPlayer failed', err);
+    }
+    lookupCache.set(key, lookup);
+  }
+
+  if (!lookup || typeof lookup !== 'object') return player;
+  const conf = typeof lookup.confidence === 'number' ? lookup.confidence : 0;
+  if (conf < 0.55) return player;
+
+  const next = { ...player, _web_enriched: true };
+  if (lookup.full_name && (stub || cleanName(lookup.full_name).toLowerCase().includes(rawName.replace(/^.*?\.\s*/, '').toLowerCase()))) {
+    next.name = cleanName(lookup.full_name);
+  }
+  if (!hasValue(next.date_of_birth) && lookup.date_of_birth) next.date_of_birth = lookup.date_of_birth;
+  if (!hasValue(next.nationality) && lookup.nationality) next.nationality = lookup.nationality;
+  if (!hasValue(next.club) && lookup.current_club) next.club = lookup.current_club;
+  if (!hasValue(next.league) && lookup.current_league) next.league = lookup.current_league;
+  if (!hasValue(next.position) && lookup.position) next.position = lookup.position;
+  return next;
+};
+
 const runWithConcurrency = async <T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>): Promise<R[]> => {
   const results: R[] = new Array(items.length);
   let i = 0;
@@ -245,6 +323,16 @@ serve(async (req) => {
         const existing = await findExistingPlayer(supabase, player?.name);
         return mergePlayer(player, existing);
       }));
+    }
+
+    // Web lookup: expand "Initial. Surname" stubs and backfill missing fields
+    // by asking the model to identify the player from its football knowledge.
+    if (players.length) {
+      try {
+        players = await runWithConcurrency(players, 4, (p) => webLookupPlayer(p, LOVABLE_API_KEY, instruction));
+      } catch (err) {
+        console.error('Web lookup failed', err);
+      }
     }
 
     // Web enrichment: fill missing club/league/DOB/position by looking the
