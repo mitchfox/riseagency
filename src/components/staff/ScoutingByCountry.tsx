@@ -18,13 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search } from "lucide-react";
+import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search, ChevronDown, Database, Video, ArrowLeft, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
 
@@ -67,6 +61,8 @@ export const ScoutingByCountry = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
+  const [openCountry, setOpenCountry] = useState<string | null>(null);
+  const [openAges, setOpenAges] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -102,6 +98,40 @@ export const ScoutingByCountry = () => {
     if (!q) return all;
     return all.filter((c) => c.toLowerCase().includes(q));
   }, [grouped, search]);
+
+  const classifyLink = (l: LinkRow): "data" | "video" | "other" => {
+    const blob = `${l.label} ${l.notes ?? ""}`.toLowerCase();
+    if (/\b(video|tv|fotbaltv|tvcom|veo|stream|highlight|záznam|zaznam)\b/.test(blob)) return "video";
+    if (/\b(data|stats|statistik|table|tabulka|standings|fixtures|results|profile|player|subjekt)\b/.test(blob)) return "data";
+    return "other";
+  };
+
+  const groupCountryLinks = (countryLinks: LinkRow[]) => {
+    // Bucket by age_group, then within each age bucket split into "leagues" using
+    // sort_order as a soft grouping plus the label root before "(".
+    const byAge = new Map<string, LinkRow[]>();
+    for (const l of countryLinks) {
+      if (!byAge.has(l.age_group)) byAge.set(l.age_group, []);
+      byAge.get(l.age_group)!.push(l);
+    }
+    const ordered = [...AGE_GROUPS, ...Array.from(byAge.keys()).filter((k) => !AGE_GROUPS.includes(k as any))]
+      .filter((age, i, arr) => arr.indexOf(age) === i && byAge.has(age));
+    return ordered.map((age) => {
+      const items = byAge.get(age)!;
+      // group by league root (label before the first "(" or " — ")
+      const leagues = new Map<string, LinkRow[]>();
+      for (const l of items) {
+        const root = l.label.split(/\(|—|-\s/)[0].trim() || l.label;
+        if (!leagues.has(root)) leagues.set(root, []);
+        leagues.get(root)!.push(l);
+      }
+      return {
+        age,
+        leagues: Array.from(leagues.entries()).map(([name, ls]) => ({ name, links: ls })),
+        total: items.length,
+      };
+    });
+  };
 
   const saveDraft = async () => {
     if (!editing) return;
@@ -160,98 +190,151 @@ export const ScoutingByCountry = () => {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Save the links you use to get to video and data for each country's youth and senior leagues. Click a country to view or add links.
+        Click a country to open its scouting dossier. Age groups collapse inwards; each league offers Data and Video shortcuts.
       </p>
 
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading...</div>
       ) : (
-        <Accordion type="multiple" className="w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
           {filteredCountries.map((country) => {
             const countryLinks = grouped.get(country) || [];
-            const byAge = new Map<string, LinkRow[]>();
-            for (const l of countryLinks) {
-              if (!byAge.has(l.age_group)) byAge.set(l.age_group, []);
-              byAge.get(l.age_group)!.push(l);
-            }
             const flag = getCountryFlagUrl(country);
+            const has = countryLinks.length > 0;
             return (
-              <AccordionItem key={country} value={country} className="border-border">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3 w-full">
-                    <img src={flag} alt="" className="w-6 h-4 object-cover rounded-sm" />
-                    <span className="font-medium">{country}</span>
-                    <span className="text-xs text-muted-foreground ml-auto mr-2">
+              <button
+                key={country}
+                onClick={() => { setOpenCountry(country); setOpenAges({}); }}
+                className={`group relative overflow-hidden rounded-xl border ${
+                  has ? "border-[hsl(var(--rise-gold)/0.4)]" : "border-border/60"
+                } bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm p-3 text-left transition-all hover:border-[hsl(var(--rise-gold))] hover:shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]`}
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-[hsl(var(--rise-gold)/0.08)] to-transparent pointer-events-none" />
+                <div className="flex items-center gap-2.5 relative">
+                  <img src={flag} alt="" className="w-7 h-5 object-cover rounded-sm ring-1 ring-border/50" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{country}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       {countryLinks.length} link{countryLinks.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-2">
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditing(blankDraft(country))}
-                      >
-                        <Plus className="h-4 w-4 mr-1.5" /> Add link
-                      </Button>
                     </div>
-
-                    {countryLinks.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">
-                        No links yet. Add your first one to start building this country's scouting toolkit.
-                      </p>
-                    ) : (
-                      [...AGE_GROUPS, ...Array.from(byAge.keys()).filter(k => !AGE_GROUPS.includes(k as any))]
-                        .filter((age, i, arr) => arr.indexOf(age) === i && byAge.has(age))
-                        .map((age) => (
-                          <div key={age} className="space-y-2">
-                            <h4 className="text-sm font-semibold text-[hsl(var(--rise-gold))] uppercase tracking-wide">
-                              {age}
-                            </h4>
-                            <div className="grid gap-2">
-                              {byAge.get(age)!.map((l) => (
-                                <Card key={l.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <a
-                                      href={l.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm font-medium text-foreground hover:text-[hsl(var(--rise-gold))] inline-flex items-center gap-1.5"
-                                    >
-                                      {l.label}
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                    {l.notes && (
-                                      <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{l.notes}</p>
-                                    )}
-                                    <p className="text-[10px] text-muted-foreground truncate mt-0.5">{l.url}</p>
-                                  </div>
-                                  <div className="flex gap-1 shrink-0">
-                                    <Button size="icon" variant="ghost" onClick={() => setEditing(l)}>
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" onClick={() => removeLink(l.id)}>
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                </Card>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                    )}
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                </div>
+              </button>
             );
           })}
-        </Accordion>
+        </div>
       )}
 
+      {/* Country dossier modal */}
+      <Dialog open={!!openCountry} onOpenChange={(o) => !o && setOpenCountry(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden border-[hsl(var(--rise-gold)/0.3)] bg-gradient-to-br from-background via-background to-[hsl(var(--rise-gold)/0.04)]">
+          {openCountry && (() => {
+            const countryLinks = grouped.get(openCountry) || [];
+            const ageGroups = groupCountryLinks(countryLinks);
+            const flag = getCountryFlagUrl(openCountry);
+            return (
+              <div className="flex flex-col max-h-[85vh]">
+                {/* Glossy header */}
+                <div className="relative px-6 py-5 border-b border-border/60 bg-gradient-to-r from-[hsl(var(--rise-gold)/0.12)] via-transparent to-[hsl(var(--rise-gold)/0.06)]">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--rise-gold))] to-transparent opacity-60" />
+                  <div className="flex items-center gap-4">
+                    <img src={flag} alt="" className="w-12 h-8 object-cover rounded ring-2 ring-[hsl(var(--rise-gold)/0.4)] shadow-lg" />
+                    <div className="flex-1 min-w-0">
+                      <DialogTitle className="text-xl font-bold tracking-tight">{openCountry}</DialogTitle>
+                      <div className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">
+                        Scouting dossier · {countryLinks.length} resource{countryLinks.length === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[hsl(var(--rise-gold)/0.5)] hover:bg-[hsl(var(--rise-gold)/0.1)]"
+                      onClick={() => setEditing(blankDraft(openCountry))}
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" /> Add link
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Scrollable body */}
+                <div className="overflow-y-auto px-4 sm:px-6 py-5 space-y-2">
+                  {countryLinks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic text-center py-12">
+                      No links yet. Add your first one to start building {openCountry}'s scouting toolkit.
+                    </p>
+                  ) : (
+                    ageGroups.map(({ age, leagues, total }) => {
+                      const isOpen = !!openAges[age];
+                      return (
+                        <div
+                          key={age}
+                          className="rounded-xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 overflow-hidden"
+                        >
+                          <button
+                            onClick={() => setOpenAges((s) => ({ ...s, [age]: !s[age] }))}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[hsl(var(--rise-gold)/0.05)] transition-colors"
+                          >
+                            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[hsl(var(--rise-gold)/0.25)] to-[hsl(var(--rise-gold)/0.05)] border border-[hsl(var(--rise-gold)/0.3)] flex items-center justify-center text-[10px] font-bold tracking-wider text-[hsl(var(--rise-gold))]">
+                              {age}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <div className="text-sm font-semibold">{age === "General" ? "General resources" : `${age} football`}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {leagues.length} league{leagues.length === 1 ? "" : "s"} · {total} link{total === 1 ? "" : "s"}
+                              </div>
+                            </div>
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+
+                          {isOpen && (
+                            <div className="px-3 pb-3 space-y-2 border-t border-border/40 pt-3">
+                              {leagues.map((league) => {
+                                const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
+                                const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
+                                const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
+                                return (
+                                  <div
+                                    key={league.name}
+                                    className="rounded-lg border border-border/50 bg-background/60 p-3"
+                                  >
+                                    <div className="flex items-start justify-between gap-3 mb-2">
+                                      <div className="font-medium text-sm truncate">{league.name}</div>
+                                      <div className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-wider">
+                                        {league.links.length} link{league.links.length === 1 ? "" : "s"}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {dataLinks.map((l) => (
+                                        <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
+                                      ))}
+                                      {videoLinks.map((l) => (
+                                        <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
+                                      ))}
+                                      {otherLinks.map((l) => (
+                                        <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl z-[110]">
           <DialogHeader>
             <DialogTitle>
               {editing?.id ? "Edit link" : "Add link"} — {editing?.country}
