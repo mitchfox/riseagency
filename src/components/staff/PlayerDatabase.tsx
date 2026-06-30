@@ -774,21 +774,7 @@ export const PlayerDatabase = () => {
       case 'fit':
         return (
           <TableCell key={key} className="py-1.5 text-center">
-            <FitScoreBadge
-              player={{
-                position: player.position,
-                age: player.age,
-                date_of_birth: player.date_of_birth,
-                nationality: player.nationality,
-                current_club: player.current_club,
-                club_country: clubCountry,
-                club_first_team_rating: clubRatingVal as any,
-                messaged: player.messaged,
-                response_received: player.response_received,
-                parent_approval: player.parent_approval,
-              }}
-              scope={player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined}
-            />
+            <MiniFitBadge score={fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0} />
           </TableCell>
         );
       case 'name':
