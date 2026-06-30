@@ -2097,7 +2097,7 @@ const Staff = () => {
                 <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <ErrorBoundary>
                     <Suspense fallback={<div className="rounded-lg border border-[hsl(var(--rise-gold)/0.25)] p-3 text-xs text-muted-foreground">Loading add players…</div>}>
-                      <PlayerAddMode initialMode={playerDatabaseInitialAddMode} onExit={() => setPlayerDatabaseAddModeOpen(false)} />
+                      <PlayerAddMode key={playerDatabaseInitialAddMode} initialMode={playerDatabaseInitialAddMode} onExit={() => setPlayerDatabaseAddModeOpen(false)} />
                     </Suspense>
                   </ErrorBoundary>
                 </div>
