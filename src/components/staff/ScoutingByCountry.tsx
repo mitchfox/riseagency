@@ -672,8 +672,8 @@ export const ScoutingByCountry = () => {
         <div className="text-sm text-muted-foreground">Loading...</div>
       ) : (
         <div className="space-y-2">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-            {filteredCountries.map((country) => {
+          <div className={openCountry ? "" : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"}>
+            {(openCountry ? filteredCountries.filter((c) => c === openCountry) : filteredCountries).map((country) => {
               const countryLinks = grouped.get(country) || [];
               const flag = getCountryFlagUrl(country);
               const has = countryLinks.length > 0;
@@ -682,20 +682,23 @@ export const ScoutingByCountry = () => {
                 <button
                   key={country}
                   onClick={() => setOpenCountry(isOpen ? null : country)}
-                  className={`group relative overflow-hidden rounded-xl border ${
+                  className={`group relative overflow-hidden rounded-xl border ${isOpen ? "w-full" : ""} ${
                     isOpen
-                      ? "border-[hsl(var(--rise-gold))] shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]"
+                      ? "border-[hsl(var(--rise-gold))] shadow-[0_0_40px_-8px_hsl(var(--rise-gold)/0.6)]"
                       : has
                       ? "border-[hsl(var(--rise-gold)/0.4)]"
                       : "border-border/60"
-                  } bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm p-2.5 text-left transition-all hover:border-[hsl(var(--rise-gold))] hover:shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]`}
+                  } bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm ${isOpen ? "p-4" : "p-2.5"} text-left transition-all hover:border-[hsl(var(--rise-gold))] hover:shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]`}
                 >
+                  {isOpen && (
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--rise-gold))] to-transparent opacity-70" />
+                  )}
                   <div className="flex items-center gap-2 relative min-w-0">
-                    <img src={flag} alt="" className="w-6 h-4 object-cover rounded-sm ring-1 ring-border/50 shrink-0" />
+                    <img src={flag} alt="" className={`${isOpen ? "w-10 h-7" : "w-6 h-4"} object-cover rounded-sm ring-1 ring-[hsl(var(--rise-gold)/0.4)] shrink-0`} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[12px] sm:text-sm font-medium truncate">{country}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        {countryLinks.length} link{countryLinks.length === 1 ? "" : "s"}
+                      <div className={`${isOpen ? "text-base sm:text-lg" : "text-[12px] sm:text-sm"} font-semibold truncate`}>{country}</div>
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {isOpen ? "Scouting dossier · " : ""}{countryLinks.length} resource{countryLinks.length === 1 ? "" : "s"}
                       </div>
                     </div>
                     <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
