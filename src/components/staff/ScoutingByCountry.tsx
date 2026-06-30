@@ -477,6 +477,9 @@ export const ScoutingByCountry = () => {
   const [selectedAge, setSelectedAge] = useState<Record<string, string>>({});
   // Map of leagueKey -> the data link to render stats for
   const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
+  const [players, setPlayers] = useState<ScoutingPlayer[]>([]);
+  // Map of `${country}:${age}` → boolean (expanded)
+  const [playersOpen, setPlayersOpen] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -495,6 +498,39 @@ export const ScoutingByCountry = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("players")
+        .select("id, name, nationality, age, date_of_birth, club, club_logo, image_url, category, representation_status")
+        .order("name", { ascending: true });
+      if (!error && data) {
+        const filtered = (data as ScoutingPlayer[]).filter(
+          (p) =>
+            (p.category ?? "") !== "Scouted" &&
+            (p.category ?? "") !== "Fuel For Football" &&
+            (p.representation_status ?? "") !== "Scouted" &&
+            (p.representation_status ?? "") !== "Fuel For Football",
+        );
+        setPlayers(filtered);
+      }
+    })();
+  }, []);
+
+  const playersByCountryAge = useMemo(() => {
+    const map = new Map<string, Map<string, ScoutingPlayer[]>>();
+    for (const p of players) {
+      const country = countryForNationality(p.nationality);
+      if (!country) continue;
+      const band = ageBandFor(p.age);
+      if (!map.has(country)) map.set(country, new Map());
+      const byAge = map.get(country)!;
+      if (!byAge.has(band)) byAge.set(band, []);
+      byAge.get(band)!.push(p);
+    }
+    return map;
+  }, [players]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, LinkRow[]>();
