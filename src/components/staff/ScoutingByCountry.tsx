@@ -43,7 +43,7 @@ const EUROPEAN_COUNTRIES = [
   "Switzerland","Turkey","Ukraine","Wales",
 ];
 
-const AGE_GROUPS = ["U15", "U17", "U19", "U21", "Senior", "General"] as const;
+const AGE_GROUPS = ["U15", "U16", "U17", "U19", "U21", "Senior", "General"] as const;
 
 // Map of canonical country name → accepted nationality strings (lower-cased).
 const COUNTRY_NATIONALITY_ALIASES: Record<string, string[]> = {
@@ -120,6 +120,7 @@ type ScoutingPlayer = {
 const ageBandFor = (age: number | null | undefined): typeof AGE_GROUPS[number] => {
   if (age == null || isNaN(age)) return "Senior";
   if (age <= 15) return "U15";
+  if (age <= 16) return "U16";
   if (age <= 17) return "U17";
   if (age <= 19) return "U19";
   if (age <= 21) return "U21";
