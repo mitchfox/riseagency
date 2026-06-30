@@ -1,16 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -18,13 +10,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search, ChevronDown, Database, Video, ArrowLeft, Link2 } from "lucide-react";
+import {
+  Telescope,
+  Plus,
+  ExternalLink,
+  Pencil,
+  Trash2,
+  Search,
+  ChevronDown,
+  Database,
+  Video,
+  Link2,
+  BarChart3,
+  Loader2,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
-import ScoutingPlayersPanel from "./ScoutingPlayersPanel";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDistanceToNow } from "date-fns";
 
-// European countries we cover in Network / Coaching Database
 const EUROPEAN_COUNTRIES = [
   "Albania","Andorra","Armenia","Austria","Azerbaijan","Belarus","Belgium",
   "Bosnia and Herzegovina","Bulgaria","Croatia","Cyprus","Czech Republic",
@@ -49,14 +54,53 @@ type LinkRow = {
   sort_order: number;
 };
 
-const blankDraft = (country: string): Partial<LinkRow> => ({
+type Competition = {
+  id: string;
+  country: string;
+  name: string;
+  age_group: string;
+  stats_url: string;
+  season: string | null;
+  source: string;
+  season_active: boolean;
+  last_indexed_at: string | null;
+};
+
+type PlayerStatRow = {
+  id: string;
+  player_id: string;
+  team_name: string | null;
+  appearances: number | null;
+  minutes: number | null;
+  goals: number | null;
+  clean_sheets: number | null;
+  scouting_players: {
+    id: string;
+    player_name: string;
+    player_url: string | null;
+    position: string | null;
+    last_checked_at: string | null;
+  } | null;
+};
+
+const blankDraft = (country: string, age?: string): Partial<LinkRow> => ({
   country,
-  age_group: "U19",
+  age_group: age || "U19",
   label: "",
   url: "",
   notes: "",
   sort_order: 0,
 });
+
+const classifyLink = (l: LinkRow): "data" | "video" | "other" => {
+  const blob = `${l.label} ${l.notes ?? ""} ${l.url}`.toLowerCase();
+  if (/\b(video|tv|fotbaltv|tvcom|veo|stream|highlight|youtube|záznam|zaznam)\b/.test(blob)) return "video";
+  if (/\b(stats|statistik|table|tabulka|standings|fixtures|results|profile|player|subjekt|souteze|liga|cup|federation)\b/.test(blob)) return "data";
+  return "other";
+};
+
+const isFotbalStatsUrl = (url: string) =>
+  /fotbal\.cz\/.*(souteze|turnaje|stats|subjekt)/i.test(url);
 
 const LinkPill = ({
   link,
@@ -77,7 +121,7 @@ const LinkPill = ({
       ? "border-[hsl(var(--rise-gold)/0.5)] bg-[hsl(var(--rise-gold)/0.1)] hover:bg-[hsl(var(--rise-gold)/0.18)] text-[hsl(var(--rise-gold))]"
       : "border-border/60 bg-muted/40 hover:bg-muted/70 text-foreground";
   return (
-    <div className={`group/pill inline-flex items-center rounded-full border ${tone} pl-2.5 pr-1 py-0.5 text-xs transition-colors max-w-full`}>
+    <div className={`group/pill inline-flex items-center rounded-full border ${tone} pl-2.5 pr-1 py-0.5 text-[11px] transition-colors max-w-full`}>
       <a
         href={link.url}
         target="_blank"
@@ -86,24 +130,254 @@ const LinkPill = ({
         title={link.notes || link.url}
       >
         <Icon className="h-3 w-3 shrink-0" />
-        <span className="truncate max-w-[220px]">{link.label}</span>
+        <span className="truncate max-w-[180px] sm:max-w-[260px]">{link.label}</span>
         <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
       </a>
       <button
         onClick={() => onEdit(link)}
         className="ml-1 opacity-0 group-hover/pill:opacity-100 transition-opacity p-1 rounded hover:bg-background/50"
+        aria-label="Edit"
       >
         <Pencil className="h-3 w-3" />
       </button>
       <button
         onClick={() => onRemove(link.id)}
         className="opacity-0 group-hover/pill:opacity-100 transition-opacity p-1 rounded hover:bg-background/50"
+        aria-label="Delete"
       >
         <Trash2 className="h-3 w-3" />
       </button>
     </div>
   );
 };
+
+const LeagueStats = ({
+  country,
+  ageGroup,
+  leagueName,
+  dataLink,
+  onClose,
+}: {
+  country: string;
+  ageGroup: string;
+  leagueName: string;
+  dataLink: LinkRow;
+  onClose: () => void;
+}) => {
+  const [comp, setComp] = useState<Competition | null>(null);
+  const [rows, setRows] = useState<PlayerStatRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [indexing, setIndexing] = useState(false);
+  const [refreshing, setRefreshing] = useState<string | null>(null);
+
+  const ensureComp = useCallback(async () => {
+    // Find existing competition matching this stats_url, else create.
+    const { data: existing } = await supabase
+      .from("scouting_competitions")
+      .select("*")
+      .eq("stats_url", dataLink.url)
+      .maybeSingle();
+    if (existing) return existing as Competition;
+    const { data: ins, error } = await supabase
+      .from("scouting_competitions")
+      .insert({
+        country,
+        name: leagueName,
+        age_group: ageGroup,
+        stats_url: dataLink.url,
+        season: "2025/26",
+        source: "fotbal.cz",
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return ins as Competition;
+  }, [country, ageGroup, leagueName, dataLink.url]);
+
+  const loadRows = useCallback(async (compId: string) => {
+    const { data } = await supabase
+      .from("scouting_player_stats")
+      .select("id,player_id,team_name,appearances,minutes,goals,clean_sheets,scouting_players(id,player_name,player_url,position,last_checked_at)")
+      .eq("competition_id", compId)
+      .order("goals", { ascending: false, nullsFirst: false })
+      .limit(200);
+    setRows((data as any) || []);
+  }, []);
+
+  const indexNow = useCallback(async (compId: string, force: boolean) => {
+    setIndexing(true);
+    const { data, error } = await supabase.functions.invoke("scouting-index-competition", {
+      body: { competition_id: compId, force },
+    });
+    setIndexing(false);
+    if (error) {
+      toast({ title: "Index failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    if ((data as any)?.players) toast({ title: `Indexed ${(data as any).players} players` });
+    await loadRows(compId);
+    const { data: fresh } = await supabase.from("scouting_competitions").select("*").eq("id", compId).maybeSingle();
+    if (fresh) setComp(fresh as Competition);
+  }, [loadRows]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const c = await ensureComp();
+        if (cancelled) return;
+        setComp(c);
+        await loadRows(c.id);
+        const stale = !c.last_indexed_at || (Date.now() - new Date(c.last_indexed_at).getTime()) > 12 * 60 * 60 * 1000;
+        if (stale) indexNow(c.id, false);
+      } catch (e: any) {
+        toast({ title: "Could not load stats", description: e.message, variant: "destructive" });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [ensureComp, loadRows, indexNow]);
+
+  const refreshPlayer = async (playerId: string) => {
+    if (!comp) return;
+    setRefreshing(playerId);
+    const { error } = await supabase.functions.invoke("scouting-refresh-player", { body: { player_id: playerId, force: true } });
+    setRefreshing(null);
+    if (error) { toast({ title: "Refresh failed", description: error.message, variant: "destructive" }); return; }
+    await loadRows(comp.id);
+  };
+
+  return (
+    <div className="mt-2 rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-gradient-to-b from-[hsl(var(--rise-gold)/0.04)] to-transparent p-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+          <BarChart3 className="h-3.5 w-3.5 text-[hsl(var(--rise-gold))] shrink-0" />
+          <span className="truncate">
+            Player stats · {comp?.last_indexed_at ? `Indexed ${formatDistanceToNow(new Date(comp.last_indexed_at))} ago` : indexing ? "Indexing…" : "Not yet indexed"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {comp && (
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => indexNow(comp.id, true)} disabled={indexing}>
+              {indexing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />} Refresh
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={onClose} aria-label="Close stats">
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      {loading && !rows.length ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+        </div>
+      ) : rows.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic text-center py-4">
+          {indexing ? "Indexing players from source…" : "No players parsed yet. Try refresh."}
+        </p>
+      ) : (
+        <div className="max-h-[360px] overflow-auto rounded border border-border/40">
+          <table className="w-full text-[11px]">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr className="text-left">
+                <th className="px-2 py-1.5 font-medium">Player</th>
+                <th className="px-2 py-1.5 font-medium">Team</th>
+                <th className="px-1.5 py-1.5 font-medium text-right">Apps</th>
+                <th className="px-1.5 py-1.5 font-medium text-right">Min</th>
+                <th className="px-1.5 py-1.5 font-medium text-right">G</th>
+                <th className="px-1.5 py-1.5 font-medium text-right">CS</th>
+                <th className="px-1.5 py-1.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-border/30 hover:bg-[hsl(var(--rise-gold)/0.04)]">
+                  <td className="px-2 py-1 max-w-[180px]">
+                    {r.scouting_players?.player_url ? (
+                      <a href={r.scouting_players.player_url} target="_blank" rel="noopener noreferrer" className="hover:text-[hsl(var(--rise-gold))] truncate inline-block max-w-full align-bottom">
+                        {r.scouting_players.player_name}
+                      </a>
+                    ) : (
+                      <span className="truncate inline-block max-w-full align-bottom">{r.scouting_players?.player_name}</span>
+                    )}
+                    {r.scouting_players?.position && <span className="ml-1.5 text-[9px] text-muted-foreground uppercase">{r.scouting_players.position}</span>}
+                  </td>
+                  <td className="px-2 py-1 text-muted-foreground truncate max-w-[120px]">{r.team_name || "—"}</td>
+                  <td className="px-1.5 py-1 text-right">{r.appearances ?? "—"}</td>
+                  <td className="px-1.5 py-1 text-right">{r.minutes ?? "—"}</td>
+                  <td className="px-1.5 py-1 text-right">{r.goals ?? "—"}</td>
+                  <td className="px-1.5 py-1 text-right">{r.clean_sheets ?? "—"}</td>
+                  <td className="px-1.5 py-1 text-right">
+                    <button
+                      onClick={() => refreshPlayer(r.player_id)}
+                      className="p-1 rounded hover:bg-muted"
+                      title={r.scouting_players?.last_checked_at ? `Checked ${formatDistanceToNow(new Date(r.scouting_players.last_checked_at))} ago` : "Never refreshed"}
+                    >
+                      {refreshing === r.player_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InlineLinkEditor = ({
+  draft,
+  onChange,
+  onSave,
+  onCancel,
+}: {
+  draft: Partial<LinkRow>;
+  onChange: (d: Partial<LinkRow>) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) => (
+  <div className="rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/70 p-3 space-y-2">
+    <div className="grid grid-cols-2 gap-2">
+      <Select value={draft.age_group || "General"} onValueChange={(v) => onChange({ ...draft, age_group: v })}>
+        <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>{AGE_GROUPS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+      </Select>
+      <Input
+        className="h-9 text-xs"
+        type="number"
+        placeholder="Sort"
+        value={draft.sort_order ?? 0}
+        onChange={(e) => onChange({ ...draft, sort_order: Number(e.target.value) || 0 })}
+      />
+    </div>
+    <Input
+      className="h-9 text-xs"
+      placeholder="Label e.g. 1.Celostátní liga dorostu U19 — Stats"
+      value={draft.label || ""}
+      onChange={(e) => onChange({ ...draft, label: e.target.value })}
+    />
+    <Input
+      className="h-9 text-xs"
+      placeholder="https://..."
+      value={draft.url || ""}
+      onChange={(e) => onChange({ ...draft, url: e.target.value })}
+    />
+    <Textarea
+      className="text-xs"
+      placeholder="Notes (optional)"
+      rows={2}
+      value={draft.notes || ""}
+      onChange={(e) => onChange({ ...draft, notes: e.target.value })}
+    />
+    <div className="flex justify-end gap-2">
+      <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+      <Button size="sm" onClick={onSave}>Save</Button>
+    </div>
+  </div>
+);
 
 export const ScoutingByCountry = () => {
   const [links, setLinks] = useState<LinkRow[]>([]);
@@ -112,7 +386,8 @@ export const ScoutingByCountry = () => {
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
   const [openAges, setOpenAges] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<"resources" | "players">("resources");
+  // Map of leagueKey -> the data link to render stats for
+  const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
 
   const load = async () => {
     setLoading(true);
@@ -149,16 +424,7 @@ export const ScoutingByCountry = () => {
     return all.filter((c) => c.toLowerCase().includes(q));
   }, [grouped, search]);
 
-  const classifyLink = (l: LinkRow): "data" | "video" | "other" => {
-    const blob = `${l.label} ${l.notes ?? ""}`.toLowerCase();
-    if (/\b(video|tv|fotbaltv|tvcom|veo|stream|highlight|záznam|zaznam)\b/.test(blob)) return "video";
-    if (/\b(data|stats|statistik|table|tabulka|standings|fixtures|results|profile|player|subjekt)\b/.test(blob)) return "data";
-    return "other";
-  };
-
   const groupCountryLinks = (countryLinks: LinkRow[]) => {
-    // Bucket by age_group, then within each age bucket split into "leagues" using
-    // sort_order as a soft grouping plus the label root before "(".
     const byAge = new Map<string, LinkRow[]>();
     for (const l of countryLinks) {
       if (!byAge.has(l.age_group)) byAge.set(l.age_group, []);
@@ -168,7 +434,6 @@ export const ScoutingByCountry = () => {
       .filter((age, i, arr) => arr.indexOf(age) === i && byAge.has(age));
     return ordered.map((age) => {
       const items = byAge.get(age)!;
-      // group by league root (label before the first "(" or " — ")
       const leagues = new Map<string, LinkRow[]>();
       for (const l of items) {
         const root = l.label.split(/\(|—|-\s/)[0].trim() || l.label;
@@ -221,6 +486,166 @@ export const ScoutingByCountry = () => {
     load();
   };
 
+  const toggleStats = (key: string, link: LinkRow | null) => {
+    setStatsOpen((s) => ({ ...s, [key]: s[key] ? null : link }));
+  };
+
+  const renderDossier = (country: string) => {
+    const countryLinks = grouped.get(country) || [];
+    const ageGroups = groupCountryLinks(countryLinks);
+    return (
+      <div className="relative px-3 sm:px-5 py-4 space-y-3 border-t border-[hsl(var(--rise-gold)/0.25)] bg-gradient-to-b from-[hsl(var(--rise-gold)/0.04)] to-transparent">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            {countryLinks.length} resource{countryLinks.length === 1 ? "" : "s"}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[11px] border-[hsl(var(--rise-gold)/0.5)] hover:bg-[hsl(var(--rise-gold)/0.1)]"
+              onClick={() => setEditing(blankDraft(country))}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add link
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setOpenCountry(null)}>
+              <X className="h-3.5 w-3.5 mr-1" /> Close
+            </Button>
+          </div>
+        </div>
+
+        {editing && editing.country === country && !editing.id && (
+          <InlineLinkEditor
+            draft={editing}
+            onChange={setEditing}
+            onSave={saveDraft}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+
+        {countryLinks.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic text-center py-6">
+            No links yet for {country}. Use Add link above.
+          </p>
+        ) : (
+          ageGroups.map(({ age, leagues, total }) => {
+            const isOpen = openAges[`${country}:${age}`] ?? false;
+            return (
+              <div key={age} className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
+                <button
+                  onClick={() => setOpenAges((s) => ({ ...s, [`${country}:${age}`]: !isOpen }))}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[hsl(var(--rise-gold)/0.05)] transition-colors"
+                >
+                  <div className="h-7 w-12 rounded-md bg-gradient-to-br from-[hsl(var(--rise-gold)/0.25)] to-[hsl(var(--rise-gold)/0.05)] border border-[hsl(var(--rise-gold)/0.3)] flex items-center justify-center text-[10px] font-bold tracking-wider text-[hsl(var(--rise-gold))]">
+                    {age}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="text-xs sm:text-sm font-semibold truncate">{age === "General" ? "General resources" : `${age} football`}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {leagues.length} league{leagues.length === 1 ? "" : "s"} · {total} link{total === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isOpen && (
+                  <div className="px-2 sm:px-3 pb-3 space-y-2 border-t border-border/40 pt-3">
+                    {leagues.map((league) => {
+                      const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
+                      const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
+                      const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
+                      const statsCandidate = dataLinks.find((l) => isFotbalStatsUrl(l.url));
+                      const leagueKey = `${country}:${age}:${league.name}`;
+                      const statsLink = statsOpen[leagueKey];
+                      return (
+                        <div key={league.name} className="rounded-lg border border-border/50 bg-background/60 p-2.5">
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <div className="font-medium text-[13px] truncate flex-1 min-w-0">{league.name}</div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {statsCandidate && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-[10px] border border-[hsl(var(--rise-gold)/0.4)] text-[hsl(var(--rise-gold))] hover:bg-[hsl(var(--rise-gold)/0.1)] uppercase tracking-wider"
+                                  onClick={() => toggleStats(leagueKey, statsCandidate)}
+                                >
+                                  <BarChart3 className="h-3 w-3 mr-1" /> {statsLink ? "Hide" : "Stats"}
+                                </Button>
+                              )}
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                {league.links.length}
+                              </span>
+                            </div>
+                          </div>
+
+                          {(dataLinks.length > 0 || videoLinks.length > 0 || otherLinks.length > 0) && (
+                            <div className="space-y-1.5">
+                              {dataLinks.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-[9px] uppercase tracking-widest text-[hsl(var(--rise-gold))] mt-1 w-10 shrink-0">Data</span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                    {dataLinks.map((l) => (
+                                      <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {videoLinks.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-[9px] uppercase tracking-widest text-blue-300 mt-1 w-10 shrink-0">Video</span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                    {videoLinks.map((l) => (
+                                      <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {otherLinks.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1 w-10 shrink-0">Other</span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                    {otherLinks.map((l) => (
+                                      <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {editing && editing.id && league.links.some((l) => l.id === editing.id) && (
+                            <div className="mt-2">
+                              <InlineLinkEditor
+                                draft={editing}
+                                onChange={setEditing}
+                                onSave={saveDraft}
+                                onCancel={() => setEditing(null)}
+                              />
+                            </div>
+                          )}
+
+                          {statsLink && (
+                            <LeagueStats
+                              country={country}
+                              ageGroup={age}
+                              leagueName={league.name}
+                              dataLink={statsLink}
+                              onClose={() => toggleStats(leagueKey, null)}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -239,222 +664,54 @@ export const ScoutingByCountry = () => {
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Click a country to open its scouting dossier. Age groups collapse inwards; each league offers Data and Video shortcuts.
+      <p className="text-xs sm:text-sm text-muted-foreground">
+        Click a country to expand its scouting dossier. Each league shows Data, Video and other links — press <span className="text-[hsl(var(--rise-gold))] font-medium">Stats</span> to pull live player stats from the source.
       </p>
 
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading...</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          {filteredCountries.map((country) => {
-            const countryLinks = grouped.get(country) || [];
-            const flag = getCountryFlagUrl(country);
-            const has = countryLinks.length > 0;
-            return (
-              <button
-                key={country}
-                onClick={() => { setOpenCountry(country); setOpenAges({}); }}
-                className={`group relative overflow-hidden rounded-xl border ${
-                  has ? "border-[hsl(var(--rise-gold)/0.4)]" : "border-border/60"
-                } bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm p-3 text-left transition-all hover:border-[hsl(var(--rise-gold))] hover:shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]`}
-              >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-[hsl(var(--rise-gold)/0.08)] to-transparent pointer-events-none" />
-                <div className="flex items-center gap-2.5 relative">
-                  <img src={flag} alt="" className="w-7 h-5 object-cover rounded-sm ring-1 ring-border/50" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{country}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      {countryLinks.length} link{countryLinks.length === 1 ? "" : "s"}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Country dossier modal */}
-      <Dialog open={!!openCountry} onOpenChange={(o) => !o && setOpenCountry(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden border-[hsl(var(--rise-gold)/0.3)] bg-gradient-to-br from-background via-background to-[hsl(var(--rise-gold)/0.04)]">
-          {openCountry && (() => {
-            const countryLinks = grouped.get(openCountry) || [];
-            const ageGroups = groupCountryLinks(countryLinks);
-            const flag = getCountryFlagUrl(openCountry);
-            return (
-              <div className="flex flex-col max-h-[85vh]">
-                {/* Glossy header */}
-                <div className="relative px-6 py-5 border-b border-border/60 bg-gradient-to-r from-[hsl(var(--rise-gold)/0.12)] via-transparent to-[hsl(var(--rise-gold)/0.06)]">
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--rise-gold))] to-transparent opacity-60" />
-                  <div className="flex items-center gap-4">
-                    <img src={flag} alt="" className="w-12 h-8 object-cover rounded ring-2 ring-[hsl(var(--rise-gold)/0.4)] shadow-lg" />
-                    <div className="flex-1 min-w-0">
-                      <DialogTitle className="text-xl font-bold tracking-tight">{openCountry}</DialogTitle>
-                      <div className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">
-                        Scouting dossier · {countryLinks.length} resource{countryLinks.length === 1 ? "" : "s"}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            {filteredCountries.map((country) => {
+              const countryLinks = grouped.get(country) || [];
+              const flag = getCountryFlagUrl(country);
+              const has = countryLinks.length > 0;
+              const isOpen = openCountry === country;
+              return (
+                <button
+                  key={country}
+                  onClick={() => setOpenCountry(isOpen ? null : country)}
+                  className={`group relative overflow-hidden rounded-xl border ${
+                    isOpen
+                      ? "border-[hsl(var(--rise-gold))] shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]"
+                      : has
+                      ? "border-[hsl(var(--rise-gold)/0.4)]"
+                      : "border-border/60"
+                  } bg-gradient-to-br from-background/80 to-background/40 backdrop-blur-sm p-2.5 text-left transition-all hover:border-[hsl(var(--rise-gold))] hover:shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.5)]`}
+                >
+                  <div className="flex items-center gap-2 relative min-w-0">
+                    <img src={flag} alt="" className="w-6 h-4 object-cover rounded-sm ring-1 ring-border/50 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12px] sm:text-sm font-medium truncate">{country}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {countryLinks.length} link{countryLinks.length === 1 ? "" : "s"}
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-[hsl(var(--rise-gold)/0.5)] hover:bg-[hsl(var(--rise-gold)/0.1)]"
-                      onClick={() => setEditing(blankDraft(openCountry))}
-                    >
-                      <Plus className="h-4 w-4 mr-1.5" /> Add link
-                    </Button>
+                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </div>
-                </div>
+                </button>
+              );
+            })}
+          </div>
 
-                {/* Scrollable body */}
-                <div className="overflow-y-auto px-4 sm:px-6 py-5 space-y-2">
-                  <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
-                    <TabsList className="grid grid-cols-2 w-full max-w-sm">
-                      <TabsTrigger value="resources">Resources</TabsTrigger>
-                      <TabsTrigger value="players">Player stats</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  {tab === "players" ? (
-                    <ScoutingPlayersPanel country={openCountry} />
-                  ) : countryLinks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic text-center py-12">
-                      No links yet. Add your first one to start building {openCountry}'s scouting toolkit.
-                    </p>
-                  ) : (
-                    ageGroups.map(({ age, leagues, total }) => {
-                      const isOpen = !!openAges[age];
-                      return (
-                        <div
-                          key={age}
-                          className="rounded-xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 overflow-hidden"
-                        >
-                          <button
-                            onClick={() => setOpenAges((s) => ({ ...s, [age]: !s[age] }))}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[hsl(var(--rise-gold)/0.05)] transition-colors"
-                          >
-                            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[hsl(var(--rise-gold)/0.25)] to-[hsl(var(--rise-gold)/0.05)] border border-[hsl(var(--rise-gold)/0.3)] flex items-center justify-center text-[10px] font-bold tracking-wider text-[hsl(var(--rise-gold))]">
-                              {age}
-                            </div>
-                            <div className="flex-1 text-left">
-                              <div className="text-sm font-semibold">{age === "General" ? "General resources" : `${age} football`}</div>
-                              <div className="text-[11px] text-muted-foreground">
-                                {leagues.length} league{leagues.length === 1 ? "" : "s"} · {total} link{total === 1 ? "" : "s"}
-                              </div>
-                            </div>
-                            <ChevronDown
-                              className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-                            />
-                          </button>
-
-                          {isOpen && (
-                            <div className="px-3 pb-3 space-y-2 border-t border-border/40 pt-3">
-                              {leagues.map((league) => {
-                                const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
-                                const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
-                                const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
-                                return (
-                                  <div
-                                    key={league.name}
-                                    className="rounded-lg border border-border/50 bg-background/60 p-3"
-                                  >
-                                    <div className="flex items-start justify-between gap-3 mb-2">
-                                      <div className="font-medium text-sm truncate">{league.name}</div>
-                                      <div className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-wider">
-                                        {league.links.length} link{league.links.length === 1 ? "" : "s"}
-                                      </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {dataLinks.map((l) => (
-                                        <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
-                                      ))}
-                                      {videoLinks.map((l) => (
-                                        <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
-                                      ))}
-                                      {otherLinks.map((l) => (
-                                        <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl z-[110]">
-          <DialogHeader>
-            <DialogTitle>
-              {editing?.id ? "Edit link" : "Add link"} — {editing?.country}
-            </DialogTitle>
-          </DialogHeader>
-          {editing && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Age group</label>
-                  <Select
-                    value={editing.age_group || "General"}
-                    onValueChange={(v) => setEditing({ ...editing, age_group: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {AGE_GROUPS.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Sort order</label>
-                  <Input
-                    type="number"
-                    value={editing.sort_order ?? 0}
-                    onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Label</label>
-                <Input
-                  value={editing.label || ""}
-                  onChange={(e) => setEditing({ ...editing, label: e.target.value })}
-                  placeholder="e.g. 1.Celostátní liga dorostu U19 (FotbalTV)"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">URL</label>
-                <Input
-                  value={editing.url || ""}
-                  onChange={(e) => setEditing({ ...editing, url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Notes</label>
-                <Textarea
-                  value={editing.notes || ""}
-                  onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
-                  rows={4}
-                  placeholder="Coverage notes, what's available, login required, etc."
-                />
-              </div>
+          {openCountry && (
+            <div className="rounded-xl border border-[hsl(var(--rise-gold)/0.3)] bg-gradient-to-br from-background/80 to-background/40 overflow-hidden">
+              {renderDossier(openCountry)}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={saveDraft}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 };
