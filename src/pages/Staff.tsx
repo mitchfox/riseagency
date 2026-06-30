@@ -126,7 +126,7 @@ import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
-import { Palette, Tv, Music } from "lucide-react";
+import { Palette, Tv, Music, Telescope } from "lucide-react";
 import { UserRoundCheck } from "lucide-react";
 import { Image as GalleryImageIcon } from "lucide-react";
 import { Trophy } from "lucide-react";
