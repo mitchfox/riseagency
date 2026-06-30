@@ -495,7 +495,8 @@ export const ScoutingByCountry = () => {
       .select("*")
       .order("country", { ascending: true })
       .order("age_group", { ascending: true })
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .range(0, 9999);
     if (error) {
       toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
     } else {
