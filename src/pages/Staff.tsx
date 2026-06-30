@@ -2047,16 +2047,6 @@ const Staff = () => {
                       categoryTitle={parentCat.title}
                       categoryIcon={parentCat.icon}
                       sectionTitle={activeSection.title}
-                      action={expandedSection === 'playerdatabase' ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => setPlayerDatabaseAddModeOpen((open) => !open)}
-                          className="h-8 gap-1.5 border !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-3 text-[10px] font-black uppercase tracking-wider !text-background shadow-[0_0_14px_hsl(var(--rise-gold)/0.35)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
-                        >
-                          <UserPlus className="h-3.5 w-3.5" /> Add players
-                        </Button>
-                      ) : undefined}
                       onCategoryClick={() => {
                         setExpandedCategory(parentCat.id);
                         setExpandedSection(null);
@@ -2067,6 +2057,38 @@ const Staff = () => {
                 }
                 return null;
               })()}
+              {expandedSection === 'playerdatabase' && (
+                <div className="mb-3 rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/70 px-2.5 py-2 shadow-[0_0_18px_hsl(var(--rise-gold)/0.08)]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setPlayerDatabaseAddModeOpen((open) => !open)}
+                      className="h-7 gap-1.5 border !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-2.5 text-[10px] font-black uppercase tracking-wider !text-background shadow-[0_0_14px_hsl(var(--rise-gold)/0.3)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" /> Add players
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPlayerDatabaseAddModeOpen(true)}
+                      className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
+                    >
+                      AI bulk add
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPlayerDatabaseAddModeOpen(true)}
+                      className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
+                    >
+                      Manual add
+                    </Button>
+                  </div>
+                </div>
+              )}
               {expandedSection === 'playerdatabase' && playerDatabaseAddModeOpen && (
                 <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <ErrorBoundary>
