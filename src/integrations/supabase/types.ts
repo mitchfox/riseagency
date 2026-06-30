@@ -6756,6 +6756,7 @@ export type Database = {
           fit_score_breakdown: Json | null
           fit_score_target_id: string | null
           fit_score_updated_at: string | null
+          fotbal_profile_url: string | null
           has_representation_offer: boolean
           highlighted_match: Json | null
           highlights: Json | null
@@ -6818,6 +6819,7 @@ export type Database = {
           fit_score_breakdown?: Json | null
           fit_score_target_id?: string | null
           fit_score_updated_at?: string | null
+          fotbal_profile_url?: string | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
@@ -6880,6 +6882,7 @@ export type Database = {
           fit_score_breakdown?: Json | null
           fit_score_target_id?: string | null
           fit_score_updated_at?: string | null
+          fotbal_profile_url?: string | null
           has_representation_offer?: boolean
           highlighted_match?: Json | null
           highlights?: Json | null
