@@ -681,12 +681,63 @@ export const ScoutingByCountry = () => {
 
             {/* League rows for selected age */}
             <div className="space-y-3">
-              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Active Competitions</div>
               {(() => {
                 const activeAge = selectedAge[country] ?? ageGroups[0]?.age;
                 const ageBlock = ageGroups.find((a) => a.age === activeAge) ?? ageGroups[0];
                 if (!ageBlock) return null;
-                return ageBlock.leagues.map((league) => {
+                const countryPlayers = playersByCountryAge.get(country)?.get(ageBlock.age) ?? [];
+                const pKey = `${country}:${ageBlock.age}`;
+                const playersExpanded = !!playersOpen[pKey];
+                return (
+                  <>
+                    {/* Player roster panel (collapsed by default) */}
+                    <div className="rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-900/20 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setPlayersOpen((s) => ({ ...s, [pKey]: !s[pKey] }))}
+                        className="w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 hover:bg-zinc-900/50 transition"
+                      >
+                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-[hsl(var(--rise-gold))] drop-shadow-[0_0_6px_hsl(var(--rise-gold)/0.5)]">
+                          Players · {ageBlock.age} · {countryPlayers.length}
+                        </span>
+                        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${playersExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                      {playersExpanded && (
+                        <div className="px-3 sm:px-4 pb-3 pt-1 border-t border-zinc-800/50">
+                          {countryPlayers.length === 0 ? (
+                            <p className="text-[11px] text-muted-foreground italic py-3">No players in our database for this age band.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {countryPlayers.map((p) => (
+                                <a
+                                  key={p.id}
+                                  href={`/staff?section=players&playerId=${p.id}`}
+                                  className="group flex items-center gap-2 rounded-lg bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800/70 hover:border-[hsl(var(--rise-gold)/0.5)] px-2 py-1.5 transition min-w-[160px] flex-1 sm:flex-none sm:basis-[calc(50%-0.25rem)] md:basis-[calc(33.333%-0.34rem)] lg:basis-[calc(25%-0.375rem)] xl:basis-[calc(20%-0.4rem)] max-w-full"
+                                >
+                                  {p.image_url ? (
+                                    <img src={p.image_url} alt={p.name} className="w-9 h-9 rounded-full object-cover ring-1 ring-[hsl(var(--rise-gold)/0.4)] shrink-0" />
+                                  ) : (
+                                    <div className="w-9 h-9 rounded-full bg-zinc-800 ring-1 ring-[hsl(var(--rise-gold)/0.3)] flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
+                                      {p.name.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-[12px] font-semibold text-white truncate group-hover:text-[hsl(var(--rise-gold))]">{p.name}</div>
+                                    <div className="flex items-center gap-1 min-w-0">
+                                      {p.club_logo && <img src={p.club_logo} alt="" className="w-3 h-3 object-contain shrink-0" />}
+                                      <span className="text-[10px] text-zinc-400 truncate">{p.club || "—"}</span>
+                                    </div>
+                                  </div>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1 pt-1">Active Competitions</div>
+                    {ageBlock.leagues.map((league) => {
                       const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
                       const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
                       const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
@@ -782,7 +833,9 @@ export const ScoutingByCountry = () => {
                           )}
                         </div>
                       );
-                });
+                    })}
+                  </>
+                );
               })()}
             </div>
           </>
