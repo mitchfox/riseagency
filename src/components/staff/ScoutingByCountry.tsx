@@ -526,96 +526,84 @@ export const ScoutingByCountry = () => {
             No links yet for {country}. Use Add link above.
           </p>
         ) : (
-          ageGroups.map(({ age, leagues, total }) => {
-            const isOpen = openAges[`${country}:${age}`] ?? false;
-            return (
-              <div key={age} className={`rounded-xl border ${isOpen ? "border-[hsl(var(--rise-gold)/0.45)] shadow-[0_0_30px_-12px_hsl(var(--rise-gold)/0.5)]" : "border-border/60"} bg-gradient-to-br from-card/80 via-card/50 to-[hsl(var(--rise-gold)/0.04)] overflow-hidden transition-all`}>
-                <button
-                  onClick={() => setOpenAges((s) => ({ ...s, [`${country}:${age}`]: !isOpen }))}
-                  className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[hsl(var(--rise-gold)/0.06)] transition-colors"
-                >
-                  <div className="h-9 w-14 rounded-lg bg-gradient-to-br from-[hsl(var(--rise-gold)/0.4)] via-[hsl(var(--rise-gold)/0.15)] to-transparent border border-[hsl(var(--rise-gold)/0.45)] flex items-center justify-center text-[11px] font-bold tracking-wider text-[hsl(var(--rise-gold))] shadow-inner shrink-0">
-                    {age}
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <div className="text-sm font-semibold truncate">{age === "General" ? "General resources" : `${age} football`}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {leagues.length} league{leagues.length === 1 ? "" : "s"} · {total} link{total === 1 ? "" : "s"}
+          <>
+            {/* Age group selector — glossy 4-col tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {ageGroups.map(({ age, total, leagues }) => {
+                const active = (selectedAge[country] ?? ageGroups[0]?.age) === age;
+                return (
+                  <button
+                    key={age}
+                    onClick={() => setSelectedAge((s) => ({ ...s, [country]: age }))}
+                    className="relative group"
+                  >
+                    {active && (
+                      <div className="absolute -inset-0.5 bg-[hsl(var(--rise-gold))] opacity-20 group-hover:opacity-40 rounded-lg blur-sm transition" />
+                    )}
+                    <div className={`relative flex flex-col items-center justify-center py-3 rounded-lg shadow-inner transition-colors ${
+                      active
+                        ? "bg-zinc-900 border border-[hsl(var(--rise-gold))]"
+                        : "bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700"
+                    }`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-tighter mb-0.5 ${active ? "text-[hsl(var(--rise-gold))]" : "text-zinc-500"}`}>{age}</span>
+                      <span className={`text-sm font-bold ${active ? "text-white" : "text-zinc-300"}`}>{leagues.length} · {total}</span>
                     </div>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                </button>
+                  </button>
+                );
+              })}
+            </div>
 
-                {isOpen && (
-                  <div className="px-2 sm:px-3 pb-3 space-y-2.5 border-t border-[hsl(var(--rise-gold)/0.2)] pt-3 bg-gradient-to-b from-[hsl(var(--rise-gold)/0.03)] to-transparent">
-                    {leagues.map((league) => {
+            {/* League rows for selected age */}
+            <div className="space-y-3">
+              <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1">Active Competitions</div>
+              {(() => {
+                const activeAge = selectedAge[country] ?? ageGroups[0]?.age;
+                const ageBlock = ageGroups.find((a) => a.age === activeAge) ?? ageGroups[0];
+                if (!ageBlock) return null;
+                return ageBlock.leagues.map((league) => {
                       const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
                       const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
                       const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
                       const statsCandidate = dataLinks.find((l) => isFotbalStatsUrl(l.url));
-                      const leagueKey = `${country}:${age}:${league.name}`;
+                      const leagueKey = `${country}:${ageBlock.age}:${league.name}`;
                       const statsLink = statsOpen[leagueKey];
                       return (
-                        <div key={league.name} className="group/league rounded-xl border border-border/60 bg-gradient-to-br from-background/90 to-background/40 hover:border-[hsl(var(--rise-gold)/0.4)] hover:shadow-[0_2px_20px_-8px_hsl(var(--rise-gold)/0.4)] transition-all p-3">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rise-gold))] shrink-0 shadow-[0_0_8px_hsl(var(--rise-gold))]" />
-                              <div className="font-semibold text-sm truncate">{league.name}</div>
+                        <div key={league.name} className="group rounded-xl bg-zinc-900/30 border border-zinc-800/50 hover:bg-zinc-800/40 transition-all p-3 sm:p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-semibold text-zinc-100 truncate">{league.name}</span>
+                              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                                {ageBlock.age === "General" ? "General" : ageBlock.age} · {league.links.length} link{league.links.length === 1 ? "" : "s"}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                              {(dataLinks.length > 0 || videoLinks.length > 0 || otherLinks.length > 0) && (
+                                <div className="flex flex-wrap items-center gap-1.5 bg-black/40 rounded-full p-1 border border-zinc-800 max-w-full">
+                                  {dataLinks.map((l) => (
+                                    <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
+                                  ))}
+                                  {videoLinks.map((l) => (
+                                    <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
+                                  ))}
+                                  {otherLinks.map((l) => (
+                                    <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
+                                  ))}
+                                </div>
+                              )}
                               {statsCandidate && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className={`h-7 px-2.5 text-[10px] border uppercase tracking-widest font-bold ${statsLink ? "border-[hsl(var(--rise-gold))] bg-[hsl(var(--rise-gold)/0.15)] text-[hsl(var(--rise-gold))]" : "border-[hsl(var(--rise-gold)/0.5)] text-[hsl(var(--rise-gold))] hover:bg-[hsl(var(--rise-gold)/0.12)]"}`}
+                                <button
                                   onClick={() => toggleStats(leagueKey, statsCandidate)}
+                                  className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all ${
+                                    statsLink
+                                      ? "bg-[hsl(var(--rise-gold))] text-black hover:bg-[hsl(var(--rise-gold)/0.85)]"
+                                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                                  }`}
                                 >
-                                  <BarChart3 className="h-3 w-3 mr-1" /> {statsLink ? "Hide" : "Stats"}
-                                </Button>
+                                  <BarChart3 className="h-3 w-3 inline mr-1 -mt-0.5" /> {statsLink ? "Hide" : "Stats"}
+                                </button>
                               )}
                             </div>
                           </div>
-
-                          {(dataLinks.length > 0 || videoLinks.length > 0 || otherLinks.length > 0) && (
-                            <div className="space-y-2">
-                              {dataLinks.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-[hsl(var(--rise-gold))] font-bold mt-1 w-12 shrink-0">
-                                    <Database className="h-2.5 w-2.5" /> Data
-                                  </span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
-                                    {dataLinks.map((l) => (
-                                      <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {videoLinks.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-blue-300 font-bold mt-1 w-12 shrink-0">
-                                    <Video className="h-2.5 w-2.5" /> Video
-                                  </span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
-                                    {videoLinks.map((l) => (
-                                      <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {otherLinks.length > 0 && (
-                                <div className="flex items-start gap-2">
-                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-muted-foreground font-bold mt-1 w-12 shrink-0">
-                                    <Link2 className="h-2.5 w-2.5" /> Other
-                                  </span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
-                                    {otherLinks.map((l) => (
-                                      <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
 
                           {editing && editing.id && league.links.some((l) => l.id === editing.id) && (
                             <div className="mt-2">
@@ -631,7 +619,7 @@ export const ScoutingByCountry = () => {
                           {statsLink && (
                             <LeagueStats
                               country={country}
-                              ageGroup={age}
+                              ageGroup={ageBlock.age}
                               leagueName={league.name}
                               dataLink={statsLink}
                               onClose={() => toggleStats(leagueKey, null)}
@@ -639,12 +627,10 @@ export const ScoutingByCountry = () => {
                           )}
                         </div>
                       );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })
+                });
+              })()}
+            </div>
+          </>
         )}
       </div>
     );
