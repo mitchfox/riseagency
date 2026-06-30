@@ -476,6 +476,7 @@ export const ScoutingByCountry = () => {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
+  const [showAllCountries, setShowAllCountries] = useState(false);
   const [selectedAge, setSelectedAge] = useState<Record<string, string>>({});
   // Map of leagueKey -> the data link to render stats for
   const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
@@ -554,6 +555,16 @@ export const ScoutingByCountry = () => {
     if (!q) return all;
     return all.filter((c) => c.toLowerCase().includes(q));
   }, [grouped, search]);
+
+  const { activeCountries, emptyCountries } = useMemo(() => {
+    const active: string[] = [];
+    const empty: string[] = [];
+    for (const c of filteredCountries) {
+      if ((grouped.get(c) || []).length > 0) active.push(c);
+      else empty.push(c);
+    }
+    return { activeCountries: active, emptyCountries: empty };
+  }, [filteredCountries, grouped]);
 
   const groupCountryLinks = (countryLinks: LinkRow[]) => {
     const byAge = new Map<string, LinkRow[]>();
@@ -924,7 +935,14 @@ export const ScoutingByCountry = () => {
       ) : (
         <div className="space-y-2">
           <div className={openCountry ? "" : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"}>
-            {(openCountry ? filteredCountries.filter((c) => c === openCountry) : filteredCountries).map((country) => {
+            {(openCountry
+              ? filteredCountries.filter((c) => c === openCountry)
+              : (search.trim()
+                  ? filteredCountries
+                  : showAllCountries
+                    ? [...activeCountries, ...emptyCountries]
+                    : activeCountries)
+            ).map((country) => {
               const countryLinks = grouped.get(country) || [];
               const flag = getCountryFlagUrl(country);
               const has = countryLinks.length > 0;
@@ -958,6 +976,21 @@ export const ScoutingByCountry = () => {
               );
             })}
           </div>
+
+          {!openCountry && !search.trim() && emptyCountries.length > 0 && (
+            <div className="flex justify-center pt-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowAllCountries((v) => !v)}
+                className="h-8 text-[11px] uppercase tracking-widest text-muted-foreground hover:text-[hsl(var(--rise-gold))]"
+              >
+                {showAllCountries
+                  ? `Hide ${emptyCountries.length} empty`
+                  : `+ ${emptyCountries.length} More`}
+              </Button>
+            </div>
+          )}
 
           {openCountry && (
             <div className="rounded-xl border border-[hsl(var(--rise-gold)/0.3)] bg-gradient-to-br from-background/80 to-background/40 overflow-hidden">
