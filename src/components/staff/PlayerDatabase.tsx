@@ -26,7 +26,6 @@ import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './Tab
 import { Switch } from '@/components/ui/switch';
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
-import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
 import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
@@ -213,6 +212,23 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
         <FaInstagram className="h-4 w-4 text-[#E1306C]" />
       </button>
     </TooltipTrigger><TooltipContent><p>@{clean}</p></TooltipContent></Tooltip></TooltipProvider>
+  );
+};
+
+const MiniFitBadge = ({ score }: { score: number }) => {
+  const total = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const colour = total >= 85 ? 'bg-[hsl(var(--rise-gold))] text-black border-[hsl(var(--rise-gold))]'
+    : total >= 70 ? 'bg-emerald-500 text-white border-emerald-400'
+    : total >= 50 ? 'bg-amber-500 text-black border-amber-400'
+    : total >= 30 ? 'bg-orange-500 text-white border-orange-400'
+    : 'bg-red-500 text-white border-red-400';
+  return (
+    <span
+      title={`Fit score ${total}`}
+      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black shadow-sm ${colour}`}
+    >
+      {total}
+    </span>
   );
 };
 
