@@ -11,7 +11,7 @@ import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -30,7 +30,6 @@ import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
 import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
 import { matchesQuery } from '@/lib/searchMatch';
-import { PlayerAddMode } from './PlayerAddMode';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -218,7 +217,6 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
 
 export const PlayerDatabase = () => {
   const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [adding, setAdding] = useState(false);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -754,7 +752,6 @@ export const PlayerDatabase = () => {
     }
   };
 
-  if (adding) return <PlayerAddMode onExit={() => setAdding(false)} />;
   if (loading) return <LoadingSpinner size="md" className="py-8" text="Loading player database..." />;
 
   return (
@@ -766,15 +763,6 @@ export const PlayerDatabase = () => {
           Player Database
         </h2>
         <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setAdding(true)}
-          className="h-9 gap-1.5 border-2 !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] !text-black text-xs font-bold uppercase tracking-wider shadow-[0_0_22px_hsl(var(--rise-gold)/0.55)] hover:!bg-[hsl(var(--rise-gold)/0.86)]"
-        >
-          <UserPlus className="h-4 w-4" /> Add players
-        </Button>
         <TableSettingsPopover
           storageKey="player-database"
           columns={DB_COLUMNS}
