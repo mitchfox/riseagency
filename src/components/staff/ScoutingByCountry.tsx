@@ -44,6 +44,97 @@ const EUROPEAN_COUNTRIES = [
 
 const AGE_GROUPS = ["U15", "U17", "U19", "U21", "Senior", "General"] as const;
 
+// Map of canonical country name → accepted nationality strings (lower-cased).
+const COUNTRY_NATIONALITY_ALIASES: Record<string, string[]> = {
+  "Albania": ["albania", "albanian"],
+  "Armenia": ["armenia", "armenian"],
+  "Austria": ["austria", "austrian"],
+  "Azerbaijan": ["azerbaijan", "azerbaijani"],
+  "Belarus": ["belarus", "belarusian"],
+  "Belgium": ["belgium", "belgian"],
+  "Bosnia and Herzegovina": ["bosnia", "bosnian", "bosnia and herzegovina", "herzegovinian"],
+  "Bulgaria": ["bulgaria", "bulgarian"],
+  "Croatia": ["croatia", "croatian"],
+  "Cyprus": ["cyprus", "cypriot"],
+  "Czech Republic": ["czech republic", "czech", "czechia", "czechian"],
+  "Denmark": ["denmark", "danish", "dane"],
+  "England": ["england", "english", "englander"],
+  "Estonia": ["estonia", "estonian"],
+  "Faroe Islands": ["faroe islands", "faroese"],
+  "Finland": ["finland", "finnish", "finn"],
+  "France": ["france", "french"],
+  "Georgia": ["georgia", "georgian"],
+  "Germany": ["germany", "german"],
+  "Gibraltar": ["gibraltar", "gibraltarian"],
+  "Greece": ["greece", "greek"],
+  "Hungary": ["hungary", "hungarian"],
+  "Iceland": ["iceland", "icelandic"],
+  "Ireland": ["ireland", "irish"],
+  "Israel": ["israel", "israeli"],
+  "Italy": ["italy", "italian"],
+  "Kazakhstan": ["kazakhstan", "kazakh"],
+  "Kosovo": ["kosovo", "kosovan", "kosovar"],
+  "Latvia": ["latvia", "latvian"],
+  "Liechtenstein": ["liechtenstein"],
+  "Lithuania": ["lithuania", "lithuanian"],
+  "Luxembourg": ["luxembourg", "luxembourger"],
+  "Malta": ["malta", "maltese"],
+  "Moldova": ["moldova", "moldovan"],
+  "Monaco": ["monaco", "monegasque"],
+  "Montenegro": ["montenegro", "montenegrin"],
+  "Netherlands": ["netherlands", "dutch", "holland"],
+  "North Macedonia": ["north macedonia", "macedonian", "macedonia"],
+  "Northern Ireland": ["northern ireland", "northern irish"],
+  "Norway": ["norway", "norwegian"],
+  "Poland": ["poland", "polish", "pole"],
+  "Portugal": ["portugal", "portuguese"],
+  "Romania": ["romania", "romanian"],
+  "Russia": ["russia", "russian"],
+  "San Marino": ["san marino", "sammarinese"],
+  "Scotland": ["scotland", "scottish", "scot"],
+  "Serbia": ["serbia", "serbian"],
+  "Slovakia": ["slovakia", "slovak"],
+  "Slovenia": ["slovenia", "slovenian"],
+  "Spain": ["spain", "spanish"],
+  "Sweden": ["sweden", "swedish", "swede"],
+  "Switzerland": ["switzerland", "swiss"],
+  "Turkey": ["turkey", "turkish"],
+  "Ukraine": ["ukraine", "ukrainian"],
+  "Wales": ["wales", "welsh"],
+};
+
+type ScoutingPlayer = {
+  id: string;
+  name: string;
+  nationality: string | null;
+  age: number | null;
+  date_of_birth: string | null;
+  club: string | null;
+  club_logo: string | null;
+  image_url: string | null;
+  category: string | null;
+  representation_status: string | null;
+};
+
+const ageBandFor = (age: number | null | undefined): typeof AGE_GROUPS[number] => {
+  if (age == null || isNaN(age)) return "Senior";
+  if (age <= 15) return "U15";
+  if (age <= 17) return "U17";
+  if (age <= 19) return "U19";
+  if (age <= 21) return "U21";
+  return "Senior";
+};
+
+const countryForNationality = (nat: string | null): string | null => {
+  if (!nat) return null;
+  const k = nat.trim().toLowerCase();
+  if (!k) return null;
+  for (const [country, aliases] of Object.entries(COUNTRY_NATIONALITY_ALIASES)) {
+    if (aliases.includes(k)) return country;
+  }
+  return null;
+};
+
 type LinkRow = {
   id: string;
   country: string;
