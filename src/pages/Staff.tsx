@@ -468,7 +468,7 @@ const Staff = () => {
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     initialStaffSectionResolvedRef.current = true;
     setExpandedSection(finalSection as any);
-    setStaffSectionParams({ section: finalSection }, { replace: true });
+    setStaffSectionParams({ section: finalSection }, { replace: true, preservePlayer: true });
     try {
       localStorage.setItem('staff_active_tab', finalSection);
       const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
