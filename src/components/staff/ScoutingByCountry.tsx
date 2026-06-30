@@ -44,6 +44,16 @@ const EUROPEAN_COUNTRIES = [
 ];
 
 const AGE_GROUPS = ["U15", "U16", "U17", "U19", "U21", "Senior", "General"] as const;
+const RESOURCE_PAGE_SIZE = 1000;
+
+const normaliseCountryKey = (value: string | null | undefined) =>
+  (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 // Map of canonical country name → accepted nationality strings (lower-cased).
 const COUNTRY_NATIONALITY_ALIASES: Record<string, string[]> = {
@@ -129,12 +139,27 @@ const ageBandFor = (age: number | null | undefined): typeof AGE_GROUPS[number] =
 
 const countryForNationality = (nat: string | null): string | null => {
   if (!nat) return null;
-  const k = nat.trim().toLowerCase();
+  const k = normaliseCountryKey(nat);
   if (!k) return null;
   for (const [country, aliases] of Object.entries(COUNTRY_NATIONALITY_ALIASES)) {
-    if (aliases.includes(k)) return country;
+    if (aliases.some((alias) => normaliseCountryKey(alias) === k)) return country;
   }
   return null;
+};
+
+const COUNTRY_LOOKUP = new Map<string, string>(
+  EUROPEAN_COUNTRIES.flatMap((country) => {
+    const aliases = COUNTRY_NATIONALITY_ALIASES[country] || [];
+    return [country, ...aliases].map((alias) => [normaliseCountryKey(alias), country] as const);
+  }),
+);
+
+COUNTRY_LOOKUP.set("turkiye", "Turkey");
+
+const canonicalCountry = (country: string | null | undefined) => {
+  const key = normaliseCountryKey(country);
+  if (!key) return country?.trim() || "Unknown";
+  return COUNTRY_LOOKUP.get(key) || country!.trim();
 };
 
 type LinkRow = {
@@ -477,6 +502,7 @@ export const ScoutingByCountry = () => {
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
   const [showAllCountries, setShowAllCountries] = useState(false);
+  const [loadIssue, setLoadIssue] = useState<string | null>(null);
   const [selectedAge, setSelectedAge] = useState<Record<string, string>>({});
   // Map of leagueKey -> the data link to render stats for
   const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
@@ -490,18 +516,35 @@ export const ScoutingByCountry = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("scouting_country_links")
-      .select("*")
-      .order("country", { ascending: true })
-      .order("age_group", { ascending: true })
-      .order("sort_order", { ascending: true })
-      .range(0, 9999);
-    if (error) {
-      toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
-    } else {
-      setLinks((data as LinkRow[]) || []);
+    setLoadIssue(null);
+    const allRows: LinkRow[] = [];
+
+    for (let from = 0; ; from += RESOURCE_PAGE_SIZE) {
+      const to = from + RESOURCE_PAGE_SIZE - 1;
+      const { data, error } = await supabase
+        .from("scouting_country_links")
+        .select("*")
+        .order("country", { ascending: true })
+        .order("age_group", { ascending: true })
+        .order("sort_order", { ascending: true })
+        .range(from, to);
+
+      if (error) {
+        setLoadIssue(error.message);
+        toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
+        break;
+      }
+
+      const rows = ((data as LinkRow[]) || []).map((row) => ({
+        ...row,
+        country: canonicalCountry(row.country),
+      }));
+      allRows.push(...rows);
+
+      if (rows.length < RESOURCE_PAGE_SIZE) break;
     }
+
+    setLinks(allRows);
     setLoading(false);
   };
 
@@ -544,8 +587,9 @@ export const ScoutingByCountry = () => {
     const map = new Map<string, LinkRow[]>();
     for (const c of EUROPEAN_COUNTRIES) map.set(c, []);
     for (const l of links) {
-      if (!map.has(l.country)) map.set(l.country, []);
-      map.get(l.country)!.push(l);
+      const country = canonicalCountry(l.country);
+      if (!map.has(country)) map.set(country, []);
+      map.get(country)!.push({ ...l, country });
     }
     return map;
   }, [links]);
@@ -566,6 +610,8 @@ export const ScoutingByCountry = () => {
     }
     return { activeCountries: active, emptyCountries: empty };
   }, [filteredCountries, grouped]);
+
+  const totalResourceCount = links.length;
 
   const groupCountryLinks = (countryLinks: LinkRow[]) => {
     const byAge = new Map<string, LinkRow[]>();
@@ -912,10 +958,18 @@ export const ScoutingByCountry = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-          <Telescope className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--rise-gold))]" />
-          Scouting
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <Telescope className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--rise-gold))]" />
+            Scouting
+          </h2>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span className="rounded-full border border-[hsl(var(--rise-gold)/0.35)] bg-[hsl(var(--rise-gold)/0.08)] px-2.5 py-1 text-[hsl(var(--rise-gold))]">
+              {totalResourceCount} resources loaded
+            </span>
+            {loadIssue && <span className="text-destructive normal-case tracking-normal">Load issue: {loadIssue}</span>}
+          </div>
+        </div>
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
