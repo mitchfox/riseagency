@@ -61,8 +61,8 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       date_of_birth: manual.date_of_birth || null,
       club: manual.club.trim() || null,
       instagram_handle: manual.instagram_handle.trim() || null,
-      category: 'Scouted',
-      representation_status: 'Scouted',
+        category: 'Other',
+        representation_status: 'Other',
     });
     setSavingManual(false);
     if (error) { toast.error(error.message); return; }
@@ -117,8 +117,8 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         league: p.league || null,
         instagram_handle: p.instagram_handle || null,
         bio: p.notes || null,
-        category: 'Scouted',
-        representation_status: 'Scouted',
+        category: 'Other',
+        representation_status: 'Other',
       });
       if (error) {
         update(p._i, { _error: error.message });
