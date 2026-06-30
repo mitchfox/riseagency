@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { BlurInput } from '@/components/staff/BlurInput';
 import { BlurTextarea } from '@/components/staff/BlurTextarea';
 import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -1148,21 +1147,21 @@ export const PlayerDatabase = () => {
           {selectedPlayer && editMode && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><BlurInput value={editForm.player_name} onCommit={v => setEditForm((f: any) => ({ ...f, player_name: v }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><BlurInput value={editForm.position} onCommit={v => setEditForm((f: any) => ({ ...f, position: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, player_name: e.target.value }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position || ''} onChange={e => setEditForm((f: any) => ({ ...f, position: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><BlurInput value={editForm.nationality} onCommit={v => setEditForm((f: any) => ({ ...f, nationality: v }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><BlurInput value={editForm.current_club} onCommit={v => setEditForm((f: any) => ({ ...f, current_club: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality || ''} onChange={e => setEditForm((f: any) => ({ ...f, nationality: e.target.value }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club || ''} onChange={e => setEditForm((f: any) => ({ ...f, current_club: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><BlurInput value={editForm.ig_handle} onCommit={v => setEditForm((f: any) => ({ ...f, ig_handle: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle || ''} onChange={e => setEditForm((f: any) => ({ ...f, ig_handle: e.target.value }))} /></div>
               </div>
               {selectedPlayer.source === 'youth_outreach' && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={editForm.parents_name} onCommit={v => setEditForm((f: any) => ({ ...f, parents_name: v }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, parents_name: e.target.value }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact || ''} onChange={e => setEditForm((f: any) => ({ ...f, parent_contact: e.target.value }))} /></div>
                 </div>
               )}
               {(selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach') && (
@@ -1199,11 +1198,11 @@ export const PlayerDatabase = () => {
                         <option value="top_agency">Top agency</option>
                       </select>
                     </div>
-                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><BlurInput value={editForm.agent_name || ''} onCommit={v => setEditForm((f: any) => ({ ...f, agent_name: v }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><Input value={editForm.agent_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, agent_name: e.target.value }))} /></div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Previous serious injury</Label>
-                    <BlurInput value={editForm.previous_serious_injury || ''} onCommit={v => setEditForm((f: any) => ({ ...f, previous_serious_injury: v }))} placeholder="e.g. ACL 2023" />
+                    <Input value={editForm.previous_serious_injury || ''} onChange={e => setEditForm((f: any) => ({ ...f, previous_serious_injury: e.target.value }))} placeholder="e.g. ACL 2023" />
                   </div>
                 </div>
               )}
