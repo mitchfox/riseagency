@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2 } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -216,6 +217,7 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
 };
 
 export const PlayerDatabase = () => {
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
@@ -235,6 +237,7 @@ export const PlayerDatabase = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+  const [creatingOutreach, setCreatingOutreach] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
@@ -537,7 +540,7 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
-  const openPlayerDetail = async (player: PlayerData) => {
+  const openPlayerDetail = (player: PlayerData) => {
     setSelectedPlayer(player);
     setEditMode(false);
     setEditForm({
@@ -564,18 +567,84 @@ export const PlayerDatabase = () => {
       const cols = player.source === 'youth_outreach'
         ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
         : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
-      const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
-      if (data) {
-        setEditForm((f: any) => ({
-          ...f,
-          national_team: !!data.national_team,
-          star_of_team: !!data.star_of_team,
-          previous_serious_injury: data.previous_serious_injury || '',
-          agent_status: data.agent_status || '',
-          agent_name: data.agent_name || '',
-          parent_approval: !!data.parent_approval,
-        }));
+      void (async () => {
+        const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
+        if (data) {
+          setEditForm((f: any) => ({
+            ...f,
+            national_team: !!data.national_team,
+            star_of_team: !!data.star_of_team,
+            previous_serious_injury: data.previous_serious_injury || '',
+            agent_status: data.agent_status || '',
+            agent_name: data.agent_name || '',
+            parent_approval: !!data.parent_approval,
+          }));
+        }
+      })();
+    }
+  };
+
+  const createPlayerOutreach = async () => {
+    if (!selectedPlayer?.player_name?.trim()) return;
+    setCreatingOutreach(true);
+    try {
+      const cleanName = selectedPlayer.player_name.trim();
+      let query = (supabase as any)
+        .from('players')
+        .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
+        .ilike('name', cleanName);
+      if (selectedPlayer.date_of_birth) query = query.eq('date_of_birth', selectedPlayer.date_of_birth);
+      let { data: existingRows, error } = await query.limit(1);
+      if (error) throw error;
+
+      if ((!existingRows || existingRows.length === 0) && selectedPlayer.date_of_birth) {
+        const fallback = await (supabase as any)
+          .from('players')
+          .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
+          .ilike('name', cleanName)
+          .limit(1);
+        if (fallback.error) throw fallback.error;
+        existingRows = fallback.data || [];
       }
+
+      const existing = existingRows?.[0] || null;
+      const cleanIg = (selectedPlayer.ig_handle || '').replace(/^@/, '').trim() || null;
+      if (existing) {
+        const updatePayload: any = {
+          has_representation_offer: true,
+          offer_status: existing.offer_status || 'draft',
+          representation_status: existing.representation_status || 'prospect',
+          position: existing.position || selectedPlayer.position || 'Other',
+          club: existing.club || selectedPlayer.current_club || null,
+          nationality: existing.nationality || selectedPlayer.nationality || 'Unknown',
+          date_of_birth: existing.date_of_birth || selectedPlayer.date_of_birth || null,
+          instagram_handle: existing.instagram_handle || cleanIg,
+        };
+        const { error: updateError } = await (supabase as any).from('players').update(updatePayload).eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await (supabase as any).from('players').insert({
+          name: cleanName,
+          position: selectedPlayer.position || 'Other',
+          age: selectedPlayer.age || null,
+          nationality: selectedPlayer.nationality || 'Unknown',
+          club: selectedPlayer.current_club || null,
+          date_of_birth: selectedPlayer.date_of_birth || null,
+          instagram_handle: cleanIg,
+          representation_status: 'prospect',
+          has_representation_offer: true,
+          offer_status: 'draft',
+        });
+        if (insertError) throw insertError;
+      }
+
+      toast.success('Player outreach draft created');
+      setDetailOpen(false);
+      navigate(`/staff?section=representationoffers&player=${encodeURIComponent(cleanName)}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not create player outreach');
+    } finally {
+      setCreatingOutreach(false);
     }
   };
 
@@ -997,9 +1066,15 @@ export const PlayerDatabase = () => {
             <DialogTitle className="flex items-center justify-between">
               <span>{editMode ? 'Edit Player' : 'Player Details'}</span>
               {!editMode && (
-                <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
-                  <Edit className="h-3 w-3" /> Edit
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={createPlayerOutreach} disabled={creatingOutreach} className="gap-1">
+                    {creatingOutreach ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
+                    Create player outreach
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
+                    <Edit className="h-3 w-3" /> Edit
+                  </Button>
+                </div>
               )}
             </DialogTitle>
           </DialogHeader>
