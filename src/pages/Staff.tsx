@@ -62,6 +62,7 @@ const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentM
 const ScoutingCentreManagement = lazy(() => import("@/components/staff/ScoutingCentreManagement").then(m => ({ default: m.ScoutingCentreManagement })));
 const ScoutingByCountry = lazy(() => import("@/components/staff/ScoutingByCountry").then(m => ({ default: m.ScoutingByCountry })));
 const HighlightMakersManagement = lazy(() => import("@/components/staff/HighlightMakersManagement").then(m => ({ default: m.HighlightMakersManagement })));
+const PlayerDatabaseActions = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseActions })));
 const PlayerDatabaseManagement = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseManagement })));
 const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccountManagement").then(m => ({ default: m.StaffAccountManagement })));
 const PlayerPasswordManagement = lazy(() => import("@/components/staff/PlayerPasswordManagement").then(m => ({ default: m.PlayerPasswordManagement })));
