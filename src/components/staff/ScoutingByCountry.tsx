@@ -538,15 +538,14 @@ export const ScoutingByCountry = () => {
                     className="relative group"
                   >
                     {active && (
-                      <div className="absolute -inset-0.5 bg-[hsl(var(--rise-gold))] opacity-20 group-hover:opacity-40 rounded-lg blur-sm transition" />
+                      <div className="absolute -inset-1 bg-[hsl(var(--rise-gold))] opacity-30 group-hover:opacity-50 rounded-xl blur-md transition" />
                     )}
-                    <div className={`relative flex flex-col items-center justify-center py-3 rounded-lg shadow-inner transition-colors ${
+                    <div className={`relative flex items-center justify-center py-4 sm:py-5 rounded-lg shadow-inner transition-colors ${
                       active
-                        ? "bg-zinc-900 border border-[hsl(var(--rise-gold))]"
+                        ? "bg-gradient-to-b from-zinc-900 to-black border border-[hsl(var(--rise-gold))]"
                         : "bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700"
                     }`}>
-                      <span className={`text-[10px] font-bold uppercase tracking-tighter mb-0.5 ${active ? "text-[hsl(var(--rise-gold))]" : "text-zinc-500"}`}>{age}</span>
-                      <span className={`text-sm font-bold ${active ? "text-white" : "text-zinc-300"}`}>{leagues.length} · {total}</span>
+                      <span className={`font-black tracking-tight ${active ? "text-[hsl(var(--rise-gold))] text-2xl sm:text-3xl drop-shadow-[0_0_8px_hsl(var(--rise-gold)/0.6)]" : "text-zinc-300 text-xl sm:text-2xl"}`}>{age}</span>
                     </div>
                   </button>
                 );
@@ -568,41 +567,70 @@ export const ScoutingByCountry = () => {
                       const leagueKey = `${country}:${ageBlock.age}:${league.name}`;
                       const statsLink = statsOpen[leagueKey];
                       return (
-                        <div key={league.name} className="group rounded-xl bg-zinc-900/30 border border-zinc-800/50 hover:bg-zinc-800/40 transition-all p-3 sm:p-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-sm font-semibold text-zinc-100 truncate">{league.name}</span>
-                              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                                {ageBlock.age === "General" ? "General" : ageBlock.age} · {league.links.length} link{league.links.length === 1 ? "" : "s"}
-                              </span>
+                        <div key={league.name} className="group relative rounded-xl bg-gradient-to-br from-zinc-900/60 to-zinc-900/20 border border-zinc-800/60 hover:border-[hsl(var(--rise-gold)/0.4)] hover:shadow-[0_0_24px_-8px_hsl(var(--rise-gold)/0.5)] transition-all p-3 sm:p-4">
+                          {/* League title bar */}
+                          <div className="flex items-start justify-between gap-3 mb-3 pb-3 border-b border-zinc-800/70">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <img src={getCountryFlagUrl(country)} alt="" className="w-6 h-4 object-cover rounded-sm ring-1 ring-[hsl(var(--rise-gold)/0.4)] shrink-0" />
+                              <div className="min-w-0">
+                                <h4 className="text-base sm:text-lg font-bold text-white tracking-tight truncate drop-shadow-[0_0_8px_hsl(var(--rise-gold)/0.25)]">{league.name}</h4>
+                                <span className="text-[10px] text-[hsl(var(--rise-gold))] uppercase tracking-[0.18em] font-semibold">
+                                  {ageBlock.age === "General" ? "General" : ageBlock.age}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 min-w-0">
-                              {(dataLinks.length > 0 || videoLinks.length > 0 || otherLinks.length > 0) && (
-                                <div className="flex flex-wrap items-center gap-1.5 bg-black/40 rounded-full p-1 border border-zinc-800 max-w-full">
+                            {statsCandidate && (
+                              <button
+                                onClick={() => toggleStats(leagueKey, statsCandidate)}
+                                className={`shrink-0 px-3 sm:px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all ${
+                                  statsLink
+                                    ? "bg-[hsl(var(--rise-gold))] text-black hover:bg-[hsl(var(--rise-gold)/0.85)] shadow-[0_0_16px_-2px_hsl(var(--rise-gold)/0.6)]"
+                                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-[hsl(var(--rise-gold)/0.3)]"
+                                }`}
+                              >
+                                <BarChart3 className="h-3 w-3 inline mr-1 -mt-0.5" /> {statsLink ? "Hide" : "Stats"}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Separated rows for Data / Video / Other */}
+                          <div className="space-y-2">
+                            {dataLinks.length > 0 && (
+                              <div className="flex items-start gap-2.5">
+                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-[hsl(var(--rise-gold))] drop-shadow-[0_0_6px_hsl(var(--rise-gold)/0.5)]">
+                                  <Database className="h-3 w-3 inline mr-1 -mt-0.5" />Data
+                                </span>
+                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
                                   {dataLinks.map((l) => (
                                     <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
                                   ))}
+                                </div>
+                              </div>
+                            )}
+                            {videoLinks.length > 0 && (
+                              <div className="flex items-start gap-2.5 pt-2 border-t border-zinc-800/40">
+                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-blue-300 drop-shadow-[0_0_6px_rgb(96_165_250/0.5)]">
+                                  <Video className="h-3 w-3 inline mr-1 -mt-0.5" />Video
+                                </span>
+                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
                                   {videoLinks.map((l) => (
                                     <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
                                   ))}
+                                </div>
+                              </div>
+                            )}
+                            {otherLinks.length > 0 && (
+                              <div className="flex items-start gap-2.5 pt-2 border-t border-zinc-800/40">
+                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">
+                                  <Link2 className="h-3 w-3 inline mr-1 -mt-0.5" />Other
+                                </span>
+                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
                                   {otherLinks.map((l) => (
                                     <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
                                   ))}
                                 </div>
-                              )}
-                              {statsCandidate && (
-                                <button
-                                  onClick={() => toggleStats(leagueKey, statsCandidate)}
-                                  className={`px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all ${
-                                    statsLink
-                                      ? "bg-[hsl(var(--rise-gold))] text-black hover:bg-[hsl(var(--rise-gold)/0.85)]"
-                                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                                  }`}
-                                >
-                                  <BarChart3 className="h-3 w-3 inline mr-1 -mt-0.5" /> {statsLink ? "Hide" : "Stats"}
-                                </button>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
 
                           {editing && editing.id && league.links.some((l) => l.id === editing.id) && (
