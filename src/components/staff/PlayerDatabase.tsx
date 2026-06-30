@@ -605,18 +605,19 @@ export const PlayerDatabase = () => {
 
   const createPlayerOutreach = async () => {
     if (!selectedPlayer?.player_name?.trim()) return;
+    const snapshot = selectedPlayer;
     setCreatingOutreach(true);
     try {
-      const cleanName = selectedPlayer.player_name.trim();
+      const cleanName = snapshot.player_name.trim();
       let query = (supabase as any)
         .from('players')
         .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
         .ilike('name', cleanName);
-      if (selectedPlayer.date_of_birth) query = query.eq('date_of_birth', selectedPlayer.date_of_birth);
+      if (snapshot.date_of_birth) query = query.eq('date_of_birth', snapshot.date_of_birth);
       let { data: existingRows, error } = await query.limit(1);
       if (error) throw error;
 
-      if ((!existingRows || existingRows.length === 0) && selectedPlayer.date_of_birth) {
+      if ((!existingRows || existingRows.length === 0) && snapshot.date_of_birth) {
         const fallback = await (supabase as any)
           .from('players')
           .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
@@ -627,16 +628,16 @@ export const PlayerDatabase = () => {
       }
 
       const existing = existingRows?.[0] || null;
-      const cleanIg = (selectedPlayer.ig_handle || '').replace(/^@/, '').trim() || null;
+      const cleanIg = (snapshot.ig_handle || '').replace(/^@/, '').trim() || null;
       if (existing) {
         const updatePayload: any = {
           has_representation_offer: true,
           offer_status: existing.offer_status || 'draft',
           representation_status: existing.representation_status || 'prospect',
-          position: existing.position || selectedPlayer.position || 'Other',
-          club: existing.club || selectedPlayer.current_club || null,
-          nationality: existing.nationality || selectedPlayer.nationality || 'Unknown',
-          date_of_birth: existing.date_of_birth || selectedPlayer.date_of_birth || null,
+          position: existing.position || snapshot.position || 'Other',
+          club: existing.club || snapshot.current_club || null,
+          nationality: existing.nationality || snapshot.nationality || 'Unknown',
+          date_of_birth: existing.date_of_birth || snapshot.date_of_birth || null,
           instagram_handle: existing.instagram_handle || cleanIg,
         };
         const { error: updateError } = await (supabase as any).from('players').update(updatePayload).eq('id', existing.id);
@@ -644,11 +645,11 @@ export const PlayerDatabase = () => {
       } else {
         const { error: insertError } = await (supabase as any).from('players').insert({
           name: cleanName,
-          position: selectedPlayer.position || 'Other',
-          age: selectedPlayer.age || null,
-          nationality: selectedPlayer.nationality || 'Unknown',
-          club: selectedPlayer.current_club || null,
-          date_of_birth: selectedPlayer.date_of_birth || null,
+          position: snapshot.position || 'Other',
+          age: snapshot.age || null,
+          nationality: snapshot.nationality || 'Unknown',
+          club: snapshot.current_club || null,
+          date_of_birth: snapshot.date_of_birth || null,
           instagram_handle: cleanIg,
           representation_status: 'prospect',
           has_representation_offer: true,
