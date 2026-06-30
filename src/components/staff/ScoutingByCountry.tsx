@@ -44,6 +44,16 @@ const EUROPEAN_COUNTRIES = [
 ];
 
 const AGE_GROUPS = ["U15", "U16", "U17", "U19", "U21", "Senior", "General"] as const;
+const RESOURCE_PAGE_SIZE = 1000;
+
+const normaliseCountryKey = (value: string | null | undefined) =>
+  (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 // Map of canonical country name → accepted nationality strings (lower-cased).
 const COUNTRY_NATIONALITY_ALIASES: Record<string, string[]> = {
@@ -129,12 +139,27 @@ const ageBandFor = (age: number | null | undefined): typeof AGE_GROUPS[number] =
 
 const countryForNationality = (nat: string | null): string | null => {
   if (!nat) return null;
-  const k = nat.trim().toLowerCase();
+  const k = normaliseCountryKey(nat);
   if (!k) return null;
   for (const [country, aliases] of Object.entries(COUNTRY_NATIONALITY_ALIASES)) {
-    if (aliases.includes(k)) return country;
+    if (aliases.some((alias) => normaliseCountryKey(alias) === k)) return country;
   }
   return null;
+};
+
+const COUNTRY_LOOKUP = new Map<string, string>(
+  EUROPEAN_COUNTRIES.flatMap((country) => {
+    const aliases = COUNTRY_NATIONALITY_ALIASES[country] || [];
+    return [country, ...aliases].map((alias) => [normaliseCountryKey(alias), country] as const);
+  }),
+);
+
+COUNTRY_LOOKUP.set("turkiye", "Turkey");
+
+const canonicalCountry = (country: string | null | undefined) => {
+  const key = normaliseCountryKey(country);
+  if (!key) return country?.trim() || "Unknown";
+  return COUNTRY_LOOKUP.get(key) || country!.trim();
 };
 
 type LinkRow = {
