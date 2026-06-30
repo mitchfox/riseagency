@@ -17,10 +17,11 @@ export const PlayerDatabaseManagement = ({ isAdmin }: { isAdmin: boolean }) => {
         <Button
           type="button"
           size="sm"
+          variant="outline"
           onClick={() => setAdding(true)}
-          className="h-8 text-xs gap-1.5 bg-[hsl(var(--rise-gold))] text-black hover:bg-[hsl(var(--rise-gold)/0.85)]"
+          className="h-9 text-xs gap-1.5 font-bold uppercase tracking-wider !bg-[hsl(var(--rise-gold))] !text-black border-2 !border-[hsl(var(--rise-gold))] hover:!bg-[hsl(var(--rise-gold)/0.85)] shadow-[0_0_18px_hsl(var(--rise-gold)/0.45)]"
         >
-          <UserPlus className="h-3.5 w-3.5" /> Add players
+          <UserPlus className="h-4 w-4" /> Add players
         </Button>
         <div className="flex items-center gap-1">
         <Button
