@@ -113,15 +113,14 @@ const LinkPill = ({
   onEdit: (l: LinkRow) => void;
   onRemove: (id: string) => void;
 }) => {
-  const Icon = kind === "video" ? Video : kind === "data" ? Database : Link2;
   const tone =
     kind === "video"
-      ? "border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200"
+      ? "bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20"
       : kind === "data"
-      ? "border-[hsl(var(--rise-gold)/0.5)] bg-[hsl(var(--rise-gold)/0.1)] hover:bg-[hsl(var(--rise-gold)/0.18)] text-[hsl(var(--rise-gold))]"
-      : "border-border/60 bg-muted/40 hover:bg-muted/70 text-foreground";
+      ? "bg-[hsl(var(--rise-gold)/0.10)] text-[hsl(var(--rise-gold))] border-[hsl(var(--rise-gold)/0.30)] hover:bg-[hsl(var(--rise-gold)/0.20)]"
+      : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-white/5";
   return (
-    <div className={`group/pill inline-flex items-center rounded-full border ${tone} pl-2.5 pr-1 py-0.5 text-[11px] transition-colors max-w-full`}>
+    <div className={`group/pill inline-flex items-center rounded-full border ${tone} pl-2.5 pr-1 py-0.5 text-[10px] font-bold uppercase tracking-wide transition-colors max-w-full`}>
       <a
         href={link.url}
         target="_blank"
@@ -129,8 +128,7 @@ const LinkPill = ({
         className="inline-flex items-center gap-1.5 min-w-0"
         title={link.notes || link.url}
       >
-        <Icon className="h-3 w-3 shrink-0" />
-        <span className="truncate max-w-[180px] sm:max-w-[260px]">{link.label}</span>
+        <span className="truncate max-w-[140px] sm:max-w-[220px]">{link.label}</span>
         <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
       </a>
       <button
