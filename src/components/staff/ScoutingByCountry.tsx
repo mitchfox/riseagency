@@ -958,10 +958,18 @@ export const ScoutingByCountry = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-          <Telescope className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--rise-gold))]" />
-          Scouting
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <Telescope className="h-5 w-5 sm:h-6 sm:w-6 text-[hsl(var(--rise-gold))]" />
+            Scouting
+          </h2>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span className="rounded-full border border-[hsl(var(--rise-gold)/0.35)] bg-[hsl(var(--rise-gold)/0.08)] px-2.5 py-1 text-[hsl(var(--rise-gold))]">
+              {totalResourceCount} resources loaded
+            </span>
+            {loadIssue && <span className="text-destructive normal-case tracking-normal">Load issue: {loadIssue}</span>}
+          </div>
+        </div>
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
