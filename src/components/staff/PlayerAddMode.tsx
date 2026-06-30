@@ -66,6 +66,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     });
     setSavingManual(false);
     if (error) { toast.error(error.message); return; }
+    window.dispatchEvent(new CustomEvent('player-database-refresh'));
     toast.success('Player added');
     setManual({ name: '', position: '', nationality: '', date_of_birth: '', club: '', instagram_handle: '' });
     onExit();
@@ -128,6 +129,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       }
     }
     setBulkSaving(false);
+    if (ok > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
     toast.success(`Added ${ok} player${ok === 1 ? '' : 's'}`);
     if (ok === toSave.length) onExit();
   };
