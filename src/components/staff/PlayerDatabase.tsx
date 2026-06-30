@@ -267,7 +267,12 @@ export const PlayerDatabase = () => {
   const { targets } = useRecruitmentTargets();
   const { settings: scoringSettings } = useScoringSettings();
 
-  useEffect(() => { fetchAllPlayers(); }, []);
+  useEffect(() => {
+    fetchAllPlayers();
+    const refresh = () => fetchAllPlayers();
+    window.addEventListener('player-database-refresh', refresh);
+    return () => window.removeEventListener('player-database-refresh', refresh);
+  }, []);
 
   const fetchAllPlayers = async () => {
     try {
