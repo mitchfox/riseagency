@@ -836,8 +836,6 @@ export default function MarketTablesTab() {
         const td = matchContactForClub(contacts, c.club_name, c.country, TD_RE);
         const cs = matchContactForClub(contacts, c.club_name, c.country, CS_RE);
         if (td || cs) return false;
-        const extras = additionalContactsForClub(contacts, c.club_name, c.country, new Set());
-        if (extras.length > 0) return false;
         return true;
       }
       return true;
