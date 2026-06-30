@@ -2068,15 +2068,13 @@ const Staff = () => {
                 return null;
               })()}
               {expandedSection === 'playerdatabase' && playerDatabaseAddModeOpen && (
-                <Card className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300 border border-[hsl(var(--rise-gold)/0.35)]">
-                  <CardContent className="pt-6">
-                    <ErrorBoundary>
-                      <Suspense fallback={<PageLoading />}>
-                        <PlayerAddMode onExit={() => setPlayerDatabaseAddModeOpen(false)} />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </CardContent>
-                </Card>
+                <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <ErrorBoundary>
+                    <Suspense fallback={<div className="rounded-lg border border-[hsl(var(--rise-gold)/0.25)] p-3 text-xs text-muted-foreground">Loading add players…</div>}>
+                      <PlayerAddMode onExit={() => setPlayerDatabaseAddModeOpen(false)} />
+                    </Suspense>
+                  </ErrorBoundary>
+                </div>
               )}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
