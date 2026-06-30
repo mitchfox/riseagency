@@ -383,7 +383,7 @@ export const ScoutingByCountry = () => {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
-  const [openAges, setOpenAges] = useState<Record<string, boolean>>({});
+  const [selectedAge, setSelectedAge] = useState<Record<string, string>>({});
   // Map of leagueKey -> the data link to render stats for
   const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
 
