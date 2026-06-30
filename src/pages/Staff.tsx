@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw, MoreVertical, UserPlus } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
@@ -62,6 +62,7 @@ const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentM
 const ScoutingCentreManagement = lazy(() => import("@/components/staff/ScoutingCentreManagement").then(m => ({ default: m.ScoutingCentreManagement })));
 const ScoutingByCountry = lazy(() => import("@/components/staff/ScoutingByCountry").then(m => ({ default: m.ScoutingByCountry })));
 const HighlightMakersManagement = lazy(() => import("@/components/staff/HighlightMakersManagement").then(m => ({ default: m.HighlightMakersManagement })));
+const PlayerDatabaseActions = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseActions })));
 const PlayerDatabaseManagement = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseManagement })));
 const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccountManagement").then(m => ({ default: m.StaffAccountManagement })));
 const PlayerPasswordManagement = lazy(() => import("@/components/staff/PlayerPasswordManagement").then(m => ({ default: m.PlayerPasswordManagement })));
@@ -113,7 +114,6 @@ const MusicStudio = lazy(() => import("@/components/staff/MusicStudio").then(m =
 const HighlightCompiler = lazy(() => import("@/components/staff/HighlightCompiler").then(m => ({ default: m.HighlightCompiler })));
 const DatasetBuilder = lazy(() => import("@/components/staff/DatasetBuilder").then(m => ({ default: m.DatasetBuilder })));
 const UsageSection = lazy(() => import("@/components/staff/UsageSection").then(m => ({ default: m.UsageSection })));
-const PlayerAddMode = lazy(() => import("@/components/staff/PlayerAddMode").then(m => ({ default: m.PlayerAddMode })));
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -231,7 +231,6 @@ const Staff = () => {
   const logoLongPressFiredRef = useRef(false);
   const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
-  const [playerDatabaseAddModeOpen, setPlayerDatabaseAddModeOpen] = useState(false);
 
   // Track every section the user has visited so we can mount-once and hide
   // instead of unmount/remount. This preserves scroll, filters, popups and any
@@ -247,9 +246,6 @@ const Staff = () => {
     });
   }, [expandedSection]);
 
-  useEffect(() => {
-    if (expandedSection !== 'playerdatabase') setPlayerDatabaseAddModeOpen(false);
-  }, [expandedSection]);
   const renderKA = (id: string, node: React.ReactNode) => {
     if (!visitedSections.has(id)) return null;
     return (
@@ -472,7 +468,7 @@ const Staff = () => {
     const finalSection = (permissionManagedRole && !canView(section)) ? defaultSection : section;
     initialStaffSectionResolvedRef.current = true;
     setExpandedSection(finalSection as any);
-    setStaffSectionParams({ section: finalSection }, { replace: true });
+    setStaffSectionParams({ section: finalSection }, { replace: true, preservePlayer: true });
     try {
       localStorage.setItem('staff_active_tab', finalSection);
       const savedTabs = JSON.parse(localStorage.getItem('staff_open_tabs') || '[]') as string[];
@@ -2047,16 +2043,6 @@ const Staff = () => {
                       categoryTitle={parentCat.title}
                       categoryIcon={parentCat.icon}
                       sectionTitle={activeSection.title}
-                      action={expandedSection === 'playerdatabase' ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => setPlayerDatabaseAddModeOpen((open) => !open)}
-                          className="h-8 gap-1.5 border !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-3 text-[10px] font-black uppercase tracking-wider !text-background shadow-[0_0_14px_hsl(var(--rise-gold)/0.35)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
-                        >
-                          <UserPlus className="h-3.5 w-3.5" /> Add players
-                        </Button>
-                      ) : undefined}
                       onCategoryClick={() => {
                         setExpandedCategory(parentCat.id);
                         setExpandedSection(null);
@@ -2067,15 +2053,6 @@ const Staff = () => {
                 }
                 return null;
               })()}
-              {expandedSection === 'playerdatabase' && playerDatabaseAddModeOpen && (
-                <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <ErrorBoundary>
-                    <Suspense fallback={<div className="rounded-lg border border-[hsl(var(--rise-gold)/0.25)] p-3 text-xs text-muted-foreground">Loading add players…</div>}>
-                      <PlayerAddMode onExit={() => setPlayerDatabaseAddModeOpen(false)} />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
               {/* Mount once, hide via display:none on tab switch so scroll, filters
@@ -2108,7 +2085,12 @@ const Staff = () => {
                   {renderKA('staffschedules', <StaffSchedulesManagement />)}
                   {renderKA('playerlist', <PlayerList isAdmin={canManageSection('playerlist')} />)}
                   {renderKA('recruitment', <RecruitmentManagement isAdmin={canManageSection('recruitment')} />)}
-                  {renderKA('playerdatabase', <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />)}
+                  {renderKA('playerdatabase', (
+                    <div className="space-y-3">
+                      <PlayerDatabaseActions />
+                      <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />
+                    </div>
+                  ))}
                   {renderKA('scoutingcentre', <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />)}
                   {renderKA('scouting', <ScoutingByCountry />)}
                   {renderKA('coaching', <CoachingDatabase isAdmin={canManageSection('coaching')} />)}

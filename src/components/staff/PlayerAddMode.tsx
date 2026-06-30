@@ -34,8 +34,8 @@ const blobToBase64 = (file: File) => new Promise<string>((resolve, reject) => {
   r.readAsDataURL(file);
 });
 
-export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
-  const [mode, setMode] = useState<Mode>('ai');
+export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => void; initialMode?: Exclude<Mode, 'review'> }) => {
+  const [mode, setMode] = useState<Mode>(initialMode);
 
   // Manual
   const [manual, setManual] = useState({ name: '', position: '', nationality: '', date_of_birth: '', club: '', instagram_handle: '' });

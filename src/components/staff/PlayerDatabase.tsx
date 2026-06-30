@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo, useDeferredValue, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { BlurInput } from '@/components/staff/BlurInput';
 import { BlurTextarea } from '@/components/staff/BlurTextarea';
 import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2 } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -25,7 +25,6 @@ import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './Tab
 import { Switch } from '@/components/ui/switch';
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
-import { FitScoreBadge } from './recruitment/FitScoreBadge';
 import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
 import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
@@ -215,7 +214,25 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
   );
 };
 
+const MiniFitBadge = ({ score }: { score: number }) => {
+  const total = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const colour = total >= 85 ? 'bg-[hsl(var(--rise-gold))] text-black border-[hsl(var(--rise-gold))]'
+    : total >= 70 ? 'bg-emerald-500 text-white border-emerald-400'
+    : total >= 50 ? 'bg-amber-500 text-black border-amber-400'
+    : total >= 30 ? 'bg-orange-500 text-white border-orange-400'
+    : 'bg-red-500 text-white border-red-400';
+  return (
+    <span
+      title={`Fit score ${total}`}
+      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black shadow-sm ${colour}`}
+    >
+      {total}
+    </span>
+  );
+};
+
 export const PlayerDatabase = () => {
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
@@ -235,6 +252,8 @@ export const PlayerDatabase = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
+  const [creatingOutreach, setCreatingOutreach] = useState(false);
+  const [notesReady, setNotesReady] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
@@ -537,7 +556,8 @@ export const PlayerDatabase = () => {
 
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
-  const openPlayerDetail = async (player: PlayerData) => {
+  const openPlayerDetail = (player: PlayerData) => {
+    setNotesReady(false);
     setSelectedPlayer(player);
     setEditMode(false);
     setEditForm({
@@ -558,24 +578,92 @@ export const PlayerDatabase = () => {
       parent_approval: false,
     });
     setDetailOpen(true);
+    window.setTimeout(() => setNotesReady(true), 120);
     // Hydrate fit-score fields from source table
     if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
       const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const cols = player.source === 'youth_outreach'
         ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
         : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
-      const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
-      if (data) {
-        setEditForm((f: any) => ({
-          ...f,
-          national_team: !!data.national_team,
-          star_of_team: !!data.star_of_team,
-          previous_serious_injury: data.previous_serious_injury || '',
-          agent_status: data.agent_status || '',
-          agent_name: data.agent_name || '',
-          parent_approval: !!data.parent_approval,
-        }));
+      void (async () => {
+        const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
+        if (data) {
+          setEditForm((f: any) => ({
+            ...f,
+            national_team: !!data.national_team,
+            star_of_team: !!data.star_of_team,
+            previous_serious_injury: data.previous_serious_injury || '',
+            agent_status: data.agent_status || '',
+            agent_name: data.agent_name || '',
+            parent_approval: !!data.parent_approval,
+          }));
+        }
+      })();
+    }
+  };
+
+  const createPlayerOutreach = async () => {
+    if (!selectedPlayer?.player_name?.trim()) return;
+    const snapshot = selectedPlayer;
+    setCreatingOutreach(true);
+    try {
+      const cleanName = snapshot.player_name.trim();
+      let query = (supabase as any)
+        .from('players')
+        .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
+        .ilike('name', cleanName);
+      if (snapshot.date_of_birth) query = query.eq('date_of_birth', snapshot.date_of_birth);
+      let { data: existingRows, error } = await query.limit(1);
+      if (error) throw error;
+
+      if ((!existingRows || existingRows.length === 0) && snapshot.date_of_birth) {
+        const fallback = await (supabase as any)
+          .from('players')
+          .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
+          .ilike('name', cleanName)
+          .limit(1);
+        if (fallback.error) throw fallback.error;
+        existingRows = fallback.data || [];
       }
+
+      const existing = existingRows?.[0] || null;
+      const cleanIg = (snapshot.ig_handle || '').replace(/^@/, '').trim() || null;
+      if (existing) {
+        const updatePayload: any = {
+          has_representation_offer: true,
+          offer_status: existing.offer_status || 'draft',
+          representation_status: existing.representation_status || 'prospect',
+          position: existing.position || snapshot.position || 'Other',
+          club: existing.club || snapshot.current_club || null,
+          nationality: existing.nationality || snapshot.nationality || 'Unknown',
+          date_of_birth: existing.date_of_birth || snapshot.date_of_birth || null,
+          instagram_handle: existing.instagram_handle || cleanIg,
+        };
+        const { error: updateError } = await (supabase as any).from('players').update(updatePayload).eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await (supabase as any).from('players').insert({
+          name: cleanName,
+          position: snapshot.position || 'Other',
+          age: snapshot.age || null,
+          nationality: snapshot.nationality || 'Unknown',
+          club: snapshot.current_club || null,
+          date_of_birth: snapshot.date_of_birth || null,
+          instagram_handle: cleanIg,
+          representation_status: 'prospect',
+          has_representation_offer: true,
+          offer_status: 'draft',
+        });
+        if (insertError) throw insertError;
+      }
+
+      toast.success('Player outreach draft created');
+      setDetailOpen(false);
+      navigate(`/staff?section=representationoffers&player=${encodeURIComponent(cleanName)}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not create player outreach');
+    } finally {
+      setCreatingOutreach(false);
     }
   };
 
@@ -585,13 +673,12 @@ export const PlayerDatabase = () => {
       const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
         : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
-      const { error } = await supabase.from(tableName).update({
+      const payload = {
         player_name: editForm.player_name,
         position: editForm.position || null,
         nationality: editForm.nationality || null,
         current_club: editForm.current_club || null,
         date_of_birth: editForm.date_of_birth || null,
-        ig_handle: editForm.ig_handle || null,
         notes: editForm.notes || null,
         ...(selectedPlayer.source === 'youth_outreach' ? {
           parents_name: editForm.parents_name || null,
@@ -604,12 +691,29 @@ export const PlayerDatabase = () => {
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
+          ig_handle: editForm.ig_handle || null,
         } : {}),
-      }).eq('id', selectedPlayer.id);
+      };
+      const { error } = await supabase.from(tableName).update(payload).eq('id', selectedPlayer.id);
       if (error) throw error;
+      const updatedPlayer: PlayerData = {
+        ...selectedPlayer,
+        player_name: editForm.player_name,
+        position: editForm.position || null,
+        nationality: editForm.nationality || null,
+        current_club: editForm.current_club || null,
+        date_of_birth: editForm.date_of_birth || null,
+        age: calculateAge(editForm.date_of_birth) ?? selectedPlayer.age,
+        ig_handle: isOutreach ? (editForm.ig_handle || null) : selectedPlayer.ig_handle,
+        notes: editForm.notes || null,
+        parents_name: selectedPlayer.source === 'youth_outreach' ? (editForm.parents_name || null) : selectedPlayer.parents_name,
+        parent_contact: selectedPlayer.source === 'youth_outreach' ? (editForm.parent_contact || null) : selectedPlayer.parent_contact,
+        parent_approval: selectedPlayer.source === 'youth_outreach' ? !!editForm.parent_approval : selectedPlayer.parent_approval,
+      };
+      setPlayers((prev) => prev.map((p) => (p.id === selectedPlayer.id && p.source === selectedPlayer.source ? updatedPlayer : p)));
+      setSelectedPlayer(updatedPlayer);
       toast.success('Player updated');
-      setDetailOpen(false);
-      fetchAllPlayers();
+      setEditMode(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     }
@@ -670,21 +774,7 @@ export const PlayerDatabase = () => {
       case 'fit':
         return (
           <TableCell key={key} className="py-1.5 text-center">
-            <FitScoreBadge
-              player={{
-                position: player.position,
-                age: player.age,
-                date_of_birth: player.date_of_birth,
-                nationality: player.nationality,
-                current_club: player.current_club,
-                club_country: clubCountry,
-                club_first_team_rating: clubRatingVal as any,
-                messaged: player.messaged,
-                response_received: player.response_received,
-                parent_approval: player.parent_approval,
-              }}
-              scope={player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined}
-            />
+            <MiniFitBadge score={fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0} />
           </TableCell>
         );
       case 'name':
@@ -991,15 +1081,21 @@ export const PlayerDatabase = () => {
       )}
 
       {/* Player Detail/Edit Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <Dialog open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) { setEditMode(false); setNotesReady(false); } }}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{editMode ? 'Edit Player' : 'Player Details'}</span>
               {!editMode && (
-                <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
-                  <Edit className="h-3 w-3" /> Edit
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={createPlayerOutreach} disabled={creatingOutreach} className="gap-1">
+                    {creatingOutreach ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
+                    Create player outreach
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
+                    <Edit className="h-3 w-3" /> Edit
+                  </Button>
+                </div>
               )}
             </DialogTitle>
           </DialogHeader>
@@ -1038,34 +1134,34 @@ export const PlayerDatabase = () => {
                 <div><span className="text-muted-foreground text-xs">Reports</span><p className="font-medium">{selectedPlayer.report_count}</p></div>
                 {selectedPlayer.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{selectedPlayer.notes}</p></div>}
               </div>
-              <div className="pt-2 border-t border-border/40">
+              {notesReady && <div className="pt-2 border-t border-border/40">
                 <PlayerNotesBoard
                   playerKey={buildPlayerKey(selectedPlayer.player_name, selectedPlayer.date_of_birth)}
                   playerName={selectedPlayer.player_name}
                   source={selectedPlayer.source}
                   sourceId={selectedPlayer.id}
                 />
-              </div>
+              </div>}
             </div>
           )}
           {selectedPlayer && editMode && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><BlurInput value={editForm.player_name} onCommit={v => setEditForm((f: any) => ({ ...f, player_name: v }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><BlurInput value={editForm.position} onCommit={v => setEditForm((f: any) => ({ ...f, position: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, player_name: e.target.value }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position || ''} onChange={e => setEditForm((f: any) => ({ ...f, position: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><BlurInput value={editForm.nationality} onCommit={v => setEditForm((f: any) => ({ ...f, nationality: v }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><BlurInput value={editForm.current_club} onCommit={v => setEditForm((f: any) => ({ ...f, current_club: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality || ''} onChange={e => setEditForm((f: any) => ({ ...f, nationality: e.target.value }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club || ''} onChange={e => setEditForm((f: any) => ({ ...f, current_club: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><BlurInput value={editForm.ig_handle} onCommit={v => setEditForm((f: any) => ({ ...f, ig_handle: v }))} /></div>
+                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle || ''} onChange={e => setEditForm((f: any) => ({ ...f, ig_handle: e.target.value }))} /></div>
               </div>
               {selectedPlayer.source === 'youth_outreach' && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><BlurInput value={editForm.parents_name} onCommit={v => setEditForm((f: any) => ({ ...f, parents_name: v }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><BlurInput value={editForm.parent_contact} onCommit={v => setEditForm((f: any) => ({ ...f, parent_contact: v }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, parents_name: e.target.value }))} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact || ''} onChange={e => setEditForm((f: any) => ({ ...f, parent_contact: e.target.value }))} /></div>
                 </div>
               )}
               {(selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach') && (
@@ -1102,11 +1198,11 @@ export const PlayerDatabase = () => {
                         <option value="top_agency">Top agency</option>
                       </select>
                     </div>
-                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><BlurInput value={editForm.agent_name || ''} onCommit={v => setEditForm((f: any) => ({ ...f, agent_name: v }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><Input value={editForm.agent_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, agent_name: e.target.value }))} /></div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Previous serious injury</Label>
-                    <BlurInput value={editForm.previous_serious_injury || ''} onCommit={v => setEditForm((f: any) => ({ ...f, previous_serious_injury: v }))} placeholder="e.g. ACL 2023" />
+                    <Input value={editForm.previous_serious_injury || ''} onChange={e => setEditForm((f: any) => ({ ...f, previous_serious_injury: e.target.value }))} placeholder="e.g. ACL 2023" />
                   </div>
                 </div>
               )}
