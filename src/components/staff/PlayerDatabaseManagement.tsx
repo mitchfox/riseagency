@@ -59,7 +59,7 @@ export const PlayerDatabaseActions = () => {
   );
 };
 
-export const PlayerDatabaseManagement = ({ isAdmin }: { isAdmin: boolean }) => {
+export const PlayerDatabaseManagement = ({ isAdmin: _isAdmin }: { isAdmin: boolean }) => {
   const [mode, setMode] = useState<Mode>('classic');
   return (
     <div className="space-y-4 rounded-xl border border-border/50 bg-background/40 p-3 md:p-4">
