@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Sparkles, UserPlus, Upload, Image as ImageIcon, X, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Sparkles, UserPlus, Image as ImageIcon, X, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type Mode = 'choice' | 'manual' | 'ai' | 'review';
+type Mode = 'manual' | 'ai' | 'review';
 
 interface ParsedPlayer {
   name: string;
@@ -35,7 +35,7 @@ const blobToBase64 = (file: File) => new Promise<string>((resolve, reject) => {
 });
 
 export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
-  const [mode, setMode] = useState<Mode>('choice');
+  const [mode, setMode] = useState<Mode>('ai');
 
   // Manual
   const [manual, setManual] = useState({ name: '', position: '', nationality: '', date_of_birth: '', club: '', instagram_handle: '' });
@@ -132,30 +132,22 @@ export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 p-4 md:p-6 rounded-xl bg-gradient-to-b from-background via-background to-muted/30 border border-border/50">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={onExit} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back to database
-        </Button>
-        <div className="text-xs uppercase tracking-widest text-[hsl(var(--rise-gold))] font-bold">Add Players</div>
-      </div>
-
-      {mode === 'choice' && (
-        <div className="grid sm:grid-cols-2 gap-4">
-          <button onClick={() => setMode('manual')} className="group relative overflow-hidden rounded-2xl border-2 border-border/60 hover:border-[hsl(var(--rise-gold))] bg-gradient-to-br from-card to-background p-8 text-left transition-all hover:shadow-[0_0_30px_hsl(var(--rise-gold)/0.25)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--rise-gold)/0.15),transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity" />
-            <UserPlus className="h-10 w-10 text-[hsl(var(--rise-gold))] mb-4" />
-            <div className="text-xl font-bold mb-1">Add manually</div>
-            <p className="text-sm text-muted-foreground">Type the details for one player and add them straight to the database.</p>
-          </button>
-          <button onClick={() => setMode('ai')} className="group relative overflow-hidden rounded-2xl border-2 border-border/60 hover:border-[hsl(var(--rise-gold))] bg-gradient-to-br from-card to-background p-8 text-left transition-all hover:shadow-[0_0_30px_hsl(var(--rise-gold)/0.25)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--rise-gold)/0.15),transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Sparkles className="h-10 w-10 text-[hsl(var(--rise-gold))] mb-4" />
-            <div className="text-xl font-bold mb-1">Add with AI</div>
-            <p className="text-sm text-muted-foreground">Paste lists, scout notes or drop screenshots. AI extracts players, fills nationality, position, club and more for you to review.</p>
-          </button>
+    <div className="space-y-4 rounded-xl border border-[hsl(var(--rise-gold)/0.35)] bg-card/35 p-3 md:p-4 shadow-[0_0_24px_hsl(var(--rise-gold)/0.08)]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-sm font-black uppercase tracking-wider text-[hsl(var(--rise-gold))]">Add players</div>
+          <div className="text-xs text-muted-foreground">Paste text or screenshots, then review before anything is saved.</div>
         </div>
-      )}
+        <div className="flex items-center gap-1.5">
+          <Button type="button" size="sm" variant={mode === 'ai' || mode === 'review' ? 'default' : 'outline'} onClick={() => setMode('ai')} className="h-8 gap-1.5 text-xs">
+            <Sparkles className="h-3.5 w-3.5" /> AI
+          </Button>
+          <Button type="button" size="sm" variant={mode === 'manual' ? 'default' : 'outline'} onClick={() => setMode('manual')} className="h-8 gap-1.5 text-xs">
+            <UserPlus className="h-3.5 w-3.5" /> Manual
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onExit} className="h-8 text-xs">Close</Button>
+        </div>
+      </div>
 
       {mode === 'manual' && (
         <div className="max-w-2xl space-y-3 rounded-xl border border-border/50 bg-card/40 p-5">
@@ -170,7 +162,7 @@ export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
           </div>
           <Field label="Instagram handle"><Input value={manual.instagram_handle} onChange={(e) => setManual({ ...manual, instagram_handle: e.target.value })} placeholder="handle (no @)" /></Field>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setMode('choice')}>Cancel</Button>
+            <Button variant="ghost" onClick={onExit}>Cancel</Button>
             <Button onClick={saveManual} disabled={savingManual} className="gap-2">{savingManual ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Add player</Button>
           </div>
         </div>
@@ -199,10 +191,10 @@ export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
               </div>
               <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={onImageInput} />
             </div>
-            <Field label="Optional extra instruction"><Input value={aiInstruction} onChange={(e) => setAiInstruction(e.target.value)} placeholder="e.g. these are all U17 Czech league players" /></Field>
+            <Field label="Optional extra instruction"><Input value={aiInstruction} onChange={(e) => setAiInstruction(e.target.value)} placeholder="e.g. these are all U17 Czech league players from Sigma Olomouc" /></Field>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setMode('choice')}>Cancel</Button>
+            <Button variant="ghost" onClick={onExit}>Cancel</Button>
             <Button onClick={runParse} disabled={parsing} className="gap-2">
               {parsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Parse players
