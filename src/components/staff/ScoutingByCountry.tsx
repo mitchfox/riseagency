@@ -531,16 +531,16 @@ export const ScoutingByCountry = () => {
           ageGroups.map(({ age, leagues, total }) => {
             const isOpen = openAges[`${country}:${age}`] ?? false;
             return (
-              <div key={age} className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
+              <div key={age} className={`rounded-xl border ${isOpen ? "border-[hsl(var(--rise-gold)/0.45)] shadow-[0_0_30px_-12px_hsl(var(--rise-gold)/0.5)]" : "border-border/60"} bg-gradient-to-br from-card/80 via-card/50 to-[hsl(var(--rise-gold)/0.04)] overflow-hidden transition-all`}>
                 <button
                   onClick={() => setOpenAges((s) => ({ ...s, [`${country}:${age}`]: !isOpen }))}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[hsl(var(--rise-gold)/0.05)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[hsl(var(--rise-gold)/0.06)] transition-colors"
                 >
-                  <div className="h-7 w-12 rounded-md bg-gradient-to-br from-[hsl(var(--rise-gold)/0.25)] to-[hsl(var(--rise-gold)/0.05)] border border-[hsl(var(--rise-gold)/0.3)] flex items-center justify-center text-[10px] font-bold tracking-wider text-[hsl(var(--rise-gold))]">
+                  <div className="h-9 w-14 rounded-lg bg-gradient-to-br from-[hsl(var(--rise-gold)/0.4)] via-[hsl(var(--rise-gold)/0.15)] to-transparent border border-[hsl(var(--rise-gold)/0.45)] flex items-center justify-center text-[11px] font-bold tracking-wider text-[hsl(var(--rise-gold))] shadow-inner shrink-0">
                     {age}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <div className="text-xs sm:text-sm font-semibold truncate">{age === "General" ? "General resources" : `${age} football`}</div>
+                    <div className="text-sm font-semibold truncate">{age === "General" ? "General resources" : `${age} football`}</div>
                     <div className="text-[10px] text-muted-foreground">
                       {leagues.length} league{leagues.length === 1 ? "" : "s"} · {total} link{total === 1 ? "" : "s"}
                     </div>
@@ -549,7 +549,7 @@ export const ScoutingByCountry = () => {
                 </button>
 
                 {isOpen && (
-                  <div className="px-2 sm:px-3 pb-3 space-y-2 border-t border-border/40 pt-3">
+                  <div className="px-2 sm:px-3 pb-3 space-y-2.5 border-t border-[hsl(var(--rise-gold)/0.2)] pt-3 bg-gradient-to-b from-[hsl(var(--rise-gold)/0.03)] to-transparent">
                     {leagues.map((league) => {
                       const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
                       const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
@@ -558,32 +558,34 @@ export const ScoutingByCountry = () => {
                       const leagueKey = `${country}:${age}:${league.name}`;
                       const statsLink = statsOpen[leagueKey];
                       return (
-                        <div key={league.name} className="rounded-lg border border-border/50 bg-background/60 p-2.5">
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="font-medium text-[13px] truncate flex-1 min-w-0">{league.name}</div>
-                            <div className="flex items-center gap-1 shrink-0">
+                        <div key={league.name} className="group/league rounded-xl border border-border/60 bg-gradient-to-br from-background/90 to-background/40 hover:border-[hsl(var(--rise-gold)/0.4)] hover:shadow-[0_2px_20px_-8px_hsl(var(--rise-gold)/0.4)] transition-all p-3">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--rise-gold))] shrink-0 shadow-[0_0_8px_hsl(var(--rise-gold))]" />
+                              <div className="font-semibold text-sm truncate">{league.name}</div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
                               {statsCandidate && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-[10px] border border-[hsl(var(--rise-gold)/0.4)] text-[hsl(var(--rise-gold))] hover:bg-[hsl(var(--rise-gold)/0.1)] uppercase tracking-wider"
+                                  className={`h-7 px-2.5 text-[10px] border uppercase tracking-widest font-bold ${statsLink ? "border-[hsl(var(--rise-gold))] bg-[hsl(var(--rise-gold)/0.15)] text-[hsl(var(--rise-gold))]" : "border-[hsl(var(--rise-gold)/0.5)] text-[hsl(var(--rise-gold))] hover:bg-[hsl(var(--rise-gold)/0.12)]"}`}
                                   onClick={() => toggleStats(leagueKey, statsCandidate)}
                                 >
                                   <BarChart3 className="h-3 w-3 mr-1" /> {statsLink ? "Hide" : "Stats"}
                                 </Button>
                               )}
-                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                {league.links.length}
-                              </span>
                             </div>
                           </div>
 
                           {(dataLinks.length > 0 || videoLinks.length > 0 || otherLinks.length > 0) && (
-                            <div className="space-y-1.5">
+                            <div className="space-y-2">
                               {dataLinks.length > 0 && (
                                 <div className="flex items-start gap-2">
-                                  <span className="text-[9px] uppercase tracking-widest text-[hsl(var(--rise-gold))] mt-1 w-10 shrink-0">Data</span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-[hsl(var(--rise-gold))] font-bold mt-1 w-12 shrink-0">
+                                    <Database className="h-2.5 w-2.5" /> Data
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
                                     {dataLinks.map((l) => (
                                       <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
                                     ))}
@@ -592,8 +594,10 @@ export const ScoutingByCountry = () => {
                               )}
                               {videoLinks.length > 0 && (
                                 <div className="flex items-start gap-2">
-                                  <span className="text-[9px] uppercase tracking-widest text-blue-300 mt-1 w-10 shrink-0">Video</span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-blue-300 font-bold mt-1 w-12 shrink-0">
+                                    <Video className="h-2.5 w-2.5" /> Video
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
                                     {videoLinks.map((l) => (
                                       <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
                                     ))}
@@ -602,8 +606,10 @@ export const ScoutingByCountry = () => {
                               )}
                               {otherLinks.length > 0 && (
                                 <div className="flex items-start gap-2">
-                                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1 w-10 shrink-0">Other</span>
-                                  <div className="flex flex-wrap gap-1.5 min-w-0">
+                                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-muted-foreground font-bold mt-1 w-12 shrink-0">
+                                    <Link2 className="h-2.5 w-2.5" /> Other
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
                                     {otherLinks.map((l) => (
                                       <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
                                     ))}
