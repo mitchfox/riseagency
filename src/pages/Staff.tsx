@@ -2085,7 +2085,12 @@ const Staff = () => {
                   {renderKA('staffschedules', <StaffSchedulesManagement />)}
                   {renderKA('playerlist', <PlayerList isAdmin={canManageSection('playerlist')} />)}
                   {renderKA('recruitment', <RecruitmentManagement isAdmin={canManageSection('recruitment')} />)}
-                  {renderKA('playerdatabase', <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />)}
+                  {renderKA('playerdatabase', (
+                    <div className="space-y-3">
+                      <PlayerDatabaseActions />
+                      <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />
+                    </div>
+                  ))}
                   {renderKA('scoutingcentre', <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />)}
                   {renderKA('scouting', <ScoutingByCountry />)}
                   {renderKA('coaching', <CoachingDatabase isAdmin={canManageSection('coaching')} />)}
