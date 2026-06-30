@@ -502,6 +502,7 @@ export const ScoutingByCountry = () => {
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
   const [showAllCountries, setShowAllCountries] = useState(false);
+  const [loadIssue, setLoadIssue] = useState<string | null>(null);
   const [selectedAge, setSelectedAge] = useState<Record<string, string>>({});
   // Map of leagueKey -> the data link to render stats for
   const [statsOpen, setStatsOpen] = useState<Record<string, LinkRow | null>>({});
@@ -515,18 +516,35 @@ export const ScoutingByCountry = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("scouting_country_links")
-      .select("*")
-      .order("country", { ascending: true })
-      .order("age_group", { ascending: true })
-      .order("sort_order", { ascending: true })
-      .range(0, 9999);
-    if (error) {
-      toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
-    } else {
-      setLinks((data as LinkRow[]) || []);
+    setLoadIssue(null);
+    const allRows: LinkRow[] = [];
+
+    for (let from = 0; ; from += RESOURCE_PAGE_SIZE) {
+      const to = from + RESOURCE_PAGE_SIZE - 1;
+      const { data, error } = await supabase
+        .from("scouting_country_links")
+        .select("*")
+        .order("country", { ascending: true })
+        .order("age_group", { ascending: true })
+        .order("sort_order", { ascending: true })
+        .range(from, to);
+
+      if (error) {
+        setLoadIssue(error.message);
+        toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
+        break;
+      }
+
+      const rows = ((data as LinkRow[]) || []).map((row) => ({
+        ...row,
+        country: canonicalCountry(row.country),
+      }));
+      allRows.push(...rows);
+
+      if (rows.length < RESOURCE_PAGE_SIZE) break;
     }
+
+    setLinks(allRows);
     setLoading(false);
   };
 
@@ -569,8 +587,9 @@ export const ScoutingByCountry = () => {
     const map = new Map<string, LinkRow[]>();
     for (const c of EUROPEAN_COUNTRIES) map.set(c, []);
     for (const l of links) {
-      if (!map.has(l.country)) map.set(l.country, []);
-      map.get(l.country)!.push(l);
+      const country = canonicalCountry(l.country);
+      if (!map.has(country)) map.set(country, []);
+      map.get(country)!.push({ ...l, country });
     }
     return map;
   }, [links]);
@@ -591,6 +610,8 @@ export const ScoutingByCountry = () => {
     }
     return { activeCountries: active, emptyCountries: empty };
   }, [filteredCountries, grouped]);
+
+  const totalResourceCount = links.length;
 
   const groupCountryLinks = (countryLinks: LinkRow[]) => {
     const byAge = new Map<string, LinkRow[]>();
