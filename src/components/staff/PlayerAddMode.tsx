@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Sparkles, UserPlus, Upload, Image as ImageIcon, X, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Sparkles, UserPlus, Image as ImageIcon, X, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type Mode = 'choice' | 'manual' | 'ai' | 'review';
+type Mode = 'manual' | 'ai' | 'review';
 
 interface ParsedPlayer {
   name: string;
@@ -35,7 +35,7 @@ const blobToBase64 = (file: File) => new Promise<string>((resolve, reject) => {
 });
 
 export const PlayerAddMode = ({ onExit }: { onExit: () => void }) => {
-  const [mode, setMode] = useState<Mode>('choice');
+  const [mode, setMode] = useState<Mode>('ai');
 
   // Manual
   const [manual, setManual] = useState({ name: '', position: '', nationality: '', date_of_birth: '', club: '', instagram_handle: '' });
