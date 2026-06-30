@@ -481,6 +481,10 @@ export const ScoutingByCountry = () => {
   const [players, setPlayers] = useState<ScoutingPlayer[]>([]);
   // Map of `${country}:${age}` → boolean (expanded)
   const [playersOpen, setPlayersOpen] = useState<Record<string, boolean>>({});
+  // Tab state per `${country}:${age}` → which category card is open
+  const [selectedTab, setSelectedTab] = useState<Record<string, "video" | "data" | "players" | "stats">>({});
+  // Per-league expansion within Video/Data/Stats tabs (`${country}:${age}:${tab}:${league}`)
+  const [expandedLeague, setExpandedLeague] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
