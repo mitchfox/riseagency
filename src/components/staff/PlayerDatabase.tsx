@@ -42,7 +42,7 @@ interface PlayerData {
   nationality: string | null;
   date_of_birth: string | null;
   report_count: number;
-  source: 'scouting' | 'youth_outreach' | 'pro_outreach';
+  source: 'database' | 'scouting' | 'youth_outreach' | 'pro_outreach';
   notes?: string | null;
   ig_handle?: string | null;
   created_at?: string;
@@ -271,7 +271,8 @@ export const PlayerDatabase = () => {
 
   const fetchAllPlayers = async () => {
     try {
-      const [scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
+      const [databaseResult, scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
+        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status').range(0, 4999),
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
@@ -281,6 +282,7 @@ export const PlayerDatabase = () => {
         supabase.from('club_ratings').select('club_name, first_team_rating, academy_rating, country'),
       ]);
 
+      if (databaseResult.error) throw databaseResult.error;
       if (scoutingResult.error) throw scoutingResult.error;
       if (youthResult.error) throw youthResult.error;
       if (proResult.error) throw proResult.error;
@@ -324,6 +326,32 @@ export const PlayerDatabase = () => {
       };
 
       const playerMap: Record<string, PlayerData> = {};
+
+      databaseResult.data?.forEach(player => {
+        if (['Scouted', 'Fuel For Football', 'FFF'].includes(player.category || '') || ['Scouted', 'Fuel For Football', 'FFF'].includes(player.representation_status || '')) return;
+        const name = player.name;
+        if (!name) return;
+        if (!playerMap[name]) {
+          playerMap[name] = {
+            id: player.id,
+            player_name: name,
+            position: player.position,
+            age: calculateAge(player.date_of_birth) ?? player.age,
+            current_club: player.club,
+            nationality: player.nationality,
+            date_of_birth: player.date_of_birth,
+            report_count: 0,
+            source: 'database',
+            notes: player.bio,
+            ig_handle: player.instagram_handle,
+            created_at: player.created_at,
+            profile_image_url: player.image_url,
+            club_logo_url: player.club_logo || getClubLogo(player.club),
+            messaged: !!player.has_representation_offer || player.offer_status === 'sent',
+            response_received: !!player.outreach_response_status,
+          };
+        }
+      });
 
       scoutingResult.data?.forEach(report => {
         const name = report.player_name;
@@ -457,7 +485,7 @@ export const PlayerDatabase = () => {
             parent_approval: player.parent_approval,
           } as any,
           targets, scoringSettings.weights, scoringSettings.age_sweet_spot_band,
-          player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' ? 'pro' : undefined,
+          player.source === 'youth_outreach' ? 'youth' : player.source === 'pro_outreach' || player.source === 'database' ? 'pro' : undefined,
           scoringSettings.bonus_weights,
           scoringSettings.position_adjacency_factor,
           scoringSettings.league_strength_weight,
@@ -670,6 +698,36 @@ export const PlayerDatabase = () => {
   const handleSaveEdit = async () => {
     if (!selectedPlayer) return;
     try {
+      if (selectedPlayer.source === 'database') {
+        const payload = {
+          name: editForm.player_name,
+          position: editForm.position || null,
+          nationality: editForm.nationality || null,
+          club: editForm.current_club || null,
+          date_of_birth: editForm.date_of_birth || null,
+          bio: editForm.notes || null,
+          instagram_handle: editForm.ig_handle || null,
+        };
+        const { error } = await supabase.from('players').update(payload).eq('id', selectedPlayer.id);
+        if (error) throw error;
+        const updatedPlayer: PlayerData = {
+          ...selectedPlayer,
+          player_name: editForm.player_name,
+          position: editForm.position || null,
+          nationality: editForm.nationality || null,
+          current_club: editForm.current_club || null,
+          date_of_birth: editForm.date_of_birth || null,
+          age: calculateAge(editForm.date_of_birth) ?? selectedPlayer.age,
+          ig_handle: editForm.ig_handle || null,
+          notes: editForm.notes || null,
+        };
+        setPlayers((prev) => prev.map((p) => (p.id === selectedPlayer.id && p.source === selectedPlayer.source ? updatedPlayer : p)));
+        setSelectedPlayer(updatedPlayer);
+        toast.success('Player updated');
+        setEditMode(false);
+        return;
+      }
+
       const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
         : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
@@ -819,7 +877,7 @@ export const PlayerDatabase = () => {
       case 'source':
         return (
           <TableCell key={key} className="text-xs py-1.5">
-            <Badge variant="secondary" className="text-[9px]">{player.source === 'scouting' ? 'Scout' : player.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
+            <Badge variant="secondary" className="text-[9px]">{player.source === 'database' ? 'DB' : player.source === 'scouting' ? 'Scout' : player.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
           </TableCell>
         );
       case 'added':
@@ -903,10 +961,10 @@ export const PlayerDatabase = () => {
               <div className="space-y-2">
                 <Label className="text-xs">Source</Label>
                 <div className="flex gap-1">
-                  {['scouting', 'youth_outreach', 'pro_outreach'].map(src => (
+                  {['database', 'scouting', 'youth_outreach', 'pro_outreach'].map(src => (
                     <button key={src} onClick={() => setSourceFilter(prev => prev.includes(src) ? prev.filter(v => v !== src) : [...prev, src])}
                       className={`text-[10px] px-1.5 py-0.5 border rounded ${sourceFilter.includes(src) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
-                    >{src === 'scouting' ? 'Scout' : src === 'youth_outreach' ? 'Youth' : 'Pro'}</button>
+                    >{src === 'database' ? 'DB' : src === 'scouting' ? 'Scout' : src === 'youth_outreach' ? 'Youth' : 'Pro'}</button>
                   ))}
                 </div>
               </div>
@@ -1000,7 +1058,7 @@ export const PlayerDatabase = () => {
           {ageFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{ageFilter}</Badge>}
           {nationFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">{nationFilter}</Badge>}
           {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
-          {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
+          {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'database' ? 'DB' : s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
           {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
           {birthMonthFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">Born {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(birthMonthFilter) - 1]}</Badge>}
           {activeBirthdayLabel && <Badge variant="secondary" className="text-[10px]">Birthday: {activeBirthdayLabel}</Badge>}
@@ -1112,7 +1170,7 @@ export const PlayerDatabase = () => {
                   <h3 className="font-bold text-lg">{selectedPlayer.player_name}</h3>
                   <div className="flex items-center gap-2">
                     <EligibilityBadge player={selectedPlayer} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                    <Badge variant="secondary" className="text-[10px]">{selectedPlayer.source === 'scouting' ? 'Scouting' : selectedPlayer.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{selectedPlayer.source === 'database' ? 'Database' : selectedPlayer.source === 'scouting' ? 'Scouting' : selectedPlayer.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
                   </div>
                 </div>
               </div>
