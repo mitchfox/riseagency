@@ -21,6 +21,8 @@ import {
 import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search, ChevronDown, Database, Video, ArrowLeft, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
+import ScoutingPlayersPanel from "./ScoutingPlayersPanel";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // European countries we cover in Network / Coaching Database
 const EUROPEAN_COUNTRIES = [
@@ -110,6 +112,7 @@ export const ScoutingByCountry = () => {
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
   const [openCountry, setOpenCountry] = useState<string | null>(null);
   const [openAges, setOpenAges] = useState<Record<string, boolean>>({});
+  const [tab, setTab] = useState<"resources" | "players">("resources");
 
   const load = async () => {
     setLoading(true);
@@ -305,7 +308,15 @@ export const ScoutingByCountry = () => {
 
                 {/* Scrollable body */}
                 <div className="overflow-y-auto px-4 sm:px-6 py-5 space-y-2">
-                  {countryLinks.length === 0 ? (
+                  <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
+                    <TabsList className="grid grid-cols-2 w-full max-w-sm">
+                      <TabsTrigger value="resources">Resources</TabsTrigger>
+                      <TabsTrigger value="players">Player stats</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  {tab === "players" ? (
+                    <ScoutingPlayersPanel country={openCountry} />
+                  ) : countryLinks.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic text-center py-12">
                       No links yet. Add your first one to start building {openCountry}'s scouting toolkit.
                     </p>

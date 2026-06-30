@@ -7977,6 +7977,54 @@ export type Database = {
           },
         ]
       }
+      scouting_competitions: {
+        Row: {
+          age_group: string
+          country: string
+          created_at: string
+          id: string
+          last_indexed_at: string | null
+          level: string | null
+          name: string
+          organiser_url: string | null
+          season: string | null
+          season_active: boolean
+          source: string
+          stats_url: string
+          updated_at: string
+        }
+        Insert: {
+          age_group: string
+          country: string
+          created_at?: string
+          id?: string
+          last_indexed_at?: string | null
+          level?: string | null
+          name: string
+          organiser_url?: string | null
+          season?: string | null
+          season_active?: boolean
+          source?: string
+          stats_url: string
+          updated_at?: string
+        }
+        Update: {
+          age_group?: string
+          country?: string
+          created_at?: string
+          id?: string
+          last_indexed_at?: string | null
+          level?: string | null
+          name?: string
+          organiser_url?: string | null
+          season?: string | null
+          season_active?: boolean
+          source?: string
+          stats_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scouting_country_links: {
         Row: {
           age_group: string
@@ -8013,6 +8061,114 @@ export type Database = {
           sort_order?: number
           updated_at?: string
           url?: string
+        }
+        Relationships: []
+      }
+      scouting_player_stats: {
+        Row: {
+          age_group: string | null
+          appearances: number | null
+          clean_sheets: number | null
+          competition_id: string | null
+          confidence: string | null
+          created_at: string
+          goals: number | null
+          id: string
+          last_checked_at: string
+          minutes: number | null
+          player_id: string
+          season: string | null
+          source_url: string | null
+          team_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          age_group?: string | null
+          appearances?: number | null
+          clean_sheets?: number | null
+          competition_id?: string | null
+          confidence?: string | null
+          created_at?: string
+          goals?: number | null
+          id?: string
+          last_checked_at?: string
+          minutes?: number | null
+          player_id: string
+          season?: string | null
+          source_url?: string | null
+          team_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          age_group?: string | null
+          appearances?: number | null
+          clean_sheets?: number | null
+          competition_id?: string | null
+          confidence?: string | null
+          created_at?: string
+          goals?: number | null
+          id?: string
+          last_checked_at?: string
+          minutes?: number | null
+          player_id?: string
+          season?: string | null
+          source_url?: string | null
+          team_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scouting_player_stats_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "scouting_competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scouting_player_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "scouting_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scouting_players: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          last_checked_at: string | null
+          player_name: string
+          player_url: string | null
+          position: string | null
+          source: string
+          source_player_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          last_checked_at?: string | null
+          player_name: string
+          player_url?: string | null
+          position?: string | null
+          source?: string
+          source_player_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          last_checked_at?: string | null
+          player_name?: string
+          player_url?: string | null
+          position?: string | null
+          source?: string
+          source_player_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
