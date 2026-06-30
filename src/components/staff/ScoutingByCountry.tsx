@@ -56,6 +56,53 @@ const blankDraft = (country: string): Partial<LinkRow> => ({
   sort_order: 0,
 });
 
+const LinkPill = ({
+  link,
+  kind,
+  onEdit,
+  onRemove,
+}: {
+  link: LinkRow;
+  kind: "data" | "video" | "other";
+  onEdit: (l: LinkRow) => void;
+  onRemove: (id: string) => void;
+}) => {
+  const Icon = kind === "video" ? Video : kind === "data" ? Database : Link2;
+  const tone =
+    kind === "video"
+      ? "border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 text-blue-200"
+      : kind === "data"
+      ? "border-[hsl(var(--rise-gold)/0.5)] bg-[hsl(var(--rise-gold)/0.1)] hover:bg-[hsl(var(--rise-gold)/0.18)] text-[hsl(var(--rise-gold))]"
+      : "border-border/60 bg-muted/40 hover:bg-muted/70 text-foreground";
+  return (
+    <div className={`group/pill inline-flex items-center rounded-full border ${tone} pl-2.5 pr-1 py-0.5 text-xs transition-colors max-w-full`}>
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 min-w-0"
+        title={link.notes || link.url}
+      >
+        <Icon className="h-3 w-3 shrink-0" />
+        <span className="truncate max-w-[220px]">{link.label}</span>
+        <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
+      </a>
+      <button
+        onClick={() => onEdit(link)}
+        className="ml-1 opacity-0 group-hover/pill:opacity-100 transition-opacity p-1 rounded hover:bg-background/50"
+      >
+        <Pencil className="h-3 w-3" />
+      </button>
+      <button
+        onClick={() => onRemove(link.id)}
+        className="opacity-0 group-hover/pill:opacity-100 transition-opacity p-1 rounded hover:bg-background/50"
+      >
+        <Trash2 className="h-3 w-3" />
+      </button>
+    </div>
+  );
+};
+
 export const ScoutingByCountry = () => {
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [loading, setLoading] = useState(true);
