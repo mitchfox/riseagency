@@ -2047,6 +2047,16 @@ const Staff = () => {
                       categoryTitle={parentCat.title}
                       categoryIcon={parentCat.icon}
                       sectionTitle={activeSection.title}
+                      action={expandedSection === 'playerdatabase' ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => setPlayerDatabaseAddModeOpen((open) => !open)}
+                          className="h-8 gap-1.5 border !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-3 text-[10px] font-black uppercase tracking-wider !text-background shadow-[0_0_14px_hsl(var(--rise-gold)/0.35)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" /> Add players
+                        </Button>
+                      ) : undefined}
                       onCategoryClick={() => {
                         setExpandedCategory(parentCat.id);
                         setExpandedSection(null);
@@ -2057,20 +2067,8 @@ const Staff = () => {
                 }
                 return null;
               })()}
-              {expandedSection === 'playerdatabase' && (
-                <div className="mb-3 flex w-full items-center justify-end rounded-xl border-2 border-[hsl(var(--rise-gold)/0.55)] bg-[hsl(var(--rise-gold)/0.12)] px-3 py-3 shadow-[0_0_28px_hsl(var(--rise-gold)/0.18)]">
-                  <Button
-                    type="button"
-                    size="lg"
-                    onClick={() => setPlayerDatabaseAddModeOpen(true)}
-                    className="min-h-11 gap-2 border-2 !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-5 text-xs font-black uppercase tracking-wider !text-background shadow-[0_0_28px_hsl(var(--rise-gold)/0.58)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
-                  >
-                    <UserPlus className="h-4 w-4" /> Add players
-                  </Button>
-                </div>
-              )}
               {expandedSection === 'playerdatabase' && playerDatabaseAddModeOpen && (
-                <Card className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300 border-2 border-[hsl(var(--rise-gold)/0.45)] shadow-[0_0_32px_hsl(var(--rise-gold)/0.16)]">
+                <Card className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300 border border-[hsl(var(--rise-gold)/0.35)]">
                   <CardContent className="pt-6">
                     <ErrorBoundary>
                       <Suspense fallback={<PageLoading />}>
