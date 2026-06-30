@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import {
   Loader2,
   RefreshCw,
   X,
+  Users,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
@@ -480,6 +481,10 @@ export const ScoutingByCountry = () => {
   const [players, setPlayers] = useState<ScoutingPlayer[]>([]);
   // Map of `${country}:${age}` → boolean (expanded)
   const [playersOpen, setPlayersOpen] = useState<Record<string, boolean>>({});
+  // Tab state per `${country}:${age}` → which category card is open
+  const [selectedTab, setSelectedTab] = useState<Record<string, "video" | "data" | "players" | "stats">>({});
+  // Per-league expansion within Video/Data/Stats tabs (`${country}:${age}:${tab}:${league}`)
+  const [expandedLeague, setExpandedLeague] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -687,27 +692,153 @@ export const ScoutingByCountry = () => {
                 if (!ageBlock) return null;
                 const countryPlayers = playersByCountryAge.get(country)?.get(ageBlock.age) ?? [];
                 const pKey = `${country}:${ageBlock.age}`;
-                const playersExpanded = !!playersOpen[pKey];
-                return (
-                  <>
-                    {/* Player roster panel (collapsed by default) */}
-                    <div className="rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900/60 to-zinc-900/20 overflow-hidden">
+                const activeTab = selectedTab[pKey] ?? null;
+
+                // Aggregate links across leagues of this age band
+                const leaguesData = ageBlock.leagues
+                  .map((lg) => ({ ...lg, data: lg.links.filter((l) => classifyLink(l) === "data") }))
+                  .filter((lg) => lg.data.length > 0);
+                const leaguesVideo = ageBlock.leagues
+                  .map((lg) => ({ ...lg, video: lg.links.filter((l) => classifyLink(l) === "video") }))
+                  .filter((lg) => lg.video.length > 0);
+                const leaguesStats = ageBlock.leagues
+                  .map((lg) => ({ ...lg, statsLink: lg.links.find((l) => classifyLink(l) === "data" && isFotbalStatsUrl(l.url)) }))
+                  .filter((lg) => !!lg.statsLink);
+                const otherLinks = ageBlock.leagues.flatMap((lg) => lg.links.filter((l) => classifyLink(l) === "other"));
+
+                const counts = {
+                  video: leaguesVideo.reduce((n, lg) => n + lg.video.length, 0),
+                  data: leaguesData.reduce((n, lg) => n + lg.data.length, 0),
+                  players: countryPlayers.length,
+                  stats: leaguesStats.length,
+                };
+
+                const tabs: Array<{ key: "video" | "data" | "players" | "stats"; label: string; count: number; Icon: any; tone: string }> = [
+                  { key: "video",   label: "Video",   count: counts.video,   Icon: Video,     tone: "blue" },
+                  { key: "data",    label: "Data",    count: counts.data,    Icon: Database,  tone: "gold" },
+                  { key: "players", label: "Players", count: counts.players, Icon: Users,     tone: "gold" },
+                  { key: "stats",   label: "Stats",   count: counts.stats,   Icon: BarChart3, tone: "gold" },
+                ];
+
+                const tabClass = (active: boolean, tone: string) => {
+                  if (active) {
+                    return tone === "blue"
+                      ? "border-blue-400 bg-gradient-to-b from-blue-500/15 to-blue-500/5 shadow-[0_0_24px_-6px_rgb(96_165_250/0.7)]"
+                      : "border-[hsl(var(--rise-gold))] bg-gradient-to-b from-[hsl(var(--rise-gold)/0.15)] to-[hsl(var(--rise-gold)/0.04)] shadow-[0_0_24px_-6px_hsl(var(--rise-gold)/0.7)]";
+                  }
+                  return "border-zinc-800/70 bg-zinc-900/40 hover:border-zinc-700";
+                };
+
+                const leagueRow = (
+                  leagueName: string,
+                  rowKey: string,
+                  badge: string,
+                  tone: "blue" | "gold",
+                  body: ReactNode,
+                ) => {
+                  const open = !!expandedLeague[rowKey];
+                  const accent = tone === "blue" ? "text-blue-300" : "text-[hsl(var(--rise-gold))]";
+                  return (
+                    <div key={rowKey} className="rounded-xl border border-zinc-800/70 bg-gradient-to-br from-zinc-900/60 to-zinc-900/20 overflow-hidden">
                       <button
                         type="button"
-                        onClick={() => setPlayersOpen((s) => ({ ...s, [pKey]: !s[pKey] }))}
-                        className="w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 hover:bg-zinc-900/50 transition"
+                        onClick={() => setExpandedLeague((s) => ({ ...s, [rowKey]: !s[rowKey] }))}
+                        className="w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 hover:bg-zinc-900/60 transition text-left"
                       >
-                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-[hsl(var(--rise-gold))] drop-shadow-[0_0_6px_hsl(var(--rise-gold)/0.5)]">
-                          Players · {ageBlock.age} · {countryPlayers.length}
-                        </span>
-                        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${playersExpanded ? "rotate-180" : ""}`} />
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img src={getCountryFlagUrl(country)} alt="" className="w-5 h-3.5 object-cover rounded-sm ring-1 ring-[hsl(var(--rise-gold)/0.4)] shrink-0" />
+                          <span className="font-bold text-white text-sm sm:text-base truncate">{leagueName}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-[0.18em] ${accent} shrink-0`}>{badge}</span>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
                       </button>
-                      {playersExpanded && (
-                        <div className="px-3 sm:px-4 pb-3 pt-1 border-t border-zinc-800/50">
-                          {countryPlayers.length === 0 ? (
-                            <p className="text-[11px] text-muted-foreground italic py-3">No players in our database for this age band.</p>
+                      {open && <div className="px-3 sm:px-4 pb-3 pt-1 border-t border-zinc-800/60">{body}</div>}
+                    </div>
+                  );
+                };
+
+                return (
+                  <>
+                    {/* Category cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                      {tabs.map(({ key, label, count, Icon, tone }) => {
+                        const active = activeTab === key;
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => setSelectedTab((s) => ({ ...s, [pKey]: s[pKey] === key ? (undefined as any) : key }))}
+                            className={`relative rounded-xl border px-3 py-4 sm:py-5 text-left transition-all ${tabClass(active, tone)}`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <Icon className={`h-5 w-5 ${tone === "blue" ? "text-blue-300" : "text-[hsl(var(--rise-gold))]"}`} />
+                              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">{count}</span>
+                            </div>
+                            <div className={`mt-2 text-lg sm:text-xl font-black tracking-tight ${active ? (tone === "blue" ? "text-blue-200 drop-shadow-[0_0_6px_rgb(96_165_250/0.6)]" : "text-[hsl(var(--rise-gold))] drop-shadow-[0_0_6px_hsl(var(--rise-gold)/0.6)]") : "text-zinc-200"}`}>
+                              {label}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Active tab body */}
+                    {activeTab && (
+                      <div className="space-y-2 pt-1">
+                        {activeTab === "video" && (
+                          leaguesVideo.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic text-center py-6">No video links yet for {ageBlock.age}.</p>
                           ) : (
-                            <div className="flex flex-wrap gap-2">
+                            leaguesVideo.map((lg) => leagueRow(
+                              lg.name,
+                              `${pKey}:video:${lg.name}`,
+                              `${lg.video.length} video`,
+                              "blue",
+                              <div className="flex flex-wrap gap-1.5">
+                                {lg.video.map((l) => (
+                                  <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
+                                ))}
+                              </div>,
+                            ))
+                          )
+                        )}
+
+                        {activeTab === "data" && (
+                          leaguesData.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic text-center py-6">No data links yet for {ageBlock.age}.</p>
+                          ) : (
+                            <>
+                              {leaguesData.map((lg) => leagueRow(
+                                lg.name,
+                                `${pKey}:data:${lg.name}`,
+                                `${lg.data.length} data`,
+                                "gold",
+                                <div className="flex flex-wrap gap-1.5">
+                                  {lg.data.map((l) => (
+                                    <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
+                                  ))}
+                                </div>,
+                              ))}
+                              {otherLinks.length > 0 && (
+                                <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-3">
+                                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 mb-2 flex items-center gap-1">
+                                    <Link2 className="h-3 w-3" /> Other
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {otherLinks.map((l) => (
+                                      <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )
+                        )}
+
+                        {activeTab === "players" && (
+                          countryPlayers.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic text-center py-6">No players in our database for {country} · {ageBlock.age}.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-3">
                               {countryPlayers.map((p) => (
                                 <a
                                   key={p.id}
@@ -731,109 +862,30 @@ export const ScoutingByCountry = () => {
                                 </a>
                               ))}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                          )
+                        )}
 
-                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] px-1 pt-1">Active Competitions</div>
-                    {ageBlock.leagues.map((league) => {
-                      const dataLinks = league.links.filter((l) => classifyLink(l) === "data");
-                      const videoLinks = league.links.filter((l) => classifyLink(l) === "video");
-                      const otherLinks = league.links.filter((l) => classifyLink(l) === "other");
-                      const statsCandidate = dataLinks.find((l) => isFotbalStatsUrl(l.url));
-                      const leagueKey = `${country}:${ageBlock.age}:${league.name}`;
-                      const statsLink = statsOpen[leagueKey];
-                      return (
-                        <div key={league.name} className="group relative rounded-xl bg-gradient-to-br from-zinc-900/60 to-zinc-900/20 border border-zinc-800/60 hover:border-[hsl(var(--rise-gold)/0.4)] hover:shadow-[0_0_24px_-8px_hsl(var(--rise-gold)/0.5)] transition-all p-3 sm:p-4">
-                          {/* League title bar */}
-                          <div className="flex items-start justify-between gap-3 mb-3 pb-3 border-b border-zinc-800/70">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <img src={getCountryFlagUrl(country)} alt="" className="w-6 h-4 object-cover rounded-sm ring-1 ring-[hsl(var(--rise-gold)/0.4)] shrink-0" />
-                              <div className="min-w-0">
-                                <h4 className="text-base sm:text-lg font-bold text-white tracking-tight truncate drop-shadow-[0_0_8px_hsl(var(--rise-gold)/0.25)]">{league.name}</h4>
-                                <span className="text-[10px] text-[hsl(var(--rise-gold))] uppercase tracking-[0.18em] font-semibold">
-                                  {ageBlock.age === "General" ? "General" : ageBlock.age}
-                                </span>
-                              </div>
-                            </div>
-                            {statsCandidate && (
-                              <button
-                                onClick={() => toggleStats(leagueKey, statsCandidate)}
-                                className={`shrink-0 px-3 sm:px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all ${
-                                  statsLink
-                                    ? "bg-[hsl(var(--rise-gold))] text-black hover:bg-[hsl(var(--rise-gold)/0.85)] shadow-[0_0_16px_-2px_hsl(var(--rise-gold)/0.6)]"
-                                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-[hsl(var(--rise-gold)/0.3)]"
-                                }`}
-                              >
-                                <BarChart3 className="h-3 w-3 inline mr-1 -mt-0.5" /> {statsLink ? "Hide" : "Stats"}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Separated rows for Data / Video / Other */}
-                          <div className="space-y-2">
-                            {dataLinks.length > 0 && (
-                              <div className="flex items-start gap-2.5">
-                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-[hsl(var(--rise-gold))] drop-shadow-[0_0_6px_hsl(var(--rise-gold)/0.5)]">
-                                  <Database className="h-3 w-3 inline mr-1 -mt-0.5" />Data
-                                </span>
-                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
-                                  {dataLinks.map((l) => (
-                                    <LinkPill key={l.id} link={l} kind="data" onEdit={setEditing} onRemove={removeLink} />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {videoLinks.length > 0 && (
-                              <div className="flex items-start gap-2.5 pt-2 border-t border-zinc-800/40">
-                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-blue-300 drop-shadow-[0_0_6px_rgb(96_165_250/0.5)]">
-                                  <Video className="h-3 w-3 inline mr-1 -mt-0.5" />Video
-                                </span>
-                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
-                                  {videoLinks.map((l) => (
-                                    <LinkPill key={l.id} link={l} kind="video" onEdit={setEditing} onRemove={removeLink} />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {otherLinks.length > 0 && (
-                              <div className="flex items-start gap-2.5 pt-2 border-t border-zinc-800/40">
-                                <span className="shrink-0 w-14 sm:w-16 mt-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">
-                                  <Link2 className="h-3 w-3 inline mr-1 -mt-0.5" />Other
-                                </span>
-                                <div className="flex-1 flex flex-wrap gap-1.5 min-w-0">
-                                  {otherLinks.map((l) => (
-                                    <LinkPill key={l.id} link={l} kind="other" onEdit={setEditing} onRemove={removeLink} />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {editing && editing.id && league.links.some((l) => l.id === editing.id) && (
-                            <div className="mt-2">
-                              <InlineLinkEditor
-                                draft={editing}
-                                onChange={setEditing}
-                                onSave={saveDraft}
-                                onCancel={() => setEditing(null)}
-                              />
-                            </div>
-                          )}
-
-                          {statsLink && (
-                            <LeagueStats
-                              country={country}
-                              ageGroup={ageBlock.age}
-                              leagueName={league.name}
-                              dataLink={statsLink}
-                              onClose={() => toggleStats(leagueKey, null)}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                        {activeTab === "stats" && (
+                          leaguesStats.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic text-center py-6">No stats-capable league sources yet for {ageBlock.age}.</p>
+                          ) : (
+                            leaguesStats.map((lg) => leagueRow(
+                              lg.name,
+                              `${pKey}:stats:${lg.name}`,
+                              "Live stats",
+                              "gold",
+                              <LeagueStats
+                                country={country}
+                                ageGroup={ageBlock.age}
+                                leagueName={lg.name}
+                                dataLink={lg.statsLink!}
+                                onClose={() => setExpandedLeague((s) => ({ ...s, [`${pKey}:stats:${lg.name}`]: false }))}
+                              />,
+                            ))
+                          )
+                        )}
+                      </div>
+                    )}
                   </>
                 );
               })()}
