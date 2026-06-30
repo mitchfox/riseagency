@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -125,6 +126,7 @@ const OfferStatusToggle = ({ status, onChange }: { status: OfferStatus; onChange
 };
 
 export const RepresentationOffers = () => {
+  const [searchParams] = useSearchParams();
   const [players, setPlayers] = useState<OfferPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -230,6 +232,11 @@ export const RepresentationOffers = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const player = searchParams.get("player");
+    if (player) setQuery(player);
+  }, [searchParams]);
 
   // Load all players from every database the Player Database aggregates so the
   // create-offer dialog can autocomplete from anyone we already track — not
