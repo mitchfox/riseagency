@@ -1132,6 +1132,7 @@ const Staff = () => {
           { id: 'markettables', title: 'Market Tables', icon: Mail },
           { id: 'playerdatabase', title: 'Player Database', icon: Users },
           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+          { id: 'scouting', title: 'Scouting', icon: Telescope },
           { id: 'submissions', title: 'Form Submissions', icon: Mail },
         ]
       },
