@@ -497,6 +497,9 @@ const InlineLinkEditor = ({
 
 export const ScoutingByCountry = () => {
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [countryCounts, setCountryCounts] = useState<Map<string, number>>(new Map());
+  const [loadedCountries, setLoadedCountries] = useState<Set<string>>(new Set());
+  const [loadingCountry, setLoadingCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Partial<LinkRow> | null>(null);
@@ -514,41 +517,68 @@ export const ScoutingByCountry = () => {
   // Per-league expansion within Video/Data/Stats tabs (`${country}:${age}:${tab}:${league}`)
   const [expandedLeague, setExpandedLeague] = useState<Record<string, boolean>>({});
 
-  const load = async () => {
+  // Lightweight: fetch only `country` per row to know which countries have resources & their counts.
+  const loadCounts = async () => {
     setLoading(true);
     setLoadIssue(null);
-    const allRows: LinkRow[] = [];
+    const counts = new Map<string, number>();
+    for (let from = 0; ; from += RESOURCE_PAGE_SIZE) {
+      const to = from + RESOURCE_PAGE_SIZE - 1;
+      const { data, error } = await supabase
+        .from("scouting_country_links")
+        .select("country")
+        .range(from, to);
+      if (error) {
+        setLoadIssue(error.message);
+        toast({ title: "Failed to load scouting index", description: error.message, variant: "destructive" });
+        break;
+      }
+      const rows = (data as { country: string }[]) || [];
+      for (const r of rows) {
+        const c = canonicalCountry(r.country);
+        counts.set(c, (counts.get(c) || 0) + 1);
+      }
+      if (rows.length < RESOURCE_PAGE_SIZE) break;
+    }
+    setCountryCounts(counts);
+    setLoading(false);
+  };
 
+  const loadCountryLinks = async (country: string) => {
+    if (loadedCountries.has(country)) return;
+    setLoadingCountry(country);
+    const aliases = COUNTRY_NATIONALITY_ALIASES[country] || [country];
+    const variants = Array.from(new Set([country, ...aliases, ...(country === "Turkey" ? ["Türkiye"] : [])]));
+    const collected: LinkRow[] = [];
     for (let from = 0; ; from += RESOURCE_PAGE_SIZE) {
       const to = from + RESOURCE_PAGE_SIZE - 1;
       const { data, error } = await supabase
         .from("scouting_country_links")
         .select("*")
-        .order("country", { ascending: true })
+        .in("country", variants)
         .order("age_group", { ascending: true })
         .order("sort_order", { ascending: true })
         .range(from, to);
-
       if (error) {
-        setLoadIssue(error.message);
-        toast({ title: "Failed to load links", description: error.message, variant: "destructive" });
+        toast({ title: `Failed to load ${country}`, description: error.message, variant: "destructive" });
         break;
       }
-
-      const rows = ((data as LinkRow[]) || []).map((row) => ({
-        ...row,
-        country: canonicalCountry(row.country),
-      }));
-      allRows.push(...rows);
-
+      const rows = ((data as LinkRow[]) || []).map((r) => ({ ...r, country: canonicalCountry(r.country) }));
+      collected.push(...rows);
       if (rows.length < RESOURCE_PAGE_SIZE) break;
     }
-
-    setLinks(allRows);
-    setLoading(false);
+    setLinks((prev) => [...prev.filter((l) => l.country !== country), ...collected]);
+    setLoadedCountries((prev) => new Set(prev).add(country));
+    setLoadingCountry(null);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadCounts(); }, []);
+
+  const openCountryHandler = (country: string) => {
+    if (openCountry === country) { setOpenCountry(null); return; }
+    setOpenCountry(country);
+    loadCountryLinks(country);
+  };
 
   useEffect(() => {
     (async () => {
@@ -594,24 +624,31 @@ export const ScoutingByCountry = () => {
     return map;
   }, [links]);
 
+  const allCountryNames = useMemo(() => {
+    const set = new Set<string>([...EUROPEAN_COUNTRIES, ...countryCounts.keys()]);
+    return Array.from(set).sort();
+  }, [countryCounts]);
+
   const filteredCountries = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const all = Array.from(grouped.keys()).sort();
-    if (!q) return all;
-    return all.filter((c) => c.toLowerCase().includes(q));
-  }, [grouped, search]);
+    if (!q) return allCountryNames;
+    return allCountryNames.filter((c) => c.toLowerCase().includes(q));
+  }, [allCountryNames, search]);
 
   const { activeCountries, emptyCountries } = useMemo(() => {
     const active: string[] = [];
     const empty: string[] = [];
     for (const c of filteredCountries) {
-      if ((grouped.get(c) || []).length > 0) active.push(c);
+      if ((countryCounts.get(c) || 0) > 0) active.push(c);
       else empty.push(c);
     }
     return { activeCountries: active, emptyCountries: empty };
-  }, [filteredCountries, grouped]);
+  }, [filteredCountries, countryCounts]);
 
-  const totalResourceCount = links.length;
+  const totalResourceCount = useMemo(
+    () => Array.from(countryCounts.values()).reduce((n, v) => n + v, 0),
+    [countryCounts],
+  );
 
   const groupCountryLinks = (countryLinks: LinkRow[]) => {
     const byAge = new Map<string, LinkRow[]>();
@@ -619,10 +656,13 @@ export const ScoutingByCountry = () => {
       if (!byAge.has(l.age_group)) byAge.set(l.age_group, []);
       byAge.get(l.age_group)!.push(l);
     }
+    const generalLinks = byAge.get("General") || [];
     const ordered = [...AGE_GROUPS, ...Array.from(byAge.keys()).filter((k) => !AGE_GROUPS.includes(k as any))]
-      .filter((age, i, arr) => arr.indexOf(age) === i && byAge.has(age));
+      .filter((age, i, arr) => arr.indexOf(age) === i && (byAge.has(age) || (age !== "General" && generalLinks.length > 0)));
     return ordered.map((age) => {
-      const items = byAge.get(age)!;
+      const specific = byAge.get(age) || [];
+      // Carry cross-age aggregators (filed under "General") into every age band so e.g. ZeroZero / Transfermarkt show on U15-U21 too.
+      const items = age === "General" ? specific : [...specific, ...generalLinks];
       const leagues = new Map<string, LinkRow[]>();
       for (const l of items) {
         const root = l.label.split(/\(|—|-\s/)[0].trim() || l.label;
@@ -662,7 +702,10 @@ export const ScoutingByCountry = () => {
       return;
     }
     setEditing(null);
-    load();
+    const c = canonicalCountry(payload.country);
+    setLoadedCountries((prev) => { const n = new Set(prev); n.delete(c); return n; });
+    await loadCountryLinks(c);
+    loadCounts();
   };
 
   const removeLink = async (id: string) => {
@@ -672,7 +715,8 @@ export const ScoutingByCountry = () => {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
       return;
     }
-    load();
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+    loadCounts();
   };
 
   const toggleStats = (key: string, link: LinkRow | null) => {
@@ -998,14 +1042,15 @@ export const ScoutingByCountry = () => {
                     ? [...activeCountries, ...emptyCountries]
                     : activeCountries)
             ).map((country) => {
-              const countryLinks = grouped.get(country) || [];
+              const countLoaded = grouped.get(country)?.length ?? 0;
+              const countTotal = countryCounts.get(country) ?? countLoaded;
               const flag = getCountryFlagUrl(country);
-              const has = countryLinks.length > 0;
+              const has = countTotal > 0;
               const isOpen = openCountry === country;
               return (
                 <button
                   key={country}
-                  onClick={() => setOpenCountry(isOpen ? null : country)}
+                  onClick={() => openCountryHandler(country)}
                   className={`group relative overflow-hidden rounded-xl border ${isOpen ? "w-full" : ""} ${
                     isOpen
                       ? "border-[hsl(var(--rise-gold))] shadow-[0_0_40px_-8px_hsl(var(--rise-gold)/0.6)]"
@@ -1022,7 +1067,7 @@ export const ScoutingByCountry = () => {
                     <div className="min-w-0 flex-1">
                       <div className={`${isOpen ? "text-base sm:text-lg" : "text-[12px] sm:text-sm"} font-semibold truncate`}>{country}</div>
                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {isOpen ? "Scouting dossier · " : ""}{countryLinks.length} resource{countryLinks.length === 1 ? "" : "s"}
+                        {isOpen ? "Scouting dossier · " : ""}{countTotal} resource{countTotal === 1 ? "" : "s"}
                       </div>
                     </div>
                     <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -1049,7 +1094,13 @@ export const ScoutingByCountry = () => {
 
           {openCountry && (
             <div className="rounded-xl border border-[hsl(var(--rise-gold)/0.3)] bg-gradient-to-br from-background/80 to-background/40 overflow-hidden">
-              {renderDossier(openCountry)}
+              {loadingCountry === openCountry && !loadedCountries.has(openCountry) ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground p-6 justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading {openCountry} dossier…
+                </div>
+              ) : (
+                renderDossier(openCountry)
+              )}
             </div>
           )}
         </div>
