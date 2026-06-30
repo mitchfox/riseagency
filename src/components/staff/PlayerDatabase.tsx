@@ -238,6 +238,7 @@ export const PlayerDatabase = () => {
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [creatingOutreach, setCreatingOutreach] = useState(false);
+  const [notesReady, setNotesReady] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
@@ -541,6 +542,7 @@ export const PlayerDatabase = () => {
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
+    setNotesReady(false);
     setSelectedPlayer(player);
     setEditMode(false);
     setEditForm({
@@ -561,6 +563,7 @@ export const PlayerDatabase = () => {
       parent_approval: false,
     });
     setDetailOpen(true);
+    window.setTimeout(() => setNotesReady(true), 120);
     // Hydrate fit-score fields from source table
     if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
       const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
@@ -654,13 +657,12 @@ export const PlayerDatabase = () => {
       const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
         : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
-      const { error } = await supabase.from(tableName).update({
+      const payload = {
         player_name: editForm.player_name,
         position: editForm.position || null,
         nationality: editForm.nationality || null,
         current_club: editForm.current_club || null,
         date_of_birth: editForm.date_of_birth || null,
-        ig_handle: editForm.ig_handle || null,
         notes: editForm.notes || null,
         ...(selectedPlayer.source === 'youth_outreach' ? {
           parents_name: editForm.parents_name || null,
@@ -673,12 +675,29 @@ export const PlayerDatabase = () => {
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
+          ig_handle: editForm.ig_handle || null,
         } : {}),
-      }).eq('id', selectedPlayer.id);
+      };
+      const { error } = await supabase.from(tableName).update(payload).eq('id', selectedPlayer.id);
       if (error) throw error;
+      const updatedPlayer: PlayerData = {
+        ...selectedPlayer,
+        player_name: editForm.player_name,
+        position: editForm.position || null,
+        nationality: editForm.nationality || null,
+        current_club: editForm.current_club || null,
+        date_of_birth: editForm.date_of_birth || null,
+        age: calculateAge(editForm.date_of_birth) ?? selectedPlayer.age,
+        ig_handle: isOutreach ? (editForm.ig_handle || null) : selectedPlayer.ig_handle,
+        notes: editForm.notes || null,
+        parents_name: selectedPlayer.source === 'youth_outreach' ? (editForm.parents_name || null) : selectedPlayer.parents_name,
+        parent_contact: selectedPlayer.source === 'youth_outreach' ? (editForm.parent_contact || null) : selectedPlayer.parent_contact,
+        parent_approval: selectedPlayer.source === 'youth_outreach' ? !!editForm.parent_approval : selectedPlayer.parent_approval,
+      };
+      setPlayers((prev) => prev.map((p) => (p.id === selectedPlayer.id && p.source === selectedPlayer.source ? updatedPlayer : p)));
+      setSelectedPlayer(updatedPlayer);
       toast.success('Player updated');
-      setDetailOpen(false);
-      fetchAllPlayers();
+      setEditMode(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     }
@@ -1060,7 +1079,7 @@ export const PlayerDatabase = () => {
       )}
 
       {/* Player Detail/Edit Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <Dialog open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) { setEditMode(false); setNotesReady(false); } }}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
@@ -1113,14 +1132,14 @@ export const PlayerDatabase = () => {
                 <div><span className="text-muted-foreground text-xs">Reports</span><p className="font-medium">{selectedPlayer.report_count}</p></div>
                 {selectedPlayer.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{selectedPlayer.notes}</p></div>}
               </div>
-              <div className="pt-2 border-t border-border/40">
+              {notesReady && <div className="pt-2 border-t border-border/40">
                 <PlayerNotesBoard
                   playerKey={buildPlayerKey(selectedPlayer.player_name, selectedPlayer.date_of_birth)}
                   playerName={selectedPlayer.player_name}
                   source={selectedPlayer.source}
                   sourceId={selectedPlayer.id}
                 />
-              </div>
+              </div>}
             </div>
           )}
           {selectedPlayer && editMode && (
