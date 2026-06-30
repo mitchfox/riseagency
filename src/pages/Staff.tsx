@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw, MoreVertical } from "lucide-react";
+import { Search, Menu, ChevronRight, ChevronLeft, ExternalLink, Lightbulb, Star, HelpCircle, Plus, RefreshCw, MoreVertical, UserPlus } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaffBreadcrumb } from "@/components/staff/StaffBreadcrumb";
@@ -113,6 +113,7 @@ const MusicStudio = lazy(() => import("@/components/staff/MusicStudio").then(m =
 const HighlightCompiler = lazy(() => import("@/components/staff/HighlightCompiler").then(m => ({ default: m.HighlightCompiler })));
 const DatasetBuilder = lazy(() => import("@/components/staff/DatasetBuilder").then(m => ({ default: m.DatasetBuilder })));
 const UsageSection = lazy(() => import("@/components/staff/UsageSection").then(m => ({ default: m.UsageSection })));
+const PlayerAddMode = lazy(() => import("@/components/staff/PlayerAddMode").then(m => ({ default: m.PlayerAddMode })));
 
 import { supabase } from "@/integrations/supabase/client";
 import { VersionManager } from "@/lib/versionManager";
@@ -230,6 +231,7 @@ const Staff = () => {
   const logoLongPressFiredRef = useRef(false);
   const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
+  const [playerDatabaseAddModeOpen, setPlayerDatabaseAddModeOpen] = useState(false);
 
   // Track every section the user has visited so we can mount-once and hide
   // instead of unmount/remount. This preserves scroll, filters, popups and any
@@ -243,6 +245,10 @@ const Staff = () => {
       next.add(expandedSection);
       return next;
     });
+  }, [expandedSection]);
+
+  useEffect(() => {
+    if (expandedSection !== 'playerdatabase') setPlayerDatabaseAddModeOpen(false);
   }, [expandedSection]);
   const renderKA = (id: string, node: React.ReactNode) => {
     if (!visitedSections.has(id)) return null;
@@ -2051,6 +2057,29 @@ const Staff = () => {
                 }
                 return null;
               })()}
+              {expandedSection === 'playerdatabase' && (
+                <div className="mb-3 flex w-full items-center justify-end rounded-xl border-2 border-[hsl(var(--rise-gold)/0.55)] bg-[hsl(var(--rise-gold)/0.12)] px-3 py-3 shadow-[0_0_28px_hsl(var(--rise-gold)/0.18)]">
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={() => setPlayerDatabaseAddModeOpen(true)}
+                    className="min-h-11 gap-2 border-2 !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-5 text-xs font-black uppercase tracking-wider !text-background shadow-[0_0_28px_hsl(var(--rise-gold)/0.58)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
+                  >
+                    <UserPlus className="h-4 w-4" /> Add players
+                  </Button>
+                </div>
+              )}
+              {expandedSection === 'playerdatabase' && playerDatabaseAddModeOpen && (
+                <Card className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300 border-2 border-[hsl(var(--rise-gold)/0.45)] shadow-[0_0_32px_hsl(var(--rise-gold)/0.16)]">
+                  <CardContent className="pt-6">
+                    <ErrorBoundary>
+                      <Suspense fallback={<PageLoading />}>
+                        <PlayerAddMode onExit={() => setPlayerDatabaseAddModeOpen(false)} />
+                      </Suspense>
+                    </ErrorBoundary>
+                  </CardContent>
+                </Card>
+              )}
               <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardContent className="pt-6">
               {/* Mount once, hide via display:none on tab switch so scroll, filters
