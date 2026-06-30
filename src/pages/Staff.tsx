@@ -232,6 +232,7 @@ const Staff = () => {
   const initialStaffSectionResolvedRef = useRef(false);
   const [portalQuickOpen, setPortalQuickOpen] = useState(false);
   const [playerDatabaseAddModeOpen, setPlayerDatabaseAddModeOpen] = useState(false);
+  const [playerDatabaseInitialAddMode, setPlayerDatabaseInitialAddMode] = useState<'ai' | 'manual'>('ai');
 
   // Track every section the user has visited so we can mount-once and hide
   // instead of unmount/remount. This preserves scroll, filters, popups and any
@@ -2063,7 +2064,10 @@ const Staff = () => {
                     <Button
                       type="button"
                       size="sm"
-                      onClick={() => setPlayerDatabaseAddModeOpen((open) => !open)}
+                      onClick={() => {
+                        setPlayerDatabaseInitialAddMode('ai');
+                        setPlayerDatabaseAddModeOpen((open) => !open);
+                      }}
                       className="h-7 gap-1.5 border !border-[hsl(var(--rise-gold))] !bg-[hsl(var(--rise-gold))] px-2.5 text-[10px] font-black uppercase tracking-wider !text-background shadow-[0_0_14px_hsl(var(--rise-gold)/0.3)] hover:!bg-[hsl(var(--rise-gold)/0.88)]"
                     >
                       <UserPlus className="h-3.5 w-3.5" /> Add players
@@ -2072,7 +2076,7 @@ const Staff = () => {
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => setPlayerDatabaseAddModeOpen(true)}
+                      onClick={() => { setPlayerDatabaseInitialAddMode('ai'); setPlayerDatabaseAddModeOpen(true); }}
                       className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
                     >
                       AI bulk add
@@ -2081,7 +2085,7 @@ const Staff = () => {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => setPlayerDatabaseAddModeOpen(true)}
+                      onClick={() => { setPlayerDatabaseInitialAddMode('manual'); setPlayerDatabaseAddModeOpen(true); }}
                       className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
                     >
                       Manual add
@@ -2093,7 +2097,7 @@ const Staff = () => {
                 <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <ErrorBoundary>
                     <Suspense fallback={<div className="rounded-lg border border-[hsl(var(--rise-gold)/0.25)] p-3 text-xs text-muted-foreground">Loading add players…</div>}>
-                      <PlayerAddMode onExit={() => setPlayerDatabaseAddModeOpen(false)} />
+                      <PlayerAddMode initialMode={playerDatabaseInitialAddMode} onExit={() => setPlayerDatabaseAddModeOpen(false)} />
                     </Suspense>
                   </ErrorBoundary>
                 </div>
