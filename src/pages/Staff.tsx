@@ -60,6 +60,7 @@ const ContentCreator = lazy(() => import("@/components/staff/marketing").then(m 
 const SalesDeck = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.SalesDeck })));
 const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentManagement").then(m => ({ default: m.RecruitmentManagement })));
 const ScoutingCentreManagement = lazy(() => import("@/components/staff/ScoutingCentreManagement").then(m => ({ default: m.ScoutingCentreManagement })));
+const ScoutingByCountry = lazy(() => import("@/components/staff/ScoutingByCountry").then(m => ({ default: m.ScoutingByCountry })));
 const HighlightMakersManagement = lazy(() => import("@/components/staff/HighlightMakersManagement").then(m => ({ default: m.HighlightMakersManagement })));
 const PlayerDatabaseManagement = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseManagement })));
 const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccountManagement").then(m => ({ default: m.StaffAccountManagement })));
@@ -1006,7 +1007,8 @@ const Staff = () => {
             { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
             { id: 'markettables', title: 'Market Tables', icon: Mail },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
-            { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+           { id: 'scouting', title: 'Scouting', icon: Telescope },
             { id: 'submissions', title: 'Form Submissions', icon: Mail },
           ]
         },
@@ -2082,6 +2084,7 @@ const Staff = () => {
                   {renderKA('recruitment', <RecruitmentManagement isAdmin={canManageSection('recruitment')} />)}
                   {renderKA('playerdatabase', <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />)}
                   {renderKA('scoutingcentre', <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />)}
+                  {renderKA('scouting', <ScoutingByCountry />)}
                   {renderKA('coaching', <CoachingDatabase isAdmin={canManageSection('coaching')} />)}
                   {renderKA('tacticsboard', <TacticsBoard />)}
                   {renderKA('meetings', <Meetings />)}
