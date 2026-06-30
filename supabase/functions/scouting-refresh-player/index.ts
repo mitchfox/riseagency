@@ -4,9 +4,40 @@ import * as cheerio from 'npm:cheerio@1.0.0';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const SCRAPER_API_URL = Deno.env.get('SCRAPER_API_URL');
+const SCRAPER_API_KEY = Deno.env.get('SCRAPER_API_KEY');
 
 function ttlMs(active: boolean) {
   return active ? 6 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+}
+
+function looksLikeCloudflareChallenge(html: string) {
+  return /Just a moment|cf_chl_opt|challenges\.cloudflare\.com|Enable JavaScript and cookies/i.test(html) && html.length < 50000;
+}
+
+async function fetchRendered(url: string): Promise<string> {
+  const direct = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'cs-CZ,cs;q=0.9,en;q=0.8',
+    },
+  }).then(r => r.text()).catch(() => '');
+  if (direct && !looksLikeCloudflareChallenge(direct)) return direct;
+
+  if (SCRAPER_API_URL && SCRAPER_API_KEY) {
+    const u = new URL(SCRAPER_API_URL);
+    u.searchParams.set('api_key', SCRAPER_API_KEY);
+    u.searchParams.set('url', url);
+    u.searchParams.set('render_js', 'true');
+    u.searchParams.set('premium_proxy', 'true');
+    u.searchParams.set('country_code', 'cz');
+    const proxied = await fetch(u.toString()).then(r => r.text());
+    if (proxied && !looksLikeCloudflareChallenge(proxied)) return proxied;
+    throw new Error('Scraper service returned a Cloudflare challenge or empty body.');
+  }
+
+  throw new Error('Fotbal.cz is behind a Cloudflare bot challenge. Configure SCRAPER_API_URL + SCRAPER_API_KEY (ScrapingBee or similar with JS rendering + premium proxy) to fetch this page.');
 }
 
 Deno.serve(async (req) => {
@@ -26,7 +57,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, skipped: 'cache fresh' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const html = await fetch(player.player_url, { headers: { 'User-Agent': 'Mozilla/5.0 RiseScout/1.0' } }).then(r => r.text());
+    const html = await fetchRendered(player.player_url);
     const $ = cheerio.load(html);
 
     // Try to extract position from common Fotbal.cz profile markers
