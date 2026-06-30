@@ -7977,6 +7977,45 @@ export type Database = {
           },
         ]
       }
+      scouting_country_links: {
+        Row: {
+          age_group: string
+          country: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          age_group?: string
+          country: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          age_group?: string
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       scouting_report_drafts: {
         Row: {
           additional_notes: string | null
