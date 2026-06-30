@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -734,7 +734,7 @@ export const ScoutingByCountry = () => {
                   rowKey: string,
                   badge: string,
                   tone: "blue" | "gold",
-                  body: React.ReactNode,
+                  body: ReactNode,
                 ) => {
                   const open = !!expandedLeague[rowKey];
                   const accent = tone === "blue" ? "text-blue-300" : "text-[hsl(var(--rise-gold))]";
