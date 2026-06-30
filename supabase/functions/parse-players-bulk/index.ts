@@ -73,6 +73,119 @@ const findExistingPlayer = async (supabase: any, rawName: string) => {
   };
 };
 
+const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
+const TM_UA = 'Mozilla/5.0 (compatible; RiseBot/1.0)';
+const compNameCache = new Map<string, string>();
+const clubInfoCache = new Map<string, { club: string | null; competitionId: string | null }>();
+
+const searchTransfermarktId = async (name: string): Promise<string | null> => {
+  try {
+    const q = encodeURIComponent(name);
+    const res = await fetch(`https://www.transfermarkt.com/schnellsuche/ergebnis/schnellsuche?query=${q}`, {
+      headers: { 'User-Agent': TM_UA, 'Accept-Language': 'en' },
+      redirect: 'follow',
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/\/[a-z0-9-]+\/profil\/spieler\/(\d+)/i);
+    return m ? m[1] : null;
+  } catch { return null; }
+};
+
+const fetchTmPlayer = async (id: string): Promise<any | null> => {
+  try {
+    const r = await fetch(`${TM_API}/player/${id}`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.data || null;
+  } catch { return null; }
+};
+
+const fetchTmClubInfo = async (clubId: string) => {
+  if (clubInfoCache.has(clubId)) return clubInfoCache.get(clubId)!;
+  let info = { club: null as string | null, competitionId: null as string | null };
+  try {
+    const r = await fetch(`${TM_API}/club/${clubId}`);
+    if (r.ok) {
+      const j = await r.json();
+      info = {
+        club: j?.data?.name ?? null,
+        competitionId: j?.data?.baseDetails?.primaryCompetitionId ?? null,
+      };
+    }
+  } catch { /* ignore */ }
+  clubInfoCache.set(clubId, info);
+  return info;
+};
+
+const fetchTmCompetitionName = async (compId: string): Promise<string | null> => {
+  if (compNameCache.has(compId)) return compNameCache.get(compId)!;
+  let name: string | null = null;
+  try {
+    const r = await fetch(`${TM_API}/competition/${compId}`);
+    if (r.ok) {
+      const j = await r.json();
+      name = j?.data?.name ?? null;
+    }
+  } catch { /* ignore */ }
+  compNameCache.set(compId, name as any);
+  return name;
+};
+
+const enrichFromTransfermarkt = async (player: any): Promise<any> => {
+  // Only do work when something material is missing
+  const needsClub = !hasValue(player.club);
+  const needsLeague = !hasValue(player.league);
+  const needsDob = !hasValue(player.date_of_birth);
+  const needsNat = !hasValue(player.nationality);
+  const needsPos = !hasValue(player.position);
+  if (!needsClub && !needsLeague && !needsDob && !needsNat && !needsPos) return player;
+
+  const name = cleanName(player?.name);
+  if (!name) return player;
+  const tmId = await searchTransfermarktId(name);
+  if (!tmId) return player;
+  const data = await fetchTmPlayer(tmId);
+  if (!data) return player;
+
+  const next = { ...player };
+  const dob = data?.lifeDates?.dateOfBirth ?? null;
+  if (needsDob && dob) next.date_of_birth = dob;
+  if (!hasValue(next.age) && data?.lifeDates?.age) next.age = data.lifeDates.age;
+
+  const posShort = data?.attributes?.position?.shortName ?? null;
+  if (needsPos && posShort) next.position = posShort;
+
+  // Nationality: use NATIONALITY_NAMES if we can — but parse-players-bulk doesn't have the map.
+  // Skip to avoid wrong country names.
+
+  const current = (data?.clubAssignments || []).find((a: any) => a?.type === 'current');
+  if (current?.clubId) {
+    const club = await fetchTmClubInfo(String(current.clubId));
+    if (needsClub && club.club) next.club = club.club;
+    if (needsLeague && club.competitionId) {
+      const compName = await fetchTmCompetitionName(club.competitionId);
+      if (compName) next.league = compName;
+    }
+  }
+
+  return next;
+};
+
+const runWithConcurrency = async <T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>): Promise<R[]> => {
+  const results: R[] = new Array(items.length);
+  let i = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const idx = i++;
+      if (idx >= items.length) return;
+      results[idx] = await worker(items[idx]);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
@@ -132,6 +245,16 @@ serve(async (req) => {
         const existing = await findExistingPlayer(supabase, player?.name);
         return mergePlayer(player, existing);
       }));
+    }
+
+    // Web enrichment: fill missing club/league/DOB/position by looking the
+    // player up on Transfermarkt. Existing values are never overwritten.
+    if (players.length) {
+      try {
+        players = await runWithConcurrency(players, 4, enrichFromTransfermarkt);
+      } catch (err) {
+        console.error('TM enrichment failed', err);
+      }
     }
 
     return new Response(JSON.stringify({ players }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
