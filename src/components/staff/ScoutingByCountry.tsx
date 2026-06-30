@@ -3,14 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -18,11 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search, ChevronDown, Database, Video, ArrowLeft, Link2 } from "lucide-react";
+import { Telescope, Plus, ExternalLink, Pencil, Trash2, Search, ChevronDown, Database, Video, Link2, BarChart3, Loader2, RefreshCw, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getCountryFlagUrl } from "@/lib/countryFlags";
-import ScoutingPlayersPanel from "./ScoutingPlayersPanel";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDistanceToNow } from "date-fns";
 
 // European countries we cover in Network / Coaching Database
 const EUROPEAN_COUNTRIES = [
