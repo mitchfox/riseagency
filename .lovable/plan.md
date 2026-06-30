@@ -1,30 +1,59 @@
-I checked the backend data directly. The rows are there:
+## Problem
 
-- Spain: 69 resources
-- Sweden: 153 resources
-- Turkey: 145 resources
-- Ukraine: 43 resources
+The uploaded image is a two-team formation graphic with shirt numbers + "Initial. Surname" labels (e.g. `10 B. Szywała`). The current `parse-players-bulk` function returns only the visible token (`B. Szywała`) with everything else null because:
 
-So the problem is the staff Scouting UI is not reliably normalising and loading those resources into the country tiles, not that the resources are missing.
+1. The Gemini prompt does not push the model to (a) split left vs right team, (b) infer position from the formation layout when no position label exists, or (c) flag that a name is an "initial + surname" stub.
+2. The only enrichment is a direct Transfermarkt quick-search by the literal name. `B. Szywała` does not resolve, so club/league/DOB stay empty.
+3. There is no real web search step — nothing ever tries to expand `B. Szywała` into `Bartosz Szywała` (Polish youth international) or find the U19/U17 club he plays for.
 
-Plan:
+## Fix
 
-1. **Make country matching bulletproof**
-   - Normalise country names when grouping resources, so casing, accents, whitespace, `Türkiye` vs `Turkey`, and other small differences cannot split rows away from the visible country tile.
-   - Keep the visible label as the standard UI country name.
+### 1. Stronger image extraction (no model change)
 
-2. **Remove the fragile all-rows fetch assumption**
-   - Replace the single `.range(0, 9999)` fetch with paged loading until no more rows are returned.
-   - This prevents the same issue coming back when resources exceed 10,000.
+Update `SYSTEM_PROMPT` and the per-image user instructions in `supabase/functions/parse-players-bulk/index.ts` so the model:
 
-3. **Add a visible loaded-count sanity check in Scouting**
-   - Show a small total resources count at the top, so we can immediately see if the UI loaded the backend rows.
-   - If the backend returns an error or partial data, show the actual load issue instead of silently showing `0 resources`.
+- Detects formation graphics with a vertical centre line and emits two team groups (`team_side: "left" | "right"`), even when team names are not printed.
+- Infers position from spatial role for every named player (GK closest to own goal, then back line, midfield bands, attack — keepers on the touchline of each half).
+- Records `name_is_initial: true` when the label is `X. Surname` so the enrichment step knows to expand it.
+- Captures the shirt number into `notes` (e.g. `#10`) so later lookups have one more disambiguator.
 
-4. **Verify against the exact affected countries**
-   - Confirm Spain, Sweden, Turkey and Ukraine render with non-zero counts after the code change.
-   - Also check Portugal and Hungary since they were recently added too.
+### 2. Real web lookup per player (new step)
 
-Technical notes:
-- No resource rows need to be re-added. The data exists.
-- This is a frontend data-loading/grouping fix in `ScoutingByCountry.tsx`, with no destructive database changes.
+Add a `webEnrichPlayer` step that runs before the existing Transfermarkt enrichment. It uses Perplexity `sonar` (suggest connector if not present) with a strict JSON schema:
+
+```text
+Input: { surname, initial?, shirt_number?, team_side?, context_hint? }
+Output: { full_name, date_of_birth, nationality, current_club, current_league, position, confidence }
+```
+
+Prompt instructs Perplexity to find the most likely professional/youth footballer matching the surname + initial (+ shirt + team side if provided), prefer Transfermarkt / national federation / Wikipedia / Sofascore as sources, and return `null` fields rather than guessing. If `confidence < 0.6`, discard.
+
+The returned `full_name` then replaces the stub `name`, and missing fields are filled (never overwriting anything the model already extracted).
+
+If Perplexity is not connected, fall back to a Gemini call with Google Search grounding (`google/gemini-2.5-flash` + `tools: [{ google_search: {} }]`) doing the same lookup — so the feature degrades but still tries the web.
+
+### 3. Re-run Transfermarkt enrichment with the expanded name
+
+After web enrichment runs, the existing `enrichFromTransfermarkt` call already fills any remaining gaps (DOB, club, league, position) using the now-full name. Keep it unchanged, just runs second.
+
+### 4. UI surfacing
+
+In `src/components/staff/PlayerAddMode.tsx` (or wherever the parsed rows render), show a small "web-enriched" pill on rows where the full name was expanded so the user can sanity-check before saving.
+
+## Technical notes
+
+- Concurrency: keep `runWithConcurrency` at 4 for the web step too; Perplexity tolerates this.
+- Caching: memoise web lookups by `${surname}|${initial}|${shirt_number}` within a single request so duplicated rows do not double-charge.
+- Errors: any web lookup failure is swallowed per-player; the row still returns with whatever the image gave us.
+- No schema changes, no DB migrations.
+
+## Files to change
+
+- `supabase/functions/parse-players-bulk/index.ts` — prompt rewrite, new `webEnrichPlayer`, pipeline reorder.
+- `src/components/staff/PlayerAddMode.tsx` — small "web-enriched" badge.
+- If Perplexity isn't already linked, prompt to connect it once the plan is approved.
+
+## Out of scope
+
+- No change to manual add flow.
+- No change to player database schema or RLS.
