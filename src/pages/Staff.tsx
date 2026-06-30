@@ -60,6 +60,7 @@ const ContentCreator = lazy(() => import("@/components/staff/marketing").then(m 
 const SalesDeck = lazy(() => import("@/components/staff/marketing").then(m => ({ default: m.SalesDeck })));
 const RecruitmentManagement = lazy(() => import("@/components/staff/RecruitmentManagement").then(m => ({ default: m.RecruitmentManagement })));
 const ScoutingCentreManagement = lazy(() => import("@/components/staff/ScoutingCentreManagement").then(m => ({ default: m.ScoutingCentreManagement })));
+const ScoutingByCountry = lazy(() => import("@/components/staff/ScoutingByCountry").then(m => ({ default: m.ScoutingByCountry })));
 const HighlightMakersManagement = lazy(() => import("@/components/staff/HighlightMakersManagement").then(m => ({ default: m.HighlightMakersManagement })));
 const PlayerDatabaseManagement = lazy(() => import("@/components/staff/PlayerDatabaseManagement").then(m => ({ default: m.PlayerDatabaseManagement })));
 const StaffAccountManagement = lazy(() => import("@/components/staff/StaffAccountManagement").then(m => ({ default: m.StaffAccountManagement })));
@@ -125,7 +126,7 @@ import { useTheme } from "next-themes";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import marbleBackground from "@/assets/smudged-marble-overlay.png";
 import whiteMarbleBackground from "@/assets/white-marble-overlay.png";
-import { Palette, Tv, Music } from "lucide-react";
+import { Palette, Tv, Music, Telescope } from "lucide-react";
 import { UserRoundCheck } from "lucide-react";
 import { Image as GalleryImageIcon } from "lucide-react";
 import { Trophy } from "lucide-react";
@@ -207,7 +208,7 @@ const Staff = () => {
   const [isMarketeer, setIsMarketeer] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'teamperformance' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'markettables' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'dashboard' | 'overview' | 'teamperformance' | 'focusedtasks' | 'visionboard' | 'docs' | 'sheets' | 'designstudio' | 'annotations' | 'streams' | 'schedule' | 'staffschedules' | 'staffaccounts' | 'passwords' | 'pwainstall' | 'offlinemanager' | 'pushnotifications' | 'notifications' | 'smsnotifications' | 'players' | 'playerlist' | 'recruitment' | 'playerdatabase' | 'scouts' | 'scoutingcentre' | 'scouting' | 'publiccontent' | 'coaching' | 'coachingdata' | 'analysis' | 'marketingschedule' | 'marketing' | 'marketinggallery' | 'contentcreator' | 'marketingideas' | 'salesdeck' | 'submissions' | 'visitors' | 'invoices' | 'updates' | 'clubnetwork' | 'cluboutreach' | 'markettables' | 'casestudies' | 'representationoffers' | 'transferreports' | 'interactionhistory' | 'legal' | 'partners' | 'jobs' | 'socialshare' | 'requests' | 'sitetext' | 'languages' | 'transferhub' | 'payments' | 'expenses' | 'taxrecords' | 'corporationtax' | 'financialreports' | 'budgets' | 'athletecentre' | 'tacticsboard' | 'meetings' | 'videoanalysis' | 'activitylog' | 'dataexport' | 'strengthpower' | 'technical' | 'nutrition' | 'psychology' | 'portalmanagement' | 'videocompressor' | 'highlightcompiler' | 'highlightmakers' | 'datasetbuilder' | 'musicstudio' | 'usage' | '__grid_picker__' | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [pinnedSections, setPinnedSections] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('staff_pinned_sections') || '[]'); } catch { return []; }
@@ -1006,7 +1007,8 @@ const Staff = () => {
             { id: 'cluboutreach', title: 'Club Outreach', icon: Mail },
             { id: 'markettables', title: 'Market Tables', icon: Mail },
             { id: 'playerdatabase', title: 'Player Database', icon: Users },
-            { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+           { id: 'scoutingcentre', title: 'Scouting Centre', icon: ClipboardList },
+           { id: 'scouting', title: 'Scouting', icon: Telescope },
             { id: 'submissions', title: 'Form Submissions', icon: Mail },
           ]
         },
@@ -2082,6 +2084,7 @@ const Staff = () => {
                   {renderKA('recruitment', <RecruitmentManagement isAdmin={canManageSection('recruitment')} />)}
                   {renderKA('playerdatabase', <PlayerDatabaseManagement isAdmin={canManageSection('playerdatabase')} />)}
                   {renderKA('scoutingcentre', <ScoutingCentreManagement isAdmin={canManageSection('scoutingcentre')} />)}
+                  {renderKA('scouting', <ScoutingByCountry />)}
                   {renderKA('coaching', <CoachingDatabase isAdmin={canManageSection('coaching')} />)}
                   {renderKA('tacticsboard', <TacticsBoard />)}
                   {renderKA('meetings', <Meetings />)}
