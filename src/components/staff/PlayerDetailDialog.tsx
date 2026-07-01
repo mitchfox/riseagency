@@ -67,6 +67,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       parent_contact: player.parent_contact || '',
       national_team: false,
       star_of_team: false,
+      minutes_share: 0,
       previous_serious_injury: '',
       agent_status: '',
       agent_name: '',
@@ -83,7 +84,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       idle(async () => {
         const { data } = await (supabase as any)
           .from('players')
-          .select('national_team,star_of_team,previous_serious_injury,agent_status,agent_name')
+          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name')
           .eq('id', player.id)
           .maybeSingle();
         if (data) {
@@ -91,6 +92,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             ...f,
             national_team: !!data.national_team,
             star_of_team: !!data.star_of_team,
+            minutes_share: typeof data.minutes_share === 'number' ? data.minutes_share : 0,
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
@@ -100,8 +102,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
     } else if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
       const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const cols = player.source === 'youth_outreach'
-        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
-        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
+        ? 'national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name,parent_approval'
+        : 'national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name';
       idle(async () => {
         const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
         if (data) {
@@ -109,6 +111,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             ...f,
             national_team: !!data.national_team,
             star_of_team: !!data.star_of_team,
+            minutes_share: typeof data.minutes_share === 'number' ? data.minutes_share : 0,
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
