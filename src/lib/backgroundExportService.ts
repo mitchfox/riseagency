@@ -28,6 +28,7 @@ export interface ExportJob {
     action_score?: number;
     zone_details?: { zone: number; sub?: number; direction?: "forward" | "backward" }[];
     minute?: string;
+    crop?: { top: number; right: number; bottom: number; left: number } | null;
   }>;
   matchMinuteOffset?: number;
   secondHalfOffset?: number | null;
@@ -222,7 +223,9 @@ export async function startExportJob(job: ExportJob): Promise<void> {
           sourceVideoUrl,
           clip.id,
           clip.start,
-          clip.end
+          clip.end,
+          undefined,
+          clip.crop ?? null
         );
         if (!trimmedUrl) throw new Error("Clip trim returned no URL");
         const clipVideoUrl = trimmedUrl;
