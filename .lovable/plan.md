@@ -1,49 +1,32 @@
-## Goal
+## Problem
 
-When you export a clip from Video Analysis → Player Outreach, any annotations drawn on that clip must render on top of the video in the Rise With Us intro — the same way they render on Analysis reports. No breakage. No experimental new overlay component.
+Intro clip videos only start loading when their corner frame fades in (they're mounted inside `AnimatePresence` and unmounted on exit). On mobile that means every rotation hits network + decode from cold, so the frame appears empty / laggy and by the time playback starts it's already fading out. There is no preload path for the video items in `extraIntro`.
 
-## Why the previous attempt broke
+Existing `useVideoPreloader` hook does exactly what we need (creates hidden `<video preload="auto">` elements to warm the buffer) but it's not being used by the intro.
 
-The last pass built a bespoke `IntroVideoWithAnnotations` SVG overlay in `RiseWithUs.tsx` from scratch, wired to `framer-motion`'s `motion.video`. It desynced from the intro carousel's timing and crashed the page. Instead of debugging that, I removed the annotation payload entirely — which is why you're (rightly) angry. It threw the baby out with the bathwater.
+## Fix
 
-We already have a battle-tested read-only overlay used by the portal analysis playback: `src/components/portal/ReadOnlyAnnotationOverlay.tsx`. It renders identically to `AnnotationCanvas`, handles loops, uses the shared `computeVisibleElements` timing engine, and is what analysis exports rely on. We should reuse it verbatim — not reinvent it.
+Edit only `src/pages/RiseWithUs.tsx` inside `IntroCinematic`:
 
-## Plan
+1. **Warm every intro video on mount.** As soon as `IntroCinematic` mounts (well before the first video rotation), kick off a hidden preloader for every video URL in `extraIntro`:
+   - Collect `extraIntro.filter(m => m.kind === "video").map(m => m.url)`.
+   - Use `useVideoPreloader({ videos: urls, preloadCount: urls.length, enabled: true })` so every clip is fetched immediately, not just "the next few".
+   - Reduce the hook's internal 1s startup delay by calling `preloadVideo` in an effect ourselves too, so the very first clip is warm by the time phase 1 begins.
 
-### 1. Re-attach annotations to the outreach export payload
-`src/components/staff/coaching/VideoAnalysis.tsx` → `handleExportToPlayerOutreach`
+2. **Set `preload="auto"` on the visible `<video>` elements** in `AnnotatedIntroVideo` (both branches — with and without annotations). Currently neither element sets `preload`, so browsers default to `metadata` and don't buffer until play. Adding `preload="auto"` plus the pre-warmed cache means the frame is decoded and ready the moment it mounts.
 
-- Before pushing each clip into `newItems`, call the existing `getClipAnnotations(clip.id)` helper (already defined at line 1367, already used for analysis exports).
-- If it returns elements, attach them to the intro_media entry:
-  ```
-  { id, kind: "video", url, show: true, position: "intro", annotations: <elements> }
-  ```
-- Type already supports it — `intro_media[].annotations?: any[]` is declared in `RiseWithUs.tsx` (line 60) and preserved through `introVisible` / `extraIntro` (lines 2099-2116). No schema change needed.
+3. **Keep videos alive across rotations** so they don't have to re-buffer each cycle. Instead of relying purely on `AnimatePresence` mount/unmount, render one hidden persistent `<video>` per unique video URL at zero opacity / `pointer-events-none` inside the intro container (a tiny 1x1 offscreen sink is enough — same trick the preloader hook uses but attached to the DOM tree). This guarantees the decoded buffer persists between rotations on mobile Safari, which is aggressive about evicting orphaned media.
 
-### 2. Render annotations on the Rise With Us intro video using the existing overlay
-`src/pages/RiseWithUs.tsx`
+4. **Autoplay guarantee.** Keep `autoPlay muted playsInline loop` (already present) — required for mobile autoplay after the language-switch tap that starts the intro.
 
-- Find the intro media carousel that renders each `intro_media` item's video.
-- For video items only, wrap the `<video>` in a relatively-positioned container and mount `<ReadOnlyAnnotationOverlay elements={item.annotations} videoRef={videoRef} clipStart={0} />` alongside it when `item.annotations?.length > 0`.
-- Use a plain `<video>` ref (not `motion.video`) for the annotated case, or pass a ref into the existing motion element via `useRef` — either works; the overlay only needs the raw `HTMLVideoElement` for `currentTime`. Keep the container `absolute inset-0 pointer-events-none` so it never blocks UI.
-- Because clips are exported as independently trimmed files, `clipStart` is 0 — timings in the saved elements are already relative to the clip's own timeline (that's how localStorage stored them from the editor).
-
-### 3. Keep the stable export path
-- Leave `preferServer: true` in `trimAndUploadClip` intact. Server-side stream-copy trims were the actual fix for the "melt down / choppy playback". That stays.
-- No changes to `clientClipExtractor.ts` or `backgroundExportService.ts`.
-
-### 4. Safety rails so this can't repeat
-- If `elements` is missing/empty/malformed, the overlay renders nothing and the video plays as before — no crash path.
-- Wrap the overlay mount in a `try/catch`-friendly conditional (`Array.isArray(item.annotations) && item.annotations.length > 0`) so a bad payload can never take down the intro.
-- No changes to the export progress UI, dialogs, or database schema.
+No changes to export logic, annotations, `clientClipExtractor`, or the extractor timeout. This is purely a preload/lifecycle fix on the render side.
 
 ## Files touched
 
-- `src/components/staff/coaching/VideoAnalysis.tsx` — add annotations to intro_media push in `handleExportToPlayerOutreach`.
-- `src/pages/RiseWithUs.tsx` — mount `ReadOnlyAnnotationOverlay` over annotated intro video items.
+- `src/pages/RiseWithUs.tsx` — `IntroCinematic` preload effect + `AnnotatedIntroVideo` `preload="auto"` and persistent hidden sinks.
 
 ## Verification
 
-- Draw an annotation on a clip in Video Analysis, export to a test player, open that player's Rise With Us link → annotation appears synced to the clip's timeline, loops correctly.
-- Export a clip with no annotations → intro video plays clean as today.
-- Staff dashboard remains stable throughout (no "melt down").
+- Open a Rise With Us link with 2+ intro clips on mobile → first clip is playing frame-1 the moment it appears; subsequent rotations start instantly with no black gap.
+- Link with only images still behaves as today.
+- Link with annotated clip still shows the overlay in sync.
