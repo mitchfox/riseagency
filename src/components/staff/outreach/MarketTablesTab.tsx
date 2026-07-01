@@ -11,6 +11,7 @@ import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
 import { Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { canonicalClubName } from "@/lib/clubNameUtils";
 
 interface ClubRow {
   id: string;
