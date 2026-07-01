@@ -24,7 +24,8 @@ export async function trimAndUploadClip(
   start: number,
   end: number,
   onProgress?: (msg: string) => void,
-  crop?: CropPercent | null
+  crop?: CropPercent | null,
+  opts?: { preferServer?: boolean }
 ): Promise<string> {
   // ── 1. Check size & attempt server-side trim (preferred) ──
   // Crops require re-encoding, so we skip the fast server stream-copy path.
@@ -33,15 +34,17 @@ export async function trimAndUploadClip(
   try {
     // Quick HEAD check to skip server call for large files
     let skipServer = false;
-    try {
-      const head = await fetch(sourceUrl.split("#")[0], { method: "HEAD" });
-      const size = parseInt(head.headers.get("content-length") || "0", 10);
-      if (size > 200 * 1024 * 1024) {
-        console.log(`Source ${(size / 1048576).toFixed(0)}MB exceeds server limit, using client encoder`);
-        skipServer = true;
+    if (!opts?.preferServer) {
+      try {
+        const head = await fetch(sourceUrl.split("#")[0], { method: "HEAD" });
+        const size = parseInt(head.headers.get("content-length") || "0", 10);
+        if (size > 200 * 1024 * 1024) {
+          console.log(`Source ${(size / 1048576).toFixed(0)}MB exceeds server limit, using client encoder`);
+          skipServer = true;
+        }
+      } catch {
+        // HEAD failed, try server anyway
       }
-    } catch {
-      // HEAD failed, try server anyway
     }
 
     if (!skipServer) {
