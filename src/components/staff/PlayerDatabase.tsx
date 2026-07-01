@@ -985,6 +985,23 @@ export const PlayerDatabase = () => {
                   ))}
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Missing Info</Label>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { key: 'dob', label: 'DOB' },
+                    { key: 'position', label: 'Position' },
+                    { key: 'club', label: 'Club' },
+                    { key: 'nationality', label: 'Nationality' },
+                    { key: 'league', label: 'League' },
+                  ].map(f => (
+                    <button key={f.key}
+                      onClick={() => setMissingFilters(prev => prev.includes(f.key) ? prev.filter(v => v !== f.key) : [...prev, f.key])}
+                      className={`text-[10px] px-1.5 py-0.5 border rounded ${missingFilters.includes(f.key) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                    >{f.label}</button>
+                  ))}
+                </div>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">DOB Range</Label>
                 <div className="flex gap-1 items-center">
