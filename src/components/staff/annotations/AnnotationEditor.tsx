@@ -737,14 +737,24 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // the freeze frame closes.
     const video = videoRef.current;
     if (video) {
-      const target = Math.max(activeKlip?.startTime ?? 0, drawingTimestamp - 1.5);
-      video.currentTime = target;
-      if (video.currentTime < (video.duration || 0)) {
-        video.play().catch(() => {});
-        setIsPlaying(true);
+      if (clipConstraint) {
+        // Inside a clip constraint (e.g. Video Analysis "Annotate this clip"),
+        // a short clip can cause playback to hit the boundary before the newly
+        // drawn annotation renders. Keep the video paused on the exact frame
+        // the user drew on so the annotation is immediately visible.
+        video.pause();
+        video.currentTime = drawingTimestamp;
+        setIsPlaying(false);
+      } else {
+        const target = Math.max(activeKlip?.startTime ?? 0, drawingTimestamp - 1.5);
+        video.currentTime = target;
+        if (video.currentTime < (video.duration || 0)) {
+          video.play().catch(() => {});
+          setIsPlaying(true);
+        }
       }
     }
-  }, [handleSave, activeKlip, drawingTimestamp]);
+  }, [handleSave, activeKlip, drawingTimestamp, clipConstraint]);
 
   const cancelDrawing = useCallback(() => {
     // Revert elements to what they were before drawing started
