@@ -76,6 +76,7 @@ const STATIC_PHRASE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "Match": { es: "Partido", pt: "Jogo", fr: "Match", de: "Spiel", it: "Partita", pl: "Mecz", cs: "Zápas", ru: "Матч", tr: "Maç", hr: "Utakmica", no: "Kamp" },
   "Play video report": { es: "Reproducir informe de vídeo", pt: "Reproduzir relatório em vídeo", fr: "Lire le rapport vidéo", de: "Videobericht abspielen", it: "Riproduci report video", pl: "Odtwórz raport wideo", cs: "Přehrát video report", ru: "Воспроизвести видеоотчёт", tr: "Video raporu oynat", hr: "Reproducir video izvješće", no: "Spill av videorapport" },
   "No data available.": { es: "No hay datos disponibles.", pt: "Sem dados disponíveis.", fr: "Aucune donnée disponible.", de: "Keine Daten verfügbar.", it: "Nessun dato disponibile.", pl: "Brak dostępnych danych.", cs: "Nejsou k dispozici žádná data.", ru: "Данные недоступны.", tr: "Veri yok.", hr: "Nema dostupnih podataka.", no: "Ingen data tilgjengelig." },
+  "All statistics are verifiable and evidenced through the auto video report of each match above.": { es: "Todas las estadísticas son verificables y están respaldadas por el informe de vídeo automático de cada partido anterior.", pt: "Todas as estatísticas são verificáveis e comprovadas pelo relatório de vídeo automático de cada jogo acima.", fr: "Toutes les statistiques sont vérifiables et étayées par le rapport vidéo automatique de chaque match ci-dessus.", de: "Alle Statistiken sind überprüfbar und durch den automatischen Videobericht jedes obigen Spiels belegt.", it: "Tutte le statistiche sono verificabili e documentate attraverso il report video automatico di ogni partita sopra.", pl: "Wszystkie statystyki są weryfikowalne i potwierdzone przez automatyczny raport wideo z każdego powyższego meczu.", cs: "Všechny statistiky jsou ověřitelné a podložené automatickým video reportem z každého výše uvedeného zápasu.", ru: "Все статистические данные проверяемы и подтверждены автоматическим видеоотчётом по каждому матчу выше.", tr: "Tüm istatistikler yukarıdaki her maçın otomatik video raporuyla doğrulanabilir ve kanıtlanabilir.", hr: "Sve statistike su provjerljive i potkrijepljene automatskim video izvješćem svake gore navedene utakmice.", no: "Alle statistikkene er verifiserbare og dokumentert gjennom den automatiske videorapporten for hver kamp ovenfor." },
 };
 
 const RESULT_INITIALS_BY_LANG: Record<string, Record<"W" | "D" | "L", string>> = {
@@ -2965,6 +2966,9 @@ function MatchByMatchCard({
           </TabsContent>
         ))}
       </Tabs>
+      <p className="mt-3 text-[11px] italic text-gold/90">
+        {T("mbm.note", "All statistics are verifiable and evidenced through the auto video report of each match above.")}
+      </p>
       <ClippedActionsPlayer
         open={!!openClipsForId}
         onOpenChange={(o) => { if (!o) setOpenClipsForId(null); }}
