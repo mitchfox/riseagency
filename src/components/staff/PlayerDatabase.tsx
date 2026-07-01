@@ -9,9 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { BlurTextarea } from '@/components/staff/BlurTextarea';
 import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2, SlidersHorizontal } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -22,8 +21,7 @@ import { normalizeClubName, findClubCountry, findClubRating } from '@/lib/clubNa
 import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
-import { Switch } from '@/components/ui/switch';
-import { PlayerNotesBoard } from './PlayerNotesBoard';
+import { PlayerDetailDialog } from './PlayerDetailDialog';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
 import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
@@ -251,13 +249,10 @@ export const PlayerDatabase = () => {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState<any>({});
-  const [creatingOutreach, setCreatingOutreach] = useState(false);
-  const [notesReady, setNotesReady] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
+  const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -602,196 +597,15 @@ export const PlayerDatabase = () => {
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
-    setNotesReady(false);
+    // Keep the open handler lightweight so the dialog paints immediately;
+    // the dialog itself hydrates its edit form and fetches extras.
     setSelectedPlayer(player);
-    setEditMode(false);
-    setEditForm({
-      player_name: player.player_name,
-      position: player.position || '',
-      nationality: player.nationality || '',
-      current_club: player.current_club || '',
-      date_of_birth: player.date_of_birth || '',
-      ig_handle: player.ig_handle || '',
-      notes: player.notes || '',
-      parents_name: player.parents_name || '',
-      parent_contact: player.parent_contact || '',
-      national_team: false,
-      star_of_team: false,
-      previous_serious_injury: '',
-      agent_status: '',
-      agent_name: '',
-      parent_approval: false,
-    });
     setDetailOpen(true);
-    window.setTimeout(() => setNotesReady(true), 120);
-    // Hydrate fit-score fields from source table
-    if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
-      const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
-      const cols = player.source === 'youth_outreach'
-        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
-        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
-      void (async () => {
-        const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
-        if (data) {
-          setEditForm((f: any) => ({
-            ...f,
-            national_team: !!data.national_team,
-            star_of_team: !!data.star_of_team,
-            previous_serious_injury: data.previous_serious_injury || '',
-            agent_status: data.agent_status || '',
-            agent_name: data.agent_name || '',
-            parent_approval: !!data.parent_approval,
-          }));
-        }
-      })();
-    }
   };
 
-  const createPlayerOutreach = async () => {
-    if (!selectedPlayer?.player_name?.trim()) return;
-    const snapshot = selectedPlayer;
-    setCreatingOutreach(true);
-    try {
-      const cleanName = snapshot.player_name.trim();
-      let query = (supabase as any)
-        .from('players')
-        .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
-        .ilike('name', cleanName);
-      if (snapshot.date_of_birth) query = query.eq('date_of_birth', snapshot.date_of_birth);
-      let { data: existingRows, error } = await query.limit(1);
-      if (error) throw error;
-
-      if ((!existingRows || existingRows.length === 0) && snapshot.date_of_birth) {
-        const fallback = await (supabase as any)
-          .from('players')
-          .select('id, name, position, club, nationality, date_of_birth, representation_status, has_representation_offer, offer_status, instagram_handle')
-          .ilike('name', cleanName)
-          .limit(1);
-        if (fallback.error) throw fallback.error;
-        existingRows = fallback.data || [];
-      }
-
-      const existing = existingRows?.[0] || null;
-      const cleanIg = (snapshot.ig_handle || '').replace(/^@/, '').trim() || null;
-      if (existing) {
-        const updatePayload: any = {
-          has_representation_offer: true,
-          offer_status: existing.offer_status || 'draft',
-          representation_status: existing.representation_status || 'prospect',
-          position: existing.position || snapshot.position || 'Other',
-          club: existing.club || snapshot.current_club || null,
-          nationality: existing.nationality || snapshot.nationality || 'Unknown',
-          date_of_birth: existing.date_of_birth || snapshot.date_of_birth || null,
-          instagram_handle: existing.instagram_handle || cleanIg,
-        };
-        const { error: updateError } = await (supabase as any).from('players').update(updatePayload).eq('id', existing.id);
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await (supabase as any).from('players').insert({
-          name: cleanName,
-          position: snapshot.position || 'Other',
-          age: snapshot.age || null,
-          nationality: snapshot.nationality || 'Unknown',
-          club: snapshot.current_club || null,
-          date_of_birth: snapshot.date_of_birth || null,
-          instagram_handle: cleanIg,
-          representation_status: 'prospect',
-          has_representation_offer: true,
-          offer_status: 'draft',
-        });
-        if (insertError) throw insertError;
-      }
-
-      toast.success('Player outreach draft created');
-      setDetailOpen(false);
-      navigate(`/staff?section=representationoffers&player=${encodeURIComponent(cleanName)}`);
-    } catch (error: any) {
-      toast.error(error?.message || 'Could not create player outreach');
-    } finally {
-      setCreatingOutreach(false);
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedPlayer) return;
-    try {
-      if (selectedPlayer.source === 'database') {
-        const payload = {
-          name: editForm.player_name,
-          position: editForm.position || null,
-          nationality: editForm.nationality || null,
-          club: editForm.current_club || null,
-          date_of_birth: editForm.date_of_birth || null,
-          bio: editForm.notes || null,
-          instagram_handle: editForm.ig_handle || null,
-        };
-        const { error } = await supabase.from('players').update(payload).eq('id', selectedPlayer.id);
-        if (error) throw error;
-        const updatedPlayer: PlayerData = {
-          ...selectedPlayer,
-          player_name: editForm.player_name,
-          position: editForm.position || null,
-          nationality: editForm.nationality || null,
-          current_club: editForm.current_club || null,
-          date_of_birth: editForm.date_of_birth || null,
-          age: calculateAge(editForm.date_of_birth) ?? selectedPlayer.age,
-          ig_handle: editForm.ig_handle || null,
-          notes: editForm.notes || null,
-        };
-        setPlayers((prev) => prev.map((p) => (p.id === selectedPlayer.id && p.source === selectedPlayer.source ? updatedPlayer : p)));
-        setSelectedPlayer(updatedPlayer);
-        toast.success('Player updated');
-        setEditMode(false);
-        return;
-      }
-
-      const tableName = selectedPlayer.source === 'scouting' ? 'scouting_reports'
-        : selectedPlayer.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
-      const isOutreach = selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach';
-      const payload = {
-        player_name: editForm.player_name,
-        position: editForm.position || null,
-        nationality: editForm.nationality || null,
-        current_club: editForm.current_club || null,
-        date_of_birth: editForm.date_of_birth || null,
-        notes: editForm.notes || null,
-        ...(selectedPlayer.source === 'youth_outreach' ? {
-          parents_name: editForm.parents_name || null,
-          parent_contact: editForm.parent_contact || null,
-          parent_approval: !!editForm.parent_approval,
-        } : {}),
-        ...(isOutreach ? {
-          national_team: !!editForm.national_team,
-          star_of_team: !!editForm.star_of_team,
-          previous_serious_injury: editForm.previous_serious_injury || null,
-          agent_status: editForm.agent_status || null,
-          agent_name: editForm.agent_name || null,
-          ig_handle: editForm.ig_handle || null,
-        } : {}),
-      };
-      const { error } = await supabase.from(tableName).update(payload).eq('id', selectedPlayer.id);
-      if (error) throw error;
-      const updatedPlayer: PlayerData = {
-        ...selectedPlayer,
-        player_name: editForm.player_name,
-        position: editForm.position || null,
-        nationality: editForm.nationality || null,
-        current_club: editForm.current_club || null,
-        date_of_birth: editForm.date_of_birth || null,
-        age: calculateAge(editForm.date_of_birth) ?? selectedPlayer.age,
-        ig_handle: isOutreach ? (editForm.ig_handle || null) : selectedPlayer.ig_handle,
-        notes: editForm.notes || null,
-        parents_name: selectedPlayer.source === 'youth_outreach' ? (editForm.parents_name || null) : selectedPlayer.parents_name,
-        parent_contact: selectedPlayer.source === 'youth_outreach' ? (editForm.parent_contact || null) : selectedPlayer.parent_contact,
-        parent_approval: selectedPlayer.source === 'youth_outreach' ? !!editForm.parent_approval : selectedPlayer.parent_approval,
-      };
-      setPlayers((prev) => prev.map((p) => (p.id === selectedPlayer.id && p.source === selectedPlayer.source ? updatedPlayer : p)));
-      setSelectedPlayer(updatedPlayer);
-      toast.success('Player updated');
-      setEditMode(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save');
-    }
+  const handlePlayerUpdated = (updated: PlayerData) => {
+    setPlayers((prev) => prev.map((p) => (p.id === updated.id && p.source === updated.source ? updated : p)));
+    setSelectedPlayer(updated);
   };
 
   // Dynamic column renderers
@@ -923,13 +737,24 @@ export const PlayerDatabase = () => {
     <div className="space-y-3">
       {/* Quick Filters — surfaced just below Player Database Actions */}
       <div className="rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/70 p-3 shadow-[0_0_18px_hsl(var(--rise-gold)/0.06)]">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">Quick Filters</p>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setQuickFiltersOpen(v => !v)}
+            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))] hover:opacity-80"
+          >
+            {quickFiltersOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            Quick Filters
+            {hasActiveFilters && (
+              <span className="ml-1 rounded-full bg-[hsl(var(--rise-gold))] text-black text-[9px] px-1.5 py-0.5 tracking-normal">Active</span>
+            )}
+          </button>
           {hasActiveFilters && (
             <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear all</button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {quickFiltersOpen && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
           <div className="space-y-1">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Age Group</Label>
             <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
@@ -997,6 +822,7 @@ export const PlayerDatabase = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Header */}
@@ -1251,140 +1077,13 @@ export const PlayerDatabase = () => {
       )}
 
       {/* Player Detail/Edit Dialog */}
-      <Dialog open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) { setEditMode(false); setNotesReady(false); } }}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{editMode ? 'Edit Player' : 'Player Details'}</span>
-              {!editMode && (
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={createPlayerOutreach} disabled={creatingOutreach} className="gap-1">
-                    {creatingOutreach ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
-                    Create player outreach
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)} className="gap-1">
-                    <Edit className="h-3 w-3" /> Edit
-                  </Button>
-                </div>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedPlayer && !editMode && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-14 w-14">
-                  <AvatarImage src={selectedPlayer.profile_image_url || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold">
-                    {selectedPlayer.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-bold text-lg">{selectedPlayer.player_name}</h3>
-                  <div className="flex items-center gap-2">
-                    <EligibilityBadge player={selectedPlayer} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-                    <Badge variant="secondary" className="text-[10px]">{selectedPlayer.source === 'database' ? 'Database' : selectedPlayer.source === 'scouting' ? 'Scouting' : selectedPlayer.source === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground text-xs">Position</span><p className="font-medium">{selectedPlayer.position || '-'}</p></div>
-                <div><span className="text-muted-foreground text-xs">Age</span><p className="font-medium">{selectedPlayer.age || '-'}</p></div>
-                <div><span className="text-muted-foreground text-xs">Date of Birth</span><p className="font-medium">{selectedPlayer.date_of_birth ? new Date(selectedPlayer.date_of_birth).toLocaleDateString('en-GB') : '-'}</p></div>
-                <div><span className="text-muted-foreground text-xs">Nationality</span><p className="font-medium">{selectedPlayer.nationality || '-'}</p></div>
-                <div className="col-span-2"><span className="text-muted-foreground text-xs">Club</span><p className="font-medium">{selectedPlayer.current_club || '-'}</p></div>
-                {selectedPlayer.ig_handle && (
-                  <div className="col-span-2"><span className="text-muted-foreground text-xs">Instagram</span><p className="font-medium">@{selectedPlayer.ig_handle.replace(/^@/, '')}</p></div>
-                )}
-                {selectedPlayer.parents_name && (
-                  <div><span className="text-muted-foreground text-xs">Parent Name</span><p className="font-medium">{selectedPlayer.parents_name}</p></div>
-                )}
-                {selectedPlayer.parent_contact && (
-                  <div><span className="text-muted-foreground text-xs">Parent IG</span><p className="font-medium">@{selectedPlayer.parent_contact.replace(/^@/, '')}</p></div>
-                )}
-                <div><span className="text-muted-foreground text-xs">Reports</span><p className="font-medium">{selectedPlayer.report_count}</p></div>
-                {selectedPlayer.notes && <div className="col-span-2"><span className="text-muted-foreground text-xs">Notes</span><p className="text-muted-foreground text-sm">{selectedPlayer.notes}</p></div>}
-              </div>
-              {notesReady && <div className="pt-2 border-t border-border/40">
-                <PlayerNotesBoard
-                  playerKey={buildPlayerKey(selectedPlayer.player_name, selectedPlayer.date_of_birth)}
-                  playerName={selectedPlayer.player_name}
-                  source={selectedPlayer.source}
-                  sourceId={selectedPlayer.id}
-                />
-              </div>}
-            </div>
-          )}
-          {selectedPlayer && editMode && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Name</Label><Input value={editForm.player_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, player_name: e.target.value }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Position</Label><Input value={editForm.position || ''} onChange={e => setEditForm((f: any) => ({ ...f, position: e.target.value }))} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Nationality</Label><Input value={editForm.nationality || ''} onChange={e => setEditForm((f: any) => ({ ...f, nationality: e.target.value }))} /></div>
-                <div className="space-y-1"><Label className="text-xs">Club</Label><Input value={editForm.current_club || ''} onChange={e => setEditForm((f: any) => ({ ...f, current_club: e.target.value }))} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Date of Birth</Label><Input type="date" value={editForm.date_of_birth} onChange={e => setEditForm({ ...editForm, date_of_birth: e.target.value })} /></div>
-                <div className="space-y-1"><Label className="text-xs">Instagram</Label><Input value={editForm.ig_handle || ''} onChange={e => setEditForm((f: any) => ({ ...f, ig_handle: e.target.value }))} /></div>
-              </div>
-              {selectedPlayer.source === 'youth_outreach' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label className="text-xs">Parent Name</Label><Input value={editForm.parents_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, parents_name: e.target.value }))} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact || ''} onChange={e => setEditForm((f: any) => ({ ...f, parent_contact: e.target.value }))} /></div>
-                </div>
-              )}
-              {(selectedPlayer.source === 'youth_outreach' || selectedPlayer.source === 'pro_outreach') && (
-                <div className="space-y-3 rounded-md border border-border/60 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fit-score signals</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex items-center justify-between gap-2 text-sm">
-                      <span>National team</span>
-                      <Switch checked={!!editForm.national_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, national_team: v }))} />
-                    </label>
-                    <label className="flex items-center justify-between gap-2 text-sm">
-                      <span>Star of team</span>
-                      <Switch checked={!!editForm.star_of_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, star_of_team: v }))} />
-                    </label>
-                    {selectedPlayer.source === 'youth_outreach' && (
-                      <label className="flex items-center justify-between gap-2 text-sm col-span-2">
-                        <span>Parent approval</span>
-                        <Switch checked={!!editForm.parent_approval} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, parent_approval: v }))} />
-                      </label>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Agent status</Label>
-                      <select
-                        className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
-                        value={editForm.agent_status || ''}
-                        onChange={(e) => setEditForm((f: any) => ({ ...f, agent_status: e.target.value }))}
-                      >
-                        <option value="">Unknown</option>
-                        <option value="unrepresented">Unrepresented</option>
-                        <option value="family">Family</option>
-                        <option value="represented">Represented</option>
-                        <option value="top_agency">Top agency</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1"><Label className="text-xs">Agent name</Label><Input value={editForm.agent_name || ''} onChange={e => setEditForm((f: any) => ({ ...f, agent_name: e.target.value }))} /></div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Previous serious injury</Label>
-                    <Input value={editForm.previous_serious_injury || ''} onChange={e => setEditForm((f: any) => ({ ...f, previous_serious_injury: e.target.value }))} placeholder="e.g. ACL 2023" />
-                  </div>
-                </div>
-              )}
-              <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={v => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
-              <div className="flex gap-2">
-                <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
-                <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PlayerDetailDialog
+        player={selectedPlayer}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdated={handlePlayerUpdated}
+        eligibilityBadge={selectedPlayer ? <EligibilityBadge player={selectedPlayer} clubCountryMap={clubCountryMap} ageRules={ageRules} /> : null}
+      />
     </div>
   );
 };
