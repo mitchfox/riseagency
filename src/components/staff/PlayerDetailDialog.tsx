@@ -366,6 +366,22 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
                     <span>Star of team</span>
                     <Switch checked={!!editForm.star_of_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, star_of_team: v }))} />
                   </label>
+                  <div className="col-span-2 space-y-1 rounded-md border border-border/40 bg-background/40 p-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <Label className="text-xs">Playing time</Label>
+                      <span className="text-risegold font-semibold">{Number(editForm.minutes_share) || 0}/10</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={Number(editForm.minutes_share) || 0}
+                      onChange={(e) => setEditForm((f: any) => ({ ...f, minutes_share: Number(e.target.value) }))}
+                      className="w-full accent-risegold"
+                    />
+                    <p className="text-[10px] text-muted-foreground">0 = didn't play at all · 5 = 50% of minutes · 10 = every minute. Adds that many points to the AI score.</p>
+                  </div>
                   {player.source === 'youth_outreach' && (
                     <label className="flex items-center justify-between gap-2 text-sm col-span-2">
                       <span>Parent approval</span>
