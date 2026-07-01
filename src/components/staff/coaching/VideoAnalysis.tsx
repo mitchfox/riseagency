@@ -2827,6 +2827,25 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           </DialogContent>
         </Dialog>
 
+        {/* Inline crop dialog */}
+        {croppingClip && selectedVideo && (
+          <VideoCropDialog
+            open={!!croppingClip}
+            onOpenChange={(open) => { if (!open) setCroppingClip(null); }}
+            videoUrl={selectedVideo.video_url}
+            initialCrop={croppingClip.crop || null}
+            onCropComplete={async (crop) => {
+              const active = croppingClip;
+              setCroppingClip(null);
+              if (!active) return;
+              const isNoop = crop.top === 0 && crop.right === 0 && crop.bottom === 0 && crop.left === 0;
+              const updated = selectedVideo.clips.map(c => c.id === active.id ? { ...c, crop: isNoop ? null : crop } : c);
+              await saveClips(updated);
+              toast.success(isNoop ? "Crop cleared" : "Crop saved to clip");
+            }}
+          />
+        )}
+
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
