@@ -1502,7 +1502,7 @@ const AnnotatedIntroVideo = ({
         src={src}
         className={className}
         style={style}
-        autoPlay muted loop playsInline
+        autoPlay muted loop playsInline preload="auto"
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 0.82, scale: 1 }}
         exit={{ opacity: 0, scale: 1.02 }}
@@ -1529,7 +1529,7 @@ const AnnotatedIntroVideo = ({
         src={src}
         className="absolute inset-0 h-full w-full object-cover"
         style={{ objectPosition: (style as any)?.objectPosition || "50% 35%" }}
-        autoPlay muted loop playsInline
+        autoPlay muted loop playsInline preload="auto"
       />
       <ReadOnlyAnnotationOverlay elements={annotations!} videoRef={videoRef} clipStart={0} />
     </motion.div>
