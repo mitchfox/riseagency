@@ -1486,7 +1486,7 @@ const IntroCinematic = ({
   assignedLang, currentLang, onSwitchToEnglish,
 }: {
   fullName: string; lang: string; extraImages: string[];
-  extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }>;
+  extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string; annotations?: any[] }>;
   secondaryParagraph?: string | null; profileImageUrl?: string | null; onDone: () => void; isUnder18?: boolean;
   assignedLang?: string; currentLang?: string; onSwitchToEnglish?: () => void;
 }) => {
