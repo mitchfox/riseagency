@@ -2935,7 +2935,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   <Select value={exportPlayerId} onValueChange={(value) => handleExportPlayerChange(value, "outreach")}>
                     <SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger>
                     <SelectContent>
-                      {groupPlayersByStatus(players).map(group => (
+                      {outreachPlayers.length === 0 && (
+                        <div className="px-2 py-3 text-xs text-muted-foreground">No players with a RiseWithUs link yet.</div>
+                      )}
+                      {groupPlayersByStatus(outreachPlayers).map(group => (
                         <SelectGroup key={group.status}>
                           <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
                           {group.players.map(p => (
