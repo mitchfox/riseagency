@@ -475,6 +475,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setPlayers(sortPlayersByRepresentation(list));
   };
 
+  // Load the subset of players that actually have a RiseWithUs link created
+  // (has_representation_offer = true, or prospects — same rule as RiseWithUs.tsx).
+  const fetchOutreachPlayers = async () => {
+    const { data } = await supabase
+      .from("players")
+      .select("id, name, position, representation_status, image_url, has_representation_offer")
+      .or("has_representation_offer.eq.true,representation_status.eq.prospect")
+      .order("name");
+    if (!data) return;
+    setOutreachPlayers(sortPlayersByRepresentation(data as any));
+  };
+
   const fetchKnownActionTypes = async (forPlayerId?: string | null) => {
     const pid = forPlayerId ?? selectedVideo?.player_id ?? (newPlayerId || null);
     const result = await fetchPlayerActionFrequencies(pid);
