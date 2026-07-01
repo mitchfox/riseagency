@@ -79,7 +79,25 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       else window.setTimeout(cb, 80);
     };
     idle(() => setNotesReady(true));
-    if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
+    if (player.source === 'database') {
+      idle(async () => {
+        const { data } = await (supabase as any)
+          .from('players')
+          .select('national_team,star_of_team,previous_serious_injury,agent_status,agent_name')
+          .eq('id', player.id)
+          .maybeSingle();
+        if (data) {
+          setEditForm((f: any) => ({
+            ...f,
+            national_team: !!data.national_team,
+            star_of_team: !!data.star_of_team,
+            previous_serious_injury: data.previous_serious_injury || '',
+            agent_status: data.agent_status || '',
+            agent_name: data.agent_name || '',
+          }));
+        }
+      });
+    } else if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
       const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const cols = player.source === 'youth_outreach'
         ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
@@ -175,6 +193,11 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           date_of_birth: editForm.date_of_birth || null,
           bio: editForm.notes || null,
           instagram_handle: editForm.ig_handle || null,
+          national_team: !!editForm.national_team,
+          star_of_team: !!editForm.star_of_team,
+          previous_serious_injury: editForm.previous_serious_injury || null,
+          agent_status: editForm.agent_status || null,
+          agent_name: editForm.agent_name || null,
         };
         const { error } = await supabase.from('players').update(payload).eq('id', player.id);
         if (error) throw error;
@@ -326,7 +349,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
                 <div className="space-y-1"><Label className="text-xs">Parent IG</Label><Input value={editForm.parent_contact || ''} onChange={e => setEditForm((f: any) => ({ ...f, parent_contact: e.target.value }))} /></div>
               </div>
             )}
-            {(player.source === 'youth_outreach' || player.source === 'pro_outreach') && (
+            {(player.source === 'database' || player.source === 'youth_outreach' || player.source === 'pro_outreach') && (
               <div className="space-y-3 rounded-md border border-border/60 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fit-score signals</p>
                 <div className="grid grid-cols-2 gap-3">

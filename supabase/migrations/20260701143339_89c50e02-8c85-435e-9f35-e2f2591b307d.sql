@@ -1,0 +1,1 @@
+ALTER TABLE public.players ADD COLUMN IF NOT EXISTS agent_status text; ALTER TABLE public.players ADD COLUMN IF NOT EXISTS agent_name text;
