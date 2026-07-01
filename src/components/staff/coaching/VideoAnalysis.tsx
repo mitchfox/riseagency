@@ -128,6 +128,8 @@ const formatClipMinuteFromSeconds = (seconds: number): string => {
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
+  // Players who have a RiseWithUs link created — used only in the "Player Outreach" export destination.
+  const [outreachPlayers, setOutreachPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
