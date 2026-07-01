@@ -2100,7 +2100,7 @@ const RiseWithUs = () => {
   );
   const baseIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> =
     introVisible.length > 0
-      ? introVisible.map((m) => ({ kind: m.kind, url: m.url, objectPosition: m.objectPosition }))
+      ? introVisible.map((m) => ({ kind: m.kind, url: m.url, objectPosition: m.objectPosition, annotations: m.annotations }))
       : Object.values(settings.section_images)
           .filter(Boolean)
           .map((url) => ({ kind: "image" as const, url: url as string }));
@@ -2112,7 +2112,7 @@ const RiseWithUs = () => {
   for (const m of settings.intro_media) {
     if (m?.url) focalByUrl.set(m.url, m.objectPosition);
   }
-  const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string }> = [
+  const extraIntro: Array<{ kind: "image" | "video"; url: string; objectPosition?: string; annotations?: any[] }> = [
     ...priorityIntroImages.map((url) => ({
       kind: "image" as const,
       url,
