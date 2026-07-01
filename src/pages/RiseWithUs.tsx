@@ -1797,6 +1797,26 @@ const IntroCinematic = ({
         );
       })()}
 
+      {/* Persistent hidden video sinks — keep decoded buffers alive between
+          rotations so playback is instant on mobile Safari, which is quick
+          to evict media from unmounted elements. */}
+      {introVideoUrls.length > 0 && (
+        <div aria-hidden className="pointer-events-none fixed left-0 top-0 h-px w-px overflow-hidden opacity-0">
+          {introVideoUrls.map((u) => (
+            <video
+              key={`sink-${u}`}
+              src={u}
+              muted
+              playsInline
+              loop
+              autoPlay
+              preload="auto"
+              className="h-px w-px"
+            />
+          ))}
+        </div>
+      )}
+
       {/* Text reveal */}
       <div className="relative z-10 max-w-xl px-6 text-center">
         <AnimatePresence mode="wait">
