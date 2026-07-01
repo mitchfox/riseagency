@@ -24,7 +24,6 @@ import { usePlayerLanguageTranslations } from "@/hooks/usePlayerLanguageTranslat
 import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
-import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
