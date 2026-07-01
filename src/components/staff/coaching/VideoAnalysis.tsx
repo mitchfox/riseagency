@@ -2891,7 +2891,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   onClick={() => handleExportDestinationChange("report")}
                   className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "report" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                 >
-                  Performance Report
+                  Report
                 </button>
                 <button
                   onClick={() => handleExportDestinationChange("analysis")}
@@ -2899,9 +2899,107 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 >
                   Analysis
                 </button>
+                <button
+                  onClick={() => handleExportDestinationChange("outreach")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "outreach" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  Player Outreach
+                </button>
               </div>
 
-              {exportDestination === "report" ? (
+              {exportDestination === "outreach" ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Trims each selected clip and adds it to the player's Rise With Us intro videos.
+                    Any crop you've applied to a clip will be baked into the exported file.
+                  </p>
+                  <Select value={exportPlayerId} onValueChange={(value) => handleExportPlayerChange(value, "outreach")}>
+                    <SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger>
+                    <SelectContent>
+                      {groupPlayersByStatus(players).map(group => (
+                        <SelectGroup key={group.status}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
+                          {group.players.map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {exportPlayerId && selectedVideo.clips.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Select clips to export</p>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          onClick={() => {
+                            const allSelected = selectedVideo.clips.every(c => selectedExportClipIds.has(c.id));
+                            setSelectedExportClipIds(allSelected ? new Set() : new Set(selectedVideo.clips.map(c => c.id)));
+                          }}
+                        >
+                          {selectedVideo.clips.every(c => selectedExportClipIds.has(c.id)) ? "Deselect all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto border rounded-md p-2 space-y-1">
+                        {selectedVideo.clips.map(clip => {
+                          const selected = selectedExportClipIds.has(clip.id);
+                          return (
+                            <label
+                              key={clip.id}
+                              className="flex items-center gap-2 text-xs py-1 px-1 rounded cursor-pointer hover:bg-muted/30"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExportClipIds(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(clip.id)) next.delete(clip.id);
+                                    else next.add(clip.id);
+                                    return next;
+                                  });
+                                }}
+                                className="shrink-0"
+                              >
+                                {selected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                              </button>
+                              <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                              {clip.crop && <span className="text-[10px] text-primary shrink-0">Cropped</span>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleExportToPlayerOutreach}
+                    disabled={!exportPlayerId || outreachExporting || selectedExportClipIds.size === 0}
+                    className="w-full"
+                  >
+                    {outreachExporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                    Export {selectedExportClipIds.size > 0 ? `${selectedExportClipIds.size} clip${selectedExportClipIds.size !== 1 ? 's' : ''}` : "clips"} to intro
+                  </Button>
+                  {outreachExporting && outreachProgress.total > 0 && (
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto border rounded-md p-2 bg-muted/20">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Exporting clip {outreachProgress.current}/{outreachProgress.total}...
+                      </p>
+                      {selectedVideo.clips.filter(c => selectedExportClipIds.has(c.id)).map(clip => {
+                        const status = outreachProgress.statuses[clip.id] || "pending";
+                        return (
+                          <div key={clip.id} className="flex items-center gap-2 text-xs">
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${status === "done" ? "bg-green-500" : status === "error" ? "bg-red-500" : "bg-muted-foreground/30"}`} />
+                            <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                            <span className={`text-[10px] shrink-0 ${status === "done" ? "text-green-600" : status === "error" ? "text-red-600" : "text-muted-foreground"}`}>
+                              {status === "done" ? "Done" : status === "error" ? "Failed" : "Pending"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : exportDestination === "report" ? (
                 <>
                   <p className="text-sm text-muted-foreground">
                     <strong>Link:</strong> Makes this video analysis available for clip selection on the report.
