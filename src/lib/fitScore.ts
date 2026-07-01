@@ -411,13 +411,16 @@ export const computeFitScore = (
     if (agentBonus !== 0) agentReason = `${signed(agentBonus)} top-tier agency (${player.agent_name || ""})`;
   }
 
-  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus), 0, 100);
+  const archetype = nationalityArchetypeBonus(player.nationality, player.position);
+
+  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus + archetype.value), 0, 100);
 
   const reasons = [...best.res.reasons];
   if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
   for (const b of bonuses) reasons.push(b.reason);
   if (leagueStrengthBonus > 0) reasons.push(`+${leagueStrengthBonus} league strength (${playerCountry})`);
   if (agentReason) reasons.push(agentReason);
+  if (archetype.reason) reasons.push(archetype.reason);
 
   return {
     total,
@@ -428,6 +431,7 @@ export const computeFitScore = (
       ...Object.fromEntries(bonuses.map(b => [b.key, b.value])),
       league_strength: leagueStrengthBonus,
       agent: agentBonus,
+      nationality_archetype: archetype.value,
     },
     target_id: best.target.id,
     target_name: best.target.name,
