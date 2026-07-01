@@ -1461,13 +1461,19 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             clip.end,
             undefined,
             clip.crop ?? null,
+            { preferServer: true },
           );
+          // Attach any annotations authored against this clip so the Rise With Us
+          // intro can overlay them during playback. appearAt is already stored
+          // relative to the clip start (0-based), so the overlay uses clipStart=0.
+          const annotations = getClipAnnotations(clip.id);
           newItems.push({
             id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${i}`),
             kind: "video",
             url,
             show: true,
             position: "intro",
+            ...(annotations && annotations.length > 0 ? { annotations } : {}),
           });
           statuses[clip.id] = "done";
         } catch (err) {
