@@ -1936,6 +1936,66 @@ const IntroCinematic = ({
 };
 
 /* ============== MAIN ============== */
+/**
+ * Intro corner video with optional annotation overlay. Annotations are stored
+ * on the intro_media item (attached when clips are exported from Video
+ * Analysis) and their appearAt is relative to the clip start (0-based) so we
+ * pass clipStart=0.
+ */
+const IntroVideoWithAnnotations = ({
+  media,
+  className,
+  style,
+}: {
+  media: { url: string; objectPosition?: string; annotations?: any[] };
+  className: string;
+  style?: React.CSSProperties;
+}) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hasAnnotations = Array.isArray(media.annotations) && media.annotations.length > 0;
+  const mergedStyle = { ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" } as React.CSSProperties;
+  if (!hasAnnotations) {
+    return (
+      <motion.video
+        ref={videoRef}
+        src={media.url}
+        className={className}
+        style={mergedStyle}
+        autoPlay muted loop playsInline
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 0.82, scale: 1 }}
+        exit={{ opacity: 0, scale: 1.02 }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      />
+    );
+  }
+  // Wrap in a positioned container so the annotation SVG can overlay the
+  // video exactly. The wrapper inherits the original absolute positioning
+  // from `style` while the video fills it.
+  const { top, left, right, bottom, transform, rotate, ...restStyle } = (style || {}) as any;
+  return (
+    <motion.div
+      className={`${className} overflow-hidden`}
+      style={{ ...mergedStyle, padding: 0 }}
+      initial={{ opacity: 0, scale: 0.94 }}
+      animate={{ opacity: 0.82, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.02 }}
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <video
+        ref={videoRef}
+        src={media.url}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: mergedStyle.objectPosition }}
+        autoPlay muted loop playsInline
+      />
+      <div className="absolute inset-0 pointer-events-none">
+        <ReadOnlyAnnotationOverlay elements={media.annotations!} videoRef={videoRef} clipStart={0} />
+      </div>
+    </motion.div>
+  );
+};
+
 const RiseWithUs = () => {
   const { slug } = useParams<{ slug: string }>();
   const [player, setPlayer] = useState<ProspectPlayer | null>(null);
