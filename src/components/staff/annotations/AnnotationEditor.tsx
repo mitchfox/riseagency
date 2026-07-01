@@ -737,14 +737,24 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
     // the freeze frame closes.
     const video = videoRef.current;
     if (video) {
-      const target = Math.max(activeKlip?.startTime ?? 0, drawingTimestamp - 1.5);
-      video.currentTime = target;
-      if (video.currentTime < (video.duration || 0)) {
-        video.play().catch(() => {});
-        setIsPlaying(true);
+      if (clipConstraint) {
+        // Inside a clip constraint (e.g. Video Analysis "Annotate this clip"),
+        // a short clip can cause playback to hit the boundary before the newly
+        // drawn annotation renders. Keep the video paused on the exact frame
+        // the user drew on so the annotation is immediately visible.
+        video.pause();
+        video.currentTime = drawingTimestamp;
+        setIsPlaying(false);
+      } else {
+        const target = Math.max(activeKlip?.startTime ?? 0, drawingTimestamp - 1.5);
+        video.currentTime = target;
+        if (video.currentTime < (video.duration || 0)) {
+          video.play().catch(() => {});
+          setIsPlaying(true);
+        }
       }
     }
-  }, [handleSave, activeKlip, drawingTimestamp]);
+  }, [handleSave, activeKlip, drawingTimestamp, clipConstraint]);
 
   const cancelDrawing = useCallback(() => {
     // Revert elements to what they were before drawing started
@@ -1139,7 +1149,11 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                     videoRef={videoRef}
                     linkSource={linkSource}
                     setLinkSource={setLinkSource}
-                    klipOffset={klipOffset}
+                    klipOffset={drawingMode && drawingTimestamp !== null ? drawingTimestamp - (activeKlip?.startTime ?? 0) : klipOffset}
+                    // In drawing mode we want new elements' appearAt to be quantised
+                    // to the frozen drawingTimestamp — not to a slightly-later
+                    // wall-clock currentTime — so the annotation is guaranteed to
+                    // be visible on the exact frame the user drew on.
                     onToolUsed={handleToolUsed}
                     isDrawingMode={drawingMode}
                     onAiTrack={handleAiTrack}

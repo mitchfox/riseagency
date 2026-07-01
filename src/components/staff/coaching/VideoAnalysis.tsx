@@ -128,6 +128,8 @@ const formatClipMinuteFromSeconds = (seconds: number): string => {
 export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   const [videos, setVideos] = useState<VideoAnalysisEntry[]>([]);
   const [players, setPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
+  // Players who have a RiseWithUs link created — used only in the "Player Outreach" export destination.
+  const [outreachPlayers, setOutreachPlayers] = useState<{ id: string; name: string; position?: string | null; representation_status?: string | null; image_url?: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoAnalysisEntry | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -471,6 +473,18 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       }
     } catch { /* ignore */ }
     setPlayers(sortPlayersByRepresentation(list));
+  };
+
+  // Load the subset of players that actually have a RiseWithUs link created
+  // (has_representation_offer = true, or prospects — same rule as RiseWithUs.tsx).
+  const fetchOutreachPlayers = async () => {
+    const { data } = await supabase
+      .from("players")
+      .select("id, name, position, representation_status, image_url, has_representation_offer")
+      .or("has_representation_offer.eq.true,representation_status.eq.prospect")
+      .order("name");
+    if (!data) return;
+    setOutreachPlayers(sortPlayersByRepresentation(data as any));
   };
 
   const fetchKnownActionTypes = async (forPlayerId?: string | null) => {
@@ -1272,6 +1286,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
     if (dest === "analysis") {
       await fetchAnalysesForExport(contextPlayerId || undefined);
+    } else if (dest === "outreach") {
+      // Ensure the picker is populated with players who have a RiseWithUs link.
+      if (outreachPlayers.length === 0) await fetchOutreachPlayers();
+      // Do not preselect an arbitrary player — the outreach list is a different set.
+      setExportPlayerId("");
     } else if (contextPlayerId) {
       // Re-fetch reports for the selected player
       await handleExportPlayerChange(contextPlayerId, dest);
@@ -2916,7 +2935,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   <Select value={exportPlayerId} onValueChange={(value) => handleExportPlayerChange(value, "outreach")}>
                     <SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger>
                     <SelectContent>
-                      {groupPlayersByStatus(players).map(group => (
+                      {outreachPlayers.length === 0 && (
+                        <div className="px-2 py-3 text-xs text-muted-foreground">No players with a RiseWithUs link yet.</div>
+                      )}
+                      {groupPlayersByStatus(outreachPlayers).map(group => (
                         <SelectGroup key={group.status}>
                           <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
                           {group.players.map(p => (
