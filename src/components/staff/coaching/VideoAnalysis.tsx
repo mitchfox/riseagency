@@ -16,6 +16,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
+import { VideoCropDialog, getCropStyle, type CropRect } from "@/components/staff/analysis/VideoCropDialog";
+import { trimAndUploadClip } from "@/lib/clientClipExtractor";
+import { Crop as CropIcon } from "lucide-react";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
@@ -51,6 +54,7 @@ interface Clip {
   ai_status?: 'pending' | 'accepted' | 'rejected';
   ai_reason?: string;
   ai_suggested_action?: string;
+  crop?: CropRect | null;
 }
 
 interface VideoAnalysisEntry {
@@ -163,7 +167,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   // Export to report or analysis
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [exportDestination, setExportDestination] = useState<"report" | "analysis">("report");
+  const [exportDestination, setExportDestination] = useState<"report" | "analysis" | "outreach">("report");
+  const [outreachExporting, setOutreachExporting] = useState(false);
+  const [outreachProgress, setOutreachProgress] = useState<{ current: number; total: number; statuses: Record<string, "pending" | "done" | "error"> }>({ current: 0, total: 0, statuses: {} });
   const [availableReports, setAvailableReports] = useState<{ id: string; title: string; player_name: string }[]>([]);
   const [availableAnalyses, setAvailableAnalyses] = useState<{ id: string; title: string; analysis_type: string; points: any[] }[]>([]);
   const [selectedReportId, setSelectedReportId] = useState("");
@@ -269,6 +275,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
+
+  // Inline crop
+  const [croppingClip, setCroppingClip] = useState<Clip | null>(null);
 
   // Clip playback annotation freeze system — time-driven, no setTimeout race conditions
   const [overlayElements, setOverlayElements] = useState<any[]>([]);
@@ -1165,7 +1174,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleExportPlayerChange = async (
     playerId: string,
-    destinationOverride?: "report" | "analysis"
+    destinationOverride?: "report" | "analysis" | "outreach"
   ) => {
     const destination = destinationOverride || exportDestination;
     setExportPlayerId(playerId);
@@ -1173,6 +1182,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setSelectedAnalysisId("");
     setSelectedPointIndex(null);
 
+    if (destination === "outreach") {
+      // Nothing extra to fetch — we just need a player id.
+      return;
+    }
     if (destination === "report") {
       const { data } = await supabase
         .from("player_analysis")
@@ -1247,7 +1260,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   };
 
-  const handleExportDestinationChange = async (dest: "report" | "analysis") => {
+  const handleExportDestinationChange = async (dest: "report" | "analysis" | "outreach") => {
     setExportDestination(dest);
     setSelectedReportId("");
     setSelectedAnalysisId("");
@@ -1261,7 +1274,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       await fetchAnalysesForExport(contextPlayerId || undefined);
     } else if (contextPlayerId) {
       // Re-fetch reports for the selected player
-      await handleExportPlayerChange(contextPlayerId, "report");
+      await handleExportPlayerChange(contextPlayerId, dest);
     }
   };
 
@@ -1380,6 +1393,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         action_score: c.action_score,
         zone_details: c.zone_details,
         minute: c.minute || fmtClipMinute(c.start, selectedVideo.match_minute_offset),
+        crop: c.crop ?? null,
       })),
       matchMinuteOffset: selectedVideo.match_minute_offset,
       secondHalfOffset: selectedVideo.second_half_offset,
@@ -1390,6 +1404,76 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     // Close the dialog
     setShowExportDialog(false);
     setSelectedReportId("");
+  };
+
+  // Export selected clips to a player's Rise With Us intro media
+  const handleExportToPlayerOutreach = async () => {
+    if (!selectedVideo || !exportPlayerId) return;
+    const clips = (selectedVideo.clips || []).filter(c => selectedExportClipIds.has(c.id));
+    if (clips.length === 0) {
+      toast.info("Select at least one clip");
+      return;
+    }
+    setOutreachExporting(true);
+    const statuses: Record<string, "pending" | "done" | "error"> = {};
+    clips.forEach(c => { statuses[c.id] = "pending"; });
+    setOutreachProgress({ current: 0, total: clips.length, statuses: { ...statuses } });
+
+    try {
+      // Fetch existing intro_media once
+      const { data: existing } = await (supabase as any)
+        .from("player_offer_settings")
+        .select("intro_media")
+        .eq("player_id", exportPlayerId)
+        .maybeSingle();
+      const existingMedia: any[] = Array.isArray(existing?.intro_media) ? existing.intro_media : [];
+      const newItems: any[] = [];
+
+      const sourceUrl = selectedVideo.video_url.split("#")[0];
+
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        setOutreachProgress(p => ({ ...p, current: i + 1 }));
+        try {
+          const url = await trimAndUploadClip(
+            sourceUrl,
+            clip.id,
+            clip.start,
+            clip.end,
+            undefined,
+            clip.crop ?? null,
+          );
+          newItems.push({
+            id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${i}`),
+            kind: "video",
+            url,
+            show: true,
+            position: "intro",
+          });
+          statuses[clip.id] = "done";
+        } catch (err) {
+          console.error("Outreach clip export failed", err);
+          statuses[clip.id] = "error";
+        }
+        setOutreachProgress(p => ({ ...p, statuses: { ...statuses } }));
+      }
+
+      if (newItems.length > 0) {
+        const merged = [...existingMedia, ...newItems];
+        const { error: upErr } = await (supabase as any)
+          .from("player_offer_settings")
+          .upsert({ player_id: exportPlayerId, intro_media: merged }, { onConflict: "player_id" });
+        if (upErr) throw upErr;
+        toast.success(`Added ${newItems.length} clip${newItems.length !== 1 ? 's' : ''} to player intro`);
+      } else {
+        toast.error("No clips were exported");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to export to player outreach");
+    } finally {
+      setOutreachExporting(false);
+      setTimeout(() => setOutreachProgress({ current: 0, total: 0, statuses: {} }), 3000);
+    }
   };
 
   // Subscribe to background export progress
@@ -2636,6 +2720,15 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-6 w-6 opacity-0 group-hover/clip:opacity-100 shrink-0 ${clip.crop ? "text-primary opacity-100" : "text-muted-foreground hover:text-primary"}`}
+                    onClick={() => setCroppingClip(clip)}
+                    title={clip.crop ? "Edit crop (applied)" : "Crop clip"}
+                  >
+                    <CropIcon className="h-3 w-3" />
+                  </Button>
                   {(linkedReportIds.length > 0 || linkedAnalysisIds.length > 0) && (
                     <Button
                       variant="ghost"
@@ -2734,6 +2827,25 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
           </DialogContent>
         </Dialog>
 
+        {/* Inline crop dialog */}
+        {croppingClip && selectedVideo && (
+          <VideoCropDialog
+            open={!!croppingClip}
+            onOpenChange={(open) => { if (!open) setCroppingClip(null); }}
+            videoUrl={selectedVideo.video_url}
+            initialCrop={croppingClip.crop || null}
+            onCropComplete={async (crop) => {
+              const active = croppingClip;
+              setCroppingClip(null);
+              if (!active) return;
+              const isNoop = crop.top === 0 && crop.right === 0 && crop.bottom === 0 && crop.left === 0;
+              const updated = selectedVideo.clips.map(c => c.id === active.id ? { ...c, crop: isNoop ? null : crop } : c);
+              await saveClips(updated);
+              toast.success(isNoop ? "Crop cleared" : "Crop saved to clip");
+            }}
+          />
+        )}
+
         <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -2779,7 +2891,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   onClick={() => handleExportDestinationChange("report")}
                   className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "report" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                 >
-                  Performance Report
+                  Report
                 </button>
                 <button
                   onClick={() => handleExportDestinationChange("analysis")}
@@ -2787,9 +2899,107 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                 >
                   Analysis
                 </button>
+                <button
+                  onClick={() => handleExportDestinationChange("outreach")}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${exportDestination === "outreach" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  Player Outreach
+                </button>
               </div>
 
-              {exportDestination === "report" ? (
+              {exportDestination === "outreach" ? (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Trims each selected clip and adds it to the player's Rise With Us intro videos.
+                    Any crop you've applied to a clip will be baked into the exported file.
+                  </p>
+                  <Select value={exportPlayerId} onValueChange={(value) => handleExportPlayerChange(value, "outreach")}>
+                    <SelectTrigger><SelectValue placeholder="Select player" /></SelectTrigger>
+                    <SelectContent>
+                      {groupPlayersByStatus(players).map(group => (
+                        <SelectGroup key={group.status}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{group.label}</SelectLabel>
+                          {group.players.map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {exportPlayerId && selectedVideo.clips.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-muted-foreground">Select clips to export</p>
+                        <button
+                          type="button"
+                          className="text-xs text-primary hover:underline"
+                          onClick={() => {
+                            const allSelected = selectedVideo.clips.every(c => selectedExportClipIds.has(c.id));
+                            setSelectedExportClipIds(allSelected ? new Set() : new Set(selectedVideo.clips.map(c => c.id)));
+                          }}
+                        >
+                          {selectedVideo.clips.every(c => selectedExportClipIds.has(c.id)) ? "Deselect all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto border rounded-md p-2 space-y-1">
+                        {selectedVideo.clips.map(clip => {
+                          const selected = selectedExportClipIds.has(clip.id);
+                          return (
+                            <label
+                              key={clip.id}
+                              className="flex items-center gap-2 text-xs py-1 px-1 rounded cursor-pointer hover:bg-muted/30"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedExportClipIds(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(clip.id)) next.delete(clip.id);
+                                    else next.add(clip.id);
+                                    return next;
+                                  });
+                                }}
+                                className="shrink-0"
+                              >
+                                {selected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                              </button>
+                              <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                              {clip.crop && <span className="text-[10px] text-primary shrink-0">Cropped</span>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleExportToPlayerOutreach}
+                    disabled={!exportPlayerId || outreachExporting || selectedExportClipIds.size === 0}
+                    className="w-full"
+                  >
+                    {outreachExporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                    Export {selectedExportClipIds.size > 0 ? `${selectedExportClipIds.size} clip${selectedExportClipIds.size !== 1 ? 's' : ''}` : "clips"} to intro
+                  </Button>
+                  {outreachExporting && outreachProgress.total > 0 && (
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto border rounded-md p-2 bg-muted/20">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Exporting clip {outreachProgress.current}/{outreachProgress.total}...
+                      </p>
+                      {selectedVideo.clips.filter(c => selectedExportClipIds.has(c.id)).map(clip => {
+                        const status = outreachProgress.statuses[clip.id] || "pending";
+                        return (
+                          <div key={clip.id} className="flex items-center gap-2 text-xs">
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${status === "done" ? "bg-green-500" : status === "error" ? "bg-red-500" : "bg-muted-foreground/30"}`} />
+                            <span className="truncate flex-1">{clip.action_description || clip.action_type || clip.label || "Clip"}</span>
+                            <span className={`text-[10px] shrink-0 ${status === "done" ? "text-green-600" : status === "error" ? "text-red-600" : "text-muted-foreground"}`}>
+                              {status === "done" ? "Done" : status === "error" ? "Failed" : "Pending"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : exportDestination === "report" ? (
                 <>
                   <p className="text-sm text-muted-foreground">
                     <strong>Link:</strong> Makes this video analysis available for clip selection on the report.
