@@ -1463,12 +1463,14 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
             clip.crop ?? null,
             { preferServer: true },
           );
+          const clipAnnotations = getClipAnnotations(clip.id);
           newItems.push({
             id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${i}`),
             kind: "video",
             url,
             show: true,
             position: "intro",
+            ...(clipAnnotations && clipAnnotations.length > 0 ? { annotations: clipAnnotations } : {}),
           });
           statuses[clip.id] = "done";
         } catch (err) {
