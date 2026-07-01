@@ -1692,11 +1692,16 @@ const IntroCinematic = ({
         } as React.CSSProperties;
         const renderMedia = (media: typeof m, key: string, className: string, style?: React.CSSProperties) =>
           media.kind === "video" ? (
-            <IntroVideoWithAnnotations
+            <motion.video
               key={key}
-              media={media as any}
+              src={media.url}
               className={className}
-              style={style}
+              style={{ ...(style || {}), objectPosition: media.objectPosition || (style as any)?.objectPosition || "50% 35%" }}
+              autoPlay muted loop playsInline
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 0.82, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             />
           ) : (
             <motion.img
