@@ -252,6 +252,7 @@ export const PlayerDatabase = () => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
+  const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -736,13 +737,24 @@ export const PlayerDatabase = () => {
     <div className="space-y-3">
       {/* Quick Filters — surfaced just below Player Database Actions */}
       <div className="rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/70 p-3 shadow-[0_0_18px_hsl(var(--rise-gold)/0.06)]">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">Quick Filters</p>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setQuickFiltersOpen(v => !v)}
+            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))] hover:opacity-80"
+          >
+            {quickFiltersOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            Quick Filters
+            {hasActiveFilters && (
+              <span className="ml-1 rounded-full bg-[hsl(var(--rise-gold))] text-black text-[9px] px-1.5 py-0.5 tracking-normal">Active</span>
+            )}
+          </button>
           {hasActiveFilters && (
             <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear all</button>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {quickFiltersOpen && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
           <div className="space-y-1">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Age Group</Label>
             <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
@@ -810,6 +822,7 @@ export const PlayerDatabase = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Header */}
