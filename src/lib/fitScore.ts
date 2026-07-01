@@ -411,13 +411,16 @@ export const computeFitScore = (
     if (agentBonus !== 0) agentReason = `${signed(agentBonus)} top-tier agency (${player.agent_name || ""})`;
   }
 
-  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus), 0, 100);
+  const archetype = nationalityArchetypeBonus(player.nationality, player.position);
+
+  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus + archetype.value), 0, 100);
 
   const reasons = [...best.res.reasons];
   if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
   for (const b of bonuses) reasons.push(b.reason);
   if (leagueStrengthBonus > 0) reasons.push(`+${leagueStrengthBonus} league strength (${playerCountry})`);
   if (agentReason) reasons.push(agentReason);
+  if (archetype.reason) reasons.push(archetype.reason);
 
   return {
     total,
@@ -428,6 +431,7 @@ export const computeFitScore = (
       ...Object.fromEntries(bonuses.map(b => [b.key, b.value])),
       league_strength: leagueStrengthBonus,
       agent: agentBonus,
+      nationality_archetype: archetype.value,
     },
     target_id: best.target.id,
     target_name: best.target.name,
@@ -435,3 +439,82 @@ export const computeFitScore = (
 };
 
 const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+
+/**
+ * Nationality + position archetypes — adds +10 to any player whose
+ * nationality and normalised position match a stereotype our recruitment
+ * team wants to bias towards (e.g. Italian CB, Brazilian LW/RW).
+ */
+const NATIONALITY_ARCHETYPES: Record<string, string[]> = {
+  italian: ["CB"],
+  italy: ["CB"],
+  dutch: ["CB"],
+  netherlands: ["CB"],
+  holland: ["CB"],
+  georgian: ["LW", "RW"],
+  georgia: ["LW", "RW"],
+  brazilian: ["LW", "RW"],
+  brazil: ["LW", "RW"],
+  argentinian: ["CAM", "CF"],
+  argentine: ["CAM", "CF"],
+  argentina: ["CAM", "CF"],
+  spanish: ["CM"],
+  spain: ["CM"],
+  croatian: ["CM"],
+  croatia: ["CM"],
+  french: ["LW", "RW"],
+  france: ["LW", "RW"],
+  german: ["CM", "GK"],
+  germany: ["CM", "GK"],
+  english: ["CF", "CM", "CAM"],
+  england: ["CF", "CM", "CAM"],
+  portuguese: ["LW", "RW", "CAM"],
+  portugal: ["LW", "RW", "CAM"],
+  serbian: ["CF", "CB"],
+  serbia: ["CF", "CB"],
+  uruguayan: ["CF", "CB"],
+  uruguay: ["CF", "CB"],
+  belgian: ["CAM"],
+  belgium: ["CAM"],
+  danish: ["CB"],
+  denmark: ["CB"],
+  swedish: ["CF"],
+  sweden: ["CF"],
+  polish: ["CAM"],
+  poland: ["CAM"],
+  czech: ["GK"],
+  czechia: ["GK"],
+  "czech republic": ["GK"],
+  moroccan: ["LW", "RW", "CAM"],
+  morocco: ["LW", "RW", "CAM"],
+  nigerian: ["LW", "RW", "CF"],
+  nigeria: ["LW", "RW", "CF"],
+  japanese: ["CM", "LW", "RW"],
+  japan: ["CM", "LW", "RW"],
+  "south korean": ["LW", "RW"],
+  korean: ["LW", "RW"],
+  "south korea": ["LW", "RW"],
+  scottish: ["CM"],
+  scotland: ["CM"],
+  irish: ["CF"],
+  ireland: ["CF"],
+  slovakian: ["CDM"],
+  slovak: ["CDM"],
+  slovakia: ["CDM"],
+};
+
+export const NATIONALITY_ARCHETYPE_BONUS = 10;
+
+export const nationalityArchetypeBonus = (
+  nationality?: string | null,
+  position?: string | null,
+): { value: number; reason: string } => {
+  const nat = (nationality || "").toLowerCase().trim();
+  const pos = normalisePosLocal(position);
+  if (!nat || !pos) return { value: 0, reason: "" };
+  const positions = NATIONALITY_ARCHETYPES[nat];
+  if (positions && positions.includes(pos)) {
+    return { value: NATIONALITY_ARCHETYPE_BONUS, reason: `+${NATIONALITY_ARCHETYPE_BONUS} nationality archetype (${nat} ${pos})` };
+  }
+  return { value: 0, reason: "" };
+};
