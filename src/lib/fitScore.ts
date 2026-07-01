@@ -88,6 +88,8 @@ export interface PlayerLike {
   national_team?: boolean | null;
   star_of_team?: boolean | null;
   previous_serious_injury?: string | null;
+  // Playing time 0-10 (0 = didn't play, 10 = every minute). Adds N points to AI score.
+  minutes_share?: number | null;
   // Agent / representation
   agent_status?: string | null;   // 'unrepresented' | 'family' | 'represented' | 'top_agency' | 'unknown'
   agent_name?: string | null;
