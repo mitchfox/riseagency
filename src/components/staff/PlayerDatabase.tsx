@@ -596,49 +596,15 @@ export const PlayerDatabase = () => {
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
-    setNotesReady(false);
+    // Keep the open handler lightweight so the dialog paints immediately;
+    // the dialog itself hydrates its edit form and fetches extras.
     setSelectedPlayer(player);
-    setEditMode(false);
-    setEditForm({
-      player_name: player.player_name,
-      position: player.position || '',
-      nationality: player.nationality || '',
-      current_club: player.current_club || '',
-      date_of_birth: player.date_of_birth || '',
-      ig_handle: player.ig_handle || '',
-      notes: player.notes || '',
-      parents_name: player.parents_name || '',
-      parent_contact: player.parent_contact || '',
-      national_team: false,
-      star_of_team: false,
-      previous_serious_injury: '',
-      agent_status: '',
-      agent_name: '',
-      parent_approval: false,
-    });
     setDetailOpen(true);
-    window.setTimeout(() => setNotesReady(true), 120);
-    // Hydrate fit-score fields from source table
-    if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
-      const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
-      const cols = player.source === 'youth_outreach'
-        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
-        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
-      void (async () => {
-        const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
-        if (data) {
-          setEditForm((f: any) => ({
-            ...f,
-            national_team: !!data.national_team,
-            star_of_team: !!data.star_of_team,
-            previous_serious_injury: data.previous_serious_injury || '',
-            agent_status: data.agent_status || '',
-            agent_name: data.agent_name || '',
-            parent_approval: !!data.parent_approval,
-          }));
-        }
-      })();
-    }
+  };
+
+  const handlePlayerUpdated = (updated: PlayerData) => {
+    setPlayers((prev) => prev.map((p) => (p.id === updated.id && p.source === updated.source ? updated : p)));
+    setSelectedPlayer(updated);
   };
 
   const createPlayerOutreach = async () => {
