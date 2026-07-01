@@ -57,7 +57,7 @@ interface ProspectPlayer {
 interface OfferSettings {
   hidden_sections: string[];
   section_images: Record<string, string>;
-  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both"; objectPosition?: string }>;
+  intro_media: Array<{ id: string; kind: "image" | "video"; url: string; show: boolean; position: "intro" | "hub" | "both"; objectPosition?: string; annotations?: any[] }>;
   rise_with_us_under18?: boolean;
   representation_subtitle_secondary?: string | null;
   show_database_card?: boolean | null;
