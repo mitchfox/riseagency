@@ -1174,7 +1174,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   const handleExportPlayerChange = async (
     playerId: string,
-    destinationOverride?: "report" | "analysis"
+    destinationOverride?: "report" | "analysis" | "outreach"
   ) => {
     const destination = destinationOverride || exportDestination;
     setExportPlayerId(playerId);
@@ -1182,6 +1182,10 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setSelectedAnalysisId("");
     setSelectedPointIndex(null);
 
+    if (destination === "outreach") {
+      // Nothing extra to fetch — we just need a player id.
+      return;
+    }
     if (destination === "report") {
       const { data } = await supabase
         .from("player_analysis")
@@ -1256,7 +1260,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     }
   };
 
-  const handleExportDestinationChange = async (dest: "report" | "analysis") => {
+  const handleExportDestinationChange = async (dest: "report" | "analysis" | "outreach") => {
     setExportDestination(dest);
     setSelectedReportId("");
     setSelectedAnalysisId("");
@@ -1270,7 +1274,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
       await fetchAnalysesForExport(contextPlayerId || undefined);
     } else if (contextPlayerId) {
       // Re-fetch reports for the selected player
-      await handleExportPlayerChange(contextPlayerId, "report");
+      await handleExportPlayerChange(contextPlayerId, dest);
     }
   };
 
