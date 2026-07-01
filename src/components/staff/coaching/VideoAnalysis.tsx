@@ -16,6 +16,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AnnotationEditor } from "@/components/staff/annotations/AnnotationEditor";
+import { VideoCropDialog, getCropStyle, type CropRect } from "@/components/staff/analysis/VideoCropDialog";
+import { trimAndUploadClip } from "@/lib/clientClipExtractor";
+import { Crop as CropIcon } from "lucide-react";
 import { ZonePitchSelector, type ZonePoint } from "@/components/report/ZonePitchSelector";
 import { AnnotationCanvas } from "@/components/staff/annotations/AnnotationCanvas";
 import type { AnnotationProject, Klip, AnnotationElement } from "@/components/staff/annotations/AnnotationProjects";
@@ -51,6 +54,7 @@ interface Clip {
   ai_status?: 'pending' | 'accepted' | 'rejected';
   ai_reason?: string;
   ai_suggested_action?: string;
+  crop?: CropRect | null;
 }
 
 interface VideoAnalysisEntry {
@@ -163,7 +167,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
   // Export to report or analysis
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [exportDestination, setExportDestination] = useState<"report" | "analysis">("report");
+  const [exportDestination, setExportDestination] = useState<"report" | "analysis" | "outreach">("report");
+  const [outreachExporting, setOutreachExporting] = useState(false);
+  const [outreachProgress, setOutreachProgress] = useState<{ current: number; total: number; statuses: Record<string, "pending" | "done" | "error"> }>({ current: 0, total: 0, statuses: {} });
   const [availableReports, setAvailableReports] = useState<{ id: string; title: string; player_name: string }[]>([]);
   const [availableAnalyses, setAvailableAnalyses] = useState<{ id: string; title: string; analysis_type: string; points: any[] }[]>([]);
   const [selectedReportId, setSelectedReportId] = useState("");
@@ -269,6 +275,9 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
   // Inline annotation
   const [annotatingClip, setAnnotatingClip] = useState<Clip | null>(null);
   const [annotationProject, setAnnotationProject] = useState<AnnotationProject | null>(null);
+
+  // Inline crop
+  const [croppingClip, setCroppingClip] = useState<Clip | null>(null);
 
   // Clip playback annotation freeze system — time-driven, no setTimeout race conditions
   const [overlayElements, setOverlayElements] = useState<any[]>([]);
