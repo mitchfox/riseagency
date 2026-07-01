@@ -6009,6 +6009,7 @@ export type Database = {
           last_contact_at: string | null
           manually_viewed_at: string | null
           messaged: boolean | null
+          minutes_share: number | null
           national_team: boolean
           nationality: string | null
           next_followup_at: string | null
@@ -6043,6 +6044,7 @@ export type Database = {
           last_contact_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
+          minutes_share?: number | null
           national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
@@ -6077,6 +6079,7 @@ export type Database = {
           last_contact_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
+          minutes_share?: number | null
           national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
@@ -6122,6 +6125,7 @@ export type Database = {
           last_contact_at: string | null
           manually_viewed_at: string | null
           messaged: boolean | null
+          minutes_share: number | null
           national_team: boolean
           nationality: string | null
           next_followup_at: string | null
@@ -6159,6 +6163,7 @@ export type Database = {
           last_contact_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
+          minutes_share?: number | null
           national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
@@ -6196,6 +6201,7 @@ export type Database = {
           last_contact_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
+          minutes_share?: number | null
           national_team?: boolean
           nationality?: string | null
           next_followup_at?: string | null
@@ -6772,6 +6778,7 @@ export type Database = {
           is_starred: boolean
           league: string | null
           links: Json | null
+          minutes_share: number | null
           name: string
           national_team: boolean
           nationality: string
@@ -6837,6 +6844,7 @@ export type Database = {
           is_starred?: boolean
           league?: string | null
           links?: Json | null
+          minutes_share?: number | null
           name: string
           national_team?: boolean
           nationality: string
@@ -6902,6 +6910,7 @@ export type Database = {
           is_starred?: boolean
           league?: string | null
           links?: Json | null
+          minutes_share?: number | null
           name?: string
           national_team?: boolean
           nationality?: string

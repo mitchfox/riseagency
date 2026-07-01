@@ -67,6 +67,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       parent_contact: player.parent_contact || '',
       national_team: false,
       star_of_team: false,
+      minutes_share: 0,
       previous_serious_injury: '',
       agent_status: '',
       agent_name: '',
@@ -83,7 +84,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       idle(async () => {
         const { data } = await (supabase as any)
           .from('players')
-          .select('national_team,star_of_team,previous_serious_injury,agent_status,agent_name')
+          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name')
           .eq('id', player.id)
           .maybeSingle();
         if (data) {
@@ -91,6 +92,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             ...f,
             national_team: !!data.national_team,
             star_of_team: !!data.star_of_team,
+            minutes_share: typeof data.minutes_share === 'number' ? data.minutes_share : 0,
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
@@ -100,8 +102,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
     } else if (player.source === 'youth_outreach' || player.source === 'pro_outreach') {
       const tableName = player.source === 'youth_outreach' ? 'player_outreach_youth' : 'player_outreach_pro';
       const cols = player.source === 'youth_outreach'
-        ? 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name,parent_approval'
-        : 'national_team,star_of_team,previous_serious_injury,agent_status,agent_name';
+        ? 'national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name,parent_approval'
+        : 'national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name';
       idle(async () => {
         const { data } = await (supabase as any).from(tableName).select(cols).eq('id', player.id).maybeSingle();
         if (data) {
@@ -109,6 +111,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             ...f,
             national_team: !!data.national_team,
             star_of_team: !!data.star_of_team,
+            minutes_share: typeof data.minutes_share === 'number' ? data.minutes_share : 0,
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
@@ -195,6 +198,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           instagram_handle: editForm.ig_handle || null,
           national_team: !!editForm.national_team,
           star_of_team: !!editForm.star_of_team,
+          minutes_share: Number.isFinite(Number(editForm.minutes_share)) ? Math.max(0, Math.min(10, Math.round(Number(editForm.minutes_share)))) : 0,
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
@@ -235,6 +239,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
         ...(isOutreach ? {
           national_team: !!editForm.national_team,
           star_of_team: !!editForm.star_of_team,
+          minutes_share: Number.isFinite(Number(editForm.minutes_share)) ? Math.max(0, Math.min(10, Math.round(Number(editForm.minutes_share)))) : 0,
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
@@ -361,6 +366,22 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
                     <span>Star of team</span>
                     <Switch checked={!!editForm.star_of_team} onCheckedChange={(v) => setEditForm((f: any) => ({ ...f, star_of_team: v }))} />
                   </label>
+                  <div className="col-span-2 space-y-1 rounded-md border border-border/40 bg-background/40 p-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <Label className="text-xs">Playing time</Label>
+                      <span className="text-risegold font-semibold">{Number(editForm.minutes_share) || 0}/10</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={Number(editForm.minutes_share) || 0}
+                      onChange={(e) => setEditForm((f: any) => ({ ...f, minutes_share: Number(e.target.value) }))}
+                      className="w-full accent-risegold"
+                    />
+                    <p className="text-[10px] text-muted-foreground">0 = didn't play at all · 5 = 50% of minutes · 10 = every minute. Adds that many points to the AI score.</p>
+                  </div>
                   {player.source === 'youth_outreach' && (
                     <label className="flex items-center justify-between gap-2 text-sm col-span-2">
                       <span>Parent approval</span>
