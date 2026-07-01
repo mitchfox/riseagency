@@ -1560,6 +1560,24 @@ const IntroCinematic = ({
   // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
+  // Warm every intro video buffer immediately so rotations play instantly
+  // instead of loading on fade-in. Also render a persistent hidden <video>
+  // per unique URL further down so mobile Safari doesn't evict the decoded
+  // buffers between rotations.
+  const introVideoUrls = useMemo(
+    () => Array.from(new Set(extraIntro.filter((m) => m.kind === "video").map((m) => m.url))),
+    [extraIntro],
+  );
+  const { preloadVideo } = useVideoPreloader({
+    videos: introVideoUrls,
+    preloadCount: introVideoUrls.length,
+    enabled: introVideoUrls.length > 0,
+  });
+  useEffect(() => {
+    // Fire immediately (hook has a 1s startup delay) so the first clip is
+    // buffered before phase 1 begins.
+    introVideoUrls.forEach((u) => preloadVideo(u));
+  }, [introVideoUrls, preloadVideo]);
   useEffect(() => {
     if (extraIntro.length === 0) return;
     const t = setInterval(() => {
