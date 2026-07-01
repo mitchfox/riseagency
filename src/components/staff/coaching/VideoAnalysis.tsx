@@ -1393,6 +1393,7 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
         action_score: c.action_score,
         zone_details: c.zone_details,
         minute: c.minute || fmtClipMinute(c.start, selectedVideo.match_minute_offset),
+        crop: c.crop ?? null,
       })),
       matchMinuteOffset: selectedVideo.match_minute_offset,
       secondHalfOffset: selectedVideo.second_half_offset,
