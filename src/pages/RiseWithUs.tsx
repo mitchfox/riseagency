@@ -1481,6 +1481,60 @@ const introImageFrames: Record<number, Array<{ className: string; style: React.C
 
 const getIntroImageFrames = (count: number) => introImageFrames[Math.min(Math.max(count, 1), 6)] || [];
 
+/** Intro video with optional annotation overlay. Falls back to a plain
+ *  motion.video when there are no annotations so behaviour matches the
+ *  original intro exactly for un-annotated clips. */
+const AnnotatedIntroVideo = ({
+  src, className, style, annotations,
+}: {
+  src: string;
+  className: string;
+  style?: React.CSSProperties;
+  annotations?: any[];
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasAnnotations = Array.isArray(annotations) && annotations.length > 0;
+
+  if (!hasAnnotations) {
+    return (
+      <motion.video
+        src={src}
+        className={className}
+        style={style}
+        autoPlay muted loop playsInline
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 0.82, scale: 1 }}
+        exit={{ opacity: 0, scale: 1.02 }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      />
+    );
+  }
+
+  // When annotations are present, wrap the video in a relatively-positioned
+  // container so the SVG overlay sits exactly over it. Wrapper keeps the
+  // same absolute className/style used by the intro carousel so layout is
+  // identical to the un-annotated case.
+  return (
+    <motion.div
+      className={`${className} relative overflow-hidden`}
+      style={style}
+      initial={{ opacity: 0, scale: 0.94 }}
+      animate={{ opacity: 0.82, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.02 }}
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: (style as any)?.objectPosition || "50% 35%" }}
+        autoPlay muted loop playsInline
+      />
+      <ReadOnlyAnnotationOverlay elements={annotations!} videoRef={videoRef} clipStart={0} />
+    </motion.div>
+  );
+};
+
 const IntroCinematic = ({
   fullName, lang, extraImages, extraIntro, secondaryParagraph, profileImageUrl, onDone, isUnder18,
   assignedLang, currentLang, onSwitchToEnglish,
