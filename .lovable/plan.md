@@ -1,45 +1,49 @@
+## Goal
 
-## 1. Annotate a clip from Video Analysis
+When you export a clip from Video Analysis → Player Outreach, any annotations drawn on that clip must render on top of the video in the Rise With Us intro — the same way they render on Analysis reports. No breakage. No experimental new overlay component.
 
-On each clip row in `src/components/staff/coaching/VideoAnalysis.tsx`, add an "Annotate" action next to Save/Edit. Clicking it opens the existing `AnnotationEditor` (from `src/components/staff/annotations/AnnotationEditor.tsx`) inside a wide-screen dialog, seeded with:
-- `project.videoUrl` = the parent `video_analyses.video_url`
-- `clipConstraint` = `{ start: clip.start, end: clip.end }` (already supported)
-- `initialSeekTime` = `clip.start`, `autoPlay` = true
+## Why the previous attempt broke
 
-On save, persist the annotation payload (klips + drawings) back onto the clip as `clip.annotations` inside `video_analyses.clips` via the existing `saveClips()` path — no schema change needed (clips is jsonb). A small badge on the clip row indicates when annotations exist, and the Annotate button reopens them.
+The last pass built a bespoke `IntroVideoWithAnnotations` SVG overlay in `RiseWithUs.tsx` from scratch, wired to `framer-motion`'s `motion.video`. It desynced from the intro carousel's timing and crashed the page. Instead of debugging that, I removed the annotation payload entirely — which is why you're (rightly) angry. It threw the baby out with the bathwater.
 
-## 2. Crop / hide parts of a clip (change output resolution)
+We already have a battle-tested read-only overlay used by the portal analysis playback: `src/components/portal/ReadOnlyAnnotationOverlay.tsx`. It renders identically to `AnnotationCanvas`, handles loops, uses the shared `computeVisibleElements` timing engine, and is what analysis exports rely on. We should reuse it verbatim — not reinvent it.
 
-Reuse the existing `VideoCropDialog` (`src/components/staff/analysis/VideoCropDialog.tsx`) which already produces a `CropRect` (top/right/bottom/left percentages). Add a "Crop" button to each clip. Store the result as `clip.crop` in the clips jsonb.
+## Plan
 
-Rendering:
-- In-app preview (MatchClipPlayer, annotation preview) applies `clip-path: inset(...)` via the existing `getCropStyle` helper so the player sees the cropped frame immediately.
-- On export (background export service in `src/lib/backgroundExportService.ts` / `clientClipExtractor.ts`), pass the crop to the canvas-based extractor. `canvasVideoProcessor.ts` already draws frames to a canvas; extend it to size the output canvas to the visible region and draw `drawImage(video, sx, sy, sw, sh, 0, 0, outW, outH)` so the exported MP4 has the new (smaller) resolution baked in. Uncropped clips take the existing fast path unchanged.
+### 1. Re-attach annotations to the outreach export payload
+`src/components/staff/coaching/VideoAnalysis.tsx` → `handleExportToPlayerOutreach`
 
-## 3. New export destination: Player Outreach
-
-Extend the export dialog in `VideoAnalysis.tsx`:
-
-- Change `exportDestination` union from `"report" | "analysis"` to `"report" | "analysis" | "outreach"` and add a third tab "Player Outreach".
-- When `outreach` is selected, show a player picker sourced from `player_outreach_youth` + `player_outreach_pro` (name + club, most recent first) — same lookup pattern already used elsewhere in outreach code.
-- For each selected clip, run the same crop-aware extraction pipeline to produce an MP4, upload to the `analysis-videos` bucket (already public), then append an entry to that outreach row's `player_offer_settings.intro_media` array:
+- Before pushing each clip into `newItems`, call the existing `getClipAnnotations(clip.id)` helper (already defined at line 1367, already used for analysis exports).
+- If it returns elements, attach them to the intro_media entry:
   ```
-  { id, kind: "video", url, show: true, position: "intro", objectPosition: "50% 50%" }
+  { id, kind: "video", url, show: true, position: "intro", annotations: <elements> }
   ```
-  Merging with the existing array so nothing is overwritten (matches the pattern in `PlayerOfferCustomiser.tsx` and `InlinePlayerActionsPanel.tsx`). The RiseWithUs intro cinematic already rotates through `intro_media` where `kind==="video"`, so the clip appears in the videos space with no further wiring.
-- Toast on success with a link back to that player's outreach settings.
+- Type already supports it — `intro_media[].annotations?: any[]` is declared in `RiseWithUs.tsx` (line 60) and preserved through `introVisible` / `extraIntro` (lines 2099-2116). No schema change needed.
 
-## Technical notes
+### 2. Render annotations on the Rise With Us intro video using the existing overlay
+`src/pages/RiseWithUs.tsx`
 
-- No DB schema changes. `video_analyses.clips` (jsonb) absorbs `annotations` + `crop`. `player_offer_settings.intro_media` (jsonb) absorbs the new video entries.
-- Respect the existing `guard_video_analyses` trigger (must not wipe clips/annotations arrays).
-- Wide dialogs per project rule (annotation editor dialog uses `max-w-[95vw]`).
-- UK English throughout ("Crop", "Annotate", "Player Outreach").
+- Find the intro media carousel that renders each `intro_media` item's video.
+- For video items only, wrap the `<video>` in a relatively-positioned container and mount `<ReadOnlyAnnotationOverlay elements={item.annotations} videoRef={videoRef} clipStart={0} />` alongside it when `item.annotations?.length > 0`.
+- Use a plain `<video>` ref (not `motion.video`) for the annotated case, or pass a ref into the existing motion element via `useRef` — either works; the overlay only needs the raw `HTMLVideoElement` for `currentTime`. Keep the container `absolute inset-0 pointer-events-none` so it never blocks UI.
+- Because clips are exported as independently trimmed files, `clipStart` is 0 — timings in the saved elements are already relative to the clip's own timeline (that's how localStorage stored them from the editor).
+
+### 3. Keep the stable export path
+- Leave `preferServer: true` in `trimAndUploadClip` intact. Server-side stream-copy trims were the actual fix for the "melt down / choppy playback". That stays.
+- No changes to `clientClipExtractor.ts` or `backgroundExportService.ts`.
+
+### 4. Safety rails so this can't repeat
+- If `elements` is missing/empty/malformed, the overlay renders nothing and the video plays as before — no crash path.
+- Wrap the overlay mount in a `try/catch`-friendly conditional (`Array.isArray(item.annotations) && item.annotations.length > 0`) so a bad payload can never take down the intro.
+- No changes to the export progress UI, dialogs, or database schema.
 
 ## Files touched
 
-- `src/components/staff/coaching/VideoAnalysis.tsx` — clip row actions, export dialog third tab, outreach upload flow.
-- `src/components/staff/analysis/VideoCropDialog.tsx` — used as-is.
-- `src/components/staff/annotations/AnnotationEditor.tsx` — used as-is (wrapped in a new dialog).
-- `src/lib/clientClipExtractor.ts` / `src/lib/canvasVideoProcessor.ts` — honour `clip.crop` when extracting.
-- `src/lib/backgroundExportService.ts` — accept `destination: "outreach"` and target player id.
+- `src/components/staff/coaching/VideoAnalysis.tsx` — add annotations to intro_media push in `handleExportToPlayerOutreach`.
+- `src/pages/RiseWithUs.tsx` — mount `ReadOnlyAnnotationOverlay` over annotated intro video items.
+
+## Verification
+
+- Draw an annotation on a clip in Video Analysis, export to a test player, open that player's Rise With Us link → annotation appears synced to the clip's timeline, loops correctly.
+- Export a clip with no annotations → intro video plays clean as today.
+- Staff dashboard remains stable throughout (no "melt down").
