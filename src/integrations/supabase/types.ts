@@ -6737,7 +6737,9 @@ export type Database = {
       players: {
         Row: {
           age: number | null
+          agent_name: string | null
           agent_notes: string | null
+          agent_status: string | null
           bio: string | null
           category: string | null
           club: string | null
@@ -6800,7 +6802,9 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          agent_name?: string | null
           agent_notes?: string | null
+          agent_status?: string | null
           bio?: string | null
           category?: string | null
           club?: string | null
@@ -6863,7 +6867,9 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          agent_name?: string | null
           agent_notes?: string | null
+          agent_status?: string | null
           bio?: string | null
           category?: string | null
           club?: string | null
