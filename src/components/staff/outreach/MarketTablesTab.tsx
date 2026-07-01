@@ -838,7 +838,9 @@ export default function MarketTablesTab() {
     const set = new Set<string>();
     clubs
       .filter((c) => country === "all" || c.country === country)
-      .forEach((c) => c.league && set.add(c.league));
+      .forEach((c) => {
+        (c.league ?? "").split(",").map((s) => s.trim()).filter(Boolean).forEach((l) => set.add(l));
+      });
     return Array.from(set).sort();
   }, [clubs, country]);
 
@@ -846,7 +848,10 @@ export default function MarketTablesTab() {
     const q = search.trim().toLowerCase();
     return clubs.filter((c) => {
       if (country !== "all" && c.country !== country) return false;
-      if (league !== "all" && c.league !== league) return false;
+      if (league !== "all") {
+        const clubLeagues = (c.league ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+        if (!clubLeagues.includes(league)) return false;
+      }
       if (q && !c.club_name.toLowerCase().includes(q)) return false;
       if (outreachMode) {
         const e = entries[c.id];
