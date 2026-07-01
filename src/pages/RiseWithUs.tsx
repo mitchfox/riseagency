@@ -25,6 +25,7 @@ import { useAutoTranslateStrings } from "@/hooks/useAutoTranslateStrings";
 import { SectionSliderWheel } from "@/components/SectionSliderWheel";
 import { ScoutingDatabaseCard } from "@/components/risewithus/ScoutingDatabaseCard";
 import { ReadOnlyAnnotationOverlay } from "@/components/portal/ReadOnlyAnnotationOverlay";
+import { useVideoPreloader } from "@/hooks/useVideoPreloader";
 import {
   CARD_META, GROUPS, GROUP_LABELS,
   CARD_TITLE_KEYS, CARD_SUBTITLE_KEYS,
@@ -1501,7 +1502,7 @@ const AnnotatedIntroVideo = ({
         src={src}
         className={className}
         style={style}
-        autoPlay muted loop playsInline
+        autoPlay muted loop playsInline preload="auto"
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 0.82, scale: 1 }}
         exit={{ opacity: 0, scale: 1.02 }}
@@ -1528,7 +1529,7 @@ const AnnotatedIntroVideo = ({
         src={src}
         className="absolute inset-0 h-full w-full object-cover"
         style={{ objectPosition: (style as any)?.objectPosition || "50% 35%" }}
-        autoPlay muted loop playsInline
+        autoPlay muted loop playsInline preload="auto"
       />
       <ReadOnlyAnnotationOverlay elements={annotations!} videoRef={videoRef} clipStart={0} />
     </motion.div>
@@ -1559,6 +1560,24 @@ const IntroCinematic = ({
   // Curated intro media stays safely outside the text column.
   const [introIdx, setIntroIdx] = useState(0);
   const [sideTick, setSideTick] = useState(0);
+  // Warm every intro video buffer immediately so rotations play instantly
+  // instead of loading on fade-in. Also render a persistent hidden <video>
+  // per unique URL further down so mobile Safari doesn't evict the decoded
+  // buffers between rotations.
+  const introVideoUrls = useMemo(
+    () => Array.from(new Set(extraIntro.filter((m) => m.kind === "video").map((m) => m.url))),
+    [extraIntro],
+  );
+  const { preloadVideo } = useVideoPreloader({
+    videos: introVideoUrls,
+    preloadCount: introVideoUrls.length,
+    enabled: introVideoUrls.length > 0,
+  });
+  useEffect(() => {
+    // Fire immediately (hook has a 1s startup delay) so the first clip is
+    // buffered before phase 1 begins.
+    introVideoUrls.forEach((u) => preloadVideo(u));
+  }, [introVideoUrls, preloadVideo]);
   useEffect(() => {
     if (extraIntro.length === 0) return;
     const t = setInterval(() => {
@@ -1777,6 +1796,26 @@ const IntroCinematic = ({
           </div>
         );
       })()}
+
+      {/* Persistent hidden video sinks — keep decoded buffers alive between
+          rotations so playback is instant on mobile Safari, which is quick
+          to evict media from unmounted elements. */}
+      {introVideoUrls.length > 0 && (
+        <div aria-hidden className="pointer-events-none fixed left-0 top-0 h-px w-px overflow-hidden opacity-0">
+          {introVideoUrls.map((u) => (
+            <video
+              key={`sink-${u}`}
+              src={u}
+              muted
+              playsInline
+              loop
+              autoPlay
+              preload="auto"
+              className="h-px w-px"
+            />
+          ))}
+        </div>
+      )}
 
       {/* Text reveal */}
       <div className="relative z-10 max-w-xl px-6 text-center">
