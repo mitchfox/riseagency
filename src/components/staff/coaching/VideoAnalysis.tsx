@@ -2720,6 +2720,15 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
                   >
                     <Pencil className="h-3 w-3" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-6 w-6 opacity-0 group-hover/clip:opacity-100 shrink-0 ${clip.crop ? "text-primary opacity-100" : "text-muted-foreground hover:text-primary"}`}
+                    onClick={() => setCroppingClip(clip)}
+                    title={clip.crop ? "Edit crop (applied)" : "Crop clip"}
+                  >
+                    <CropIcon className="h-3 w-3" />
+                  </Button>
                   {(linkedReportIds.length > 0 || linkedAnalysisIds.length > 0) && (
                     <Button
                       variant="ghost"
