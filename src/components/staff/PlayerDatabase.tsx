@@ -241,6 +241,7 @@ export const PlayerDatabase = () => {
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [missingFilters, setMissingFilters] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
   const [nationFilter, setNationFilter] = useState<string>('all');
   const [dobFrom, setDobFrom] = useState('');
@@ -542,6 +543,16 @@ export const PlayerDatabase = () => {
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
+      if (missingFilters.length > 0) {
+        const isMissing = (v: any) => v === null || v === undefined || String(v).trim() === '';
+        for (const key of missingFilters) {
+          if (key === 'dob' && !isMissing(player.date_of_birth)) return false;
+          if (key === 'position' && !isMissing(player.position)) return false;
+          if (key === 'club' && !isMissing(player.current_club)) return false;
+          if (key === 'nationality' && !isMissing(player.nationality)) return false;
+          if (key === 'league' && !isMissing((player as any).league)) return false;
+        }
+      }
       if (minFit > 0 && fitFor(player) < minFit) return false;
       return true;
     });
