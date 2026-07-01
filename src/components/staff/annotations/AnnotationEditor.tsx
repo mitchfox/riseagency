@@ -1140,6 +1140,10 @@ export const AnnotationEditor = ({ project, onSave, onBack, clipConstraint, auto
                     linkSource={linkSource}
                     setLinkSource={setLinkSource}
                     klipOffset={klipOffset}
+                    // In drawing mode we want new elements' appearAt to be quantised
+                    // to the frozen drawingTimestamp — not to a slightly-later
+                    // wall-clock currentTime — so the annotation is guaranteed to
+                    // be visible on the exact frame the user drew on.
                     onToolUsed={handleToolUsed}
                     isDrawingMode={drawingMode}
                     onAiTrack={handleAiTrack}
