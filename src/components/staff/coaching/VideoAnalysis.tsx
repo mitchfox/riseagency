@@ -1286,6 +1286,11 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
 
     if (dest === "analysis") {
       await fetchAnalysesForExport(contextPlayerId || undefined);
+    } else if (dest === "outreach") {
+      // Ensure the picker is populated with players who have a RiseWithUs link.
+      if (outreachPlayers.length === 0) await fetchOutreachPlayers();
+      // Do not preselect an arbitrary player — the outreach list is a different set.
+      setExportPlayerId("");
     } else if (contextPlayerId) {
       // Re-fetch reports for the selected player
       await handleExportPlayerChange(contextPlayerId, dest);
