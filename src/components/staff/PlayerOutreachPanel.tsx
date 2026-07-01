@@ -448,11 +448,35 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this entry?')) return;
+    if (!confirm('Delete this entry? Their Rise With Us page will also be removed.')) return;
     const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
     try {
+      // Find the outreach row first so we can also tear down the linked
+      // Rise With Us page for that player (offer settings + flag).
+      const target = data.find(d => d.id === id);
+      const playerName = (target?.player_name || '').trim();
+
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
+
+      if (playerName) {
+        try {
+          const { data: matches } = await (supabase as any)
+            .from('players')
+            .select('id')
+            .ilike('name', playerName);
+          const ids = (matches || []).map((p: any) => p.id).filter(Boolean);
+          if (ids.length > 0) {
+            await Promise.all([
+              (supabase as any).from('player_offer_settings').delete().in('player_id', ids),
+              (supabase as any).from('players')
+                .update({ has_representation_offer: false })
+                .in('id', ids),
+            ]);
+          }
+        } catch { /* non-fatal: outreach row already gone */ }
+      }
+
       toast.success('Entry deleted');
       fetchData();
     } catch { toast.error('Failed to delete'); }
