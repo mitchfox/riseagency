@@ -312,59 +312,14 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         }
       });
 
-      let outreachData = dataResult.data || [];
+      const outreachData = dataResult.data || [];
       setAgeRules(rulesResult.data || []);
       setClubCountryMap(countryMap);
       setClubRatings(ratingsResult.data || []);
       setData(outreachData);
       setLoading(false);
-
-      // Auto-move 18+ youth → pro AFTER first paint so the table is not blocked.
-      if (isYouth) {
-        const toMove = outreachData.filter(item => {
-          if (!item.date_of_birth) return false;
-          const age = calculateAge(item.date_of_birth);
-          return age !== null && age >= 18;
-        });
-        if (toMove.length > 0) {
-          (async () => {
-            try {
-              // Dedupe against existing Pro entries so we don't recreate rows
-              // that a user has already deleted from Pro.
-              const names = toMove.map(m => m.player_name).filter(Boolean);
-              const { data: existingPro } = await supabase
-                .from('player_outreach_pro')
-                .select('player_name,date_of_birth')
-                .in('player_name', names as string[]);
-              const existsInPro = (item: any) => (existingPro || []).some((p: any) =>
-                (p.player_name || '').trim().toLowerCase() === (item.player_name || '').trim().toLowerCase()
-                && (!item.date_of_birth || !p.date_of_birth || p.date_of_birth === item.date_of_birth)
-              );
-              const actuallyMove = toMove.filter(item => !existsInPro(item));
-              const alreadyThere = toMove.filter(item => existsInPro(item));
-              // For duplicates, just remove the stale youth row so we don't keep re-checking.
-              if (alreadyThere.length > 0) {
-                await supabase.from('player_outreach_youth').delete().in('id', alreadyThere.map(i => i.id));
-              }
-              if (actuallyMove.length > 0) {
-                await Promise.all(actuallyMove.map(item =>
-                  supabase.from('player_outreach_pro').insert({
-                    player_name: item.player_name, ig_handle: item.ig_handle,
-                    current_club: item.current_club, date_of_birth: item.date_of_birth,
-                    messaged: item.messaged, response_received: item.response_received,
-                    initial_message: item.initial_message, notes: item.notes,
-                    age: 18, position: item.position, nationality: item.nationality
-                  }).then(() => supabase.from('player_outreach_youth').delete().eq('id', item.id))
-                ));
-                toast.info(`${actuallyMove.length} player(s) auto-moved to Pro (turned 18)`);
-              }
-              if (toMove.length > 0) {
-                setData(prev => prev.filter(d => !toMove.some(m => m.id === d.id)));
-              }
-            } catch (e) { /* ignore background move errors */ }
-          })();
-        }
-      }
+      // Note: no auto-move between youth/pro. Players stay in whichever
+      // list they were added to unless a user moves them explicitly.
       return;
     } catch (error) {
       console.error(`Error fetching ${type} outreach:`, error);
@@ -493,11 +448,35 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this entry?')) return;
+    if (!confirm('Delete this entry? Their Rise With Us page will also be removed.')) return;
     const tableName = isYouth ? 'player_outreach_youth' : 'player_outreach_pro';
     try {
+      // Find the outreach row first so we can also tear down the linked
+      // Rise With Us page for that player (offer settings + flag).
+      const target = data.find(d => d.id === id);
+      const playerName = (target?.player_name || '').trim();
+
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
+
+      if (playerName) {
+        try {
+          const { data: matches } = await (supabase as any)
+            .from('players')
+            .select('id')
+            .ilike('name', playerName);
+          const ids = (matches || []).map((p: any) => p.id).filter(Boolean);
+          if (ids.length > 0) {
+            await Promise.all([
+              (supabase as any).from('player_offer_settings').delete().in('player_id', ids),
+              (supabase as any).from('players')
+                .update({ has_representation_offer: false })
+                .in('id', ids),
+            ]);
+          }
+        } catch { /* non-fatal: outreach row already gone */ }
+      }
+
       toast.success('Entry deleted');
       fetchData();
     } catch { toast.error('Failed to delete'); }
