@@ -11,6 +11,7 @@ import { AddTeamDialog, type AddedTeam } from "./AddTeamDialog";
 import { Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { canonicalClubName } from "@/lib/clubNameUtils";
 
 interface ClubRow {
   id: string;
@@ -657,8 +658,41 @@ export default function MarketTablesTab() {
           };
         });
 
+        // Merge duplicate club rows: the same real-world club can be pulled in
+        // by multiple strategies / saved entries and end up listed several
+        // times (usually with different league labels). Group by
+        // (country + normalised club name), combine the league labels into
+        // one comma-separated string, and keep a single row whose id prefers
+        // whichever duplicate already has a saved market-table entry so the
+        // user's TD/CS names stay attached after the merge.
+        const entryIds = new Set(
+          (savedEntryRows ?? []).map((r: any) => r.club_id).filter(Boolean),
+        );
+        const groups = new Map<string, ClubRow[]>();
+        enriched.forEach((c) => {
+          const key = `${(c.country ?? "").toLowerCase().trim()}::${canonicalClubName(c.club_name)}`;
+          const arr = groups.get(key);
+          if (arr) arr.push(c);
+          else groups.set(key, [c]);
+        });
+        const merged: ClubRow[] = [];
+        groups.forEach((rows) => {
+          if (rows.length === 1) { merged.push(rows[0]); return; }
+          const primary = rows.find((r) => entryIds.has(r.id)) ?? rows[0];
+          const leagueSet = new Set<string>();
+          rows.forEach((r) => {
+            (r.league ?? "").split(",").map((s) => s.trim()).filter(Boolean).forEach((l) => leagueSet.add(l));
+          });
+          const image = rows.find((r) => r.image_url)?.image_url ?? primary.image_url ?? null;
+          merged.push({
+            ...primary,
+            image_url: image,
+            league: leagueSet.size > 0 ? Array.from(leagueSet).sort().join(", ") : primary.league,
+          });
+        });
+
         setClubs(
-          enriched.sort((a, b) => {
+          merged.sort((a, b) => {
             const c = (a.country ?? "").localeCompare(b.country ?? "");
             if (c !== 0) return c;
             const l = (a.league ?? "").localeCompare(b.league ?? "");
@@ -804,7 +838,9 @@ export default function MarketTablesTab() {
     const set = new Set<string>();
     clubs
       .filter((c) => country === "all" || c.country === country)
-      .forEach((c) => c.league && set.add(c.league));
+      .forEach((c) => {
+        (c.league ?? "").split(",").map((s) => s.trim()).filter(Boolean).forEach((l) => set.add(l));
+      });
     return Array.from(set).sort();
   }, [clubs, country]);
 
@@ -812,7 +848,10 @@ export default function MarketTablesTab() {
     const q = search.trim().toLowerCase();
     return clubs.filter((c) => {
       if (country !== "all" && c.country !== country) return false;
-      if (league !== "all" && c.league !== league) return false;
+      if (league !== "all") {
+        const clubLeagues = (c.league ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+        if (!clubLeagues.includes(league)) return false;
+      }
       if (q && !c.club_name.toLowerCase().includes(q)) return false;
       if (outreachMode) {
         const e = entries[c.id];
