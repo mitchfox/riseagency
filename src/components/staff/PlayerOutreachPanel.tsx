@@ -329,17 +329,38 @@ export const PlayerOutreachPanel = ({ type }: Props) => {
         if (toMove.length > 0) {
           (async () => {
             try {
-              await Promise.all(toMove.map(item =>
-                supabase.from('player_outreach_pro').insert({
-                  player_name: item.player_name, ig_handle: item.ig_handle,
-                  current_club: item.current_club, date_of_birth: item.date_of_birth,
-                  messaged: item.messaged, response_received: item.response_received,
-                  initial_message: item.initial_message, notes: item.notes,
-                  age: 18, position: item.position, nationality: item.nationality
-                }).then(() => supabase.from('player_outreach_youth').delete().eq('id', item.id))
-              ));
-              toast.info(`${toMove.length} player(s) auto-moved to Pro (turned 18)`);
-              setData(prev => prev.filter(d => !toMove.some(m => m.id === d.id)));
+              // Dedupe against existing Pro entries so we don't recreate rows
+              // that a user has already deleted from Pro.
+              const names = toMove.map(m => m.player_name).filter(Boolean);
+              const { data: existingPro } = await supabase
+                .from('player_outreach_pro')
+                .select('player_name,date_of_birth')
+                .in('player_name', names as string[]);
+              const existsInPro = (item: any) => (existingPro || []).some((p: any) =>
+                (p.player_name || '').trim().toLowerCase() === (item.player_name || '').trim().toLowerCase()
+                && (!item.date_of_birth || !p.date_of_birth || p.date_of_birth === item.date_of_birth)
+              );
+              const actuallyMove = toMove.filter(item => !existsInPro(item));
+              const alreadyThere = toMove.filter(item => existsInPro(item));
+              // For duplicates, just remove the stale youth row so we don't keep re-checking.
+              if (alreadyThere.length > 0) {
+                await supabase.from('player_outreach_youth').delete().in('id', alreadyThere.map(i => i.id));
+              }
+              if (actuallyMove.length > 0) {
+                await Promise.all(actuallyMove.map(item =>
+                  supabase.from('player_outreach_pro').insert({
+                    player_name: item.player_name, ig_handle: item.ig_handle,
+                    current_club: item.current_club, date_of_birth: item.date_of_birth,
+                    messaged: item.messaged, response_received: item.response_received,
+                    initial_message: item.initial_message, notes: item.notes,
+                    age: 18, position: item.position, nationality: item.nationality
+                  }).then(() => supabase.from('player_outreach_youth').delete().eq('id', item.id))
+                ));
+                toast.info(`${actuallyMove.length} player(s) auto-moved to Pro (turned 18)`);
+              }
+              if (toMove.length > 0) {
+                setData(prev => prev.filter(d => !toMove.some(m => m.id === d.id)));
+              }
             } catch (e) { /* ignore background move errors */ }
           })();
         }
