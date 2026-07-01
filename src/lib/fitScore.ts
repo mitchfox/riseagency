@@ -389,6 +389,11 @@ export const computeFitScore = (
   const playerRatingNum = ratingValue(player.club_first_team_rating);
   if (playerRatingNum === 1) bonuses.push({ key: "top_club", value: bonusEff.top_club, reason: `${signed(bonusEff.top_club)} top-tier club (R1)` });
   if (player.parent_approval) bonuses.push({ key: "parent_approval", value: bonusEff.parent_approval, reason: `${signed(bonusEff.parent_approval)} parent approval` });
+  const minutesShareRaw = typeof player.minutes_share === "number" ? player.minutes_share : Number(player.minutes_share);
+  if (Number.isFinite(minutesShareRaw) && minutesShareRaw > 0) {
+    const ms = clamp(Math.round(minutesShareRaw), 0, 10);
+    bonuses.push({ key: "minutes_share", value: ms, reason: `+${ms} playing time (${ms}/10)` });
+  }
 
   const bonusSum = bonuses.reduce((s, b) => s + b.value, 0);
 
