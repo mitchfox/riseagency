@@ -1406,6 +1406,76 @@ export const VideoAnalysis = ({ defaultPlayerId }: VideoAnalysisProps = {}) => {
     setSelectedReportId("");
   };
 
+  // Export selected clips to a player's Rise With Us intro media
+  const handleExportToPlayerOutreach = async () => {
+    if (!selectedVideo || !exportPlayerId) return;
+    const clips = (selectedVideo.clips || []).filter(c => selectedExportClipIds.has(c.id));
+    if (clips.length === 0) {
+      toast.info("Select at least one clip");
+      return;
+    }
+    setOutreachExporting(true);
+    const statuses: Record<string, "pending" | "done" | "error"> = {};
+    clips.forEach(c => { statuses[c.id] = "pending"; });
+    setOutreachProgress({ current: 0, total: clips.length, statuses: { ...statuses } });
+
+    try {
+      // Fetch existing intro_media once
+      const { data: existing } = await (supabase as any)
+        .from("player_offer_settings")
+        .select("intro_media")
+        .eq("player_id", exportPlayerId)
+        .maybeSingle();
+      const existingMedia: any[] = Array.isArray(existing?.intro_media) ? existing.intro_media : [];
+      const newItems: any[] = [];
+
+      const sourceUrl = selectedVideo.video_url.split("#")[0];
+
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        setOutreachProgress(p => ({ ...p, current: i + 1 }));
+        try {
+          const url = await trimAndUploadClip(
+            sourceUrl,
+            clip.id,
+            clip.start,
+            clip.end,
+            undefined,
+            clip.crop ?? null,
+          );
+          newItems.push({
+            id: (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${i}`),
+            kind: "video",
+            url,
+            show: true,
+            position: "intro",
+          });
+          statuses[clip.id] = "done";
+        } catch (err) {
+          console.error("Outreach clip export failed", err);
+          statuses[clip.id] = "error";
+        }
+        setOutreachProgress(p => ({ ...p, statuses: { ...statuses } }));
+      }
+
+      if (newItems.length > 0) {
+        const merged = [...existingMedia, ...newItems];
+        const { error: upErr } = await (supabase as any)
+          .from("player_offer_settings")
+          .upsert({ player_id: exportPlayerId, intro_media: merged }, { onConflict: "player_id" });
+        if (upErr) throw upErr;
+        toast.success(`Added ${newItems.length} clip${newItems.length !== 1 ? 's' : ''} to player intro`);
+      } else {
+        toast.error("No clips were exported");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to export to player outreach");
+    } finally {
+      setOutreachExporting(false);
+      setTimeout(() => setOutreachProgress({ current: 0, total: 0, statuses: {} }), 3000);
+    }
+  };
+
   // Subscribe to background export progress
   useEffect(() => {
     const unsub = subscribeToExportProgress((progress) => {
