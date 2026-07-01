@@ -241,6 +241,7 @@ export const PlayerDatabase = () => {
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [missingFilters, setMissingFilters] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
   const [nationFilter, setNationFilter] = useState<string>('all');
   const [dobFrom, setDobFrom] = useState('');
@@ -542,6 +543,16 @@ export const PlayerDatabase = () => {
       if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
+      if (missingFilters.length > 0) {
+        const isMissing = (v: any) => v === null || v === undefined || String(v).trim() === '';
+        for (const key of missingFilters) {
+          if (key === 'dob' && !isMissing(player.date_of_birth)) return false;
+          if (key === 'position' && !isMissing(player.position)) return false;
+          if (key === 'club' && !isMissing(player.current_club)) return false;
+          if (key === 'nationality' && !isMissing(player.nationality)) return false;
+          if (key === 'league' && !isMissing((player as any).league)) return false;
+        }
+      }
       if (minFit > 0 && fitFor(player) < minFit) return false;
       return true;
     });
@@ -565,7 +576,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -576,6 +587,7 @@ export const PlayerDatabase = () => {
     setNationFilter('all');
     setPositionFilter([]);
     setSourceFilter([]);
+    setMissingFilters([]);
     setDobFrom('');
     setDobTo('');
     setBirthMonthFilter('all');
@@ -587,7 +599,7 @@ export const PlayerDatabase = () => {
     ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
     : null;
 
-  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     setNotesReady(false);
@@ -970,6 +982,23 @@ export const PlayerDatabase = () => {
                     <button key={src} onClick={() => setSourceFilter(prev => prev.includes(src) ? prev.filter(v => v !== src) : [...prev, src])}
                       className={`text-[10px] px-1.5 py-0.5 border rounded ${sourceFilter.includes(src) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
                     >{src === 'database' ? 'DB' : src === 'scouting' ? 'Scout' : src === 'youth_outreach' ? 'Youth' : 'Pro'}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Missing Info</Label>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { key: 'dob', label: 'DOB' },
+                    { key: 'position', label: 'Position' },
+                    { key: 'club', label: 'Club' },
+                    { key: 'nationality', label: 'Nationality' },
+                    { key: 'league', label: 'League' },
+                  ].map(f => (
+                    <button key={f.key}
+                      onClick={() => setMissingFilters(prev => prev.includes(f.key) ? prev.filter(v => v !== f.key) : [...prev, f.key])}
+                      className={`text-[10px] px-1.5 py-0.5 border rounded ${missingFilters.includes(f.key) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                    >{f.label}</button>
                   ))}
                 </div>
               </div>
