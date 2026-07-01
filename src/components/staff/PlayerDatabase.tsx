@@ -921,6 +921,84 @@ export const PlayerDatabase = () => {
 
   return (
     <div className="space-y-3">
+      {/* Quick Filters — surfaced just below Player Database Actions */}
+      <div className="rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/70 p-3 shadow-[0_0_18px_hsl(var(--rise-gold)/0.06)]">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">Quick Filters</p>
+          {hasActiveFilters && (
+            <button onClick={clearAllFilters} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear all</button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Age Group</Label>
+            <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+              <option value="all">All Ages</option>
+              <option value="u18">U18</option>
+              <option value="18-21">18-21</option>
+              <option value="22-25">22-25</option>
+              <option value="26-30">26-30</option>
+              <option value="30+">30+</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Nationality</Label>
+            <select value={nationFilter} onChange={e => setNationFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+              <option value="all">All Nations</option>
+              {uniqueNations.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Birth Month</Label>
+            <select value={birthMonthFilter} onChange={e => setBirthMonthFilter(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+              <option value="all">Any Month</option>
+              {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+                <option key={m} value={String(i + 1)}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1 col-span-2">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Date of Birth Range</Label>
+            <div className="flex gap-1 items-center">
+              <Input type="date" value={dobFrom} onChange={e => setDobFrom(e.target.value)} className="h-8 text-xs flex-1" />
+              <span className="text-[10px] text-muted-foreground">to</span>
+              <Input type="date" value={dobTo} onChange={e => setDobTo(e.target.value)} className="h-8 text-xs flex-1" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Min Fit ({minFit})</Label>
+            <input type="range" min={0} max={100} value={minFit} onChange={e => setMinFit(Number(e.target.value))} className="w-full h-8" />
+          </div>
+          <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-6">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Position</Label>
+            <div className="flex flex-wrap gap-1">
+              {uniquePositions.map(pos => (
+                <button key={pos} onClick={() => setPositionFilter(prev => prev.includes(pos) ? prev.filter(v => v !== pos) : [...prev, pos])}
+                  className={`text-[10px] px-2 py-1 border rounded ${positionFilter.includes(pos) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/60'}`}
+                >{pos}</button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-6">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Missing Info</Label>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { key: 'dob', label: 'DOB' },
+                { key: 'position', label: 'Position' },
+                { key: 'club', label: 'Club' },
+                { key: 'nationality', label: 'Nationality' },
+                { key: 'league', label: 'League' },
+              ].map(f => (
+                <button key={f.key}
+                  onClick={() => setMissingFilters(prev => prev.includes(f.key) ? prev.filter(v => v !== f.key) : [...prev, f.key])}
+                  className={`text-[10px] px-2 py-1 border rounded ${missingFilters.includes(f.key) ? 'bg-[hsl(var(--rise-gold))] text-black border-[hsl(var(--rise-gold))]' : 'border-border hover:border-[hsl(var(--rise-gold)/0.6)]'}`}
+                >Missing {f.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
