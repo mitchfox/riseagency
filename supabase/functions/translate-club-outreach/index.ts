@@ -82,6 +82,7 @@ const UI_BUNDLE: Record<string, string> = {
   "mbm.result.win": "Win",
   "mbm.result.draw": "Draw",
   "mbm.result.loss": "Loss",
+  "mbm.note": "All statistics are verifiable and evidenced through the auto video report of each match above.",
 };
 
 Deno.serve(async (req) => {
