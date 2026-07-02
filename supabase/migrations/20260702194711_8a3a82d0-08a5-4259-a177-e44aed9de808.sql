@@ -1,0 +1,1 @@
+ALTER TABLE public.players ALTER COLUMN national_team DROP NOT NULL; ALTER TABLE public.players ALTER COLUMN national_team DROP DEFAULT;
