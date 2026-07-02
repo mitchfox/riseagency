@@ -186,7 +186,7 @@ interface OutreachRow {
   response_at?: string | null;
 }
 
-type OutreachMode = 'club' | 'agent';
+type OutreachMode = 'club' | 'agent' | 'general';
 
 const OUTREACH_LANGUAGES: { code: string; label: string }[] = [
   { code: "en", label: "English" },
