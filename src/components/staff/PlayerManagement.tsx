@@ -846,7 +846,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       age: player.age,
       nationality: player.nationality,
       representation_status: player.representation_status || "",
-      has_representation_offer: Boolean((player as any).has_representation_offer || player.representation_status === 'prospect'),
+      has_representation_offer: Boolean((player as any).has_representation_offer),
       visible_on_stars_page: player.visible_on_stars_page || false,
       portal_language: player.portal_language || "en",
       image_url: player.image_url || "",
@@ -1706,7 +1706,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                         </Button>
                       </>
                     ) : null}
-                    {(selectedPlayer?.has_representation_offer || selectedPlayer?.representation_status === 'prospect') && (
+                    {selectedPlayer?.has_representation_offer && (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -3517,7 +3517,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                     <Label htmlFor="representation_status" className="text-sm">Representation Status</Label>
                     <Select
                       value={formData.representation_status}
-                      onValueChange={(value) => setFormData({ ...formData, representation_status: value, has_representation_offer: value === 'prospect' ? true : formData.has_representation_offer })}
+                      onValueChange={(value) => setFormData({ ...formData, representation_status: value })}
                     >
                       <SelectTrigger className="h-10 sm:h-11">
                         <SelectValue placeholder="Select status" />

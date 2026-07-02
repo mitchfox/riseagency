@@ -193,7 +193,7 @@ export const RepresentationOffers = () => {
     const { data, error } = await (supabase as any)
       .from("players")
       .select("id, name, position, club, nationality, image_url, email, representation_status, has_representation_offer, date_of_birth, fit_score, fit_score_breakdown, created_at, offer_status, instagram_handle, outreach_response_status, outreach_response_notes, outreach_response_at")
-      .or("has_representation_offer.eq.true,representation_status.eq.prospect")
+      .eq("has_representation_offer", true)
       .order("name");
     if (error) {
       toast.error("Failed to load representation offers");
@@ -463,7 +463,7 @@ export const RepresentationOffers = () => {
     if (!window.confirm(`Remove ${player.name} from drafts? This clears the representation offer flag — the player record stays.`)) return;
     const { error } = await (supabase as any)
       .from("players")
-      .update({ has_representation_offer: false })
+      .update({ has_representation_offer: false, offer_status: null })
       .eq("id", player.id);
     if (error) {
       toast.error("Could not remove draft", { description: error.message });
