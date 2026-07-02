@@ -761,10 +761,11 @@ export default function ClubOutreachManager() {
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>
-      <div className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
+      <div className="grid grid-cols-3 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'club', label: 'Club Outreach' },
           { v: 'agent', label: 'Agent Outreach' },
+          { v: 'general', label: 'General' },
         ] as { v: OutreachMode; label: string }[]).map((t) => (
           <button
             key={t.v}
