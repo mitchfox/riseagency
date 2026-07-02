@@ -169,7 +169,7 @@ interface OutreachRow {
   suggested_agent_note?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
-  target_type?: 'club' | 'agent';
+  target_type?: 'club' | 'agent' | 'general';
   agent_name?: string | null;
   agent_logo_url?: string | null;
   language?: string | null;
