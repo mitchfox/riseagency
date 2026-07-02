@@ -233,7 +233,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (!query || query.length < 2) return { ...player, _needs_review: true };
 
   const ids = await searchTransfermarktIds(query);
-  if (!ids.length) return { ...player, _needs_review: true };
+  if (!ids.length) return { ...player, nationality: null, _needs_review: true };
 
   const parsedDob = hasValue(player.date_of_birth) ? String(player.date_of_birth).slice(0, 10) : null;
   const parsedYear = parsedDob ? parsedDob.slice(0, 4) : null;
@@ -285,9 +285,10 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
     }
   }
 
-  // Accept threshold: exact DOB match, OR score ≥ 4 across other signals
-  if (!best || (!best.exactDob && best.score < 4)) {
-    return { ...player, _needs_review: true };
+  // Accept threshold: exact DOB match, OR score ≥ 3 across other signals
+  // (nationality no longer contributes to scoring, so threshold is lower).
+  if (!best || (!best.exactDob && best.score < 3)) {
+    return { ...player, nationality: null, _needs_review: true };
   }
 
   const d = best.data;
