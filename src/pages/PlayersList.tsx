@@ -29,16 +29,15 @@ const PlayersList = () => {
 
   const positionOptions = [
     { label: "GK", value: "GK" },
-    { label: "LB", value: "LB" },
-    { label: "LCB", value: "LCB" },
-    { label: "RCB", value: "RCB" },
+    { label: "CB", value: "CB" },
     { label: "RB", value: "RB" },
+    { label: "LB", value: "LB" },
     { label: "CDM", value: "CDM" },
     { label: "CM", value: "CM" },
     { label: "CAM", value: "CAM" },
     { label: "LW", value: "LW" },
     { label: "RW", value: "RW" },
-    { label: "CF", value: "CF" }
+    { label: "CF", value: "CF" },
   ];
 
   const ageRangeOptions = [
