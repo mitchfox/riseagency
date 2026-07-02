@@ -4148,6 +4148,33 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                 {/* Links Tab */}
                 <TabsContent value="links" className="space-y-4">
                   <div className="space-y-2">
+                    <Label>Transfermarkt URL</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Direct link to the player's Transfermarkt profile. Auto-filled by the enricher when a match is found.
+                    </p>
+                    <Input
+                      value={(formData.links.find(l => /transfermarkt/i.test(l.label) || /transfermarkt/i.test(l.url))?.url) || ""}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        const idx = formData.links.findIndex(l => /transfermarkt/i.test(l.label) || /transfermarkt/i.test(l.url));
+                        const newLinks = [...formData.links];
+                        if (idx >= 0) {
+                          if (!url.trim()) {
+                            newLinks.splice(idx, 1);
+                          } else {
+                            newLinks[idx] = { label: "Transfermarkt", url };
+                          }
+                        } else if (url.trim()) {
+                          newLinks.push({ label: "Transfermarkt", url });
+                        }
+                        setFormData({ ...formData, links: newLinks });
+                      }}
+                      placeholder="https://www.transfermarkt.com/-/profil/spieler/..."
+                      className="h-11 sm:h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>External Profile Links</Label>
                     <p className="text-sm text-muted-foreground">
                       These appear as separate link buttons on the player profile
