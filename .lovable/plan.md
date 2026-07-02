@@ -1,32 +1,28 @@
-## Problem
 
-Intro clip videos only start loading when their corner frame fades in (they're mounted inside `AnimatePresence` and unmounted on exit). On mobile that means every rotation hits network + decode from cold, so the frame appears empty / laggy and by the time playback starts it's already fading out. There is no preload path for the video items in `extraIntro`.
+## Goal
 
-Existing `useVideoPreloader` hook does exactly what we need (creates hidden `<video preload="auto">` elements to warm the buffer) but it's not being used by the intro.
+Paste the complete Investor Portal source into chat, in sequential chunks, so you can copy it into the other site. No code changes to this project.
 
-## Fix
+## Files to send (in order)
 
-Edit only `src/pages/RiseWithUs.tsx` inside `IntroCinematic`:
+1. `src/pages/InvestorsPortal.tsx` — 4,176 lines. Sent in 4 parts:
+   - Part 1: lines 1–1200
+   - Part 2: lines 1201–2400
+   - Part 3: lines 2401–3400
+   - Part 4: lines 3401–4176
+2. `src/hooks/useInvestorSession.ts` — 48 lines (single message)
+3. `src/components/investor/InvestmentOverview.tsx`
+4. `src/components/investor/CapacityPlanner.tsx`
+5. `src/components/investor/ExecutiveSupport.tsx`
+6. `src/components/investor/OpsBoard.tsx`
+7. `src/components/investor/InvestorHighlineLog.tsx`
+8. PWA support files added earlier: `public/manifest-investors.json`, `public/investors-portal.html`, and the `_redirects` entry.
 
-1. **Warm every intro video on mount.** As soon as `IntroCinematic` mounts (well before the first video rotation), kick off a hidden preloader for every video URL in `extraIntro`:
-   - Collect `extraIntro.filter(m => m.kind === "video").map(m => m.url)`.
-   - Use `useVideoPreloader({ videos: urls, preloadCount: urls.length, enabled: true })` so every clip is fetched immediately, not just "the next few".
-   - Reduce the hook's internal 1s startup delay by calling `preloadVideo` in an effect ourselves too, so the very first clip is warm by the time phase 1 begins.
+## Delivery rules
 
-2. **Set `preload="auto"` on the visible `<video>` elements** in `AnnotatedIntroVideo` (both branches — with and without annotations). Currently neither element sets `preload`, so browsers default to `metadata` and don't buffer until play. Adding `preload="auto"` plus the pre-warmed cache means the frame is decoded and ready the moment it mounts.
+- Each turn: paste as much file content as fits inside a single fenced code block up to the message character limit, then stop.
+- Every chunk is prefixed with the file path and the line range it covers, so you can concatenate them cleanly.
+- I will wait for your "continue" before sending the next chunk.
+- No summarising, no truncation inside a chunk — raw source only.
 
-3. **Keep videos alive across rotations** so they don't have to re-buffer each cycle. Instead of relying purely on `AnimatePresence` mount/unmount, render one hidden persistent `<video>` per unique video URL at zero opacity / `pointer-events-none` inside the intro container (a tiny 1x1 offscreen sink is enough — same trick the preloader hook uses but attached to the DOM tree). This guarantees the decoded buffer persists between rotations on mobile Safari, which is aggressive about evicting orphaned media.
-
-4. **Autoplay guarantee.** Keep `autoPlay muted playsInline loop` (already present) — required for mobile autoplay after the language-switch tap that starts the intro.
-
-No changes to export logic, annotations, `clientClipExtractor`, or the extractor timeout. This is purely a preload/lifecycle fix on the render side.
-
-## Files touched
-
-- `src/pages/RiseWithUs.tsx` — `IntroCinematic` preload effect + `AnnotatedIntroVideo` `preload="auto"` and persistent hidden sinks.
-
-## Verification
-
-- Open a Rise With Us link with 2+ intro clips on mobile → first clip is playing frame-1 the moment it appears; subsequent rotations start instantly with no black gap.
-- Link with only images still behaves as today.
-- Link with annotated clip still shows the overlay in sync.
+Approve and I'll start with Part 1 of `InvestorsPortal.tsx` in the next message.
