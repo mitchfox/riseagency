@@ -3,7 +3,9 @@ import { PlayerDatabase } from './PlayerDatabase';
 import { PlayerAddMode } from './PlayerAddMode';
 import { SquadView } from './SquadView';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type Mode = 'classic' | 'squad';
 type AddMode = 'ai' | 'manual';
@@ -11,10 +13,50 @@ type AddMode = 'ai' | 'manual';
 export const PlayerDatabaseActions = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<AddMode>('ai');
+  const [enriching, setEnriching] = useState(false);
+  const [progress, setProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
 
   const openAdd = (nextMode: AddMode) => {
     setAddMode(nextMode);
     setAddOpen(true);
+  };
+
+  const enrichMissing = async () => {
+    if (enriching) return;
+    setEnriching(true);
+    setProgress({ updated: 0, processed: 0, remaining: null });
+    const toastId = toast.loading('Scanning players for missing details…');
+    let totalUpdated = 0;
+    let totalProcessed = 0;
+    try {
+      while (true) {
+        const { data, error } = await supabase.functions.invoke('parse-players-bulk', {
+          body: { mode: 'enrich', limit: 15 },
+        });
+        if (error) throw error;
+        const processed = Number(data?.processed) || 0;
+        const updated = Number(data?.updated) || 0;
+        const remaining = data?.remaining ?? null;
+        totalProcessed += processed;
+        totalUpdated += updated;
+        setProgress({ updated: totalUpdated, processed: totalProcessed, remaining });
+        toast.loading(
+          `Enriching from Transfermarkt — ${totalUpdated} filled, ${remaining ?? '?'} remaining`,
+          { id: toastId },
+        );
+        // Stop when nothing left, nothing processed, or nothing updated (avoid loops on unmatchable rows).
+        if (processed === 0 || (remaining !== null && remaining === 0) || updated === 0) break;
+      }
+      toast.success(
+        `Enrichment complete — filled details on ${totalUpdated} of ${totalProcessed} scanned`,
+        { id: toastId },
+      );
+    } catch (err) {
+      console.error('enrich failed', err);
+      toast.error(`Enrichment failed: ${(err as Error).message || 'unknown error'}`, { id: toastId });
+    } finally {
+      setEnriching(false);
+    }
   };
 
   return (
@@ -48,6 +90,20 @@ export const PlayerDatabaseActions = () => {
           className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
         >
           Manual add
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={enrichMissing}
+          disabled={enriching}
+          title="Scan players missing nationality or date of birth and backfill from Transfermarkt"
+          className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${enriching ? 'animate-spin' : ''}`} />
+          {enriching
+            ? `Enriching… ${progress?.updated ?? 0} filled${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
+            : 'Backfill from Transfermarkt'}
         </Button>
       </div>
       {addOpen && (
