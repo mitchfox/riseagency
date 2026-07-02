@@ -6780,7 +6780,7 @@ export type Database = {
           links: Json | null
           minutes_share: number | null
           name: string
-          national_team: boolean
+          national_team: boolean | null
           nationality: string
           next_program_notes: string | null
           not_to_confuse_with: string | null
@@ -6846,7 +6846,7 @@ export type Database = {
           links?: Json | null
           minutes_share?: number | null
           name: string
-          national_team?: boolean
+          national_team?: boolean | null
           nationality: string
           next_program_notes?: string | null
           not_to_confuse_with?: string | null
@@ -6912,7 +6912,7 @@ export type Database = {
           links?: Json | null
           minutes_share?: number | null
           name?: string
-          national_team?: boolean
+          national_team?: boolean | null
           nationality?: string
           next_program_notes?: string | null
           not_to_confuse_with?: string | null
