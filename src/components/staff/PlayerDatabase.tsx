@@ -32,13 +32,31 @@ const buildPlayerKey = (name: string | null | undefined, dob: string | null | un
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
 const extractTransfermarktUrl = (links: unknown): string | null => {
-  if (!Array.isArray(links)) return null;
-  for (const l of links) {
-    if (!l || typeof l !== 'object') continue;
-    const url = String((l as any).url || '').trim();
-    const label = String((l as any).label || '').trim();
-    if (!url) continue;
-    if (/transfermarkt/i.test(url) || /transfermarkt/i.test(label)) return url;
+  if (!links) return null;
+  if (typeof links === 'string') {
+    const trimmed = links.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try { return extractTransfermarktUrl(JSON.parse(trimmed)); } catch {}
+    }
+    return /transfermarkt/i.test(trimmed) ? trimmed : null;
+  }
+  if (Array.isArray(links)) {
+    for (const l of links) {
+      const found = extractTransfermarktUrl(l);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof links === 'object') {
+    const record = links as Record<string, unknown>;
+    const label = String(record.label || record.title || record.name || '').trim();
+    const candidates = [record.url, record.href, record.link, record.transfermarkt_url, record.transfermarkt, record.Transfermarkt];
+    for (const value of candidates) {
+      const url = String(value || '').trim();
+      if (!url) continue;
+      if (/transfermarkt/i.test(url) || /transfermarkt/i.test(label)) return url;
+    }
   }
   return null;
 };
@@ -624,7 +642,10 @@ export const PlayerDatabase = () => {
   };
 
   // Dynamic column renderers
-  const orderedVisibleKeys = settings.columnOrder.filter(k => settings.isVisible(k));
+  const orderedVisibleKeys = [
+    ...(settings.isVisible('transfermarkt') ? ['transfermarkt'] : []),
+    ...settings.columnOrder.filter(k => k !== 'transfermarkt' && settings.isVisible(k)),
+  ];
 
   const renderHeader = (key: string): ReactNode => {
     const sortableHeader = (label: string, field: SortField, extraClass = '') => (
