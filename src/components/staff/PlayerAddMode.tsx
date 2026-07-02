@@ -169,7 +169,14 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         <div className="max-w-2xl space-y-3 rounded-xl border border-border/50 bg-card/40 p-5">
           <Field label="Name *"><Input value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} placeholder="Full name" /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Position"><Input value={manual.position} onChange={(e) => setManual({ ...manual, position: e.target.value })} placeholder="CM, CB, RW…" /></Field>
+            <Field label="Position">
+              <Select value={manual.position} onValueChange={(value) => setManual({ ...manual, position: value })}>
+                <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
+                <SelectContent>
+                  {PLAYER_POSITIONS.map((code) => (<SelectItem key={code} value={code}>{code}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field label="Nationality"><Input value={manual.nationality} onChange={(e) => setManual({ ...manual, nationality: e.target.value })} placeholder="England" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
