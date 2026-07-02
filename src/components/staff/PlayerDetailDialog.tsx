@@ -194,6 +194,10 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
   const handleSaveEdit = async () => {
     try {
       if (player.source === 'database') {
+        const existingLinks: Array<{ label?: string; url?: string }> = Array.isArray(editForm._links) ? editForm._links : [];
+        const tmUrlRaw = String(editForm.transfermarkt_url || '').trim();
+        const withoutTm = existingLinks.filter((l) => !(/transfermarkt/i.test(String(l?.label || '')) || /transfermarkt/i.test(String(l?.url || ''))));
+        const nextLinks = tmUrlRaw ? [...withoutTm, { label: 'Transfermarkt', url: tmUrlRaw }] : withoutTm;
         const payload = {
           name: editForm.player_name,
           position: editForm.position || null,
@@ -208,6 +212,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
+          links: nextLinks.length > 0 ? nextLinks : null,
         };
         const { error } = await supabase.from('players').update(payload).eq('id', player.id);
         if (error) throw error;
