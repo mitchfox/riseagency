@@ -72,6 +72,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       agent_status: '',
       agent_name: '',
       parent_approval: !!player.parent_approval,
+      transfermarkt_url: '',
+      _links: [] as Array<{ label?: string; url?: string }>,
     });
     // Defer the notes board and fit-score fetch until after the dialog paints.
     const idle = (cb: () => void) => {
@@ -84,10 +86,12 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       idle(async () => {
         const { data } = await (supabase as any)
           .from('players')
-          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name')
+          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name,links')
           .eq('id', player.id)
           .maybeSingle();
         if (data) {
+          const linksArr: Array<{ label?: string; url?: string }> = Array.isArray(data.links) ? data.links : [];
+          const tm = linksArr.find((l) => /transfermarkt/i.test(String(l?.label || '')) || /transfermarkt/i.test(String(l?.url || '')));
           setEditForm((f: any) => ({
             ...f,
             national_team: !!data.national_team,
@@ -96,6 +100,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
+            transfermarkt_url: tm?.url || '',
+            _links: linksArr,
           }));
         }
       });
@@ -188,6 +194,10 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
   const handleSaveEdit = async () => {
     try {
       if (player.source === 'database') {
+        const existingLinks: Array<{ label?: string; url?: string }> = Array.isArray(editForm._links) ? editForm._links : [];
+        const tmUrlRaw = String(editForm.transfermarkt_url || '').trim();
+        const withoutTm = existingLinks.filter((l) => !(/transfermarkt/i.test(String(l?.label || '')) || /transfermarkt/i.test(String(l?.url || ''))));
+        const nextLinks = tmUrlRaw ? [...withoutTm, { label: 'Transfermarkt', url: tmUrlRaw }] : withoutTm;
         const payload = {
           name: editForm.player_name,
           position: editForm.position || null,
@@ -202,6 +212,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           previous_serious_injury: editForm.previous_serious_injury || null,
           agent_status: editForm.agent_status || null,
           agent_name: editForm.agent_name || null,
+          links: nextLinks.length > 0 ? nextLinks : null,
         };
         const { error } = await supabase.from('players').update(payload).eq('id', player.id);
         if (error) throw error;
@@ -413,6 +424,17 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
               </div>
             )}
             <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={(v: string) => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
+            {player.source === 'database' && (
+              <div className="space-y-1">
+                <Label className="text-xs">Transfermarkt URL</Label>
+                <Input
+                  value={editForm.transfermarkt_url || ''}
+                  onChange={(e) => setEditForm((f: any) => ({ ...f, transfermarkt_url: e.target.value }))}
+                  placeholder="https://www.transfermarkt.com/-/profil/spieler/..."
+                />
+                <p className="text-[10px] text-muted-foreground">Auto-filled by the Transfermarkt enricher when a match is found.</p>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
               <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
