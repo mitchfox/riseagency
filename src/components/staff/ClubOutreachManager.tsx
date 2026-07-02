@@ -1756,11 +1756,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         <div>
           <h3 className="text-lg font-semibold">
             {editing
-              ? (isAgent ? "Edit Agent Outreach" : "Edit Club Outreach")
-              : (isAgent ? "New Agent Outreach" : "New Club Outreach")}
+              ? (isAgent ? "Edit Agent Outreach" : isGeneral ? "Edit General Outreach" : "Edit Club Outreach")
+              : (isAgent ? "New Agent Outreach" : isGeneral ? "New General Outreach" : "New Club Outreach")}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {isAgent
+            {isGeneral
+              ? "Build a general proposal that isn't tied to a specific club or agent. Add the players you want to include."
+              : isAgent
               ? "Build a personalised proposal for an agent. Add one or many players, each with their own position and fit note."
               : "Build a personalised proposal for a club. Add one or many players, each with their own position and fit note."}
           </p>
@@ -1768,7 +1770,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="h-4 w-4" /></Button>
       </div>
       <div className="space-y-6">
-          {isAgent ? (
+          {isGeneral ? null : isAgent ? (
             <div className="space-y-3">
               <div>
                 <Label>Agent name</Label>
