@@ -119,6 +119,9 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     for (const p of toSave) {
       const normalisedAgency = (p.agency || '').trim();
       const isRise = /rise\s*football/i.test(normalisedAgency);
+      const links = p.transfermarkt_id
+        ? [{ label: 'Transfermarkt', url: `https://www.transfermarkt.com/-/profil/spieler/${p.transfermarkt_id}` }]
+        : null;
       const { error } = await supabase.from('players').insert({
         name: p.name.trim(),
         position: normalisePosition(p.position) || (p.position || 'CM').trim(),
@@ -133,6 +136,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         agent_name: isRise ? 'RISE Football Agency' : (normalisedAgency || null),
         category: 'Other',
         representation_status: isRise ? 'represented' : 'Other',
+        ...(links ? { links } : {}),
       });
       if (error) {
         update(p._i, { _error: error.message });
