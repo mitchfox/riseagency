@@ -559,7 +559,7 @@ serve(async (req) => {
       // This now targets players missing DOB, nationality OR the Transfermarkt URL.
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, links')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, agency, links')
         .order('created_at', { ascending: false })
         .range(0, 9999);
 
@@ -576,7 +576,10 @@ serve(async (req) => {
         const missingDob = !hasValue(row.date_of_birth);
         const missingNationality = isMissingNationality(row.nationality);
         const missingTransfermarktUrl = !extractTransfermarktLink(row.links);
-        return missingDob || missingNationality || missingTransfermarktUrl;
+        const missingRepresentation = !hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status).trim());
+        const missingAgency = !hasValue(row.agency);
+        const missingNationalTeam = row.national_team !== true;
+        return missingDob || missingNationality || missingTransfermarktUrl || missingRepresentation || missingAgency || missingNationalTeam;
       });
       const candidates = candidateRows.slice(0, limit);
 
@@ -605,6 +608,19 @@ serve(async (req) => {
           if (!row.league && matched.league) { patch.league = matched.league; fields.push('league'); }
           if (!row.age && matched.age) { patch.age = matched.age; fields.push('age'); }
           if (row.national_team !== true && matched.national_team === true) { patch.national_team = true; fields.push('national_team'); }
+
+          // Agency + representation status: only fill when empty/unknown.
+          const existingAgency = hasValue(row.agency) ? String(row.agency).trim() : '';
+          if (!existingAgency && matched.agency) {
+            patch.agency = matched.agency;
+            fields.push('agency');
+          }
+          const existingRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
+          const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
+          if (repIsUnknown && (matched.agency || existingAgency)) {
+            patch.representation_status = 'Represented';
+            fields.push('representation_status');
+          }
 
           // Add Transfermarkt profile link if we matched an id and one isn't already stored.
           if (matched.transfermarkt_id) {
