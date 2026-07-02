@@ -559,7 +559,7 @@ serve(async (req) => {
       // This now targets players missing DOB, nationality OR the Transfermarkt URL.
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, agency, links')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, links')
         .order('created_at', { ascending: false })
         .range(0, 9999);
 
@@ -577,9 +577,8 @@ serve(async (req) => {
         const missingNationality = isMissingNationality(row.nationality);
         const missingTransfermarktUrl = !extractTransfermarktLink(row.links);
         const missingRepresentation = !hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status).trim());
-        const missingAgency = !hasValue(row.agency);
         const missingNationalTeam = row.national_team !== true;
-        return missingDob || missingNationality || missingTransfermarktUrl || missingRepresentation || missingAgency || missingNationalTeam;
+        return missingDob || missingNationality || missingTransfermarktUrl || missingRepresentation || missingNationalTeam;
       });
       const candidates = candidateRows.slice(0, limit);
 
@@ -609,15 +608,11 @@ serve(async (req) => {
           if (!row.age && matched.age) { patch.age = matched.age; fields.push('age'); }
           if (row.national_team !== true && matched.national_team === true) { patch.national_team = true; fields.push('national_team'); }
 
-          // Agency + representation status: only fill when empty/unknown.
-          const existingAgency = hasValue(row.agency) ? String(row.agency).trim() : '';
-          if (!existingAgency && matched.agency) {
-            patch.agency = matched.agency;
-            fields.push('agency');
-          }
+          // Representation status: only fill when empty/unknown. Set to
+          // "Represented" whenever Transfermarkt returns an agent name.
           const existingRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
           const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
-          if (repIsUnknown && (matched.agency || existingAgency)) {
+          if (repIsUnknown && matched.agency) {
             patch.representation_status = 'Represented';
             fields.push('representation_status');
           }

@@ -96,7 +96,7 @@ interface ClubRating {
   academy_rating: string;
 }
 
-type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth' | 'fit_score';
+type SortField = 'player_name' | 'age' | 'position' | 'nationality' | 'current_club' | 'report_count' | 'created_at' | 'date_of_birth' | 'fit_score' | 'transfermarkt';
 type SortDirection = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 50;
@@ -596,6 +596,7 @@ export const PlayerDatabase = () => {
         case 'report_count': comparison = a.report_count - b.report_count; break;
         case 'date_of_birth': comparison = (a.date_of_birth || '9999').localeCompare(b.date_of_birth || '9999'); break;
         case 'fit_score': comparison = fitFor(a) - fitFor(b); break;
+        case 'transfermarkt': comparison = (a.transfermarkt_url ? 0 : 1) - (b.transfermarkt_url ? 0 : 1); break;
         case 'created_at':
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -660,7 +661,7 @@ export const PlayerDatabase = () => {
       </TableHead>
     );
     switch (key) {
-      case 'transfermarkt': return plainHeader('TM', 'w-10 text-center');
+      case 'transfermarkt': return sortableHeader('TM', 'transfermarkt', 'w-10 text-center');
       case 'avatar': return plainHeader('', 'w-12');
       case 'fit': return sortableHeader('FIT', 'fit_score', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
