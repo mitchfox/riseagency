@@ -49,6 +49,7 @@ interface Prospect {
   probability_weight: number | null;
   projected_revenue: number | null;
   revenue_currency: string | null;
+  stage_manual_override?: boolean | null;
   _source: 'prospects' | 'players';
 }
 
