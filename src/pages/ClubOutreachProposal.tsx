@@ -1200,18 +1200,20 @@ export default function ClubOutreachProposal() {
             background: `radial-gradient(ellipse at top, ${clubGlow}38, transparent 65%)`,
           }}
         />
-        {club?.image_url ? (
-          <img
-            src={club.image_url}
-            alt={club.club_name}
-            onError={(e) => ((e.currentTarget.style.display = "none"))}
-            className="relative mx-auto h-20 sm:h-24 w-auto object-contain"
-            style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
-          />
-        ) : (
-          <div className="relative mx-auto h-20 sm:h-24 w-20 sm:w-24 rounded-full bg-white/5 flex items-center justify-center text-3xl">
-            {club?.club_name?.[0] ?? "?"}
-          </div>
+        {data.link.target_type !== 'general' && (
+          club?.image_url ? (
+            <img
+              src={club.image_url}
+              alt={club.club_name}
+              onError={(e) => ((e.currentTarget.style.display = "none"))}
+              className="relative mx-auto h-20 sm:h-24 w-auto object-contain"
+              style={{ filter: `drop-shadow(0 6px 28px ${clubGlow}66)` }}
+            />
+          ) : (
+            <div className="relative mx-auto h-20 sm:h-24 w-20 sm:w-24 rounded-full bg-white/5 flex items-center justify-center text-3xl">
+              {club?.club_name?.[0] ?? "?"}
+            </div>
+          )
         )}
         <div className="mt-5 flex flex-col items-center gap-2.5">
           <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-[#cbb96b]">
