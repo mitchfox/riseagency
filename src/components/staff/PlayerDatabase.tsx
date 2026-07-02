@@ -639,6 +639,7 @@ export const PlayerDatabase = () => {
       </TableHead>
     );
     switch (key) {
+      case 'transfermarkt': return plainHeader('TM', 'w-10 text-center');
       case 'avatar': return plainHeader('', 'w-12');
       case 'fit': return sortableHeader('FIT', 'fit_score', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
