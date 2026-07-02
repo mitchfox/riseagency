@@ -168,6 +168,7 @@ const compNameCache = new Map<string, string>();
 const clubInfoCache = new Map<string, { club: string | null; competitionId: string | null }>();
 const tmPlayerCache = new Map<string, any>();
 const tmNationalityCache = new Map<string, string | null>();
+const tmProfileCache = new Map<string, { nationality: string | null; agent: string | null; nationalTeam: boolean | null }>();
 
 const decodeHtmlEntities = (value: string) => value
   .replace(/&amp;/g, '&')
@@ -191,10 +192,27 @@ const extractMetaContent = (html: string, name: string): string | null => {
   return match?.[1] ? decodeHtmlEntities(match[1]) : null;
 };
 
-const fetchTmProfileNationality = async (id: string): Promise<string | null> => {
-  if (tmNationalityCache.has(id)) return tmNationalityCache.get(id)!;
+const stripTags = (value: string) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const extractProfileField = (html: string, labels: string[]): string | null => {
+  for (const label of labels) {
+    const re = new RegExp(`${label}\\s*:?\\s*<\\/span>\\s*<span[^>]*>([\\s\\S]*?)<\\/span>`, 'i');
+    const m = html.match(re);
+    if (m?.[1]) {
+      const value = decodeHtmlEntities(stripTags(m[1]));
+      if (value) return value;
+    }
+  }
+  return null;
+};
+
+const fetchTmProfile = async (id: string) => {
+  if (tmProfileCache.has(id)) return tmProfileCache.get(id)!;
 
   let nationality: string | null = null;
+  let agent: string | null = null;
+  let nationalTeam: boolean | null = null;
+
   try {
     const res = await fetch(`https://www.transfermarkt.com/-/profil/spieler/${id}`, {
       headers: { 'User-Agent': TM_UA, 'Accept-Language': 'en' },
@@ -202,20 +220,36 @@ const fetchTmProfileNationality = async (id: string): Promise<string | null> => 
     });
     if (res.ok) {
       const html = await res.text();
+
+      // Nationality: meta description first, then keywords fallback.
       const description = extractMetaContent(html, 'description');
       const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
       nationality = cleanCountry(fromMatch?.[1]);
-
       if (!nationality) {
         const keywords = extractMetaContent(html, 'keywords');
         const lastKeyword = keywords?.split(',').map((part) => part.trim()).filter(Boolean).pop();
         nationality = cleanCountry(lastKeyword);
       }
-    }
-  } catch { /* keep null */ }
 
+      // Player agent: labelled "Player agent" on the info table.
+      const agentRaw = extractProfileField(html, ['Player&#039;s agent', "Player's agent", 'Player agent', 'Players&#039; agent']);
+      if (agentRaw && !/^-+$/.test(agentRaw) && !/^unknown$/i.test(agentRaw) && !/relatives/i.test(agentRaw)) {
+        agent = agentRaw;
+      }
+
+      // National team: TM shows a "Current international" row + a "National team" section.
+      if (/Current international[\s\S]{0,400}?(?:<img|<a[^>]*nationalteam)/i.test(html)
+          || /class="dataZusatzInfos"[\s\S]{0,4000}?(?:Junior international|Youth international|U-?\d{1,2})/i.test(html)
+          || /caps for\s+(?:the\s+)?[A-Za-z ]+ national team/i.test(description || '')) {
+        nationalTeam = true;
+      }
+    }
+  } catch { /* keep nulls */ }
+
+  const profile = { nationality, agent, nationalTeam };
+  tmProfileCache.set(id, profile);
   tmNationalityCache.set(id, nationality);
-  return nationality;
+  return profile;
 };
 
 const searchTransfermarktIds = async (name: string, max = 8): Promise<string[]> => {
@@ -337,8 +371,10 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
       const sim = stub
         ? (surnameOf(tmName) === parsedSurname ? 1 : nameSimilarity(surnameOf(tmName), parsedSurname))
         : nameSimilarity(tmName, rawName);
-      if (sim >= 0.85) score += 1;
-      else if (sim < 0.6 && !exactDob) score -= 1; // strong penalty for weak name match
+      if (sim >= 0.95) score += 3;      // near-exact full name: strong signal on its own
+      else if (sim >= 0.85) score += 2;
+      else if (sim >= 0.7) score += 1;
+      else if (sim < 0.55 && !exactDob) score -= 2; // strong penalty for weak name match
     }
 
     if (!best || score > best.score || (score === best.score && exactDob && !best.exactDob)) {
@@ -346,9 +382,11 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
     }
   }
 
-  // Accept threshold: exact DOB match, OR score ≥ 3 across other signals
-  // (nationality no longer contributes to scoring, so threshold is lower).
-  if (!best || (!best.exactDob && best.score < 3)) {
+  // Accept threshold: exact DOB match, OR score ≥ 2 across other signals.
+  // Threshold lowered so a strong name match alone (score 3) or name+position
+  // (score ≥ 3) is enough — otherwise TM never enriches from formation-only
+  // screenshots where DOB/nationality aren't visible.
+  if (!best || (!best.exactDob && best.score < 2)) {
     return { ...player, nationality: null, _needs_review: true };
   }
 
@@ -362,9 +400,11 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (d?.lifeDates?.age) next.age = d.lifeDates.age;
 
   const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
-  const profileNationality = await fetchTmProfileNationality(best.id);
+  const profile = await fetchTmProfile(best.id);
   const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
-  next.nationality = profileNationality || fallbackNationality || null;
+  next.nationality = profile.nationality || fallbackNationality || null;
+  if (profile.agent) next.agency = profile.agent;
+  if (profile.nationalTeam === true) next.national_team = true;
 
   const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
   const shortPos = canonicalPosition(TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || posLong);
