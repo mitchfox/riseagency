@@ -31,6 +31,18 @@ import { matchesQuery } from '@/lib/searchMatch';
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
+const extractTransfermarktUrl = (links: unknown): string | null => {
+  if (!Array.isArray(links)) return null;
+  for (const l of links) {
+    if (!l || typeof l !== 'object') continue;
+    const url = String((l as any).url || '').trim();
+    const label = String((l as any).label || '').trim();
+    if (!url) continue;
+    if (/transfermarkt/i.test(url) || /transfermarkt/i.test(label)) return url;
+  }
+  return null;
+};
+
 interface PlayerData {
   id: string;
   player_name: string;
