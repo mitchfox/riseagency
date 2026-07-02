@@ -556,6 +556,7 @@ serve(async (req) => {
       // Fetch existing players and filter in JS so we can also detect missing
       // Transfermarkt profile links inside the links JSONB array/object. PostgREST
       // cannot reliably express "links array does not contain a Transfermarkt URL".
+      // This now targets players missing DOB, nationality OR the Transfermarkt URL.
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
         .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, links')
