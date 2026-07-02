@@ -816,7 +816,9 @@ export default function ClubOutreachManager() {
               : r.manually_viewed_at ?? null;
             const targetLabel = (r.target_type ?? 'club') === 'agent'
               ? (r.agent_name || 'Agent')
-              : (r.club?.club_name || 'Club unknown');
+              : (r.target_type === 'general')
+                ? 'General Outreach'
+                : (r.club?.club_name || 'Club unknown');
             const playerNames = (r.link_players ?? [])
               .map((lp) => playerById.get(lp.player_id)?.name)
               .filter(Boolean)
@@ -844,7 +846,9 @@ export default function ClubOutreachManager() {
           <p className="text-sm text-muted-foreground">
             {mode === 'agent'
               ? "No agent outreach links yet. Create your first one to share a slick proposal with an agent."
-              : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
+              : mode === 'general'
+                ? "No general outreach links yet. Create one to share a proposal that isn't tied to a specific club or agent."
+                : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
           </p>
         </div>
       ) : (
