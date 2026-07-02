@@ -747,13 +747,13 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
     try {
       const { error } = await supabase
         .from("prospects")
-        .update({ stage: newStage })
+        .update({ stage: newStage, stage_manual_override: true })
         .eq("id", prospectId);
 
       if (error) throw error;
 
       setProspects(prev =>
-        prev.map(p => p.id === prospectId ? { ...p, stage: newStage as any } : p)
+        prev.map(p => p.id === prospectId ? { ...p, stage: newStage as any, stage_manual_override: true } : p)
       );
     } catch (error: any) {
       console.error("Error moving prospect:", error);
