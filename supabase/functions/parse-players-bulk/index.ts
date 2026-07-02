@@ -367,7 +367,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   next.nationality = profileNationality || fallbackNationality || null;
 
   const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
-  const shortPos = TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || null;
+  const shortPos = canonicalPosition(TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || posLong);
   if (shortPos) next.position = shortPos;
 
   const current = (d?.clubAssignments || []).find((a: any) => a?.type === 'current');
