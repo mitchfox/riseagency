@@ -424,6 +424,17 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
               </div>
             )}
             <div className="space-y-1"><Label className="text-xs">Notes</Label><BlurTextarea value={editForm.notes} onCommit={(v: string) => setEditForm((f: any) => ({ ...f, notes: v }))} rows={2} /></div>
+            {player.source === 'database' && (
+              <div className="space-y-1">
+                <Label className="text-xs">Transfermarkt URL</Label>
+                <Input
+                  value={editForm.transfermarkt_url || ''}
+                  onChange={(e) => setEditForm((f: any) => ({ ...f, transfermarkt_url: e.target.value }))}
+                  placeholder="https://www.transfermarkt.com/-/profil/spieler/..."
+                />
+                <p className="text-[10px] text-muted-foreground">Auto-filled by the Transfermarkt enricher when a match is found.</p>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button onClick={handleSaveEdit} className="flex-1">Save</Button>
               <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
