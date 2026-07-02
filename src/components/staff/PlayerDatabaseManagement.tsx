@@ -107,7 +107,7 @@ export const PlayerDatabaseActions = () => {
         >
           <RefreshCw className={`h-3.5 w-3.5 ${enriching ? 'animate-spin' : ''}`} />
           {enriching
-            ? `Enriching… ${progress?.updated ?? 0} filled${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
+            ? `Enriching… ${progress?.updated ?? 0} updated${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
             : 'Backfill from Transfermarkt'}
         </Button>
       </div>
