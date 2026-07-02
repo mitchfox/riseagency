@@ -663,6 +663,25 @@ export const PlayerDatabase = () => {
     const clubCountry = findClubCountry(player.current_club, clubCountryMap);
     const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
     switch (key) {
+      case 'transfermarkt':
+        return (
+          <TableCell key={key} className="py-1.5 text-center">
+            {player.transfermarkt_url ? (
+              <a
+                href={player.transfermarkt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Open on Transfermarkt"
+                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[#1a3a5c] text-white text-[9px] font-black tracking-tight hover:bg-[#245080] transition-colors"
+              >
+                TM
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-[10px]">-</span>
+            )}
+          </TableCell>
+        );
       case 'avatar':
         return (
           <TableCell key={key} className="py-1.5 pr-0">
