@@ -386,11 +386,11 @@ export default function ClubOutreachManager() {
     });
   }, [rows, q, playerById, mode]);
 
-  const proposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+  const proposalUrl = (shortId: string, targetType?: 'club' | 'agent' | 'general') =>
     targetType === 'agent'
       ? `${APP_BASE}/agents/${shortId}`
       : `${APP_BASE}/club-proposal/${shortId}`;
-  const externalProposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+  const externalProposalUrl = (shortId: string, targetType?: 'club' | 'agent' | 'general') =>
     targetType === 'agent'
       ? `${EXTERNAL_APP_BASE}/agents/${shortId}`
       : `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
@@ -408,7 +408,7 @@ export default function ClubOutreachManager() {
       || h.endsWith(".lovableproject.com")
       || h.endsWith(".lovable.dev");
   };
-  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent', externalUrl?: string) => {
+  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent' | 'general', externalUrl?: string) => {
     if (isLovablePreviewHost()) {
       const path = targetType === 'agent'
         ? `/agents/${shortId}`
@@ -421,7 +421,7 @@ export default function ClubOutreachManager() {
     openExternalUrl(externalUrl ?? externalProposalUrl(shortId, targetType));
   };
 
-  const copyLink = async (shortId: string, targetType?: 'club' | 'agent') => {
+  const copyLink = async (shortId: string, targetType?: 'club' | 'agent' | 'general') => {
     await navigator.clipboard.writeText(proposalUrl(shortId, targetType));
     toast.success("Link copied");
   };
