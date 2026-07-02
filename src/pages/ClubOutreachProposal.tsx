@@ -252,7 +252,7 @@ interface Payload {
     is_mandated?: boolean;
     key_details?: KeyDetailItem[] | null;
     section_order?: ProposalSectionKey[] | null;
-    target_type?: 'club' | 'agent';
+    target_type?: 'club' | 'agent' | 'general';
     agent_name?: string | null;
     agent_logo_url?: string | null;
     language?: string | null;
