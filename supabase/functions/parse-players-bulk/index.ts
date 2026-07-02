@@ -26,28 +26,16 @@ Rules:
 
 Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "shirt_number": number|null, "team_side": string|null, "name_is_stub": boolean, "notes": string|null } ] }`;
 
-const NATIONALITY_NAMES: Record<number, string> = {
-  189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
-  193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
-  75: 'Italy', 122: 'Netherlands', 136: 'Portugal', 24: 'Brazil',
-  9: 'Argentina', 125: 'Nigeria', 152: 'Senegal', 54: 'Ghana',
-  31: 'Cameroon', 68: 'Jamaica', 185: 'USA', 32: 'Canada',
-  14: 'Australia', 39: 'Belgium', 10: 'Armenia', 15: 'Austria',
-  22: 'Bosnia-Herzegovina', 25: 'Bulgaria', 34: 'Chile', 36: 'Colombia',
-  37: 'Costa Rica', 38: 'Croatia', 41: 'Czech Republic', 42: 'Denmark',
-  43: 'Ecuador', 44: 'Egypt', 46: 'Estonia', 48: 'Finland',
-  51: 'Gabon', 55: 'Greece', 57: 'Guinea', 59: 'Honduras',
-  60: 'Hungary', 62: 'Iceland', 63: 'Iran', 64: 'Iraq',
-  66: 'Ivory Coast', 67: 'Japan', 69: 'South Korea', 70: 'Kosovo',
-  72: 'Latvia', 76: 'Lithuania', 78: 'Luxembourg', 80: 'Mali',
-  84: 'Mexico', 86: 'Montenegro', 87: 'Morocco', 95: 'New Zealand',
-  100: 'Norway', 107: 'Paraguay', 108: 'Peru', 110: 'Poland',
-  113: 'DR Congo', 114: 'Romania', 115: 'Russia', 120: 'Serbia',
-  126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
-  141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
-  170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
-  52: 'Georgia', 11: 'Azerbaijan', 4: 'Albania', 79: 'Malta',
-  1: 'Afghanistan', 82: 'Moldova', 83: 'North Macedonia',
+// Transfermarkt's public API exposes numeric nationality IDs, but they do not
+// match the country-id list we previously used. That caused Croatian players
+// to be displayed as Costa Rican. Treat profile-page text as the source of
+// truth and use this tiny fallback only for IDs we have verified against the
+// API response and public profile metadata.
+const VERIFIED_TM_NATIONALITY_FALLBACK: Record<number, string> = {
+  36: 'Costa Rica',
+  37: 'Croatia',
+  83: 'Colombia',
+  157: 'Spain',
 };
 
 const POSITION_FAMILY: Record<string, 'GK' | 'DEF' | 'MID' | 'FWD'> = {
@@ -156,6 +144,56 @@ const TM_UA = 'Mozilla/5.0 (compatible; RiseBot/1.0)';
 const compNameCache = new Map<string, string>();
 const clubInfoCache = new Map<string, { club: string | null; competitionId: string | null }>();
 const tmPlayerCache = new Map<string, any>();
+const tmNationalityCache = new Map<string, string | null>();
+
+const decodeHtmlEntities = (value: string) => value
+  .replace(/&amp;/g, '&')
+  .replace(/&quot;/g, '"')
+  .replace(/&#39;|&apos;/g, "'")
+  .replace(/&nbsp;/g, ' ')
+  .trim();
+
+const cleanCountry = (value: unknown): string | null => {
+  const country = String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[.;:|]+$/g, '')
+    .trim();
+  if (!country || country.length < 3 || /^(unknown|n\/a|null|undefined)$/i.test(country)) return null;
+  return country;
+};
+
+const extractMetaContent = (html: string, name: string): string | null => {
+  const re = new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']*)["']`, 'i');
+  const match = html.match(re);
+  return match?.[1] ? decodeHtmlEntities(match[1]) : null;
+};
+
+const fetchTmProfileNationality = async (id: string): Promise<string | null> => {
+  if (tmNationalityCache.has(id)) return tmNationalityCache.get(id)!;
+
+  let nationality: string | null = null;
+  try {
+    const res = await fetch(`https://www.transfermarkt.com/-/profil/spieler/${id}`, {
+      headers: { 'User-Agent': TM_UA, 'Accept-Language': 'en' },
+      redirect: 'follow',
+    });
+    if (res.ok) {
+      const html = await res.text();
+      const description = extractMetaContent(html, 'description');
+      const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
+      nationality = cleanCountry(fromMatch?.[1]);
+
+      if (!nationality) {
+        const keywords = extractMetaContent(html, 'keywords');
+        const lastKeyword = keywords?.split(',').map((part) => part.trim()).filter(Boolean).pop();
+        nationality = cleanCountry(lastKeyword);
+      }
+    }
+  } catch { /* keep null */ }
+
+  tmNationalityCache.set(id, nationality);
+  return nationality;
+};
 
 const searchTransfermarktIds = async (name: string, max = 8): Promise<string[]> => {
   try {
@@ -301,9 +339,9 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (d?.lifeDates?.age) next.age = d.lifeDates.age;
 
   const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
-  const natName = NATIONALITY_NAMES[tmNatId];
-  if (natName) next.nationality = natName;
-  else next.nationality = null;
+  const profileNationality = await fetchTmProfileNationality(best.id);
+  const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
+  next.nationality = profileNationality || fallbackNationality || null;
 
   const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
   const shortPos = TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || null;
