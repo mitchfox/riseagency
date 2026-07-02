@@ -56,6 +56,7 @@ export const PlayerDatabaseActions = () => {
         `Enrichment complete — updated ${totalUpdated} of ${totalProcessed} scanned`,
         { id: toastId },
       );
+      if (totalUpdated > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
     } catch (err) {
       console.error('enrich failed', err);
       toast.error(`Enrichment failed: ${(err as Error).message || 'unknown error'}`, { id: toastId });
