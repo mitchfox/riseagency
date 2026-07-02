@@ -339,9 +339,9 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (d?.lifeDates?.age) next.age = d.lifeDates.age;
 
   const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
-  const natName = NATIONALITY_NAMES[tmNatId];
-  if (natName) next.nationality = natName;
-  else next.nationality = null;
+  const profileNationality = await fetchTmProfileNationality(best.id);
+  const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
+  next.nationality = profileNationality || fallbackNationality || null;
 
   const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
   const shortPos = TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || null;
