@@ -614,12 +614,21 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
 
       const { data: playersData, error: plError } = await supabase
         .from("players")
-        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer")
+        .select("id, name, position, image_url, club, club_logo, nationality, date_of_birth, email, representation_status, has_representation_offer, outreach_response_status")
         .or("representation_status.eq.prospect,has_representation_offer.eq.true");
 
       if (plError) throw plError;
 
       const playerById = new Map((playersData || []).map((player) => [player.id, player]));
+
+      // Map a player's outreach response into a prospect stage. If nothing
+      // matches (or the player hasn't responded), fall back to 'scouted' so
+      // players with an outreach start on the board at that stage.
+      const deriveStageFromResponse = (status: string | null | undefined): 'scouted' | 'connected' | 'rapport_building' => {
+        if (status === 'replied') return 'connected';
+        if (status === 'interested') return 'rapport_building';
+        return 'scouted';
+      };
 
       const fromProspects: Prospect[] = (prospectsData || []).map((p) => {
         const linkedPlayer = p.linked_player_id ? playerById.get(p.linked_player_id) : undefined;
@@ -636,6 +645,20 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
           _source: 'prospects' as const,
         } as Prospect;
       });
+
+      // Auto-sync stage from player outreach response, unless the user has
+      // manually moved this prospect (stage_manual_override = true). Fire
+      // updates in the background so the board renders fast.
+      for (const p of fromProspects) {
+        if (p.stage_manual_override) continue;
+        const linked = p.linked_player_id ? playerById.get(p.linked_player_id) : null;
+        if (!linked) continue;
+        const desired = deriveStageFromResponse((linked as any).outreach_response_status);
+        if (desired !== p.stage) {
+          p.stage = desired;
+          supabase.from("prospects").update({ stage: desired }).eq("id", p.id).then(() => {});
+        }
+      }
 
       const linkedPlayerIds = new Set(fromProspects.filter((p) => p.linked_player_id).map((p) => p.linked_player_id));
 
@@ -666,7 +689,7 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
             nationality: p.nationality,
             current_club: p.club,
             age_group: ageGroup,
-            stage: 'scouted' as const,
+            stage: deriveStageFromResponse((p as any).outreach_response_status),
             profile_image_url: p.image_url,
             club_logo_url: p.club_logo || null,
             contact_email: null,
