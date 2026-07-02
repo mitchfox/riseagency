@@ -275,7 +275,7 @@ export const PlayerDatabase = () => {
   const fetchAllPlayers = async () => {
     try {
       const [databaseResult, scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
-        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status').range(0, 4999),
+        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
