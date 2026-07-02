@@ -814,9 +814,10 @@ export default function ClubOutreachManager() {
             const lastVisit = vs.length
               ? vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b)).visited_at
               : r.manually_viewed_at ?? null;
-            const targetLabel = (r.target_type ?? 'club') === 'agent'
+            const tt = (r.target_type ?? 'club') as string;
+            const targetLabel = tt === 'agent'
               ? (r.agent_name || 'Agent')
-              : (r.target_type === 'general')
+              : tt === 'general'
                 ? 'General Outreach'
                 : (r.club?.club_name || 'Club unknown');
             const playerNames = (r.link_players ?? [])
