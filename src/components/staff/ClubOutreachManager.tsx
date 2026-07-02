@@ -806,7 +806,7 @@ export default function ClubOutreachManager() {
 
       {analyticsOpen && (
         <OutreachAnalyticsPanel
-          title={mode === 'agent' ? 'Agent Outreach Analytics' : 'Club Outreach Analytics'}
+          title={mode === 'agent' ? 'Agent Outreach Analytics' : mode === 'general' ? 'General Outreach Analytics' : 'Club Outreach Analytics'}
           onClose={() => setAnalyticsOpen(false)}
           onUpdateResponse={setResponse}
           rows={filtered.map<AnalyticsRow>((r) => {
