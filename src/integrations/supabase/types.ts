@@ -7282,6 +7282,7 @@ export type Database = {
           projected_revenue: number | null
           revenue_currency: string | null
           stage: string
+          stage_manual_override: boolean
           updated_at: string
         }
         Insert: {
@@ -7305,6 +7306,7 @@ export type Database = {
           projected_revenue?: number | null
           revenue_currency?: string | null
           stage?: string
+          stage_manual_override?: boolean
           updated_at?: string
         }
         Update: {
@@ -7328,6 +7330,7 @@ export type Database = {
           projected_revenue?: number | null
           revenue_currency?: string | null
           stage?: string
+          stage_manual_override?: boolean
           updated_at?: string
         }
         Relationships: [

@@ -169,7 +169,7 @@ interface OutreachRow {
   suggested_agent_note?: string | null;
   link_players?: LinkPlayerRow[];
   club?: ClubLite | null;
-  target_type?: 'club' | 'agent';
+  target_type?: 'club' | 'agent' | 'general';
   agent_name?: string | null;
   agent_logo_url?: string | null;
   language?: string | null;
@@ -186,7 +186,7 @@ interface OutreachRow {
   response_at?: string | null;
 }
 
-type OutreachMode = 'club' | 'agent';
+type OutreachMode = 'club' | 'agent' | 'general';
 
 const OUTREACH_LANGUAGES: { code: string; label: string }[] = [
   { code: "en", label: "English" },
@@ -386,11 +386,11 @@ export default function ClubOutreachManager() {
     });
   }, [rows, q, playerById, mode]);
 
-  const proposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+  const proposalUrl = (shortId: string, targetType?: 'club' | 'agent' | 'general') =>
     targetType === 'agent'
       ? `${APP_BASE}/agents/${shortId}`
       : `${APP_BASE}/club-proposal/${shortId}`;
-  const externalProposalUrl = (shortId: string, targetType?: 'club' | 'agent') =>
+  const externalProposalUrl = (shortId: string, targetType?: 'club' | 'agent' | 'general') =>
     targetType === 'agent'
       ? `${EXTERNAL_APP_BASE}/agents/${shortId}`
       : `${EXTERNAL_APP_BASE}/club-proposal/${shortId}`;
@@ -408,7 +408,7 @@ export default function ClubOutreachManager() {
       || h.endsWith(".lovableproject.com")
       || h.endsWith(".lovable.dev");
   };
-  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent', externalUrl?: string) => {
+  const openProposalLink = (shortId: string, targetType?: 'club' | 'agent' | 'general', externalUrl?: string) => {
     if (isLovablePreviewHost()) {
       const path = targetType === 'agent'
         ? `/agents/${shortId}`
@@ -421,7 +421,7 @@ export default function ClubOutreachManager() {
     openExternalUrl(externalUrl ?? externalProposalUrl(shortId, targetType));
   };
 
-  const copyLink = async (shortId: string, targetType?: 'club' | 'agent') => {
+  const copyLink = async (shortId: string, targetType?: 'club' | 'agent' | 'general') => {
     await navigator.clipboard.writeText(proposalUrl(shortId, targetType));
     toast.success("Link copied");
   };
@@ -761,10 +761,11 @@ export default function ClubOutreachManager() {
         <OutreachStrategyTab players={players} onDraftsCreated={() => { setTopTab('outreach'); load(); }} />
       ) : (
       <>
-      <div className="grid grid-cols-2 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
+      <div className="grid grid-cols-3 w-full sm:inline-flex sm:w-auto rounded-lg border border-border bg-muted/30 p-1 gap-1">
         {([
           { v: 'club', label: 'Club Outreach' },
           { v: 'agent', label: 'Agent Outreach' },
+          { v: 'general', label: 'General' },
         ] as { v: OutreachMode; label: string }[]).map((t) => (
           <button
             key={t.v}
@@ -781,11 +782,11 @@ export default function ClubOutreachManager() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 items-stretch text-center sm:text-left">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : mode === 'general' ? 'Search by player' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
           <Button onClick={openNewPanel} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
+            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : mode === 'general' ? 'New General Outreach' : 'New Outreach'}
           </Button>
           <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
@@ -805,7 +806,7 @@ export default function ClubOutreachManager() {
 
       {analyticsOpen && (
         <OutreachAnalyticsPanel
-          title={mode === 'agent' ? 'Agent Outreach Analytics' : 'Club Outreach Analytics'}
+          title={mode === 'agent' ? 'Agent Outreach Analytics' : mode === 'general' ? 'General Outreach Analytics' : 'Club Outreach Analytics'}
           onClose={() => setAnalyticsOpen(false)}
           onUpdateResponse={setResponse}
           rows={filtered.map<AnalyticsRow>((r) => {
@@ -813,9 +814,12 @@ export default function ClubOutreachManager() {
             const lastVisit = vs.length
               ? vs.reduce((a, b) => (new Date(a.visited_at) > new Date(b.visited_at) ? a : b)).visited_at
               : r.manually_viewed_at ?? null;
-            const targetLabel = (r.target_type ?? 'club') === 'agent'
+            const tt = (r.target_type ?? 'club') as string;
+            const targetLabel = tt === 'agent'
               ? (r.agent_name || 'Agent')
-              : (r.club?.club_name || 'Club unknown');
+              : tt === 'general'
+                ? 'General Outreach'
+                : (r.club?.club_name || 'Club unknown');
             const playerNames = (r.link_players ?? [])
               .map((lp) => playerById.get(lp.player_id)?.name)
               .filter(Boolean)
@@ -843,7 +847,9 @@ export default function ClubOutreachManager() {
           <p className="text-sm text-muted-foreground">
             {mode === 'agent'
               ? "No agent outreach links yet. Create your first one to share a slick proposal with an agent."
-              : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
+              : mode === 'general'
+                ? "No general outreach links yet. Create one to share a proposal that isn't tied to a specific club or agent."
+                : "No club outreach links yet. Create your first one to share a slick proposal with a club."}
           </p>
         </div>
       ) : (
@@ -1178,6 +1184,7 @@ function StatusToggle({ status, onChange }: { status: OutreachStatus; onChange: 
 
 function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClubAdded, editing, defaultFit, defaultSeasonDataMode, defaultVideoMode, mode = 'club', prefill }: { open: boolean; onClose: () => void; players: PlayerLite[]; clubs: ClubLite[]; allRows: OutreachRow[]; onSaved: () => void; onClubAdded: (c: ClubLite) => void; editing?: OutreachRow; defaultFit?: string; defaultSeasonDataMode?: 'popup' | 'link'; defaultVideoMode?: 'all' | 'first' | 'custom'; mode?: OutreachMode; prefill?: { clubId?: string; clubName?: string; country?: string | null; imageUrl?: string | null; preparedFor?: string; forceCreateClub?: boolean }; }) {
   const isAgent = mode === 'agent';
+  const isGeneral = mode === 'general';
   const [clubId, setClubId] = useState(editing?.club_id ?? prefill?.clubId ?? "");
   const [agentName, setAgentName] = useState(editing?.agent_name ?? "");
   const [agentLogoUrl, setAgentLogoUrl] = useState(editing?.agent_logo_url ?? "");
@@ -1621,7 +1628,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   };
 
   const save = async () => {
-    if (isAgent) {
+    if (isGeneral) {
+      // No club/agent required
+    } else if (isAgent) {
       if (!agentName.trim()) return toast.error("Agent name required");
     } else if (!clubId) {
       return toast.error("Pick a club");
@@ -1630,8 +1639,8 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     setSaving(true);
     try {
       const payload: any = {
-        target_type: isAgent ? 'agent' : 'club',
-        club_id: isAgent ? null : clubId,
+        target_type: isGeneral ? 'general' : (isAgent ? 'agent' : 'club'),
+        club_id: isGeneral || isAgent ? null : clubId,
         agent_name: isAgent ? agentName.trim() : null,
         agent_logo_url: isAgent ? (agentLogoUrl.trim() || null) : null,
         player_id: entries[0]?.player_id ?? null,
@@ -1666,7 +1675,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         const { data: u } = await supabase.auth.getUser();
         let inserted = false;
         for (let attempt = 0; attempt < 5 && !inserted; attempt++) {
-          const short = isAgent ? makeShortId() : makeClubShortId(selectedClub?.club_name);
+          const short = isAgent || isGeneral ? makeShortId() : makeClubShortId(selectedClub?.club_name);
           const { data, error } = await supabase
             .from("club_outreach_links")
             .insert({ short_id: short, ...payload, created_by: u.user?.id ?? null })
@@ -1747,11 +1756,13 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         <div>
           <h3 className="text-lg font-semibold">
             {editing
-              ? (isAgent ? "Edit Agent Outreach" : "Edit Club Outreach")
-              : (isAgent ? "New Agent Outreach" : "New Club Outreach")}
+              ? (isAgent ? "Edit Agent Outreach" : isGeneral ? "Edit General Outreach" : "Edit Club Outreach")
+              : (isAgent ? "New Agent Outreach" : isGeneral ? "New General Outreach" : "New Club Outreach")}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {isAgent
+            {isGeneral
+              ? "Build a general proposal that isn't tied to a specific club or agent. Add the players you want to include."
+              : isAgent
               ? "Build a personalised proposal for an agent. Add one or many players, each with their own position and fit note."
               : "Build a personalised proposal for a club. Add one or many players, each with their own position and fit note."}
           </p>
@@ -1759,7 +1770,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="h-4 w-4" /></Button>
       </div>
       <div className="space-y-6">
-          {isAgent ? (
+          {isGeneral ? null : isAgent ? (
             <div className="space-y-3">
               <div>
                 <Label>Agent name</Label>
@@ -2408,7 +2419,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         </div>
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6 pt-4 border-t border-border">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+        <Button onClick={save} disabled={saving || (isGeneral ? false : isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
           {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
         </Button>
       </div>
