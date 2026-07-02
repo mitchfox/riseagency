@@ -153,6 +153,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   const [offerImages, setOfferImages] = useState<Record<string, string>>({});
   const [uploadingImg, setUploadingImg] = useState(false);
   const [savingOffer, setSavingOffer] = useState(false);
+  const [hasOfferLive, setHasOfferLive] = useState(false);
 
   // Pipeline stage / category — editable from inside the panel
   const [stage, setStage] = useState<string>(stageFromRow(row.response_status, row.messaged));
@@ -176,8 +177,8 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   const offerSlug = slugify(name || row.player_name);
   const offerUrl = offerSlug ? `https://risefootballagency.com/risewithus/${offerSlug}` : "";
 
-  // Load existing player record + offer settings.
-  // Starred players already have a representation offer — we just edit the details on it.
+  // Load existing player record + offer settings. Do not create or reactivate
+  // player outreach drafts just because this panel was opened.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -190,28 +191,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         .limit(1)
         .maybeSingle();
 
-      let resolvedId: string | null = playerData?.id ?? null;
-
-      // 2) If no player record exists yet, create one so the offer link is real immediately.
-      if (!resolvedId) {
-        const ageGuess = ageFromDob(row.date_of_birth) ?? row.age ?? null;
-        const { data: created } = await (supabase as any).from("players").insert({
-          name: row.player_name.trim(),
-          representation_status: "prospect",
-          has_representation_offer: true,
-          position: row.position || "Other",
-          nationality: row.nationality || "Unknown",
-          club: row.current_club || null,
-          date_of_birth: row.date_of_birth || null,
-          age: ageGuess ?? 0,
-        }).select("id").maybeSingle();
-        resolvedId = created?.id ?? null;
-      } else if (!playerData.has_representation_offer) {
-        // Make sure the link is live for any starred player.
-        await (supabase as any).from("players")
-          .update({ has_representation_offer: true })
-          .eq("id", resolvedId);
-      }
+      const resolvedId: string | null = playerData?.id ?? null;
 
       let resolvedProfileImage = playerData?.image_url || "";
       if (resolvedId && !resolvedProfileImage) {
@@ -234,6 +214,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
 
       if (cancelled) return;
       setPlayerId(resolvedId);
+      setHasOfferLive(!!playerData?.has_representation_offer);
       if (playerData) {
         setName(playerData.name || row.player_name);
         setPosition(playerData.position || row.position || "");
@@ -243,6 +224,14 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
         setDob(playerData.date_of_birth || row.date_of_birth || "");
         setImageUrl(resolvedProfileImage);
         setLanguage(playerData.portal_language || "en");
+      } else {
+        setName(row.player_name || "");
+        setPosition(row.position || "");
+        setNationality(row.nationality || "");
+        setClub(row.current_club || "");
+        setEmail("");
+        setDob(row.date_of_birth || "");
+        setImageUrl("");
       }
 
       // 3) Offer settings (images) + portal settings (under18 + personalised message)
@@ -339,13 +328,33 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
   };
 
   const saveOfferDetails = async () => {
-    if (!playerId) { toast.error("Player record not ready"); return; }
+    if (!name.trim()) { toast.error("Name is required"); return; }
     setSavingOffer(true);
     try {
+      let resolvedPlayerId = playerId;
+      if (!resolvedPlayerId) {
+        const ageVal = ageFromDob(dob) ?? row.age ?? 0;
+        const { data: created, error: createError } = await (supabase as any).from("players").insert({
+          name: name.trim(),
+          representation_status: "prospect",
+          has_representation_offer: true,
+          position: position || "Other",
+          nationality: nationality || "Unknown",
+          club: club || null,
+          email: email || null,
+          date_of_birth: dob || null,
+          age: ageVal,
+          image_url: imageUrl || null,
+        }).select("id").single();
+        if (createError || !created?.id) throw createError || new Error("Could not create player record");
+        resolvedPlayerId = created.id;
+        setPlayerId(resolvedPlayerId);
+      }
+
       const { data: existingSettings } = await (supabase as any)
         .from("player_offer_settings")
         .select("intro_media")
-        .eq("player_id", playerId)
+        .eq("player_id", resolvedPlayerId)
         .maybeSingle();
       const existingIntro = Array.isArray(existingSettings?.intro_media)
         ? (existingSettings.intro_media as any[])
@@ -363,18 +372,19 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
       await Promise.all([
         (supabase as any).from("players")
           .update({ portal_language: language, has_representation_offer: true })
-          .eq("id", playerId),
+          .eq("id", resolvedPlayerId),
         (supabase as any).from("player_offer_settings").upsert({
-          player_id: playerId,
+          player_id: resolvedPlayerId,
           section_images: offerImages,
           intro_media: introMedia,
         }, { onConflict: "player_id" }),
         (supabase as any).from("player_portal_settings").upsert({
-          player_id: playerId,
+          player_id: resolvedPlayerId,
           rise_with_us_under18: under18,
           representation_subtitle_secondary: personalMessage.trim() || null,
         }, { onConflict: "player_id" }),
       ]);
+      setHasOfferLive(true);
       toast.success("Offer details saved");
     } catch (e: any) {
       toast.error("Could not save offer details", { description: e?.message });
@@ -462,7 +472,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to pipeline
           </Button>
           <div className="text-lg font-semibold truncate">{row.player_name}</div>
-          <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>
+          {hasOfferLive && <Badge variant="outline" className="border-primary/60 text-primary">Offer live</Badge>}
           <div className="flex items-center gap-1.5">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Stage</Label>
             <Select value={stage} onValueChange={changeStage} disabled={savingStage}>
@@ -477,7 +487,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
             </Select>
           </div>
         </div>
-        {offerUrl && (
+        {hasOfferLive && offerUrl && (
           <div className="flex items-center gap-1.5">
             <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(offerUrl); toast.success("Copied"); }}>
               <Copy className="h-3.5 w-3.5 mr-1" /> Copy link
@@ -555,7 +565,7 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
             <div className="text-sm text-muted-foreground py-4">Loading…</div>
           ) : (
             <>
-              {offerUrl && (
+              {hasOfferLive && offerUrl && (
                 <div className="p-2.5 rounded-md border border-border bg-muted/40 flex items-center gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Live link</div>
@@ -567,6 +577,11 @@ export const InlinePlayerActionsPanel = ({ row, type, onBack }: Props) => {
                   <Button size="sm" variant="outline" onClick={() => window.open(offerUrl, "_blank", "noopener,noreferrer")}>
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
+                </div>
+              )}
+              {!hasOfferLive && (
+                <div className="p-2.5 rounded-md border border-border bg-muted/40 text-xs text-muted-foreground">
+                  Save offer details to create the player outreach link.
                 </div>
               )}
 

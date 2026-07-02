@@ -2081,14 +2081,14 @@ const RiseWithUs = () => {
       let { data, error } = await supabase
         .from("players")
         .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
-        .or("has_representation_offer.eq.true,representation_status.eq.prospect")
+        .eq("has_representation_offer", true)
         .ilike("name", searchName)
         .maybeSingle();
       if (!data) {
         const { data: candidates } = await supabase
           .from("players")
           .select("id, name, position, image_url, club, nationality, portal_language, has_representation_offer, representation_status, fit_score")
-          .or("has_representation_offer.eq.true,representation_status.eq.prospect");
+          .eq("has_representation_offer", true);
         data = (candidates || []).find((c: any) => normalize(c.name || "") === target) || null;
         error = null as any;
       }
