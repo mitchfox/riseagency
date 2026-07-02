@@ -643,7 +643,7 @@ export const PlayerDatabase = () => {
 
   // Dynamic column renderers
   const orderedVisibleKeys = [
-    ...(settings.isVisible('transfermarkt') ? ['transfermarkt'] : []),
+    'transfermarkt',
     ...settings.columnOrder.filter(k => k !== 'transfermarkt' && settings.isVisible(k)),
   ];
 
