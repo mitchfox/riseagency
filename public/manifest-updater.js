@@ -12,6 +12,9 @@
     if (path.startsWith('/staff')) {
       return { manifest: '/manifest-staff.json', title: 'RISE Staff Portal' };
     }
+    if (path.startsWith('/investors-portal')) {
+      return { manifest: '/manifest-investors.json', title: 'RISE Investor Portal' };
+    }
     return { manifest: '/manifest.json', title: 'RISE Football Agency' };
   };
 
