@@ -31,6 +31,18 @@ import { matchesQuery } from '@/lib/searchMatch';
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
+const extractTransfermarktUrl = (links: unknown): string | null => {
+  if (!Array.isArray(links)) return null;
+  for (const l of links) {
+    if (!l || typeof l !== 'object') continue;
+    const url = String((l as any).url || '').trim();
+    const label = String((l as any).label || '').trim();
+    if (!url) continue;
+    if (/transfermarkt/i.test(url) || /transfermarkt/i.test(label)) return url;
+  }
+  return null;
+};
+
 interface PlayerData {
   id: string;
   player_name: string;
@@ -46,6 +58,7 @@ interface PlayerData {
   created_at?: string;
   profile_image_url?: string | null;
   club_logo_url?: string | null;
+  transfermarkt_url?: string | null;
   parents_name?: string | null;
   parent_contact?: string | null;
   parent_approval?: boolean;
@@ -124,6 +137,7 @@ const getPositionOrder = (position: string | null): number => {
 };
 
 const DB_COLUMNS: ColumnConfig[] = [
+  { key: 'transfermarkt', label: 'TM', defaultVisible: true },
   { key: 'avatar', label: 'Avatar', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
   { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
@@ -273,7 +287,7 @@ export const PlayerDatabase = () => {
   const fetchAllPlayers = async () => {
     try {
       const [databaseResult, scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
-        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status').range(0, 4999),
+        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
@@ -348,6 +362,7 @@ export const PlayerDatabase = () => {
             created_at: player.created_at,
             profile_image_url: player.image_url,
             club_logo_url: player.club_logo || getClubLogo(player.club),
+            transfermarkt_url: extractTransfermarktUrl((player as any).links),
             messaged: !!player.has_representation_offer || player.offer_status === 'sent',
             response_received: !!player.outreach_response_status,
           };
@@ -624,6 +639,7 @@ export const PlayerDatabase = () => {
       </TableHead>
     );
     switch (key) {
+      case 'transfermarkt': return plainHeader('TM', 'w-10 text-center');
       case 'avatar': return plainHeader('', 'w-12');
       case 'fit': return sortableHeader('FIT', 'fit_score', 'w-12 text-center');
       case 'eligibility': return plainHeader('', 'w-10');
@@ -647,6 +663,25 @@ export const PlayerDatabase = () => {
     const clubCountry = findClubCountry(player.current_club, clubCountryMap);
     const clubRatingVal = findClubRating(player.current_club, clubRatings, player.source === 'youth_outreach');
     switch (key) {
+      case 'transfermarkt':
+        return (
+          <TableCell key={key} className="py-1.5 text-center">
+            {player.transfermarkt_url ? (
+              <a
+                href={player.transfermarkt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Open on Transfermarkt"
+                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[#1a3a5c] text-white text-[9px] font-black tracking-tight hover:bg-[#245080] transition-colors"
+              >
+                TM
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-[10px]">-</span>
+            )}
+          </TableCell>
+        );
       case 'avatar':
         return (
           <TableCell key={key} className="py-1.5 pr-0">

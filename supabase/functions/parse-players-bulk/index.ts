@@ -519,7 +519,7 @@ serve(async (req) => {
       // Scouted / Fuel For Football players (excluded across the app).
       const { data: candidates, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, representation_status')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, representation_status, links')
         .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
         .not('representation_status', 'in', '("Scouted","Fuel For Football")')
         .order('created_at', { ascending: false })
@@ -560,6 +560,17 @@ serve(async (req) => {
           if (!row.league && matched.league) { patch.league = matched.league; fields.push('league'); }
           if (!row.age && matched.age) { patch.age = matched.age; fields.push('age'); }
           if (row.national_team !== true && matched.national_team === true) { patch.national_team = true; fields.push('national_team'); }
+
+          // Add Transfermarkt profile link if we matched an id and one isn't already stored.
+          if (matched.transfermarkt_id) {
+            const existingLinks: Array<{ label?: string; url?: string }> = Array.isArray(row.links) ? row.links : [];
+            const hasTm = existingLinks.some((l) => /transfermarkt/i.test(String(l?.url || '')) || /transfermarkt/i.test(String(l?.label || '')));
+            if (!hasTm) {
+              const tmUrl = `https://www.transfermarkt.com/-/profil/spieler/${matched.transfermarkt_id}`;
+              patch.links = [...existingLinks, { label: 'Transfermarkt', url: tmUrl }];
+              fields.push('transfermarkt_url');
+            }
+          }
 
           if (!Object.keys(patch).length) {
             return { id: row.id, name: row.name, updated: false, fields: [], reason: 'nothing_to_fill' };
