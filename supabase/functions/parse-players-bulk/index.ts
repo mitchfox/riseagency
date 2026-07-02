@@ -471,6 +471,10 @@ serve(async (req) => {
       }
     }
 
+    // Final pass: coerce every position to one of the 10 canonical codes so
+    // the player DB filter and edit dropdown stay in sync.
+    players = players.map((p: any) => ({ ...p, position: canonicalPosition(p?.position) }));
+
     return new Response(JSON.stringify({ players }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('parse-players-bulk error', e);
