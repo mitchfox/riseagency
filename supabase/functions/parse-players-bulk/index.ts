@@ -13,6 +13,7 @@ const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of 
 Rules:
 - Use UK English.
 - Never invent a date of birth, club or league if not present in the source or supplied context; leave null.
+- NATIONALITY: only set nationality if the country name is written in TEXT in the source (e.g. "Croatia", "CRO"). NEVER guess nationality from a flag icon, jersey colour or club badge — flags are frequently misread. If no country text is present, leave nationality null.
 - Position must be a recognised football abbreviation.
 - If the screenshot is a formation graphic, ALWAYS infer positions from each player's spatial role even when no position label is printed. Read the pitch like a football line-up: keeper closest to goal, centre backs central in the defensive line, full backs wide, holding midfielders behind central/attacking midfielders, wingers wide high, striker/centre forward highest central. Position must never be null when a formation is visible.
 - Formation graphics often show TWO teams split by a vertical halfway line. Treat each half as its own team: names on the left half are team_side "left", names on the right half are team_side "right". Each team has its own goalkeeper, defence, midfield and attack — do not merge them.
@@ -232,7 +233,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (!query || query.length < 2) return { ...player, _needs_review: true };
 
   const ids = await searchTransfermarktIds(query);
-  if (!ids.length) return { ...player, _needs_review: true };
+  if (!ids.length) return { ...player, nationality: null, _needs_review: true };
 
   const parsedDob = hasValue(player.date_of_birth) ? String(player.date_of_birth).slice(0, 10) : null;
   const parsedYear = parsedDob ? parsedDob.slice(0, 4) : null;
@@ -263,12 +264,10 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
     if (parsedDob && tmDob && tmDob.slice(0, 10) === parsedDob) { score += 3; exactDob = true; }
     else if (parsedYear && tmDob && tmDob.slice(0, 4) === parsedYear) score += 2;
 
-    if (parsedNat) {
-      const nat1 = NATIONALITY_NAMES[tmNatId] ? normName(NATIONALITY_NAMES[tmNatId]) : '';
-      const nat2 = NATIONALITY_NAMES[tmNatId2] ? normName(NATIONALITY_NAMES[tmNatId2]) : '';
-      if (nat1 && (nat1 === parsedNat || nat1.includes(parsedNat) || parsedNat.includes(nat1))) score += 2;
-      else if (nat2 && (nat2 === parsedNat || nat2.includes(parsedNat) || parsedNat.includes(nat2))) score += 2;
-    }
+    // Nationality is intentionally NOT used as a scoring signal — vision reads
+    // of flags/badges are too unreliable and were causing wrong matches (e.g.
+    // Croatian players tagged as Costa Rican from a misread flag). TM is the
+    // sole source of truth for nationality.
 
     if (parsedFamily && tmFamily && parsedFamily === tmFamily) score += 1;
     if (parsedAge && tmAge && Math.abs(parsedAge - tmAge) <= 1) score += 1;
@@ -286,9 +285,10 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
     }
   }
 
-  // Accept threshold: exact DOB match, OR score ≥ 4 across other signals
-  if (!best || (!best.exactDob && best.score < 4)) {
-    return { ...player, _needs_review: true };
+  // Accept threshold: exact DOB match, OR score ≥ 3 across other signals
+  // (nationality no longer contributes to scoring, so threshold is lower).
+  if (!best || (!best.exactDob && best.score < 3)) {
+    return { ...player, nationality: null, _needs_review: true };
   }
 
   const d = best.data;
@@ -303,6 +303,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
   const natName = NATIONALITY_NAMES[tmNatId];
   if (natName) next.nationality = natName;
+  else next.nationality = null;
 
   const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
   const shortPos = TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || null;
