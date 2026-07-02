@@ -500,7 +500,97 @@ const runWithConcurrency = async <T, R>(items: T[], limit: number, worker: (item
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
-    const { text, images, instruction } = await req.json() as { text?: string; images?: ImageInput[]; instruction?: string };
+    const body = await req.json() as { text?: string; images?: ImageInput[]; instruction?: string; mode?: string; limit?: number };
+    const { text, images, instruction, mode } = body;
+
+    // Enrichment mode: scan existing players for missing DOB/nationality and
+    // backfill from Transfermarkt without touching already-set fields.
+    if (mode === 'enrich') {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (!supabaseUrl || !serviceKey) {
+        return new Response(JSON.stringify({ error: 'Backend not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const limit = Math.min(Math.max(Number(body.limit) || 15, 1), 50);
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // Fetch candidates missing a key detail (DOB or nationality). Nationality is
+      // NOT NULL in the schema so we also treat 'Unknown'/'' as missing. Skip
+      // Scouted / Fuel For Football players (excluded across the app).
+      const { data: candidates, error: fetchErr } = await supabase
+        .from('players')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, representation_status')
+        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
+        .not('representation_status', 'in', '("Scouted","Fuel For Football")')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (fetchErr) {
+        return new Response(JSON.stringify({ error: fetchErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const { count: remainingBefore } = await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true })
+        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
+        .not('representation_status', 'in', '("Scouted","Fuel For Football")');
+
+      const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string }> = [];
+
+      const workers = await runWithConcurrency(candidates || [], 3, async (row: any) => {
+        try {
+          const matched = await matchOnTransfermarkt({
+            name: row.name,
+            position: row.position,
+            nationality: (row.nationality && !/^unknown$/i.test(row.nationality)) ? row.nationality : null,
+            date_of_birth: row.date_of_birth,
+            age: row.age,
+          });
+          if (matched?._needs_review) {
+            return { id: row.id, name: row.name, updated: false, fields: [], reason: 'no_match' };
+          }
+
+          const patch: Record<string, unknown> = {};
+          const fields: string[] = [];
+          // Only fill missing fields — never overwrite existing values.
+          if (!row.date_of_birth && matched.date_of_birth) { patch.date_of_birth = matched.date_of_birth; fields.push('date_of_birth'); }
+          if ((!row.nationality || /^unknown$/i.test(row.nationality)) && matched.nationality) { patch.nationality = matched.nationality; fields.push('nationality'); }
+          if ((!row.position || !CANONICAL_POSITIONS.has(String(row.position).toUpperCase())) && matched.position) { patch.position = matched.position; fields.push('position'); }
+          if (!row.club && matched.club) { patch.club = matched.club; fields.push('club'); }
+          if (!row.league && matched.league) { patch.league = matched.league; fields.push('league'); }
+          if (!row.age && matched.age) { patch.age = matched.age; fields.push('age'); }
+          if (row.national_team !== true && matched.national_team === true) { patch.national_team = true; fields.push('national_team'); }
+
+          if (!Object.keys(patch).length) {
+            return { id: row.id, name: row.name, updated: false, fields: [], reason: 'nothing_to_fill' };
+          }
+
+          const { error: updErr } = await supabase.from('players').update(patch).eq('id', row.id);
+          if (updErr) {
+            return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
+          }
+          return { id: row.id, name: row.name, updated: true, fields };
+        } catch (err) {
+          return { id: row.id, name: row.name, updated: false, fields: [], reason: (err as Error).message };
+        }
+      });
+      results.push(...workers);
+
+      const { count: remainingAfter } = await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true })
+        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
+        .not('representation_status', 'in', '("Scouted","Fuel For Football")');
+
+      return new Response(JSON.stringify({
+        processed: results.length,
+        updated: results.filter((r) => r.updated).length,
+        remaining_before: remainingBefore ?? null,
+        remaining: remainingAfter ?? null,
+        results,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (!text && (!images || images.length === 0)) {
       return new Response(JSON.stringify({ error: 'Provide text or images' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
