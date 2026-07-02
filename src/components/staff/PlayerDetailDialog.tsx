@@ -36,8 +36,8 @@ const extractTransfermarktUrl = (links: unknown): string => {
   }
   if (typeof links === 'object') {
     const record = links as Record<string, unknown>;
-    const label = String(record.label || record.title || record.name || '').trim();
-    for (const value of [record.url, record.href, record.link, record.transfermarkt_url, record.transfermarkt, record.Transfermarkt]) {
+    const label = String(record.label || record.title || record.name || record.type || record.platform || '').trim();
+    for (const value of [record.url, record.href, record.link, record.value, record.transfermarkt_url, record.transfermarkt, record.Transfermarkt]) {
       const url = String(value || '').trim();
       if (url && (/transfermarkt/i.test(url) || /transfermarkt/i.test(label))) return url;
     }
