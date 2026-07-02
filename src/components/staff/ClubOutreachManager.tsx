@@ -782,11 +782,11 @@ export default function ClubOutreachManager() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 items-stretch text-center sm:text-left">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : 'Search by player or club'} className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'agent' ? 'Search by player or agent' : mode === 'general' ? 'Search by player' : 'Search by player or club'} className="pl-9" />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
           <Button onClick={openNewPanel} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90 w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : 'New Outreach'}
+            <Plus className="h-4 w-4 mr-2" /> {mode === 'agent' ? 'New Agent Outreach' : mode === 'general' ? 'New General Outreach' : 'New Outreach'}
           </Button>
           <Button variant="outline" onClick={openSettingsPanel} className="w-full sm:w-auto">
             <Settings className="h-4 w-4 mr-2" /> Settings
