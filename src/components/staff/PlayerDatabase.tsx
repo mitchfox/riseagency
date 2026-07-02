@@ -362,6 +362,7 @@ export const PlayerDatabase = () => {
             created_at: player.created_at,
             profile_image_url: player.image_url,
             club_logo_url: player.club_logo || getClubLogo(player.club),
+            transfermarkt_url: extractTransfermarktUrl((player as any).links),
             messaged: !!player.has_representation_offer || player.offer_status === 'sent',
             response_received: !!player.outreach_response_status,
           };
