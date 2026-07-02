@@ -87,6 +87,43 @@ const cleanName = (value: unknown) => String(value || '').trim().replace(/\s+/g,
 const normName = (value: unknown) => cleanName(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const hasValue = (value: unknown) => value !== null && value !== undefined && String(value).trim() !== '';
 
+const transfermarktProfileUrl = (id: unknown) => {
+  const clean = String(id || '').trim();
+  return clean ? `https://www.transfermarkt.com/-/profil/spieler/${clean}` : null;
+};
+
+const extractTransfermarktLink = (links: unknown): string | null => {
+  if (!links) return null;
+  if (typeof links === 'string') {
+    const trimmed = links.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try { return extractTransfermarktLink(JSON.parse(trimmed)); } catch {}
+    }
+    return /transfermarkt/i.test(trimmed) ? trimmed : null;
+  }
+  if (Array.isArray(links)) {
+    for (const link of links) {
+      const found = extractTransfermarktLink(link);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof links === 'object') {
+    const record = links as Record<string, unknown>;
+    const candidates = [record.url, record.href, record.link, record.value, record.transfermarkt_url, record.transfermarkt, record.Transfermarkt];
+    const label = String(record.label || record.title || record.name || record.type || record.platform || '').trim();
+    for (const value of candidates) {
+      const url = String(value || '').trim();
+      if (!url) continue;
+      if (/transfermarkt/i.test(url) || /transfermarkt/i.test(label)) return url;
+    }
+  }
+  return null;
+};
+
+const isMissingNationality = (value: unknown) => !hasValue(value) || /^unknown$/i.test(String(value).trim());
+
 const isInitialStub = (name: string) => /^\(?[A-Za-zÀ-ž]\)?\.?\s*[A-Za-zÀ-ž'’\-]+/.test(name.trim()) && name.trim().split(/\s+/).filter((part) => part.replace(/[().]/g, '').length > 1).length <= 1;
 
 // Diacritic/case-insensitive similarity 0..1 (Levenshtein-based)
@@ -500,7 +537,7 @@ const runWithConcurrency = async <T, R>(items: T[], limit: number, worker: (item
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
-    const body = await req.json() as { text?: string; images?: ImageInput[]; instruction?: string; mode?: string; limit?: number };
+    const body = await req.json() as { text?: string; images?: ImageInput[]; instruction?: string; mode?: string; limit?: number; skipIds?: string[] };
     const { text, images, instruction, mode } = body;
 
     // Enrichment mode: scan existing players for missing DOB/nationality and
@@ -514,26 +551,34 @@ serve(async (req) => {
       const limit = Math.min(Math.max(Number(body.limit) || 15, 1), 50);
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      // Fetch candidates missing a key detail (DOB or nationality). Nationality is
-      // NOT NULL in the schema so we also treat 'Unknown'/'' as missing. Skip
-      // Scouted / Fuel For Football players (excluded across the app).
-      const { data: candidates, error: fetchErr } = await supabase
+      const skipIds = new Set((Array.isArray(body.skipIds) ? body.skipIds : []).map((id) => String(id)));
+
+      // Fetch existing players and filter in JS so we can also detect missing
+      // Transfermarkt profile links inside the links JSONB array/object. PostgREST
+      // cannot reliably express "links array does not contain a Transfermarkt URL".
+      // This now targets players missing DOB, nationality OR the Transfermarkt URL.
+      const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, representation_status, links')
-        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
-        .not('representation_status', 'in', '("Scouted","Fuel For Football")')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, links')
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .range(0, 9999);
 
       if (fetchErr) {
         return new Response(JSON.stringify({ error: fetchErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      const { count: remainingBefore } = await supabase
-        .from('players')
-        .select('id', { count: 'exact', head: true })
-        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
-        .not('representation_status', 'in', '("Scouted","Fuel For Football")');
+      const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
+      const candidateRows = (allRows || []).filter((row: any) => {
+        if (skipIds.has(String(row.id))) return false;
+        const category = String(row.category || '').trim().toLowerCase();
+        const representation = String(row.representation_status || '').trim().toLowerCase();
+        if (excludedStatuses.has(category) || excludedStatuses.has(representation)) return false;
+        const missingDob = !hasValue(row.date_of_birth);
+        const missingNationality = isMissingNationality(row.nationality);
+        const missingTransfermarktUrl = !extractTransfermarktLink(row.links);
+        return missingDob || missingNationality || missingTransfermarktUrl;
+      });
+      const candidates = candidateRows.slice(0, limit);
 
       const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string }> = [];
 
@@ -542,7 +587,7 @@ serve(async (req) => {
           const matched = await matchOnTransfermarkt({
             name: row.name,
             position: row.position,
-            nationality: (row.nationality && !/^unknown$/i.test(row.nationality)) ? row.nationality : null,
+            nationality: !isMissingNationality(row.nationality) ? row.nationality : null,
             date_of_birth: row.date_of_birth,
             age: row.age,
           });
@@ -554,7 +599,7 @@ serve(async (req) => {
           const fields: string[] = [];
           // Only fill missing fields — never overwrite existing values.
           if (!row.date_of_birth && matched.date_of_birth) { patch.date_of_birth = matched.date_of_birth; fields.push('date_of_birth'); }
-          if ((!row.nationality || /^unknown$/i.test(row.nationality)) && matched.nationality) { patch.nationality = matched.nationality; fields.push('nationality'); }
+          if (isMissingNationality(row.nationality) && matched.nationality) { patch.nationality = matched.nationality; fields.push('nationality'); }
           if ((!row.position || !CANONICAL_POSITIONS.has(String(row.position).toUpperCase())) && matched.position) { patch.position = matched.position; fields.push('position'); }
           if (!row.club && matched.club) { patch.club = matched.club; fields.push('club'); }
           if (!row.league && matched.league) { patch.league = matched.league; fields.push('league'); }
@@ -563,12 +608,16 @@ serve(async (req) => {
 
           // Add Transfermarkt profile link if we matched an id and one isn't already stored.
           if (matched.transfermarkt_id) {
-            const existingLinks: Array<{ label?: string; url?: string }> = Array.isArray(row.links) ? row.links : [];
-            const hasTm = existingLinks.some((l) => /transfermarkt/i.test(String(l?.url || '')) || /transfermarkt/i.test(String(l?.label || '')));
-            if (!hasTm) {
-              const tmUrl = `https://www.transfermarkt.com/-/profil/spieler/${matched.transfermarkt_id}`;
-              patch.links = [...existingLinks, { label: 'Transfermarkt', url: tmUrl }];
-              fields.push('transfermarkt_url');
+            const existingTm = extractTransfermarktLink(row.links);
+            if (!existingTm) {
+              const existingLinks: Array<{ label?: string; url?: string }> = Array.isArray(row.links)
+                ? row.links.filter((l: any) => l && typeof l === 'object')
+                : (row.links && typeof row.links === 'object' ? [row.links as any] : []);
+              const tmUrl = transfermarktProfileUrl(matched.transfermarkt_id);
+              if (tmUrl) {
+                patch.links = [...existingLinks, { label: 'Transfermarkt', url: tmUrl }];
+                fields.push('transfermarkt_url');
+              }
             }
           }
 
@@ -587,17 +636,13 @@ serve(async (req) => {
       });
       results.push(...workers);
 
-      const { count: remainingAfter } = await supabase
-        .from('players')
-        .select('id', { count: 'exact', head: true })
-        .or('date_of_birth.is.null,nationality.is.null,nationality.eq.,nationality.ilike.unknown')
-        .not('representation_status', 'in', '("Scouted","Fuel For Football")');
+      const remainingAfter = Math.max(0, candidateRows.length - workers.length);
 
       return new Response(JSON.stringify({
         processed: results.length,
         updated: results.filter((r) => r.updated).length,
-        remaining_before: remainingBefore ?? null,
-        remaining: remainingAfter ?? null,
+        remaining_before: candidateRows.length,
+        remaining: remainingAfter,
         results,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

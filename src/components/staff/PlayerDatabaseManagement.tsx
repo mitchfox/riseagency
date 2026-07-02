@@ -28,29 +28,35 @@ export const PlayerDatabaseActions = () => {
     const toastId = toast.loading('Scanning players for missing details…');
     let totalUpdated = 0;
     let totalProcessed = 0;
+    const processedIds = new Set<string>();
     try {
       while (true) {
         const { data, error } = await supabase.functions.invoke('parse-players-bulk', {
-          body: { mode: 'enrich', limit: 15 },
+          body: { mode: 'enrich', limit: 15, skipIds: Array.from(processedIds) },
         });
         if (error) throw error;
         const processed = Number(data?.processed) || 0;
         const updated = Number(data?.updated) || 0;
         const remaining = data?.remaining ?? null;
+        (data?.results || []).forEach((result: any) => {
+          if (result?.id) processedIds.add(String(result.id));
+        });
         totalProcessed += processed;
         totalUpdated += updated;
         setProgress({ updated: totalUpdated, processed: totalProcessed, remaining });
         toast.loading(
-          `Enriching from Transfermarkt — ${totalUpdated} filled, ${remaining ?? '?'} remaining`,
+          `Enriching from Transfermarkt — ${totalUpdated} updated, ${remaining ?? '?'} remaining`,
           { id: toastId },
         );
-        // Stop when nothing left, nothing processed, or nothing updated (avoid loops on unmatchable rows).
-        if (processed === 0 || (remaining !== null && remaining === 0) || updated === 0) break;
+        // Stop when nothing left or nothing processed. Processed rows are skipped
+        // on the next pass, so unmatchable players do not block later candidates.
+        if (processed === 0 || (remaining !== null && remaining === 0)) break;
       }
       toast.success(
-        `Enrichment complete — filled details on ${totalUpdated} of ${totalProcessed} scanned`,
+        `Enrichment complete — updated ${totalUpdated} of ${totalProcessed} scanned`,
         { id: toastId },
       );
+      if (totalUpdated > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
     } catch (err) {
       console.error('enrich failed', err);
       toast.error(`Enrichment failed: ${(err as Error).message || 'unknown error'}`, { id: toastId });
@@ -97,12 +103,12 @@ export const PlayerDatabaseActions = () => {
           variant="outline"
           onClick={enrichMissing}
           disabled={enriching}
-          title="Scan players missing nationality or date of birth and backfill from Transfermarkt"
+          title="Scan players missing nationality, date of birth or a Transfermarkt URL and backfill from Transfermarkt"
           className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${enriching ? 'animate-spin' : ''}`} />
           {enriching
-            ? `Enriching… ${progress?.updated ?? 0} filled${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
+            ? `Enriching… ${progress?.updated ?? 0} updated${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
             : 'Backfill from Transfermarkt'}
         </Button>
       </div>
