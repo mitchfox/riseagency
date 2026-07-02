@@ -888,7 +888,12 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
         };
 
         if (editingProspect) {
-          const { error } = await supabase.from("prospects").update(prospectData).eq("id", editingProspect.id);
+          // Editing manually implies user is choosing the stage — respect
+          // that going forward and stop the auto-sync from moving it.
+          const { error } = await supabase
+            .from("prospects")
+            .update({ ...prospectData, stage_manual_override: true })
+            .eq("id", editingProspect.id);
           if (error) throw error;
           toast.success("Prospect updated");
         } else {
