@@ -25,24 +25,84 @@ Rules:
 
 Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "shirt_number": number|null, "team_side": string|null, "name_is_stub": boolean, "notes": string|null } ] }`;
 
-const LOOKUP_SYSTEM_PROMPT = `You are a football database lookup. Given an "Initial. Surname" stub plus any context (shirt number, team side, league/age-group hint), identify the most likely real footballer this refers to using your training knowledge of professional and youth football worldwide.
+const NATIONALITY_NAMES: Record<number, string> = {
+  189: 'England', 190: 'Scotland', 191: 'Wales', 192: 'Northern Ireland',
+  193: 'Republic of Ireland', 50: 'France', 157: 'Spain', 40: 'Germany',
+  75: 'Italy', 122: 'Netherlands', 136: 'Portugal', 24: 'Brazil',
+  9: 'Argentina', 125: 'Nigeria', 152: 'Senegal', 54: 'Ghana',
+  31: 'Cameroon', 68: 'Jamaica', 185: 'USA', 32: 'Canada',
+  14: 'Australia', 39: 'Belgium', 10: 'Armenia', 15: 'Austria',
+  22: 'Bosnia-Herzegovina', 25: 'Bulgaria', 34: 'Chile', 36: 'Colombia',
+  37: 'Costa Rica', 38: 'Croatia', 41: 'Czech Republic', 42: 'Denmark',
+  43: 'Ecuador', 44: 'Egypt', 46: 'Estonia', 48: 'Finland',
+  51: 'Gabon', 55: 'Greece', 57: 'Guinea', 59: 'Honduras',
+  60: 'Hungary', 62: 'Iceland', 63: 'Iran', 64: 'Iraq',
+  66: 'Ivory Coast', 67: 'Japan', 69: 'South Korea', 70: 'Kosovo',
+  72: 'Latvia', 76: 'Lithuania', 78: 'Luxembourg', 80: 'Mali',
+  84: 'Mexico', 86: 'Montenegro', 87: 'Morocco', 95: 'New Zealand',
+  100: 'Norway', 107: 'Paraguay', 108: 'Peru', 110: 'Poland',
+  113: 'DR Congo', 114: 'Romania', 115: 'Russia', 120: 'Serbia',
+  126: 'Slovakia', 127: 'Slovenia', 128: 'South Africa', 140: 'Sweden',
+  141: 'Switzerland', 160: 'Tunisia', 161: 'Turkey', 163: 'Ukraine',
+  170: 'Uruguay', 171: 'Uzbekistan', 172: 'Venezuela', 176: 'Zimbabwe',
+  52: 'Georgia', 11: 'Azerbaijan', 4: 'Albania', 79: 'Malta',
+  1: 'Afghanistan', 82: 'Moldova', 83: 'North Macedonia',
+};
 
-Rules:
-- Prefer well-documented players (senior pros, full youth internationals, top-tier academy players).
-- Use diacritics correctly in the full name (e.g. "Bartosz Szywała", "Karol Cecuła", "Šimun Žužić").
-- Return null for any field you are not confident about. Do NOT guess clubs or dates.
-- Position must be a short code (GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF, ST).
-- date_of_birth in YYYY-MM-DD.
-- confidence is 0.0–1.0; only return data you would defend.
-- Return STRICT JSON only.
-
-Schema: { "full_name": string|null, "date_of_birth": string|null, "nationality": string|null, "current_club": string|null, "current_league": string|null, "position": string|null, "confidence": number }`;
+const POSITION_FAMILY: Record<string, 'GK' | 'DEF' | 'MID' | 'FWD'> = {
+  GK: 'GK',
+  CB: 'DEF', LB: 'DEF', RB: 'DEF', LWB: 'DEF', RWB: 'DEF',
+  CDM: 'MID', CM: 'MID', CAM: 'MID', DM: 'MID', AM: 'MID',
+  LM: 'MID', RM: 'MID',
+  LW: 'FWD', RW: 'FWD', CF: 'FWD', ST: 'FWD', SS: 'FWD',
+};
+const TM_POSITION_TO_SHORT: Record<string, string> = {
+  'Goalkeeper': 'GK',
+  'Centre-Back': 'CB', 'Left-Back': 'LB', 'Right-Back': 'RB',
+  'Defensive Midfield': 'CDM', 'Central Midfield': 'CM', 'Attacking Midfield': 'CAM',
+  'Left Midfield': 'LM', 'Right Midfield': 'RM',
+  'Left Winger': 'LW', 'Right Winger': 'RW',
+  'Centre-Forward': 'CF', 'Second Striker': 'SS', 'Striker': 'ST',
+};
+const posFamily = (p?: string | null): 'GK' | 'DEF' | 'MID' | 'FWD' | null => {
+  if (!p) return null;
+  const s = String(p).trim();
+  const short = TM_POSITION_TO_SHORT[s] || s.toUpperCase();
+  return POSITION_FAMILY[short] || null;
+};
 
 const cleanName = (value: unknown) => String(value || '').trim().replace(/\s+/g, ' ');
 const normName = (value: unknown) => cleanName(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const hasValue = (value: unknown) => value !== null && value !== undefined && String(value).trim() !== '';
 
 const isInitialStub = (name: string) => /^\(?[A-Za-zÀ-ž]\)?\.?\s*[A-Za-zÀ-ž'’\-]+/.test(name.trim()) && name.trim().split(/\s+/).filter((part) => part.replace(/[().]/g, '').length > 1).length <= 1;
+
+// Diacritic/case-insensitive similarity 0..1 (Levenshtein-based)
+const levenshtein = (a: string, b: string): number => {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const v0 = new Array(b.length + 1);
+  const v1 = new Array(b.length + 1);
+  for (let i = 0; i <= b.length; i++) v0[i] = i;
+  for (let i = 0; i < a.length; i++) {
+    v1[0] = i + 1;
+    for (let j = 0; j < b.length; j++) {
+      const cost = a[i] === b[j] ? 0 : 1;
+      v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
+    }
+    for (let j = 0; j <= b.length; j++) v0[j] = v1[j];
+  }
+  return v1[b.length];
+};
+const nameSimilarity = (a: string, b: string): number => {
+  const na = normName(a);
+  const nb = normName(b);
+  if (!na || !nb) return 0;
+  const maxLen = Math.max(na.length, nb.length);
+  return 1 - levenshtein(na, nb) / maxLen;
+};
+const surnameOf = (name: string) => normName(name).split(/\s+/).pop() || '';
 
 const mergePlayer = (player: any, match: any) => {
   if (!match) return player;
@@ -94,28 +154,38 @@ const TM_API = 'https://tmapi-alpha.transfermarkt.technology';
 const TM_UA = 'Mozilla/5.0 (compatible; RiseBot/1.0)';
 const compNameCache = new Map<string, string>();
 const clubInfoCache = new Map<string, { club: string | null; competitionId: string | null }>();
+const tmPlayerCache = new Map<string, any>();
 
-const searchTransfermarktId = async (name: string): Promise<string | null> => {
+const searchTransfermarktIds = async (name: string, max = 8): Promise<string[]> => {
   try {
     const q = encodeURIComponent(name);
     const res = await fetch(`https://www.transfermarkt.com/schnellsuche/ergebnis/schnellsuche?query=${q}`, {
       headers: { 'User-Agent': TM_UA, 'Accept-Language': 'en' },
       redirect: 'follow',
     });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const html = await res.text();
-    const m = html.match(/\/[a-z0-9-]+\/profil\/spieler\/(\d+)/i);
-    return m ? m[1] : null;
-  } catch { return null; }
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    const re = /\/[a-z0-9-]+\/profil\/spieler\/(\d+)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(html)) && ids.length < max) {
+      if (!seen.has(m[1])) { seen.add(m[1]); ids.push(m[1]); }
+    }
+    return ids;
+  } catch { return []; }
 };
 
 const fetchTmPlayer = async (id: string): Promise<any | null> => {
+  if (tmPlayerCache.has(id)) return tmPlayerCache.get(id);
   try {
     const r = await fetch(`${TM_API}/player/${id}`);
-    if (!r.ok) return null;
+    if (!r.ok) { tmPlayerCache.set(id, null); return null; }
     const j = await r.json();
-    return j?.data || null;
-  } catch { return null; }
+    const data = j?.data || null;
+    tmPlayerCache.set(id, data);
+    return data;
+  } catch { tmPlayerCache.set(id, null); return null; }
 };
 
 const fetchTmClubInfo = async (clubId: string) => {
@@ -149,104 +219,108 @@ const fetchTmCompetitionName = async (compId: string): Promise<string | null> =>
   return name;
 };
 
-const enrichFromTransfermarkt = async (player: any): Promise<any> => {
-  // Only do work when something material is missing
-  const needsClub = !hasValue(player.club);
-  const needsLeague = !hasValue(player.league);
-  const needsDob = !hasValue(player.date_of_birth);
-  const needsNat = !hasValue(player.nationality);
-  const needsPos = !hasValue(player.position);
-  if (!needsClub && !needsLeague && !needsDob && !needsNat && !needsPos) return player;
+// Match a parsed player against Transfermarkt using name + DOB/nationality/position
+// scoring. TM is the source of truth: when a confident match is found, TM fields
+// overwrite the vision fields (which are often wrong).
+const matchOnTransfermarkt = async (player: any): Promise<any> => {
+  const rawName = cleanName(player?.name);
+  if (!rawName) return { ...player, _needs_review: true };
 
-  const name = cleanName(player?.name);
-  if (!name) return player;
-  const tmId = await searchTransfermarktId(name);
-  if (!tmId) return player;
-  const data = await fetchTmPlayer(tmId);
-  if (!data) return player;
+  // Build search query — for stubs use just the surname to widen the net
+  const stub = player?.name_is_stub === true || isInitialStub(rawName);
+  const query = stub ? surnameOf(rawName) : rawName;
+  if (!query || query.length < 2) return { ...player, _needs_review: true };
 
-  const next = { ...player };
-  const dob = data?.lifeDates?.dateOfBirth ?? null;
-  if (needsDob && dob) next.date_of_birth = dob;
-  if (!hasValue(next.age) && data?.lifeDates?.age) next.age = data.lifeDates.age;
+  const ids = await searchTransfermarktIds(query);
+  if (!ids.length) return { ...player, _needs_review: true };
 
-  const posShort = data?.attributes?.position?.shortName ?? null;
-  if (needsPos && posShort) next.position = posShort;
+  const parsedDob = hasValue(player.date_of_birth) ? String(player.date_of_birth).slice(0, 10) : null;
+  const parsedYear = parsedDob ? parsedDob.slice(0, 4) : null;
+  const parsedNat = hasValue(player.nationality) ? normName(player.nationality) : null;
+  const parsedFamily = posFamily(player.position);
+  const parsedAge = typeof player.age === 'number' ? player.age : (hasValue(player.age) ? parseInt(String(player.age), 10) : null);
+  const parsedSurname = surnameOf(rawName);
 
-  // Nationality: use NATIONALITY_NAMES if we can — but parse-players-bulk doesn't have the map.
-  // Skip to avoid wrong country names.
+  const candidates = await Promise.all(ids.map(async (id) => {
+    const data = await fetchTmPlayer(id);
+    return data ? { id, data } : null;
+  }));
 
-  const current = (data?.clubAssignments || []).find((a: any) => a?.type === 'current');
+  let best: { id: string; data: any; score: number; exactDob: boolean } | null = null;
+  for (const c of candidates) {
+    if (!c) continue;
+    const d = c.data;
+    const tmName: string = d?.baseDetails?.name || `${d?.baseDetails?.firstName || ''} ${d?.baseDetails?.lastName || ''}`.trim();
+    const tmDob: string | null = d?.lifeDates?.dateOfBirth ?? null;
+    const tmAge: number | null = d?.lifeDates?.age ?? null;
+    const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
+    const tmNatId2: number = d?.nationalityDetails?.nationalities?.secondNationalityId || 0;
+    const tmPosLong: string = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
+    const tmFamily = posFamily(tmPosLong);
+
+    let score = 0;
+    let exactDob = false;
+    if (parsedDob && tmDob && tmDob.slice(0, 10) === parsedDob) { score += 3; exactDob = true; }
+    else if (parsedYear && tmDob && tmDob.slice(0, 4) === parsedYear) score += 2;
+
+    if (parsedNat) {
+      const nat1 = NATIONALITY_NAMES[tmNatId] ? normName(NATIONALITY_NAMES[tmNatId]) : '';
+      const nat2 = NATIONALITY_NAMES[tmNatId2] ? normName(NATIONALITY_NAMES[tmNatId2]) : '';
+      if (nat1 && (nat1 === parsedNat || nat1.includes(parsedNat) || parsedNat.includes(nat1))) score += 2;
+      else if (nat2 && (nat2 === parsedNat || nat2.includes(parsedNat) || parsedNat.includes(nat2))) score += 2;
+    }
+
+    if (parsedFamily && tmFamily && parsedFamily === tmFamily) score += 1;
+    if (parsedAge && tmAge && Math.abs(parsedAge - tmAge) <= 1) score += 1;
+
+    if (tmName) {
+      const sim = stub
+        ? (surnameOf(tmName) === parsedSurname ? 1 : nameSimilarity(surnameOf(tmName), parsedSurname))
+        : nameSimilarity(tmName, rawName);
+      if (sim >= 0.85) score += 1;
+      else if (sim < 0.6 && !exactDob) score -= 1; // strong penalty for weak name match
+    }
+
+    if (!best || score > best.score || (score === best.score && exactDob && !best.exactDob)) {
+      best = { id: c.id, data: d, score, exactDob };
+    }
+  }
+
+  // Accept threshold: exact DOB match, OR score ≥ 4 across other signals
+  if (!best || (!best.exactDob && best.score < 4)) {
+    return { ...player, _needs_review: true };
+  }
+
+  const d = best.data;
+  const next: any = { ...player };
+  const tmFullName = d?.baseDetails?.name || `${d?.baseDetails?.firstName || ''} ${d?.baseDetails?.lastName || ''}`.trim();
+  if (tmFullName) next.name = tmFullName;
+
+  const tmDob = d?.lifeDates?.dateOfBirth ?? null;
+  if (tmDob) next.date_of_birth = String(tmDob).slice(0, 10);
+  if (d?.lifeDates?.age) next.age = d.lifeDates.age;
+
+  const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
+  const natName = NATIONALITY_NAMES[tmNatId];
+  if (natName) next.nationality = natName;
+
+  const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
+  const shortPos = TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || null;
+  if (shortPos) next.position = shortPos;
+
+  const current = (d?.clubAssignments || []).find((a: any) => a?.type === 'current');
   if (current?.clubId) {
     const club = await fetchTmClubInfo(String(current.clubId));
-    if (needsClub && club.club) next.club = club.club;
-    if (needsLeague && club.competitionId) {
+    if (club.club) next.club = club.club;
+    if (club.competitionId) {
       const compName = await fetchTmCompetitionName(club.competitionId);
       if (compName) next.league = compName;
     }
   }
 
-  return next;
-};
-
-const lookupCache = new Map<string, any>();
-
-const webLookupPlayer = async (player: any, apiKey: string, instruction?: string): Promise<any> => {
-  const rawName = cleanName(player?.name);
-  if (!rawName) return player;
-  const stub = player?.name_is_stub === true || isInitialStub(rawName);
-  // Run lookup for stubs OR when we are missing important fields
-  const missing = !hasValue(player.club) || !hasValue(player.league) || !hasValue(player.date_of_birth) || !hasValue(player.nationality);
-  if (!stub && !missing) return player;
-
-  const key = `${normName(rawName)}|${player?.shirt_number ?? ''}|${player?.team_side ?? ''}`;
-  let lookup: any = lookupCache.get(key);
-  if (!lookup) {
-    const context: string[] = [];
-    if (player?.shirt_number) context.push(`shirt #${player.shirt_number}`);
-    if (player?.team_side) context.push(`${player.team_side} team in the formation graphic`);
-    if (player?.position) context.push(`position ${player.position}`);
-    if (player?.club) context.push(`club ${player.club}`);
-    if (player?.league) context.push(`league ${player.league}`);
-    if (instruction) context.push(`extra context: ${instruction}`);
-    const userMsg = `Stub name: ${rawName}\n${context.length ? 'Context: ' + context.join('; ') : 'No extra context.'}\nReturn the matching footballer as JSON.`;
-    try {
-      const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: LOOKUP_SYSTEM_PROMPT },
-            { role: 'user', content: userMsg },
-          ],
-          response_format: { type: 'json_object' },
-        }),
-      });
-      if (r.ok) {
-        const j = await r.json();
-        const raw = j?.choices?.[0]?.message?.content || '{}';
-        try { lookup = JSON.parse(raw); } catch { lookup = null; }
-      }
-    } catch (err) {
-      console.error('webLookupPlayer failed', err);
-    }
-    lookupCache.set(key, lookup);
-  }
-
-  if (!lookup || typeof lookup !== 'object') return player;
-  const conf = typeof lookup.confidence === 'number' ? lookup.confidence : 0;
-  if (conf < 0.55) return player;
-
-  const next = { ...player, _web_enriched: true };
-  if (lookup.full_name && (stub || cleanName(lookup.full_name).toLowerCase().includes(rawName.replace(/^.*?\.\s*/, '').toLowerCase()))) {
-    next.name = cleanName(lookup.full_name);
-  }
-  if (!hasValue(next.date_of_birth) && lookup.date_of_birth) next.date_of_birth = lookup.date_of_birth;
-  if (!hasValue(next.nationality) && lookup.nationality) next.nationality = lookup.nationality;
-  if (!hasValue(next.club) && lookup.current_club) next.club = lookup.current_club;
-  if (!hasValue(next.league) && lookup.current_league) next.league = lookup.current_league;
-  if (!hasValue(next.position) && lookup.position) next.position = lookup.position;
+  next._matched_source = 'transfermarkt';
+  next.transfermarkt_id = best.id;
+  next._needs_review = false;
   return next;
 };
 
@@ -329,17 +403,7 @@ serve(async (req) => {
     // by asking the model to identify the player from its football knowledge.
     if (players.length) {
       try {
-        players = await runWithConcurrency(players, 4, (p) => webLookupPlayer(p, LOVABLE_API_KEY, instruction));
-      } catch (err) {
-        console.error('Web lookup failed', err);
-      }
-    }
-
-    // Web enrichment: fill missing club/league/DOB/position by looking the
-    // player up on Transfermarkt. Existing values are never overwritten.
-    if (players.length) {
-      try {
-        players = await runWithConcurrency(players, 4, enrichFromTransfermarkt);
+        players = await runWithConcurrency(players, 3, matchOnTransfermarkt);
       } catch (err) {
         console.error('TM enrichment failed', err);
       }

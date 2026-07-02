@@ -19,7 +19,9 @@ interface ParsedPlayer {
   league: string | null;
   instagram_handle: string | null;
   notes: string | null;
-  _web_enriched?: boolean;
+  _matched_source?: 'transfermarkt';
+  _needs_review?: boolean;
+  transfermarkt_id?: string;
   _accepted?: boolean;
   _saved?: boolean;
   _error?: string;
@@ -88,7 +90,10 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         body: { text: aiText.trim() || undefined, images, instruction: aiInstruction.trim() || undefined },
       });
       if (error) throw error;
-      const players: ParsedPlayer[] = (data?.players || []).map((p: any) => ({ ...p, _accepted: true }));
+      const players: ParsedPlayer[] = (data?.players || []).map((p: any) => ({
+        ...p,
+        _accepted: p?._needs_review !== true,
+      }));
       if (players.length === 0) { toast.error('No players detected'); return; }
       setParsed(players);
       setMode('review');
@@ -230,9 +235,14 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
                     {p._accepted && <Check className="h-3 w-3 text-black" />}
                   </button>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 flex-1">
-                    {p._web_enriched && (
-                      <div className="col-span-2 md:col-span-4 -mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[hsl(var(--rise-gold))]">
-                        <Sparkles className="h-3 w-3" /> Web-enriched — double-check before saving
+                    {p._matched_source === 'transfermarkt' && (
+                      <div className="col-span-2 md:col-span-4 -mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" /> Matched on Transfermarkt{p.transfermarkt_id ? ` · #${p.transfermarkt_id}` : ''}
+                      </div>
+                    )}
+                    {p._needs_review && (
+                      <div className="col-span-2 md:col-span-4 -mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-amber-400">
+                        <XCircle className="h-3 w-3" /> Not matched on Transfermarkt — verify before saving
                       </div>
                     )}
                     <MiniField label="Name"><Input value={p.name || ''} onChange={(e) => update(i, { name: e.target.value })} className="h-8 text-sm" /></MiniField>
