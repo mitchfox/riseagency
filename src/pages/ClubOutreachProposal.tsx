@@ -271,7 +271,7 @@ interface Payload {
   players: PlayerEntry[];
   alternate_profiles?: Array<{
     short_id: string;
-    target_type?: 'club' | 'agent' | null;
+    target_type?: 'club' | 'agent' | 'general' | null;
     player_name: string | null;
     image_url: string | null;
     position: string | null;
