@@ -2419,7 +2419,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         </div>
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6 pt-4 border-t border-border">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={save} disabled={saving || (isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
+        <Button onClick={save} disabled={saving || (isGeneral ? false : isAgent ? !agentName.trim() : !clubId) || entries.length === 0} className="bg-[#cbb96b] text-black hover:bg-[#cbb96b]/90">
           {saving ? "Saving…" : editing ? "Save changes" : "Create link"}
         </Button>
       </div>
