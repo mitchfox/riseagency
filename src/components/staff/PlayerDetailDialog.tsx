@@ -72,6 +72,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       agent_status: '',
       agent_name: '',
       parent_approval: !!player.parent_approval,
+      transfermarkt_url: '',
+      _links: [] as Array<{ label?: string; url?: string }>,
     });
     // Defer the notes board and fit-score fetch until after the dialog paints.
     const idle = (cb: () => void) => {
@@ -84,10 +86,12 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       idle(async () => {
         const { data } = await (supabase as any)
           .from('players')
-          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name')
+          .select('national_team,star_of_team,minutes_share,previous_serious_injury,agent_status,agent_name,links')
           .eq('id', player.id)
           .maybeSingle();
         if (data) {
+          const linksArr: Array<{ label?: string; url?: string }> = Array.isArray(data.links) ? data.links : [];
+          const tm = linksArr.find((l) => /transfermarkt/i.test(String(l?.label || '')) || /transfermarkt/i.test(String(l?.url || '')));
           setEditForm((f: any) => ({
             ...f,
             national_team: !!data.national_team,
@@ -96,6 +100,8 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
+            transfermarkt_url: tm?.url || '',
+            _links: linksArr,
           }));
         }
       });
