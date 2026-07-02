@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImageIcon, X, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { PLAYER_POSITIONS } from "@/lib/playerPositions";
 
 interface AddPlayerDialogProps {
   open: boolean;
@@ -127,13 +128,19 @@ export const AddPlayerDialog = ({
                 <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="position" className="text-sm">Position *</Label>
-                    <Input
-                      id="position"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      required
-                      className="h-10 sm:h-11"
-                    />
+                    <Select
+                      value={formData.position || ''}
+                      onValueChange={(value) => setFormData({ ...formData, position: value })}
+                    >
+                      <SelectTrigger id="position" className="h-10 sm:h-11">
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PLAYER_POSITIONS.map((code) => (
+                          <SelectItem key={code} value={code}>{code}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
