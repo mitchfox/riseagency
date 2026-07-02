@@ -170,6 +170,39 @@ const tmPlayerCache = new Map<string, any>();
 const tmNationalityCache = new Map<string, string | null>();
 const tmProfileCache = new Map<string, { nationality: string | null; agent: string | null; nationalTeam: boolean | null }>();
 
+const getTmName = (data: any): string => {
+  return cleanName(
+    data?.name
+    || data?.displayName
+    || data?.shortName
+    || data?.baseDetails?.name
+    || `${data?.baseDetails?.firstName || ''} ${data?.baseDetails?.lastName || ''}`
+  );
+};
+
+const getTmPositionValue = (data: any): string => {
+  return cleanName(
+    data?.attributes?.position?.longName
+    || data?.attributes?.position?.name
+    || data?.attributes?.position?.shortName
+    || data?.attributes?.positionGroupName
+  );
+};
+
+const getTmAgency = (data: any): string | null => {
+  const agency = cleanName(
+    data?.attributes?.consultantAgency?.name
+    || data?.attributes?.consultantAgency?.shortName
+  );
+  if (!agency || /^unknown$/i.test(agency) || /relatives/i.test(agency)) return null;
+  return agency;
+};
+
+const hasTmNationalTeam = (data: any): boolean => {
+  return Array.isArray(data?.clubAssignments)
+    && data.clubAssignments.some((assignment: any) => assignment?.type === 'nationalTeam');
+};
+
 const decodeHtmlEntities = (value: string) => value
   .replace(/&amp;/g, '&')
   .replace(/&quot;/g, '"')
@@ -272,6 +305,30 @@ const searchTransfermarktIds = async (name: string, max = 8): Promise<string[]> 
   } catch { return []; }
 };
 
+const searchTransfermarktCandidates = async (rawName: string, stub: boolean, max = 12): Promise<string[]> => {
+  const queries = new Set<string>();
+  const name = cleanName(rawName);
+  if (name) queries.add(name);
+
+  const surname = surnameOf(name);
+  if (stub && surname) queries.add(surname);
+  if (!stub && surname && surname !== normName(name) && surname.length >= 4) queries.add(surname);
+
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const query of queries) {
+    const found = await searchTransfermarktIds(query, max);
+    for (const id of found) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ids.push(id);
+        if (ids.length >= max) return ids;
+      }
+    }
+  }
+  return ids;
+};
+
 const fetchTmPlayer = async (id: string): Promise<any | null> => {
   if (tmPlayerCache.has(id)) return tmPlayerCache.get(id);
   try {
@@ -327,7 +384,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   const query = stub ? surnameOf(rawName) : rawName;
   if (!query || query.length < 2) return { ...player, _needs_review: true };
 
-  const ids = await searchTransfermarktIds(query);
+  const ids = await searchTransfermarktCandidates(rawName, stub);
   if (!ids.length) return { ...player, nationality: null, _needs_review: true };
 
   const parsedDob = hasValue(player.date_of_birth) ? String(player.date_of_birth).slice(0, 10) : null;
@@ -346,12 +403,10 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   for (const c of candidates) {
     if (!c) continue;
     const d = c.data;
-    const tmName: string = d?.baseDetails?.name || `${d?.baseDetails?.firstName || ''} ${d?.baseDetails?.lastName || ''}`.trim();
+    const tmName: string = getTmName(d);
     const tmDob: string | null = d?.lifeDates?.dateOfBirth ?? null;
     const tmAge: number | null = d?.lifeDates?.age ?? null;
-    const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
-    const tmNatId2: number = d?.nationalityDetails?.nationalities?.secondNationalityId || 0;
-    const tmPosLong: string = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
+    const tmPosLong: string = getTmPositionValue(d);
     const tmFamily = posFamily(tmPosLong);
 
     let score = 0;
@@ -392,7 +447,7 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
 
   const d = best.data;
   const next: any = { ...player };
-  const tmFullName = d?.baseDetails?.name || `${d?.baseDetails?.firstName || ''} ${d?.baseDetails?.lastName || ''}`.trim();
+  const tmFullName = getTmName(d);
   if (tmFullName) next.name = tmFullName;
 
   const tmDob = d?.lifeDates?.dateOfBirth ?? null;
@@ -403,14 +458,16 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   const profile = await fetchTmProfile(best.id);
   const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
   next.nationality = profile.nationality || fallbackNationality || null;
-  if (profile.agent) next.agency = profile.agent;
-  if (profile.nationalTeam === true) next.national_team = true;
+  const tmAgency = getTmAgency(d);
+  if (tmAgency || profile.agent) next.agency = tmAgency || profile.agent;
+  if (hasTmNationalTeam(d) || profile.nationalTeam === true) next.national_team = true;
 
-  const posLong = d?.attributes?.position?.longName || d?.attributes?.position?.shortName || '';
+  const posLong = getTmPositionValue(d);
   const shortPos = canonicalPosition(TM_POSITION_TO_SHORT[posLong] || d?.attributes?.position?.shortName || posLong);
   if (shortPos) next.position = shortPos;
 
   const current = (d?.clubAssignments || []).find((a: any) => a?.type === 'current');
+  if (!hasValue(next.shirt_number) && current?.shirtNumber) next.shirt_number = current.shirtNumber;
   if (current?.clubId) {
     const club = await fetchTmClubInfo(String(current.clubId));
     if (club.club) next.club = club.club;
