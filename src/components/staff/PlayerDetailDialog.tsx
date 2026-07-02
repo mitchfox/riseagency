@@ -101,7 +101,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
       agent_status: '',
       agent_name: '',
       parent_approval: !!player.parent_approval,
-      transfermarkt_url: '',
+      transfermarkt_url: player.transfermarkt_url || '',
       _links: [] as Array<{ label?: string; url?: string }>,
     });
     // Defer the notes board and fit-score fetch until after the dialog paints.
