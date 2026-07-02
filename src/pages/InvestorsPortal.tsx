@@ -900,43 +900,53 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
     }
   };
 
-  const handleReceiptUpload = async (file: File) => {
-    if (!file) return;
+  const handleReceiptUpload = async (files: File[]) => {
+    if (!files || files.length === 0) return;
     setParsing(true);
+    const allowed = categories;
+    const aggregated: Array<{ spend_date: string; category: string; vendor: string; amount: string; notes: string }> = [];
+    let failed = 0;
     try {
-      const reader = new FileReader();
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-      });
-      const { data, error } = await supabase.functions.invoke("parse-receipt-image", {
-        body: { imageBase64: dataUrl },
-      });
-      if (error) throw error;
-      const parsed: any = (data as any)?.parsed || {};
-      const raw: any[] = Array.isArray(parsed?.items)
-        ? parsed.items
-        : (parsed && (parsed.amount || parsed.item || parsed.vendor)) ? [parsed] : [];
-      if (raw.length === 0) {
-        toast.error("Could not read any items from that image");
+      await Promise.all(files.map(async (file) => {
+        try {
+          const reader = new FileReader();
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+          });
+          const { data, error } = await supabase.functions.invoke("parse-receipt-image", {
+            body: { imageBase64: dataUrl },
+          });
+          if (error) throw error;
+          const parsed: any = (data as any)?.parsed || {};
+          const raw: any[] = Array.isArray(parsed?.items)
+            ? parsed.items
+            : (parsed && (parsed.amount || parsed.item || parsed.vendor)) ? [parsed] : [];
+          for (const it of raw) {
+            const c = String(it?.category || "").toLowerCase();
+            aggregated.push({
+              spend_date: it?.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date) ? it.date : new Date().toISOString().slice(0, 10),
+              category: allowed.includes(c) ? c : "misc",
+              vendor: String(it?.vendor || it?.location || "").slice(0, 120),
+              amount: it?.amount != null ? String(it.amount) : "",
+              notes: [it?.item, it?.location, it?.time ? `at ${it.time}` : null].filter(Boolean).join(" — "),
+            });
+          }
+        } catch (err) {
+          console.error("parse-receipt-image failed", err);
+          failed += 1;
+        }
+      }));
+      if (aggregated.length === 0) {
+        toast.error("Could not read any items from the uploaded image(s)");
         return;
       }
-      const allowed = categories;
-      const mapped = raw.map((it: any) => {
-        const c = String(it?.category || "").toLowerCase();
-        return {
-          spend_date: it?.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date) ? it.date : new Date().toISOString().slice(0, 10),
-          category: allowed.includes(c) ? c : "misc",
-          vendor: String(it?.vendor || it?.location || "").slice(0, 120),
-          amount: it?.amount != null ? String(it.amount) : "",
-          notes: [it?.item, it?.location, it?.time ? `at ${it.time}` : null].filter(Boolean).join(" — "),
-        };
-      });
-      setParsedItems(mapped);
-      toast.success(`Found ${mapped.length} item${mapped.length === 1 ? "" : "s"}`);
+      setParsedItems(prev => [...prev, ...aggregated]);
+      const suffix = failed > 0 ? ` (${failed} image${failed === 1 ? "" : "s"} failed)` : "";
+      toast.success(`Found ${aggregated.length} item${aggregated.length === 1 ? "" : "s"} across ${files.length} image${files.length === 1 ? "" : "s"}${suffix}`);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to parse image");
+      toast.error(e?.message || "Failed to parse images");
     } finally {
       setParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
