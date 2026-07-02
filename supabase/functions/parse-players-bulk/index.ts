@@ -8,13 +8,15 @@ const corsHeaders = {
 
 interface ImageInput { base64: string; mimeType?: string }
 
-const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of football players from the supplied text and/or screenshots. For each player infer the most likely values for: name, position (use short codes like GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF, ST), nationality (country name in English), date_of_birth (YYYY-MM-DD if visible, otherwise null), age (integer if visible, otherwise null), club, league, instagram_handle (without @), shirt_number (integer if visible, otherwise null), team_side ("left" or "right" if the image shows two teams, otherwise null), name_is_stub (true if the label is only an initial + surname like "B. Szywała", otherwise false), notes (short free-form text with anything else useful).
+const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of football players from the supplied text and/or screenshots. For each player infer the most likely values for: name, position (use short codes GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF only), nationality (country name in English), date_of_birth (YYYY-MM-DD if visible, otherwise null), age (integer if visible, otherwise null), club, league, instagram_handle (without @), shirt_number (integer if visible, otherwise null), team_side ("left" or "right" if the image shows two teams, otherwise null), name_is_stub (true if the label is only an initial + surname like "B. Szywała", otherwise false), national_team (true only if the source explicitly mentions this player has represented a national team at any age group, otherwise null — never guess), agency (only set if an agency name is written verbatim in the source text, otherwise null), notes (short free-form text with anything else useful).
 
 Rules:
 - Use UK English.
 - Never invent a date of birth, club or league if not present in the source or supplied context; leave null.
 - NATIONALITY: only set nationality if the country name is written in TEXT in the source (e.g. "Croatia", "CRO"). NEVER guess nationality from a flag icon, jersey colour or club badge — flags are frequently misread. If no country text is present, leave nationality null.
-- Position must be a recognised football abbreviation.
+- Position must be one of GK, CB, LB, RB, CDM, CM, CAM, LW, RW, CF. Map variants: ST/SS → CF, LM → LW, RM → RW, AM → CAM, DM → CDM, LCB/RCB/Defender → CB, LWB → LB, RWB → RB.
+- NATIONAL TEAM: only set national_team true if the source explicitly mentions national-team appearances (e.g. "Croatia U17"). Never infer from club or nationality alone.
+- AGENCY: only set agency when an agency name is written verbatim. Never guess.
 - If the screenshot is a formation graphic, ALWAYS infer positions from each player's spatial role even when no position label is printed. Read the pitch like a football line-up: keeper closest to goal, centre backs central in the defensive line, full backs wide, holding midfielders behind central/attacking midfielders, wingers wide high, striker/centre forward highest central. Position must never be null when a formation is visible.
 - Formation graphics often show TWO teams split by a vertical halfway line. Treat each half as its own team: names on the left half are team_side "left", names on the right half are team_side "right". Each team has its own goalkeeper, defence, midfield and attack — do not merge them.
 - If a club, team, age group, competition or league header is visible, apply that context to every player it clearly belongs to.
@@ -24,7 +26,7 @@ Rules:
 - If a row clearly isn't a player (e.g. header, total), skip it.
 - Return STRICT JSON only, matching the schema. No prose, no code fences.
 
-Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "shirt_number": number|null, "team_side": string|null, "name_is_stub": boolean, "notes": string|null } ] }`;
+Schema: { "players": [ { "name": string, "position": string|null, "nationality": string|null, "date_of_birth": string|null, "age": number|null, "club": string|null, "league": string|null, "instagram_handle": string|null, "shirt_number": number|null, "team_side": string|null, "name_is_stub": boolean, "national_team": boolean|null, "agency": string|null, "notes": string|null } ] }`;
 
 // Transfermarkt's public API exposes numeric nationality IDs, but they do not
 // match the country-id list we previously used. That caused Croatian players
