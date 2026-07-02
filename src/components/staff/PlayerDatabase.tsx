@@ -46,6 +46,7 @@ interface PlayerData {
   created_at?: string;
   profile_image_url?: string | null;
   club_logo_url?: string | null;
+  transfermarkt_url?: string | null;
   parents_name?: string | null;
   parent_contact?: string | null;
   parent_approval?: boolean;
@@ -124,6 +125,7 @@ const getPositionOrder = (position: string | null): number => {
 };
 
 const DB_COLUMNS: ColumnConfig[] = [
+  { key: 'transfermarkt', label: 'TM', defaultVisible: true },
   { key: 'avatar', label: 'Avatar', defaultVisible: true },
   { key: 'fit', label: 'Fit', defaultVisible: true },
   { key: 'eligibility', label: 'Eligibility', defaultVisible: true },
