@@ -14,6 +14,8 @@
 /portal/* /portal.html 200
 /staff /staff.html 200
 /staff/* /staff.html 200
+/investors-portal /investors-portal.html 200
+/investors-portal/* /investors-portal.html 200
 
 # SPA fallback for all other routes
 /*    /index.html   200
