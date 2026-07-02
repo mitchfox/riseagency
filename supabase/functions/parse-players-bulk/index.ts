@@ -51,9 +51,30 @@ const TM_POSITION_TO_SHORT: Record<string, string> = {
   'Goalkeeper': 'GK',
   'Centre-Back': 'CB', 'Left-Back': 'LB', 'Right-Back': 'RB',
   'Defensive Midfield': 'CDM', 'Central Midfield': 'CM', 'Attacking Midfield': 'CAM',
-  'Left Midfield': 'LM', 'Right Midfield': 'RM',
+  'Left Midfield': 'LW', 'Right Midfield': 'RW',
   'Left Winger': 'LW', 'Right Winger': 'RW',
-  'Centre-Forward': 'CF', 'Second Striker': 'SS', 'Striker': 'ST',
+  'Centre-Forward': 'CF', 'Second Striker': 'CF', 'Striker': 'CF',
+};
+
+// Canonical 10 codes used across the player DB. Any parsed/TM position that
+// isn't in this set is coerced to null so the record won't slip through with
+// a legacy value that the position filter can't match.
+const CANONICAL_POSITIONS = new Set(['GK','CB','LB','RB','CDM','CM','CAM','LW','RW','CF']);
+const POSITION_ALIAS: Record<string, string> = {
+  ST: 'CF', SS: 'CF', LM: 'LW', RM: 'RW', AM: 'CAM', DM: 'CDM',
+  LCB: 'CB', RCB: 'CB', LCM: 'CM', RCM: 'CM', LWB: 'LB', RWB: 'RB',
+  W: 'RW', WINGER: 'RW', DEFENDER: 'CB',
+};
+const canonicalPosition = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const upper = raw.toUpperCase();
+  if (CANONICAL_POSITIONS.has(upper)) return upper;
+  if (POSITION_ALIAS[upper]) return POSITION_ALIAS[upper];
+  const mapped = TM_POSITION_TO_SHORT[raw] || TM_POSITION_TO_SHORT[raw.replace(/\s+/g, ' ')];
+  if (mapped && CANONICAL_POSITIONS.has(mapped)) return mapped;
+  return null;
 };
 const posFamily = (p?: string | null): 'GK' | 'DEF' | 'MID' | 'FWD' | null => {
   if (!p) return null;
