@@ -17,6 +17,34 @@ import { calculateAge } from '@/lib/ageUtils';
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
+const extractTransfermarktUrl = (links: unknown): string => {
+  if (!links) return '';
+  if (typeof links === 'string') {
+    const trimmed = links.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try { return extractTransfermarktUrl(JSON.parse(trimmed)); } catch {}
+    }
+    return /transfermarkt/i.test(trimmed) ? trimmed : '';
+  }
+  if (Array.isArray(links)) {
+    for (const link of links) {
+      const found = extractTransfermarktUrl(link);
+      if (found) return found;
+    }
+    return '';
+  }
+  if (typeof links === 'object') {
+    const record = links as Record<string, unknown>;
+    const label = String(record.label || record.title || record.name || '').trim();
+    for (const value of [record.url, record.href, record.link, record.transfermarkt_url, record.transfermarkt, record.Transfermarkt]) {
+      const url = String(value || '').trim();
+      if (url && (/transfermarkt/i.test(url) || /transfermarkt/i.test(label))) return url;
+    }
+  }
+  return '';
+};
+
 export interface DialogPlayer {
   id: string;
   player_name: string;
@@ -30,6 +58,7 @@ export interface DialogPlayer {
   notes?: string | null;
   ig_handle?: string | null;
   profile_image_url?: string | null;
+  transfermarkt_url?: string | null;
   parents_name?: string | null;
   parent_contact?: string | null;
   parent_approval?: boolean;
@@ -90,8 +119,10 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           .eq('id', player.id)
           .maybeSingle();
         if (data) {
-          const linksArr: Array<{ label?: string; url?: string }> = Array.isArray(data.links) ? data.links : [];
-          const tm = linksArr.find((l) => /transfermarkt/i.test(String(l?.label || '')) || /transfermarkt/i.test(String(l?.url || '')));
+          const linksArr: Array<{ label?: string; url?: string }> = Array.isArray(data.links)
+            ? data.links
+            : (data.links && typeof data.links === 'object' ? [data.links as any] : []);
+          const tmUrl = extractTransfermarktUrl(data.links);
           setEditForm((f: any) => ({
             ...f,
             national_team: !!data.national_team,
@@ -100,7 +131,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
             previous_serious_injury: data.previous_serious_injury || '',
             agent_status: data.agent_status || '',
             agent_name: data.agent_name || '',
-            transfermarkt_url: tm?.url || '',
+            transfermarkt_url: tmUrl,
             _links: linksArr,
           }));
         }
@@ -226,6 +257,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           age: calculateAge(editForm.date_of_birth) ?? player.age,
           ig_handle: editForm.ig_handle || null,
           notes: editForm.notes || null,
+          transfermarkt_url: tmUrlRaw || null,
         };
         onUpdated(updatedPlayer);
         toast.success('Player updated');
