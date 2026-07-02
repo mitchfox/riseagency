@@ -1628,7 +1628,9 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
   };
 
   const save = async () => {
-    if (isAgent) {
+    if (isGeneral) {
+      // No club/agent required
+    } else if (isAgent) {
       if (!agentName.trim()) return toast.error("Agent name required");
     } else if (!clubId) {
       return toast.error("Pick a club");
@@ -1637,8 +1639,8 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
     setSaving(true);
     try {
       const payload: any = {
-        target_type: isAgent ? 'agent' : 'club',
-        club_id: isAgent ? null : clubId,
+        target_type: isGeneral ? 'general' : (isAgent ? 'agent' : 'club'),
+        club_id: isGeneral || isAgent ? null : clubId,
         agent_name: isAgent ? agentName.trim() : null,
         agent_logo_url: isAgent ? (agentLogoUrl.trim() || null) : null,
         player_id: entries[0]?.player_id ?? null,
@@ -1673,7 +1675,7 @@ function OutreachDialog({ open, onClose, players, clubs, allRows, onSaved, onClu
         const { data: u } = await supabase.auth.getUser();
         let inserted = false;
         for (let attempt = 0; attempt < 5 && !inserted; attempt++) {
-          const short = isAgent ? makeShortId() : makeClubShortId(selectedClub?.club_name);
+          const short = isAgent || isGeneral ? makeShortId() : makeClubShortId(selectedClub?.club_name);
           const { data, error } = await supabase
             .from("club_outreach_links")
             .insert({ short_id: short, ...payload, created_by: u.user?.id ?? null })
