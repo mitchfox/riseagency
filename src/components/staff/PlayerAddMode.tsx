@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Sparkles, UserPlus, Image as ImageIcon, X, Check, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PLAYER_POSITIONS, normalisePosition } from '@/lib/playerPositions';
 
 type Mode = 'manual' | 'ai' | 'review';
 
@@ -19,6 +21,8 @@ interface ParsedPlayer {
   league: string | null;
   instagram_handle: string | null;
   notes: string | null;
+  national_team?: boolean | null;
+  agency?: string | null;
   _matched_source?: 'transfermarkt';
   _needs_review?: boolean;
   transfermarkt_id?: string;
@@ -58,7 +62,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     setSavingManual(true);
     const { error } = await supabase.from('players').insert({
       name: manual.name.trim(),
-      position: manual.position.trim() || 'CM',
+      position: normalisePosition(manual.position) || manual.position.trim() || 'CM',
       nationality: manual.nationality.trim() || 'Unknown',
       date_of_birth: manual.date_of_birth || null,
       club: manual.club.trim() || null,
@@ -113,9 +117,11 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     setBulkSaving(true);
     let ok = 0;
     for (const p of toSave) {
+      const normalisedAgency = (p.agency || '').trim();
+      const isRise = /rise\s*football/i.test(normalisedAgency);
       const { error } = await supabase.from('players').insert({
         name: p.name.trim(),
-        position: (p.position || 'CM').trim(),
+        position: normalisePosition(p.position) || (p.position || 'CM').trim(),
         nationality: (p.nationality || 'Unknown').trim(),
         date_of_birth: p.date_of_birth || null,
         age: p.age || null,
@@ -123,8 +129,10 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         league: p.league || null,
         instagram_handle: p.instagram_handle || null,
         bio: p.notes || null,
+        national_team: p.national_team === true ? true : null,
+        agent_name: isRise ? 'RISE Football Agency' : (normalisedAgency || null),
         category: 'Other',
-        representation_status: 'Other',
+        representation_status: isRise ? 'represented' : 'Other',
       });
       if (error) {
         update(p._i, { _error: error.message });
@@ -246,12 +254,29 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
                       </div>
                     )}
                     <MiniField label="Name"><Input value={p.name || ''} onChange={(e) => update(i, { name: e.target.value })} className="h-8 text-sm" /></MiniField>
-                    <MiniField label="Position"><Input value={p.position || ''} onChange={(e) => update(i, { position: e.target.value })} className="h-8 text-sm" /></MiniField>
+                    <MiniField label="Position">
+                      <Select value={p.position || ''} onValueChange={(value) => update(i, { position: value })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          {PLAYER_POSITIONS.map((code) => (<SelectItem key={code} value={code}>{code}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </MiniField>
                     <MiniField label="Nationality"><Input value={p.nationality || ''} onChange={(e) => update(i, { nationality: e.target.value })} className="h-8 text-sm" /></MiniField>
                     <MiniField label="DOB"><Input type="date" value={p.date_of_birth || ''} onChange={(e) => update(i, { date_of_birth: e.target.value })} className="h-8 text-sm" /></MiniField>
                     <MiniField label="Club"><Input value={p.club || ''} onChange={(e) => update(i, { club: e.target.value })} className="h-8 text-sm" /></MiniField>
                     <MiniField label="League"><Input value={p.league || ''} onChange={(e) => update(i, { league: e.target.value })} className="h-8 text-sm" /></MiniField>
                     <MiniField label="Instagram"><Input value={p.instagram_handle || ''} onChange={(e) => update(i, { instagram_handle: e.target.value })} className="h-8 text-sm" /></MiniField>
+                    <MiniField label="National team">
+                      <Select value={p.national_team === true ? 'yes' : p.national_team === false ? 'no' : ''} onValueChange={(value) => update(i, { national_team: value === 'yes' ? true : value === 'no' ? false : null })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Yes</SelectItem>
+                          <SelectItem value="no">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </MiniField>
+                    <MiniField label="Agency"><Input value={p.agency || ''} onChange={(e) => update(i, { agency: e.target.value })} placeholder="Only if stated" className="h-8 text-sm" /></MiniField>
                     <MiniField label="Notes"><Input value={p.notes || ''} onChange={(e) => update(i, { notes: e.target.value })} className="h-8 text-sm" /></MiniField>
                   </div>
                 </div>
