@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PLAYER_POSITIONS } from "@/lib/playerPositions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -3334,13 +3335,19 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
                   <div className="grid grid-cols-1 gap-3 sm:gap-4">
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor="position" className="text-sm">Position *</Label>
-                      <Input
-                        id="position"
-                        value={formData.position}
-                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                        required
-                        className="h-10 sm:h-11"
-                      />
+                      <Select
+                        value={formData.position || ''}
+                        onValueChange={(value) => setFormData({ ...formData, position: value })}
+                      >
+                        <SelectTrigger id="position" className="h-10 sm:h-11">
+                          <SelectValue placeholder="Select position" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PLAYER_POSITIONS.map((code) => (
+                            <SelectItem key={code} value={code}>{code}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
