@@ -1078,15 +1078,19 @@ const Spending = ({ rows, write, token, onRefresh }: { rows: SpendingRowExt[]; w
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleReceiptUpload(f); }}
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length) handleReceiptUpload(files);
+                }}
               />
               <div className="rounded-md border border-dashed border-border/60 p-3 flex flex-wrap items-center gap-2 bg-muted/20">
                 <Button type="button" size="sm" variant="outline" disabled={parsing} onClick={() => fileInputRef.current?.click()}>
                   {parsing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Camera className="w-4 h-4 mr-1" />}
-                  {parsing ? "Reading…" : "Upload receipt / screenshot"}
+                  {parsing ? "Reading…" : "Upload receipts / screenshots"}
                 </Button>
-                <span className="text-xs text-muted-foreground">One image can contain multiple items — we'll detect each and let you review before saving.</span>
+                <span className="text-xs text-muted-foreground">Select one or more images — each can contain multiple items and we'll merge them into the review list below.</span>
               </div>
 
               {parsedItems.length > 0 ? (
