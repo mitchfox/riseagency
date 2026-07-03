@@ -221,16 +221,14 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         if (existing) merged++;
         else {
           added++;
-          if (beforeCount !== null) {
-            window.dispatchEvent(new CustomEvent('player-database-refresh', { detail: { total: beforeCount + added } }));
-          }
+          window.dispatchEvent(new CustomEvent('player-database-refresh', { detail: { increment: 1 } }));
         }
       }
     }
     setBulkSaving(false);
     const ok = added + merged;
     const afterCount = await fetchDbCount();
-    if (ok > 0) window.dispatchEvent(new CustomEvent('player-database-refresh', { detail: afterCount !== null ? { total: afterCount } : undefined }));
+    if (ok > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
     const countSuffix = beforeCount !== null && afterCount !== null
       ? ` · Database ${beforeCount} → ${afterCount}`
       : '';
