@@ -1,37 +1,36 @@
-## Why the counter "resets"
+## Goal
+Fill missing first_team_rating and academy_rating on clubs so player AI ratings compute correctly. AI proposes, you approve, then commit.
 
-`fetchLivePlayerCount` in `PlayerDatabaseManagement.tsx` runs ~900ms after each add (and on a debounce), and it does two things that fight the optimistic `+1`:
+## Scope of clubs processed
+1. Clubs already in `club_ratings` where `first_team_rating` or `academy_rating` is blank.
+2. Clubs referenced by any player's `current_club` (excluding Scouted / FFF) that have no row in `club_ratings` at all — new rows created with country auto-detected from `club_map_positions`.
 
-1. **It dedupes across four tables** (`players`, `scouting_reports`, `player_outreach_youth`, `player_outreach_pro`) using a `name::club` key. If a newly added player already exists as a scouting report or outreach row with the same name+club, the merged total does not go up by 1 — so the number visibly ticks up, then "snaps back" when the real fetch lands.
-2. **It uses `.range(0, 9999)`** on every source, silently capping at 10k rows. As the DB grows past that on any single source, the merged count becomes wrong and unstable.
+## How it works
 
-So the players *are* being inserted — the counter is just measuring something different from what the label promises ("live database players").
+1. **New staging table** `club_rating_suggestions` (id, club_name, country, current_first, current_academy, suggested_first, suggested_academy, reasoning, confidence, status: pending/approved/rejected, created_at). RLS: admin/staff only.
 
-## Fix
+2. **New edge function** `suggest-club-ratings`
+   - Gathers the two sets of unrated clubs above.
+   - Batches ~25 clubs per AI call to `google/gemini-2.5-flash` via Lovable AI gateway.
+   - Prompt gives the AI: the R1-R5 scale definition (R1 = elite European, R2 = strong top-5 league, R3 = solid top-flight / promoted, R4 = second tier, R5 = lower divisions / semi-pro), the club name, and country. Returns first-team R, academy R, one-line reasoning, confidence (high/medium/low).
+   - Writes results into `club_rating_suggestions` with status = pending.
+   - Idempotent: skips clubs already pending.
 
-Make the header counter mean exactly what it says — rows in `public.players`, minus the globally excluded categories — and make it authoritative so the optimistic tick and the refetch agree.
+3. **New review UI** — button "Suggest club ratings" on the Player Database Actions card, next to the analytics button. Opens a wide dialog listing pending suggestions with: club, country, current vs suggested first/academy R, reasoning, confidence badge. Actions per row: approve, edit R, reject. Bulk actions: approve all high-confidence, reject all.
 
-### Changes to `src/components/staff/PlayerDatabaseManagement.tsx`
+4. **Apply** — on approval, writes to `club_ratings` (upserts row if missing) and marks suggestion approved. On reject, marks rejected and hides.
 
-1. Replace `fetchLivePlayerCount` with a single exact-count query:
-   ```ts
-   supabase
-     .from('players')
-     .select('*', { count: 'exact', head: true })
-     .not('category', 'in', '("Scouted","Fuel For Football","FFF")')
-     .not('representation_status', 'in', '("Scouted","Fuel For Football","FFF")');
-   ```
-   Use the returned `count` directly. No `.range`, no client-side dedup, no 10k cap.
-2. Drop the cross-table merge helpers (`normaliseCountValue`, `mergedPlayerCountKey`, the scouting/outreach fetches) — they belonged to the old "source records" line that we already removed.
-3. Keep the optimistic `+increment` on the `player-database-refresh` event, but shorten the debounce to ~250ms so the authoritative refetch lands almost immediately after the tick and can only ever confirm or correct by ±1, never snap by hundreds.
-4. Update the label copy to match the new meaning: `"{n} players in database"` (excluded categories already filtered), so it's obvious what the number represents.
+5. **Live counter** on the dialog: X pending, Y approved, Z clubs still unrated.
 
-### No other files need changing
+## Technical notes
+- Country resolved via existing `clubCountryMap` (`club_map_positions` + `club_ratings.country`) before sending to AI so it has geographic context.
+- Player-club matching uses existing `canonicalClubName` from `src/lib/clubNameUtils.ts` to avoid duplicate suggestions for accent/alias variants.
+- Cache-invalidate `useClubMaps` (sessionStorage key `rise.clubMaps.v1`) after any approval so player fit-scores recompute immediately.
+- No changes to fit-score logic itself.
 
-`PlayerAddMode.tsx` already dispatches `player-database-refresh` with `{ increment: 1 }` per successful insert — that stays as-is and will now agree with the refetch.
-
-### Verification
-
-- Add a player via AI bulk add → counter ticks +1, refetch confirms same number (no snap-back).
-- Add a player whose name+club already exists in scouting_reports → counter still ticks +1 and stays (previously it snapped back).
-- Reload page → number matches `select count(*) from players where category not in (...)`.
+## Files
+- Migration: create `club_rating_suggestions` table + RLS + grants.
+- New: `supabase/functions/suggest-club-ratings/index.ts`
+- New: `src/components/staff/ClubRatingSuggestionsDialog.tsx`
+- Edit: `src/components/staff/PlayerDatabaseManagement.tsx` — add "Suggest club ratings" button.
+- Edit: `src/hooks/useClubMaps.ts` — expose a `refresh()` that clears the sessionStorage cache.
