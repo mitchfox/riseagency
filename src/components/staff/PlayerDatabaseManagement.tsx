@@ -10,6 +10,12 @@ import { toast } from 'sonner';
 type Mode = 'classic' | 'squad';
 type AddMode = 'ai' | 'manual';
 
+const normaliseCountValue = (value: string | null | undefined) =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const mergedPlayerCountKey = (name: string | null | undefined, club: string | null | undefined) =>
+  `${normaliseCountValue(name)}::${normaliseCountValue(club)}`;
+
 export const PlayerDatabaseActions = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<AddMode>('ai');
@@ -22,14 +28,39 @@ export const PlayerDatabaseActions = () => {
 
   const fetchLivePlayerCount = async () => {
     const excluded = ['Scouted', 'Fuel For Football', 'FFF'];
-    const { data, error } = await supabase
-      .from('players')
-      .select('id, category, representation_status')
-      .range(0, 9999);
-    if (!error) {
-      setLivePlayerCount((data || []).filter((player) => (
-        !excluded.includes(player.category || '') && !excluded.includes(player.representation_status || '')
-      )).length);
+    const [databaseResult, scoutingResult, youthResult, proResult] = await Promise.all([
+      supabase.from('players').select('id, name, club, category, representation_status').range(0, 9999),
+      supabase.from('scouting_reports').select('id, player_name, current_club').range(0, 9999),
+      supabase.from('player_outreach_youth').select('*').range(0, 9999),
+      supabase.from('player_outreach_pro').select('*').range(0, 9999),
+    ]);
+    if (!databaseResult.error && !scoutingResult.error && !youthResult.error && !proResult.error) {
+      const keys = new Set<string>();
+      const nameOnly = new Map<string, string | null>();
+      const addRow = (name: string | null | undefined, club: string | null | undefined) => {
+        const nameKey = normaliseCountValue(name);
+        if (!nameKey) return;
+        const key = mergedPlayerCountKey(name, club);
+        if (normaliseCountValue(club)) {
+          keys.add(key);
+          return;
+        }
+        const existing = nameOnly.get(nameKey);
+        if (existing === undefined) {
+          nameOnly.set(nameKey, key);
+          keys.add(key);
+        } else if (existing && existing !== key) {
+          nameOnly.set(nameKey, null);
+        }
+      };
+
+      (databaseResult.data || [])
+        .filter((player) => !excluded.includes(player.category || '') && !excluded.includes(player.representation_status || ''))
+        .forEach((player) => addRow(player.name, player.club));
+      (scoutingResult.data || []).forEach((report) => addRow(report.player_name, report.current_club));
+      (youthResult.data || []).forEach((outreach: any) => addRow(outreach.player_name, outreach.current_club));
+      (proResult.data || []).forEach((outreach: any) => addRow(outreach.player_name, outreach.current_club));
+      setLivePlayerCount(keys.size);
     }
     setCountLoading(false);
   };
@@ -38,10 +69,12 @@ export const PlayerDatabaseActions = () => {
     fetchLivePlayerCount();
     let t: ReturnType<typeof setTimeout> | null = null;
     const onRefresh = (event: Event) => {
-      const detail = (event as CustomEvent<{ total?: number }>).detail;
-      if (typeof detail?.total === 'number') setLivePlayerCount(detail.total);
+      const detail = (event as CustomEvent<{ increment?: number }>).detail;
+      if (typeof detail?.increment === 'number') {
+        setLivePlayerCount((current) => current === null ? current : current + detail.increment);
+      }
       if (t) clearTimeout(t);
-      t = setTimeout(fetchLivePlayerCount, typeof detail?.total === 'number' ? 900 : 150);
+      t = setTimeout(fetchLivePlayerCount, typeof detail?.increment === 'number' ? 900 : 150);
     };
     window.addEventListener('player-database-refresh', onRefresh);
     return () => {
