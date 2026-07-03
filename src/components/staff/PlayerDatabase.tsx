@@ -456,7 +456,6 @@ const MobilePlayerCard = ({
 export const PlayerDatabase = () => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [sourceRecordCount, setSourceRecordCount] = useState(0);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -481,6 +480,7 @@ export const PlayerDatabase = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
   const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -579,7 +579,6 @@ export const PlayerDatabase = () => {
       const scoutingRows = (scoutingResult.data || []).filter(report => !!report.player_name);
       const youthRows = (youthResult.data || []).filter(outreach => !!outreach.player_name);
       const proRows = (proResult.data || []).filter(outreach => !!outreach.player_name);
-      setSourceRecordCount(databaseRows.length + scoutingRows.length + youthRows.length + proRows.length);
 
       const rememberNameOnly = (name: string | null | undefined, rowKey: string) => {
         const nameKey = normaliseMergeValue(name);
