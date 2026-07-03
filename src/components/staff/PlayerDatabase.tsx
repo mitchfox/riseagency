@@ -29,8 +29,33 @@ import { computeFitScore } from '@/lib/fitScore';
 import { useRecruitmentTargets, useScoringSettings } from '@/hooks/useRecruitmentScoring';
 import { matchesQuery } from '@/lib/searchMatch';
 
-const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
-  name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
+const normaliseMergeValue = (value: string | null | undefined) =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const buildPlayerMergeKey = (name: string | null | undefined, club: string | null | undefined) =>
+  `${normaliseMergeValue(name)}::${normaliseMergeValue(club)}`;
+
+const mergePlayerRecord = (base: PlayerData, incoming: PlayerData): PlayerData => ({
+  ...base,
+  position: base.position || incoming.position,
+  age: base.age ?? incoming.age,
+  current_club: base.current_club || incoming.current_club,
+  nationality: base.nationality || incoming.nationality,
+  date_of_birth: base.date_of_birth || incoming.date_of_birth,
+  report_count: base.report_count + incoming.report_count,
+  notes: base.notes || incoming.notes,
+  ig_handle: base.ig_handle || incoming.ig_handle,
+  created_at: [base.created_at, incoming.created_at].filter(Boolean).sort().at(-1) || base.created_at,
+  profile_image_url: base.profile_image_url || incoming.profile_image_url,
+  club_logo_url: base.club_logo_url || incoming.club_logo_url,
+  transfermarkt_url: base.transfermarkt_url || incoming.transfermarkt_url,
+  parents_name: base.parents_name || incoming.parents_name,
+  parent_contact: base.parent_contact || incoming.parent_contact,
+  parent_approval: base.parent_approval || incoming.parent_approval,
+  messaged: base.messaged || incoming.messaged,
+  response_received: base.response_received || incoming.response_received,
+  representation_status: base.representation_status || incoming.representation_status,
+});
 
 // Map any representation_status string the DB might hold (any casing, plus
 // legacy variants like "relatives") to one of five canonical player-facing
