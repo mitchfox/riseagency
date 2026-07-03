@@ -152,6 +152,14 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     setBulkSaving(true);
     let added = 0;
     let merged = 0;
+    let lastRefreshAt = 0;
+    const maybeRefresh = () => {
+      const now = Date.now();
+      if (now - lastRefreshAt >= 400) {
+        lastRefreshAt = now;
+        window.dispatchEvent(new CustomEvent('player-database-refresh'));
+      }
+    };
     for (const p of toSave) {
       const normalisedAgency = (p.agency || '').trim();
       const isRise = /rise\s*football/i.test(normalisedAgency);
@@ -207,6 +215,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         update(p._i, { _saved: true, _error: undefined });
         if (existing) merged++;
         else added++;
+        maybeRefresh();
       }
     }
     setBulkSaving(false);
