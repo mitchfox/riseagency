@@ -226,6 +226,19 @@ const getTmPositionValue = (data: any): string => {
   );
 };
 
+const TOP_AGENCIES = [
+  'CAA Base',
+  'Wasserman',
+  'CAA Stellar',
+  'Raiola Group',
+  'Gestifute',
+];
+const isTopAgency = (agency: string | null | undefined): boolean => {
+  if (!agency) return false;
+  const norm = String(agency).toLowerCase().replace(/[^a-z0-9]/g, '');
+  return TOP_AGENCIES.some(a => norm.includes(a.toLowerCase().replace(/[^a-z0-9]/g, '')));
+};
+
 const getTmAgency = (data: any): string | null => {
   const agency = cleanName(
     data?.attributes?.consultantAgency?.name
@@ -237,11 +250,19 @@ const getTmAgency = (data: any): string | null => {
 
 // TM lists family-run representation as "Relatives" / "Family". The staff DB
 // uses "Family" as the canonical option in agent_status, so surface that
-// explicitly for the enricher.
-const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' | null => {
+// explicitly for the enricher. Top agencies get a distinct status so the
+// filter can separate them out.
+const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' | 'top_agency' | null => {
   if (!agency) return null;
   if (/relatives|family/i.test(agency)) return 'family';
+  if (isTopAgency(agency)) return 'top_agency';
   return 'represented';
+};
+
+const representationLabelForStatus = (status: 'represented' | 'family' | 'top_agency'): string => {
+  if (status === 'family') return 'Family';
+  if (status === 'top_agency') return 'Top Agency';
+  return 'Represented';
 };
 
 const tmProfileImageUrl = (id: string) => `https://img.a.transfermarkt.technology/portrait/big/${id}-1.jpg`;
