@@ -420,7 +420,17 @@ export const computeFitScore = (
 
   const archetype = nationalityArchetypeBonus(player.nationality, player.position);
 
-  const total = clamp(Math.round(baseScaled + aiScaled + bonusSum + leagueStrengthBonus + agentBonus + archetype.value), 0, 100);
+  // Data-completeness floor — every player with the key identifying details in
+  // the database gets a baseline score, so a player who has no matching
+  // recruitment target still surfaces a real number rather than a flat zero.
+  const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !== '';
+  const dataFloor =
+    (has(player.date_of_birth) || has(player.age) ? 12 : 0)
+    + (has(player.position) ? 8 : 0)
+    + (has(player.current_club) ? 10 : 0)
+    + (has(player.nationality) ? 5 : 0);
+
+  const total = clamp(Math.round(Math.max(baseScaled, dataFloor) + aiScaled + bonusSum + leagueStrengthBonus + agentBonus + archetype.value), 0, 100);
 
   const reasons = [...best.res.reasons];
   if (aiScaled > 0) reasons.push(`+${Math.round(aiScaled)} AI nudge`);
