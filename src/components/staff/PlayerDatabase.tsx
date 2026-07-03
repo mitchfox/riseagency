@@ -703,7 +703,7 @@ export const PlayerDatabase = () => {
     let t: ReturnType<typeof setTimeout> | null = null;
     const refresh = (event: Event) => {
       if (t) clearTimeout(t);
-      const detail = (event as CustomEvent<{ total?: number }>).detail;
+      const detail = (event as CustomEvent<{ increment?: number }>).detail;
       t = setTimeout(() => {
         // Reset to newest-added first so freshly saved players appear at the
         // top instead of being hidden behind whatever sort was in use.
@@ -711,7 +711,7 @@ export const PlayerDatabase = () => {
         setSortDirection('desc');
         setVisibleCount(ITEMS_PER_PAGE);
         fetchAllPlayers();
-      }, typeof detail?.total === 'number' ? 900 : 150);
+      }, typeof detail?.increment === 'number' ? 900 : 150);
     };
     window.addEventListener('player-database-refresh', refresh);
     return () => {
