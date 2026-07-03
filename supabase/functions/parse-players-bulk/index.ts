@@ -681,6 +681,147 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Refresh mode: for every player that has a Transfermarkt URL, re-pull
+    // the profile, headshot and current-season stats from TM. Runs in
+    // batches (via `limit` + `skipIds`) so the UI can page through the
+    // whole database without timing out.
+    if (mode === 'refresh_all') {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (!supabaseUrl || !serviceKey) {
+        return new Response(JSON.stringify({ error: 'Backend not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const limit = Math.min(Math.max(Number(body.limit) || 10, 1), 25);
+      const skipIds = new Set((Array.isArray(body.skipIds) ? body.skipIds : []).map((id) => String(id)));
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      const { data: allRows, error: fetchErr } = await supabase
+        .from('players')
+        .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
+        .order('name', { ascending: true })
+        .range(0, 9999);
+      if (fetchErr) {
+        return new Response(JSON.stringify({ error: fetchErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
+      const rowsWithTm = (allRows || [])
+        .map((row: any) => ({ row, url: extractTransfermarktLink(row.links) }))
+        .filter(({ row, url }) => {
+          if (!url) return false;
+          if (skipIds.has(String(row.id))) return false;
+          const category = String(row.category || '').trim().toLowerCase();
+          const representation = String(row.representation_status || '').trim().toLowerCase();
+          if (excludedStatuses.has(category) || excludedStatuses.has(representation)) return false;
+          return /\/spieler\/(\d+)/i.test(url);
+        });
+      const candidates = rowsWithTm.slice(0, limit);
+
+      const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string }> = [];
+
+      const workers = await runWithConcurrency(candidates, 3, async ({ row, url }) => {
+        const idMatch = url!.match(/\/spieler\/(\d+)/i);
+        const tmId = idMatch?.[1];
+        if (!tmId) return { id: row.id, name: row.name, updated: false, fields: [], reason: 'no_tm_id' };
+
+        try {
+          const [data, profile] = await Promise.all([
+            fetchTmPlayer(tmId),
+            fetchTmProfile(tmId),
+          ]);
+          if (!data) return { id: row.id, name: row.name, updated: false, fields: [], reason: 'tm_fetch_failed' };
+
+          const patch: Record<string, unknown> = {};
+          const fields: string[] = [];
+
+          const tmName = getTmName(data);
+          const tmDob = data?.lifeDates?.dateOfBirth ?? null;
+          const tmAge = data?.lifeDates?.age ?? null;
+          const posLong = getTmPositionValue(data);
+          const shortPos = canonicalPosition(TM_POSITION_TO_SHORT[posLong] || data?.attributes?.position?.shortName || posLong);
+          const current = (data?.clubAssignments || []).find((a: any) => a?.type === 'current');
+
+          if (tmDob) { patch.date_of_birth = String(tmDob).slice(0, 10); fields.push('date_of_birth'); }
+          if (tmAge) { patch.age = tmAge; fields.push('age'); }
+          const nationality = profile.nationality || VERIFIED_TM_NATIONALITY_FALLBACK[data?.nationalityDetails?.nationalities?.nationalityId || 0] || null;
+          if (nationality) { patch.nationality = nationality; fields.push('nationality'); }
+          if (shortPos) { patch.position = shortPos; fields.push('position'); }
+          if (current?.clubId) {
+            const clubInfo = await fetchTmClubInfo(String(current.clubId));
+            if (clubInfo.club) { patch.club = clubInfo.club; fields.push('club'); }
+            if (clubInfo.competitionId) {
+              const compName = await fetchTmCompetitionName(clubInfo.competitionId);
+              if (compName) { patch.league = compName; fields.push('league'); }
+            }
+          }
+          if (hasTmNationalTeam(data) || profile.nationalTeam === true) {
+            patch.national_team = true; fields.push('national_team');
+          }
+
+          const agency = getTmAgency(data) || profile.agent;
+          const agencyStatus = classifyAgencyStatus(agency);
+          if (agencyStatus) {
+            patch.agent_status = agencyStatus; fields.push('agent_status');
+            if (agencyStatus === 'family') {
+              patch.agent_name = null;
+              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
+                patch.representation_status = 'Family'; fields.push('representation_status');
+              }
+            } else {
+              patch.agent_name = agency; fields.push('agent_name');
+              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
+                patch.representation_status = 'Represented'; fields.push('representation_status');
+              }
+            }
+          }
+
+          // Headshot: only fill when the player has no picture yet.
+          if (!hasValue(row.image_url)) {
+            patch.image_url = tmProfileImageUrl(tmId); fields.push('image_url');
+          }
+
+          if (Object.keys(patch).length) {
+            const { error: updErr } = await supabase.from('players').update(patch).eq('id', row.id);
+            if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
+          }
+
+          // Current-season stats — best-effort. If the TM API doesn't expose
+          // performance data for this player, skip silently.
+          try {
+            const perfRes = await fetch(`${TM_API}/player/${tmId}/performanceData/current`);
+            if (perfRes.ok) {
+              const perfJson = await perfRes.json();
+              const totals = perfJson?.data?.totals || perfJson?.data?.summary || null;
+              const minutes = Number(totals?.minutesPlayed) || 0;
+              const matches = Number(totals?.appearances || totals?.matches) || 0;
+              const goals = Number(totals?.goals) || 0;
+              const assists = Number(totals?.assists) || 0;
+              if (minutes || matches || goals || assists) {
+                await supabase
+                  .from('player_stats')
+                  .upsert({ player_id: row.id, minutes, matches, goals, assists, external_player_id: tmId, updated_at: new Date().toISOString() }, { onConflict: 'player_id' });
+                fields.push('season_stats');
+              }
+            }
+          } catch { /* ignore */ }
+
+          return { id: row.id, name: row.name, updated: fields.length > 0, fields };
+        } catch (err) {
+          return { id: row.id, name: row.name, updated: false, fields: [], reason: (err as Error).message };
+        }
+      });
+      results.push(...workers);
+
+      const remainingAfter = Math.max(0, rowsWithTm.length - workers.length);
+      return new Response(JSON.stringify({
+        processed: results.length,
+        updated: results.filter((r) => r.updated).length,
+        remaining_before: rowsWithTm.length,
+        remaining: remainingAfter,
+        results,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (!text && (!images || images.length === 0)) {
       return new Response(JSON.stringify({ error: 'Provide text or images' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
