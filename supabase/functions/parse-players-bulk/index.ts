@@ -1060,13 +1060,18 @@ serve(async (req) => {
               }
             }
             if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
-            const stats = await fetchTmSeasonStats(tmId);
-            if (!stats) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_stats' };
+            let stats = await fetchTmSeasonStats(tmId);
+            let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
+            if (!stats) {
+              const html = await fetchTmSeasonStatsHtml(tmId);
+              if (html) { stats = html; statsSource = 'html'; }
+            }
+            const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
             const { error: statsErr } = await upsertPlayerStats(supabase, {
-              source: src, sourceId: r.id, playerId: null, tmId, stats,
+              source: src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
             });
             if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
-            return { id: r.id, name: r.player_name, source: src, updated: true, fields: ['season_stats'] };
+            return { id: r.id, name: r.player_name, source: src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
           } catch (err) {
             return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
           }
@@ -1075,9 +1080,12 @@ serve(async (req) => {
       }
 
       const remainingAfter = Math.max(0, rowsWithTm.length - workers.length);
+      const withStats = results.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length
+        + outreachResults.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length;
       return new Response(JSON.stringify({
         processed: results.length + outreachResults.length,
         updated: results.filter((r) => r.updated).length + outreachResults.filter((r) => r.updated).length,
+        with_stats: withStats,
         remaining_before: rowsWithTm.length,
         remaining: remainingAfter,
         results,
