@@ -496,12 +496,14 @@ const AnalyticsBarList = ({
   total,
   emptyLabel,
   onPick,
+  showFlags = false,
 }: {
   title: string;
   items: Array<{ label: string; count: number }>;
   total: number;
   emptyLabel: string;
   onPick?: (label: string) => void;
+  showFlags?: boolean;
 }) => (
   <div className="rounded-lg border border-border/60 bg-card/60 p-3">
     <div className="mb-3 flex items-center justify-between gap-2">
@@ -522,7 +524,7 @@ const AnalyticsBarList = ({
           >
             <div className="mb-1 flex items-center gap-2 text-xs">
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-muted/35 text-[10px] font-black text-muted-foreground">{index + 1}</span>
-              {!isUnknown && <img src={getCountryFlagUrl(item.label)} alt={item.label} className="h-3.5 w-5 shrink-0 rounded-sm object-cover" />}
+              {showFlags && !isUnknown && <img src={getCountryFlagUrl(item.label)} alt={item.label} className="h-3.5 w-5 shrink-0 rounded-sm object-cover" />}
               {isUnknown && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />}
               <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{item.label}</span>
               <span className="font-black text-foreground">{item.count}</span>
@@ -619,6 +621,7 @@ const PlayerAnalyticsPanel = ({
             total={analytics.total}
             items={analytics.nationalities}
             emptyLabel="No nationality data yet."
+            showFlags
             onPick={(label) => {
               if (label !== 'Unknown') onFilterNationality(label);
             }}
@@ -628,6 +631,7 @@ const PlayerAnalyticsPanel = ({
             total={analytics.total}
             items={analytics.clubCountries}
             emptyLabel="No club country data yet."
+            showFlags
           />
         </div>
 
