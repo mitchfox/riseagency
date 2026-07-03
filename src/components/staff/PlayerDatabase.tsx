@@ -618,9 +618,10 @@ export const PlayerDatabase = () => {
         if (!abbrev || !positionFilter.includes(abbrev)) return false;
       }
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
-      if (representationFilter.length > 0) {
-        const status = (player.representation_status || '').trim();
-        if (!status || !representationFilter.includes(status)) return false;
+      if (representationFilter.length > 0 || representationExclude.length > 0) {
+        const canonical = canonRepresentation(player.representation_status);
+        if (representationFilter.length > 0 && !representationFilter.includes(canonical)) return false;
+        if (representationExclude.includes(canonical)) return false;
       }
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
       if (missingFilters.length > 0) {
