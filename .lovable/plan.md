@@ -1,36 +1,29 @@
-## Goal
-Fill missing first_team_rating and academy_rating on clubs so player AI ratings compute correctly. AI proposes, you approve, then commit.
+## Plan
 
-## Scope of clubs processed
-1. Clubs already in `club_ratings` where `first_team_rating` or `academy_rating` is blank.
-2. Clubs referenced by any player's `current_club` (excluding Scouted / FFF) that have no row in `club_ratings` at all — new rows created with country auto-detected from `club_map_positions`.
+1. **Remove the useless suggestions feature**
+   - Remove the “Suggest club ratings” button from Player Database actions.
+   - Remove the suggestions dialog import and render from the staff player database screen.
+   - Leave the old staging table alone unless you want it removed later, because removing database objects is riskier and not needed to fix this.
 
-## How it works
+2. **Fix the actual club rating gaps directly in the database**
+   - Insert ratings for every current player club that is missing from `club_ratings`.
+   - Use the real player club field, `players.club`, not the incorrect `current_club` field used by the broken edge function.
+   - Populate both `first_team_rating` and `academy_rating` for each missing club.
+   - Avoid placeholders by ignoring obvious non-clubs like `---`, `Unknown`, and `The Game` unless they are required for a real player record.
 
-1. **New staging table** `club_rating_suggestions` (id, club_name, country, current_first, current_academy, suggested_first, suggested_academy, reasoning, confidence, status: pending/approved/rejected, created_at). RLS: admin/staff only.
+3. **Handle messy club-name variants**
+   - Add ratings for exact missing names such as `Birmingham City`, `Brentford`, `Toronto FC`, `Kilmarnock`, `Lommel SK`, etc.
+   - Where the player club value contains noise like `(loan)`, `(On Loan)`, or `(parent club)`, add the exact stored value too so the current fit-score lookup works immediately.
+   - This is a direct coverage patch, not an AI suggestion queue.
 
-2. **New edge function** `suggest-club-ratings`
-   - Gathers the two sets of unrated clubs above.
-   - Batches ~25 clubs per AI call to `google/gemini-2.5-flash` via Lovable AI gateway.
-   - Prompt gives the AI: the R1-R5 scale definition (R1 = elite European, R2 = strong top-5 league, R3 = solid top-flight / promoted, R4 = second tier, R5 = lower divisions / semi-pro), the club name, and country. Returns first-team R, academy R, one-line reasoning, confidence (high/medium/low).
-   - Writes results into `club_rating_suggestions` with status = pending.
-   - Idempotent: skips clubs already pending.
-
-3. **New review UI** — button "Suggest club ratings" on the Player Database Actions card, next to the analytics button. Opens a wide dialog listing pending suggestions with: club, country, current vs suggested first/academy R, reasoning, confidence badge. Actions per row: approve, edit R, reject. Bulk actions: approve all high-confidence, reject all.
-
-4. **Apply** — on approval, writes to `club_ratings` (upserts row if missing) and marks suggestion approved. On reject, marks rejected and hides.
-
-5. **Live counter** on the dialog: X pending, Y approved, Z clubs still unrated.
+4. **Verify coverage after the fix**
+   - Re-run the coverage query against current non-Scouted and non-Fuel For Football player clubs.
+   - Confirm there are no missing ratings for real club names.
+   - Check the remaining unmatched rows, if any, are only non-club placeholders or malformed values that should not affect ratings.
 
 ## Technical notes
-- Country resolved via existing `clubCountryMap` (`club_map_positions` + `club_ratings.country`) before sending to AI so it has geographic context.
-- Player-club matching uses existing `canonicalClubName` from `src/lib/clubNameUtils.ts` to avoid duplicate suggestions for accent/alias variants.
-- Cache-invalidate `useClubMaps` (sessionStorage key `rise.clubMaps.v1`) after any approval so player fit-scores recompute immediately.
-- No changes to fit-score logic itself.
 
-## Files
-- Migration: create `club_rating_suggestions` table + RLS + grants.
-- New: `supabase/functions/suggest-club-ratings/index.ts`
-- New: `src/components/staff/ClubRatingSuggestionsDialog.tsx`
-- Edit: `src/components/staff/PlayerDatabaseManagement.tsx` — add "Suggest club ratings" button.
-- Edit: `src/hooks/useClubMaps.ts` — expose a `refresh()` that clears the sessionStorage cache.
+- The current `club_ratings` table has 1,501 rows and no rows missing R values.
+- The problem is not empty ratings, it is 48 player club strings that do not exact-match a `club_ratings.club_name` row.
+- The broken suggestions edge function queries `players.current_club`, but the real column is `players.club`, so it can never find the player clubs correctly.
+- The UI button then shows no pending suggestions because the staging table is empty.
