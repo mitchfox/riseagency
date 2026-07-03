@@ -22,6 +22,7 @@ import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { TableSettingsPopover, useTableSettings, type ColumnConfig } from './TableSettingsPopover';
 import { PlayerDetailDialog } from './PlayerDetailDialog';
+import { PlayerDetailInline } from './PlayerDetailInline';
 import { useStatsUpdaterAssignments } from '@/hooks/useStatsUpdaterAssignments';
 import { normalisePosition } from '@/lib/positionNormalise';
 import { computeFitScore } from '@/lib/fitScore';
@@ -281,6 +282,7 @@ export const PlayerDatabase = () => {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [expandedRowKey, setExpandedRowKey] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
@@ -631,10 +633,9 @@ export const PlayerDatabase = () => {
   const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
-    // Keep the open handler lightweight so the dialog paints immediately;
-    // the dialog itself hydrates its edit form and fetches extras.
+    const key = `${player.source}-${player.id}`;
+    setExpandedRowKey((current) => (current === key ? null : key));
     setSelectedPlayer(player);
-    setDetailOpen(true);
   };
 
   const handlePlayerUpdated = (updated: PlayerData) => {
@@ -1112,9 +1113,24 @@ export const PlayerDatabase = () => {
           </TableHeader>
           <TableBody>
             {visiblePlayers.map((player) => (
-              <TableRow key={`${player.source}-${player.id}`} className="hover:bg-muted/30 cursor-pointer group" onClick={() => openPlayerDetail(player)}>
-                {orderedVisibleKeys.map(key => renderCell(key, player))}
-              </TableRow>
+              <React.Fragment key={`${player.source}-${player.id}`}>
+                <TableRow className="hover:bg-muted/30 cursor-pointer group" onClick={() => openPlayerDetail(player)}>
+                  {orderedVisibleKeys.map(key => renderCell(key, player))}
+                </TableRow>
+                {expandedRowKey === `${player.source}-${player.id}` && (
+                  <TableRow className="bg-muted/10 hover:bg-muted/10">
+                    <TableCell colSpan={orderedVisibleKeys.length} className="p-3">
+                      <PlayerDetailInline
+                        player={player}
+                        onClose={() => setExpandedRowKey(null)}
+                        onUpdated={handlePlayerUpdated}
+                        eligibilityBadge={<EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />}
+                        fitScore={fitScoreByRowKey[`${player.source}-${player.id}`]}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
             ))}
           </TableBody>
         </Table>
@@ -1133,7 +1149,7 @@ export const PlayerDatabase = () => {
         <div className="text-center py-8 text-muted-foreground">No players found matching your filters</div>
       )}
 
-      {/* Player Detail/Edit Dialog */}
+      {/* Full edit dialog remains available for the mobile card list. */}
       <PlayerDetailDialog
         player={selectedPlayer}
         open={detailOpen}
