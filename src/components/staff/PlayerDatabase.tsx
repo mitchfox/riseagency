@@ -369,7 +369,14 @@ export const PlayerDatabase = () => {
     let t: ReturnType<typeof setTimeout> | null = null;
     const refresh = () => {
       if (t) clearTimeout(t);
-      t = setTimeout(() => { fetchAllPlayers(); }, 300);
+      t = setTimeout(() => {
+        // Reset to newest-added first so freshly saved players appear at the
+        // top instead of being hidden behind whatever sort was in use.
+        setSortField('created_at');
+        setSortDirection('desc');
+        setVisibleCount(ITEMS_PER_PAGE);
+        fetchAllPlayers();
+      }, 150);
     };
     window.addEventListener('player-database-refresh', refresh);
     return () => {
