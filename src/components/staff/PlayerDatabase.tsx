@@ -476,6 +476,7 @@ export const PlayerDatabase = () => {
 
       databaseRows.forEach(player => {
         const name = player.name;
+        if (!name) return;
         addOrMergePlayer(`db:${player.id}`, {
           id: player.id,
           player_name: name,
@@ -500,6 +501,7 @@ export const PlayerDatabase = () => {
 
       scoutingRows.forEach(report => {
         const name = report.player_name;
+        if (!name) return;
         addOrMergePlayer(`scout:${report.id}`, {
           id: report.id, player_name: name, position: report.position,
           age: calculateAge(report.date_of_birth) ?? report.age,
@@ -513,6 +515,7 @@ export const PlayerDatabase = () => {
 
       youthRows.forEach(outreach => {
         const name = outreach.player_name;
+        if (!name) return;
         addOrMergePlayer(`youth:${outreach.id}`, {
           id: outreach.id, player_name: name, position: (outreach as any).position || null,
           age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
@@ -528,6 +531,7 @@ export const PlayerDatabase = () => {
 
       proRows.forEach(outreach => {
         const name = outreach.player_name;
+        if (!name) return;
         addOrMergePlayer(`pro:${outreach.id}`, {
           id: outreach.id, player_name: name, position: (outreach as any).position || null,
           age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
