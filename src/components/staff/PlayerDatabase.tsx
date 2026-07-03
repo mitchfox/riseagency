@@ -326,6 +326,101 @@ const MiniFitBadge = ({ score }: { score: number }) => {
   );
 };
 
+const MobilePlayerCard = ({
+  player,
+  fitScore,
+  eligibility,
+  onOpen,
+}: {
+  player: PlayerData;
+  fitScore?: number;
+  eligibility: React.ReactNode;
+  onOpen: () => void;
+}) => {
+  const sourceLabel = player.source === 'database' ? 'DB'
+    : player.source === 'scouting' ? 'Scout'
+    : player.source === 'youth_outreach' ? 'Youth'
+    : 'Pro';
+  const dob = player.date_of_birth
+    ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+  const rep = canonRepresentation(player.representation_status);
+  return (
+    <div
+      onClick={onOpen}
+      className="p-3 rounded-xl border border-border/60 bg-card/85 hover:bg-card active:scale-[0.995] transition-all cursor-pointer shadow-sm"
+    >
+      <div className="flex items-start gap-3">
+        <Avatar className="h-14 w-14 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
+          <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-sm">
+            {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {player.nationality && (
+              <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-4 h-auto rounded-sm flex-shrink-0" />
+            )}
+            <span className="font-semibold text-sm truncate leading-tight">{player.player_name}</span>
+            <Badge variant="outline" className="text-[9px] flex-shrink-0 h-4 px-1.5">{player.position || '—'}</Badge>
+            {player.age != null && (
+              <span className="text-[10px] text-muted-foreground">{player.age}y</span>
+            )}
+            <span className="ml-auto flex items-center gap-1.5">
+              {eligibility}
+              {typeof fitScore === 'number' && <MiniFitBadge score={fitScore} />}
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain flex-shrink-0" />}
+            <span className="truncate">{player.current_club || '—'}</span>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground/90 flex-wrap">
+            {dob && <span>DOB {dob}</span>}
+            {player.nationality && <span>· {player.nationality}</span>}
+            <span>· {sourceLabel}</span>
+            {rep && rep !== 'Unknown' && <span>· {rep}</span>}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            {player.transfermarkt_url ? (
+              <a
+                href={player.transfermarkt_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/20"
+              >
+                TM
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                No TM
+              </span>
+            )}
+            {player.ig_handle && (
+              <a
+                href={`https://instagram.com/${player.ig_handle.replace(/^@/, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-card px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:bg-muted"
+              >
+                <FaInstagram className="h-3 w-3" /> @{player.ig_handle.replace(/^@/, '')}
+              </a>
+            )}
+            {player.report_count > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {player.report_count} report{player.report_count === 1 ? '' : 's'}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const PlayerDatabase = () => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
@@ -369,7 +464,14 @@ export const PlayerDatabase = () => {
     let t: ReturnType<typeof setTimeout> | null = null;
     const refresh = () => {
       if (t) clearTimeout(t);
-      t = setTimeout(() => { fetchAllPlayers(); }, 300);
+      t = setTimeout(() => {
+        // Reset to newest-added first so freshly saved players appear at the
+        // top instead of being hidden behind whatever sort was in use.
+        setSortField('created_at');
+        setSortDirection('desc');
+        setVisibleCount(ITEMS_PER_PAGE);
+        fetchAllPlayers();
+      }, 150);
     };
     window.addEventListener('player-database-refresh', refresh);
     return () => {
@@ -1264,31 +1366,13 @@ export const PlayerDatabase = () => {
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {visiblePlayers.map((player) => (
-          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerInDialog(player)}>
-            <div className="flex items-center gap-3">
-              <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-              <Avatar className="h-10 w-10 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
-                <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-xs">
-                  {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  {player.nationality && <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-5 h-auto rounded-sm flex-shrink-0" />}
-                  <span className="font-medium truncate">{player.player_name}</span>
-                  <Badge variant="outline" className="text-[10px] flex-shrink-0 ml-auto">{player.position || '-'}</Badge>
-                </div>
-                <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain" />}
-                    <span className="truncate">{player.current_club || '-'}</span>
-                  </div>
-                  <span>{player.age ? `${player.age}y` : '-'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <MobilePlayerCard
+            key={`${player.source}-${player.id}`}
+            player={player}
+            fitScore={fitScoreByRowKey[`${player.source}-${player.id}`]}
+            eligibility={<EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />}
+            onOpen={() => openPlayerInDialog(player)}
+          />
         ))}
       </div>
 

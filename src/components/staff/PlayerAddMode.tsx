@@ -150,16 +150,20 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     const toSave = parsed.map((p, i) => ({ ...p, _i: i })).filter((p) => p._accepted && !p._saved && p.name?.trim());
     if (toSave.length === 0) { toast.error('Nothing to save'); return; }
     setBulkSaving(true);
+    const countExcluded = ['Scouted', 'Fuel For Football', 'FFF'];
+    const fetchDbCount = async (): Promise<number | null> => {
+      const { count, error } = await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true })
+        .not('category', 'in', `(${countExcluded.map((v) => `"${v}"`).join(',')})`)
+        .not('representation_status', 'in', `(${countExcluded.map((v) => `"${v}"`).join(',')})`);
+      if (error) return null;
+      return count ?? null;
+    };
+    const beforeCount = await fetchDbCount();
     let added = 0;
     let merged = 0;
-    let lastRefreshAt = 0;
-    const maybeRefresh = () => {
-      const now = Date.now();
-      if (now - lastRefreshAt >= 400) {
-        lastRefreshAt = now;
-        window.dispatchEvent(new CustomEvent('player-database-refresh'));
-      }
-    };
+    let failed = 0;
     for (const p of toSave) {
       const normalisedAgency = (p.agency || '').trim();
       const isRise = /rise\s*football/i.test(normalisedAgency);
@@ -211,18 +215,28 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         : await supabase.from('players').insert(payload);
       if (error) {
         update(p._i, { _error: error.message });
+        failed++;
       } else {
         update(p._i, { _saved: true, _error: undefined });
         if (existing) merged++;
         else added++;
-        maybeRefresh();
       }
     }
     setBulkSaving(false);
     const ok = added + merged;
+    const afterCount = await fetchDbCount();
     if (ok > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
-    toast.success(`${added} added, ${merged} merged`);
-    if (ok === toSave.length) onExit();
+    const countSuffix = beforeCount !== null && afterCount !== null
+      ? ` · Database ${beforeCount} → ${afterCount}`
+      : '';
+    if (failed > 0) {
+      toast.error(`${added} added, ${merged} merged, ${failed} failed${countSuffix}`);
+    } else if (added === 0 && merged > 0) {
+      toast.success(`All ${merged} already existed and were merged${countSuffix}`);
+    } else {
+      toast.success(`${added} added, ${merged} merged${countSuffix}`);
+    }
+    if (failed === 0 && ok === toSave.length) onExit();
   };
 
   return (
