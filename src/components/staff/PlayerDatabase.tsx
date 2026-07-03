@@ -239,6 +239,17 @@ const DB_COLUMNS: ColumnConfig[] = [
 const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
   player: PlayerData; clubCountryMap: Record<string, string>; ageRules: AgeRule[];
 }) => {
+  // Adults (18+) can always be contacted directly, regardless of club country
+  // or country-specific parent-contact rules. Country rules only matter for
+  // under-18s where we need parental permission timing.
+  const preciseAgeAdultCheck = calculatePreciseAge(player.date_of_birth);
+  if (preciseAgeAdultCheck !== null && preciseAgeAdultCheck >= 18) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><Star className="h-4 w-4 text-amber-500 fill-amber-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Adult — can be contacted directly</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
   if (player.source === 'pro_outreach') {
     return (
       <TooltipProvider><Tooltip><TooltipTrigger asChild>
