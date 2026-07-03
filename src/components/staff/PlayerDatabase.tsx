@@ -672,7 +672,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, representationFilter, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, representationFilter, representationExclude, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -684,6 +684,7 @@ export const PlayerDatabase = () => {
     setPositionFilter([]);
     setSourceFilter([]);
     setRepresentationFilter([]);
+    setRepresentationExclude([]);
     setMissingFilters([]);
     setDobFrom('');
     setDobTo('');
@@ -696,7 +697,7 @@ export const PlayerDatabase = () => {
     ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
     : null;
 
-  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || representationFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || representationFilter.length > 0 || representationExclude.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     const key = `${player.source}-${player.id}`;
