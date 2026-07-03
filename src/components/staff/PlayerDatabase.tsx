@@ -702,8 +702,9 @@ export const PlayerDatabase = () => {
   useEffect(() => {
     fetchAllPlayers();
     let t: ReturnType<typeof setTimeout> | null = null;
-    const refresh = () => {
+    const refresh = (event: Event) => {
       if (t) clearTimeout(t);
+      const detail = (event as CustomEvent<{ total?: number }>).detail;
       t = setTimeout(() => {
         // Reset to newest-added first so freshly saved players appear at the
         // top instead of being hidden behind whatever sort was in use.
@@ -711,7 +712,7 @@ export const PlayerDatabase = () => {
         setSortDirection('desc');
         setVisibleCount(ITEMS_PER_PAGE);
         fetchAllPlayers();
-      }, 150);
+      }, typeof detail?.total === 'number' ? 900 : 150);
     };
     window.addEventListener('player-database-refresh', refresh);
     return () => {
@@ -1615,10 +1616,6 @@ export const PlayerDatabase = () => {
         <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> Pro</span>
         <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-amber-600" /> Eligible from date</span>
         <span className="flex items-center gap-1"><HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /> No DOB/rules</span>
-      </div>
-
-      <div className="text-xs text-muted-foreground">
-        {visiblePlayers.length} visible from {filteredAndSortedPlayers.length} matching players
       </div>
 
       {/* Mobile cards */}
