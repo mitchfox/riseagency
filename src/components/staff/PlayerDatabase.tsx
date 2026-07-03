@@ -83,6 +83,7 @@ interface PlayerData {
   parent_approval?: boolean;
   messaged?: boolean;
   response_received?: boolean;
+  representation_status?: string | null;
 }
 
 interface AgeRule {
@@ -247,15 +248,39 @@ const IgTooltipIcon = ({ handle }: { handle: string | null | undefined }) => {
 
 const MiniFitBadge = ({ score }: { score: number }) => {
   const total = Math.max(0, Math.min(100, Math.round(score || 0)));
-  const colour = total >= 85 ? 'bg-[hsl(var(--rise-gold))] text-black border-[hsl(var(--rise-gold))]'
-    : total >= 70 ? 'bg-emerald-500 text-white border-emerald-400'
-    : total >= 50 ? 'bg-amber-500 text-black border-amber-400'
-    : total >= 30 ? 'bg-orange-500 text-white border-orange-400'
-    : 'bg-red-500 text-white border-red-400';
+  // Interpolate the same colour ramp used by FitScoreBadge so every value
+  // renders a solid fill via inline HSL (bypasses Tailwind purge edge cases).
+  const stops: Array<[number, [number, number, number]]> = [
+    [0,   [0,   85, 50]],
+    [25,  [20,  90, 52]],
+    [50,  [50,  90, 52]],
+    [75,  [130, 70, 42]],
+    [85,  [85,  65, 45]],
+    [100, [45,  62, 42]],
+  ];
+  let h = 0, s = 85, l = 50;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, c0] = stops[i];
+    const [t1, c1] = stops[i + 1];
+    if (total >= t0 && total <= t1) {
+      const f = (total - t0) / (t1 - t0 || 1);
+      h = c0[0] + (c1[0] - c0[0]) * f;
+      s = c0[1] + (c1[1] - c0[1]) * f;
+      l = c0[2] + (c1[2] - c0[2]) * f;
+      break;
+    }
+  }
+  const colour = `hsl(${h.toFixed(0)}, ${s.toFixed(0)}%, ${l.toFixed(0)}%)`;
+  const tint = `hsl(${h.toFixed(0)}, ${s.toFixed(0)}%, ${Math.min(l + 12, 65).toFixed(0)}%)`;
   return (
     <span
       title={`Fit score ${total}`}
-      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-black shadow-sm ${colour}`}
+      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black shadow-sm text-white"
+      style={{
+        background: `radial-gradient(circle at 30% 30%, ${tint}, ${colour} 75%)`,
+        border: `2px solid ${colour}`,
+        textShadow: '0 1px 1px rgba(0,0,0,0.45)',
+      }}
     >
       {total}
     </span>
@@ -272,6 +297,7 @@ export const PlayerDatabase = () => {
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
+  const [representationFilter, setRepresentationFilter] = useState<string[]>([]);
   const [missingFilters, setMissingFilters] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
   const [nationFilter, setNationFilter] = useState<string>('all');
@@ -385,6 +411,7 @@ export const PlayerDatabase = () => {
             transfermarkt_url: extractTransfermarktUrl((player as any).links),
             messaged: !!player.has_representation_offer || player.offer_status === 'sent',
             response_received: !!player.outreach_response_status,
+            representation_status: player.representation_status || null,
           };
         }
       });
@@ -467,7 +494,21 @@ export const PlayerDatabase = () => {
   }, [players]);
 
   const uniquePositions = useMemo(() => {
-    return [...new Set(players.map(p => p.position).filter((p): p is string => !!p))].sort((a, b) => getPositionOrder(a) - getPositionOrder(b));
+    // Only surface the canonical abbreviation set; free-form legacy values
+    // are normalised down into these codes so the filter matches everything.
+    const VALID = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','RM','LM','LW','RW','CF'];
+    const set = new Set<string>();
+    for (const p of players) {
+      const abbrev = normalisePosition(p.position);
+      if (abbrev && VALID.includes(abbrev)) set.add(abbrev);
+    }
+    return [...set].sort((a, b) => getPositionOrder(a) - getPositionOrder(b));
+  }, [players]);
+
+  const uniqueRepresentationStatuses = useMemo(() => {
+    return [...new Set(
+      players.map(p => (p.representation_status || '').trim()).filter(v => v && !/^unknown$/i.test(v))
+    )].sort();
   }, [players]);
 
   const upcomingBirthdayOptions = useMemo(() => {
@@ -570,8 +611,15 @@ export const PlayerDatabase = () => {
         if (month !== Number(birthMonthFilter)) return false;
       }
       if (nationFilter !== 'all' && player.nationality !== nationFilter) return false;
-      if (positionFilter.length > 0 && (!player.position || !positionFilter.includes(player.position))) return false;
+      if (positionFilter.length > 0) {
+        const abbrev = normalisePosition(player.position);
+        if (!abbrev || !positionFilter.includes(abbrev)) return false;
+      }
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
+      if (representationFilter.length > 0) {
+        const status = (player.representation_status || '').trim();
+        if (!status || !representationFilter.includes(status)) return false;
+      }
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
       if (missingFilters.length > 0) {
         const isMissing = (v: any) => v === null || v === undefined || String(v).trim() === '';
@@ -607,7 +655,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, representationFilter, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -618,6 +666,7 @@ export const PlayerDatabase = () => {
     setNationFilter('all');
     setPositionFilter([]);
     setSourceFilter([]);
+    setRepresentationFilter([]);
     setMissingFilters([]);
     setDobFrom('');
     setDobTo('');
@@ -630,7 +679,7 @@ export const PlayerDatabase = () => {
     ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
     : null;
 
-  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || representationFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     const key = `${player.source}-${player.id}`;
