@@ -1,75 +1,37 @@
+## Why the counter "resets"
 
-Four connected fixes across Player Database and the Transfermarkt bulk parser.
+`fetchLivePlayerCount` in `PlayerDatabaseManagement.tsx` runs ~900ms after each add (and on a debounce), and it does two things that fight the optimistic `+1`:
 
-## 1. Anyone 18+ always shows a gold star
+1. **It dedupes across four tables** (`players`, `scouting_reports`, `player_outreach_youth`, `player_outreach_pro`) using a `name::club` key. If a newly added player already exists as a scouting report or outreach row with the same name+club, the merged total does not go up by 1 — so the number visibly ticks up, then "snaps back" when the real fetch lands.
+2. **It uses `.range(0, 9999)`** on every source, silently capping at 10k rows. As the DB grows past that on any single source, the merged count becomes wrong and unstable.
 
-File: `src/components/staff/PlayerDatabase.tsx` — `EligibilityBadge`.
+So the players *are* being inserted — the counter is just measuring something different from what the label promises ("live database players").
 
-Right now a player only gets the gold star if `source === 'pro_outreach'`. Everyone else falls through to the age-rules block and ends up as `?` (no club country / no rule) or green tick / date pill even when they are already 18.
+## Fix
 
-Change: as the very first check after computing `preciseAge`, if `preciseAge >= 18` return the gold star with tooltip "Adult — can be contacted directly", regardless of country, club, or rules. The country-specific parent-contact logic only runs for under-18s.
+Make the header counter mean exactly what it says — rows in `public.players`, minus the globally excluded categories — and make it authoritative so the optimistic tick and the refetch agree.
 
-## 2. Representation status filter must read `agent_status`, not `representation_status`
+### Changes to `src/components/staff/PlayerDatabaseManagement.tsx`
 
-The players table has two independent columns:
+1. Replace `fetchLivePlayerCount` with a single exact-count query:
+   ```ts
+   supabase
+     .from('players')
+     .select('*', { count: 'exact', head: true })
+     .not('category', 'in', '("Scouted","Fuel For Football","FFF")')
+     .not('representation_status', 'in', '("Scouted","Fuel For Football","FFF")');
+   ```
+   Use the returned `count` directly. No `.range`, no client-side dedup, no 10k cap.
+2. Drop the cross-table merge helpers (`normaliseCountValue`, `mergedPlayerCountKey`, the scouting/outreach fetches) — they belonged to the old "source records" line that we already removed.
+3. Keep the optimistic `+increment` on the `player-database-refresh` event, but shorten the debounce to ~250ms so the authoritative refetch lands almost immediately after the tick and can only ever confirm or correct by ±1, never snap by hundreds.
+4. Update the label copy to match the new meaning: `"{n} players in database"` (excluded categories already filtered), so it's obvious what the number represents.
 
-- `agent_status` — set by the Transfermarkt parser: `represented` / `family` / `unrepresented`. This is what the "Player details" panel edits.
-- `representation_status` — legacy Rise pipeline stage (prospect, mandated, Other, Top Agency, scouted, fuel_for_football, etc). Currently the filter reads this, which is why it never matches what staff expect.
+### No other files need changing
 
-In `PlayerDatabase.tsx`:
+`PlayerAddMode.tsx` already dispatches `player-database-refresh` with `{ increment: 1 }` per successful insert — that stays as-is and will now agree with the refetch.
 
-- Extend `PlayerData` and every source mapping (`players`, `scouting_reports`, `player_outreach_youth`, `player_outreach_pro`) to carry `agent_status` alongside `representation_status`. Fetch `agent_status` from `players` in the base select.
-- Replace `canonRepresentation(player.representation_status)` in the filter/facet logic with a new helper that resolves the canonical label from `agent_status` first, then upgrades to `Top Agency` when `representation_status` is `Top Agency` (that tier lives on the legacy column). Order: `Top Agency` > `Represented` > `Family` > `Unrepresented` > `Unknown`.
-- Keep the same five canonical filter chips; only the underlying data source changes.
+### Verification
 
-## 3. Filling `agent_name` via the Transfermarkt parser must set `agent_status`
-
-Two places:
-
-**a. `supabase/functions/parse-players-bulk/index.ts` (refresh_all + enrich):**  
-Today it only sets `agent_status` when TM returns a recognised agency. Tighten so that whenever we write `agent_name` we also write `agent_status`:
-
-- If the agency matches the tier-one list → `agent_status='represented'` and `representation_status='Top Agency'` (already done, keep).
-- If any other agency name → `agent_status='represented'`.
-- If TM confirms no agent (agencyId 0) → `agent_status='unrepresented'` (only when previously empty, do not overwrite manual `family`).
-
-**b. One-off backfill via `supabase--insert`:**  
-`UPDATE public.players SET agent_status='represented' WHERE agent_status IS NULL AND agent_name IS NOT NULL AND btrim(agent_name) <> '';` — then a second update to promote known top agencies (CAA, Wasserman, Stellar, Roc Nation, Base, ICM, Epic, Unique) to `representation_status='Top Agency'` when currently blank/Other.
-
-**c. `PlayerDetailDialog.tsx`:**  
-When the user types an `agent_name` and leaves `agent_status` empty, default `agent_status` to `represented` on save. Preserve any explicit choice.
-
-## 4. Season stats actually populate for players with a Transfermarkt URL
-
-Root cause of "most players still empty":
-
-1. `refresh_all` in `parse-players-bulk` only runs stats for rows whose `links` contains a Transfermarkt URL AND whose category/representation is not excluded. Many represented players qualify but `fetchTmSeasonStats` (ceapi/performance-game) returns `null` (empty perf array, or all games filtered as national/friendly).
-2. There is no fallback to the HTML `/leistungsdaten/spieler/{id}/saison/{year}` page that the older `sync-player-stats` function scraped successfully.
-3. The `player_stats` row is never created for these players, so the UI reads "no stats".
-
-Fixes in `supabase/functions/parse-players-bulk/index.ts`:
-
-- **HTML fallback**: add `fetchTmSeasonStatsHtml(tmId)` that reproduces the `<tfoot>` scrape from `supabase/functions/sync-player-stats/index.ts` (Total row: appearances, goals, assists, minutes; goals_conceded/clean_sheets = 0). Call it whenever `fetchTmSeasonStats` (ceapi) returns null.
-- **Always upsert a stats row** when a valid TM id exists, even if both sources return null — write zeros with `external_player_id=tmId` so the next run has a keyed row and the UI stops showing "No stats stored yet".
-- **Widen the refresh_all candidate set** so a player is picked even when they only have a `transfermarkt_url` column (not just inside `links`). Union both extraction paths (`extractTransfermarktLink(links)` OR `players.transfermarkt_url` if the column exists on the row).
-- **Concurrency**: keep at 3 workers, add per-player logging of `stats_source: 'ceapi' | 'html' | 'empty'` in the result so the toast can surface how many actually got stats.
-
-Frontend `PlayerDatabaseManagement.tsx` toast: append `· N with stats` using the new counter returned from the function.
-
-## Technical notes
-
-- No schema changes; `agent_status`, `representation_status`, `agent_name`, `transfermarkt_url` all exist on `players`.
-- The rep-status change is filter-only; the on-card badge stays as-is (it already shows what's editable in Player Details).
-- Backfill runs once via `supabase--insert` — safe idempotent UPDATE.
-- HTML fallback uses the same UA/headers already proven in `sync-player-stats`.
-
-## Files to touch
-
-```text
-src/components/staff/PlayerDatabase.tsx           # star @18+, rep filter → agent_status
-src/components/staff/PlayerDetailDialog.tsx       # default agent_status when agent_name set
-src/components/staff/PlayerDatabaseManagement.tsx # surface "with stats" counter in toast
-supabase/functions/parse-players-bulk/index.ts    # HTML fallback, always-upsert, wider candidate set, always-set agent_status
-```
-
-Plus a one-off backfill UPDATE on `public.players`.
+- Add a player via AI bulk add → counter ticks +1, refetch confirms same number (no snap-back).
+- Add a player whose name+club already exists in scouting_reports → counter still ticks +1 and stays (previously it snapped back).
+- Reload page → number matches `select count(*) from players where category not in (...)`.
