@@ -1247,7 +1247,12 @@ export const PlayerDatabase = () => {
         <span className="flex items-center gap-1"><HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /> No DOB/rules</span>
       </div>
 
-      <div className="text-xs text-muted-foreground">{visiblePlayers.length} of {filteredAndSortedPlayers.length} players</div>
+      <div className="text-xs text-muted-foreground">
+        {visiblePlayers.length} of {filteredAndSortedPlayers.length} players
+        {sourceRecordCount > players.length && (
+          <span> · {sourceRecordCount} source records before same-name/club merging</span>
+        )}
+      </div>
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
