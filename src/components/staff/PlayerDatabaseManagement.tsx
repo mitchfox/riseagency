@@ -3,7 +3,7 @@ import { PlayerDatabase } from './PlayerDatabase';
 import { PlayerAddMode } from './PlayerAddMode';
 import { SquadView } from './SquadView';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -15,10 +15,49 @@ export const PlayerDatabaseActions = () => {
   const [addMode, setAddMode] = useState<AddMode>('ai');
   const [enriching, setEnriching] = useState(false);
   const [progress, setProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const [refreshProgress, setRefreshProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
 
   const openAdd = (nextMode: AddMode) => {
     setAddMode(nextMode);
     setAddOpen(true);
+  };
+
+  const refreshAllTransfermarkt = async () => {
+    if (refreshingAll) return;
+    if (!confirm('Refresh every player that has a Transfermarkt URL? This pulls the latest profile, headshot and current-season stats.')) return;
+    setRefreshingAll(true);
+    setRefreshProgress({ updated: 0, processed: 0, remaining: null });
+    const toastId = toast.loading('Refreshing players from Transfermarkt…');
+    let totalUpdated = 0;
+    let totalProcessed = 0;
+    const processedIds = new Set<string>();
+    try {
+      while (true) {
+        const { data, error } = await supabase.functions.invoke('parse-players-bulk', {
+          body: { mode: 'refresh_all', limit: 10, skipIds: Array.from(processedIds) },
+        });
+        if (error) throw error;
+        const processed = Number(data?.processed) || 0;
+        const updated = Number(data?.updated) || 0;
+        const remaining = data?.remaining ?? null;
+        (data?.results || []).forEach((result: any) => {
+          if (result?.id) processedIds.add(String(result.id));
+        });
+        totalProcessed += processed;
+        totalUpdated += updated;
+        setRefreshProgress({ updated: totalUpdated, processed: totalProcessed, remaining });
+        toast.loading(`Refreshing — ${totalUpdated} updated, ${remaining ?? '?'} remaining`, { id: toastId });
+        if (processed === 0 || (remaining !== null && remaining === 0)) break;
+      }
+      toast.success(`Refresh complete — updated ${totalUpdated} of ${totalProcessed} scanned`, { id: toastId });
+      if (totalUpdated > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
+    } catch (err) {
+      console.error('refresh_all failed', err);
+      toast.error(`Refresh failed: ${(err as Error).message || 'unknown error'}`, { id: toastId });
+    } finally {
+      setRefreshingAll(false);
+    }
   };
 
   const enrichMissing = async () => {
@@ -110,6 +149,20 @@ export const PlayerDatabaseActions = () => {
           {enriching
             ? `Enriching… ${progress?.updated ?? 0} updated${progress?.remaining != null ? ` · ${progress.remaining} left` : ''}`
             : 'Backfill from Transfermarkt'}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={refreshAllTransfermarkt}
+          disabled={refreshingAll}
+          title="For every player with a Transfermarkt URL, pull the latest profile, headshot and current-season stats"
+          className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
+        >
+          <Download className={`h-3.5 w-3.5 ${refreshingAll ? 'animate-pulse' : ''}`} />
+          {refreshingAll
+            ? `Refreshing… ${refreshProgress?.updated ?? 0} updated${refreshProgress?.remaining != null ? ` · ${refreshProgress.remaining} left` : ''}`
+            : 'Refresh all Transfermarkt data'}
         </Button>
       </div>
       {addOpen && (
