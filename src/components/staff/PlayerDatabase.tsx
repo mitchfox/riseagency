@@ -32,6 +32,20 @@ import { matchesQuery } from '@/lib/searchMatch';
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
+// Map any representation_status string the DB might hold (any casing, plus
+// legacy variants like "relatives") to one of five canonical player-facing
+// labels used by the filter. Anything unrecognised falls back to "Unknown".
+const CANONICAL_REPRESENTATION = ['Represented', 'Top Agency', 'Family', 'Unrepresented', 'Unknown'] as const;
+const canonRepresentation = (value: string | null | undefined): string => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'Unknown';
+  if (raw === 'top agency' || raw === 'top_agency') return 'Top Agency';
+  if (raw === 'represented') return 'Represented';
+  if (raw === 'family' || raw === 'relatives') return 'Family';
+  if (raw === 'unrepresented') return 'Unrepresented';
+  return 'Unknown';
+};
+
 const extractTransfermarktUrl = (links: unknown): string | null => {
   if (!links) return null;
   if (typeof links === 'string') {
