@@ -562,13 +562,12 @@ const PlayerAnalyticsPanel = ({
     const withTransfermarkt = players.filter((player) => !!player.transfermarkt_url).length;
     const withDob = players.filter((player) => !!player.date_of_birth).length;
     const withClub = players.filter((player) => !!player.current_club).length;
-    const withNationality = players.filter((player) => !!player.nationality && !/^unknown$/i.test(player.nationality)).length;
     const strongFit = players.filter((player) => (fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0) >= 70).length;
     const thinNationalities = nationalities.filter((item) => item.label !== 'Unknown' && item.count <= 2).length;
     const unknownNationality = nationalities.find((item) => item.label === 'Unknown')?.count || 0;
     const unknownClubCountry = clubCountries.find((item) => item.label === 'Unknown')?.count || 0;
     const sourceCoverage = groupPlayersBy(players, (player) => player.source === 'database' ? 'Database' : player.source === 'scouting' ? 'Scouting reports' : player.source === 'youth_outreach' ? 'Youth outreach' : 'Pro outreach');
-    return { total, nationalities, clubCountries, positions, withTransfermarkt, withDob, withClub, withNationality, strongFit, thinNationalities, unknownNationality, unknownClubCountry, sourceCoverage };
+    return { total, nationalities, clubCountries, positions, withTransfermarkt, withDob, withClub, strongFit, thinNationalities, unknownNationality, unknownClubCountry, sourceCoverage };
   }, [players, clubCountryMap, fitScoreByRowKey]);
 
   const pct = (value: number) => analytics.total > 0 ? `${Math.round((value / analytics.total) * 100)}%` : '0%';
