@@ -71,6 +71,26 @@ const canonRepresentation = (value: string | null | undefined): string => {
   return 'Unknown';
 };
 
+// Resolve the canonical representation label for the filter using the
+// player-details `agent_status` field as the source of truth. The legacy
+// `representation_status` column only wins when it explicitly says
+// "Top Agency" (that tier lives on the legacy column). Everything else
+// (mandated, prospect, Other, etc.) is Rise pipeline state, not agent
+// representation, so we ignore it here.
+const resolveRepresentationLabel = (
+  agentStatus: string | null | undefined,
+  representationStatus: string | null | undefined,
+): string => {
+  const rep = String(representationStatus || '').trim().toLowerCase();
+  if (rep === 'top agency' || rep === 'top_agency') return 'Top Agency';
+  const agent = String(agentStatus || '').trim().toLowerCase();
+  if (!agent) return 'Unknown';
+  if (agent === 'represented') return 'Represented';
+  if (agent === 'family' || agent === 'relatives') return 'Family';
+  if (agent === 'unrepresented') return 'Unrepresented';
+  return 'Unknown';
+};
+
 const extractTransfermarktUrl = (links: unknown): string | null => {
   if (!links) return null;
   if (typeof links === 'string') {
