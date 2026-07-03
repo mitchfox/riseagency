@@ -762,8 +762,8 @@ export const PlayerDatabase = () => {
       case 'avatar':
         return (
           <TableCell key={key} className="py-1.5 pr-0">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
+            <Avatar className="h-8 w-8 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_8px_hsl(var(--rise-gold)/0.35)]">
+              <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-[10px]">
                 {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -1159,8 +1159,8 @@ export const PlayerDatabase = () => {
           <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerInDialog(player)}>
             <div className="flex items-center gap-3">
               <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} />
+              <Avatar className="h-10 w-10 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
+                <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
                 <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-xs">
                   {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </AvatarFallback>
