@@ -329,6 +329,7 @@ const MiniFitBadge = ({ score }: { score: number }) => {
 export const PlayerDatabase = () => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
+  const [sourceRecordCount, setSourceRecordCount] = useState(0);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -429,6 +430,15 @@ export const PlayerDatabase = () => {
       const playerMap: Record<string, PlayerData> = {};
       const mergeIndex: Record<string, string> = {};
       const nameOnlyIndex: Record<string, string | null> = {};
+      const excludedPlayerValues = new Set(['Scouted', 'Fuel For Football', 'FFF']);
+      const databaseRows = (databaseResult.data || []).filter(player => {
+        if (excludedPlayerValues.has(player.category || '') || excludedPlayerValues.has(player.representation_status || '')) return false;
+        return !!player.name;
+      });
+      const scoutingRows = (scoutingResult.data || []).filter(report => !!report.player_name);
+      const youthRows = (youthResult.data || []).filter(outreach => !!outreach.player_name);
+      const proRows = (proResult.data || []).filter(outreach => !!outreach.player_name);
+      setSourceRecordCount(databaseRows.length + scoutingRows.length + youthRows.length + proRows.length);
 
       const rememberNameOnly = (name: string | null | undefined, rowKey: string) => {
         const nameKey = normaliseMergeValue(name);
@@ -464,10 +474,8 @@ export const PlayerDatabase = () => {
         return preferredKey;
       };
 
-      databaseResult.data?.forEach(player => {
-        if (['Scouted', 'Fuel For Football', 'FFF'].includes(player.category || '') || ['Scouted', 'Fuel For Football', 'FFF'].includes(player.representation_status || '')) return;
+      databaseRows.forEach(player => {
         const name = player.name;
-        if (!name) return;
         addOrMergePlayer(`db:${player.id}`, {
           id: player.id,
           player_name: name,
@@ -490,9 +498,8 @@ export const PlayerDatabase = () => {
         });
       });
 
-      scoutingResult.data?.forEach(report => {
+      scoutingRows.forEach(report => {
         const name = report.player_name;
-        if (!name) return;
         addOrMergePlayer(`scout:${report.id}`, {
           id: report.id, player_name: name, position: report.position,
           age: calculateAge(report.date_of_birth) ?? report.age,
@@ -504,9 +511,8 @@ export const PlayerDatabase = () => {
         });
       });
 
-      youthResult.data?.forEach(outreach => {
+      youthRows.forEach(outreach => {
         const name = outreach.player_name;
-        if (!name) return;
         addOrMergePlayer(`youth:${outreach.id}`, {
           id: outreach.id, player_name: name, position: (outreach as any).position || null,
           age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
@@ -520,9 +526,8 @@ export const PlayerDatabase = () => {
         });
       });
 
-      proResult.data?.forEach(outreach => {
+      proRows.forEach(outreach => {
         const name = outreach.player_name;
-        if (!name) return;
         addOrMergePlayer(`pro:${outreach.id}`, {
           id: outreach.id, player_name: name, position: (outreach as any).position || null,
           age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
