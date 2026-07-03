@@ -638,6 +638,11 @@ export const PlayerDatabase = () => {
     setSelectedPlayer(player);
   };
 
+  const openPlayerInDialog = (player: PlayerData) => {
+    setSelectedPlayer(player);
+    setDetailOpen(true);
+  };
+
   const handlePlayerUpdated = (updated: PlayerData) => {
     setPlayers((prev) => prev.map((p) => (p.id === updated.id && p.source === updated.source ? updated : p)));
     setSelectedPlayer(updated);
@@ -1001,7 +1006,7 @@ export const PlayerDatabase = () => {
         placeholder="Search by name, club, position..."
         onSuggestionSelect={(s) => {
           if (s.payload && s.payload.id) {
-            openPlayerDetail(s.payload);
+            openPlayerInDialog(s.payload);
           } else {
             setSearchQuery(s.label);
           }
@@ -1075,7 +1080,7 @@ export const PlayerDatabase = () => {
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {visiblePlayers.map((player) => (
-          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerDetail(player)}>
+          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerInDialog(player)}>
             <div className="flex items-center gap-3">
               <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
               <Avatar className="h-10 w-10 flex-shrink-0">
