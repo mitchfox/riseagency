@@ -427,112 +427,111 @@ export const PlayerDatabase = () => {
       };
 
       const playerMap: Record<string, PlayerData> = {};
-      // Track name -> key so overlays from scouting/outreach can still merge
-      // onto a database player when names match, without collapsing duplicate
-      // database rows that happen to share a name.
-      const nameIndex: Record<string, string> = {};
+      const mergeIndex: Record<string, string> = {};
+      const nameOnlyIndex: Record<string, string | null> = {};
+
+      const rememberNameOnly = (name: string | null | undefined, rowKey: string) => {
+        const nameKey = normaliseMergeValue(name);
+        if (!nameKey) return;
+        if (nameOnlyIndex[nameKey] && nameOnlyIndex[nameKey] !== rowKey) {
+          nameOnlyIndex[nameKey] = null;
+          return;
+        }
+        if (!(nameKey in nameOnlyIndex)) nameOnlyIndex[nameKey] = rowKey;
+      };
+
+      const findExistingRowKey = (name: string | null | undefined, club: string | null | undefined) => {
+        const mergeKey = buildPlayerMergeKey(name, club);
+        if (mergeIndex[mergeKey]) return mergeIndex[mergeKey];
+        // Only fall back to name-only when the incoming row has no club. If it
+        // has a club, same name at a different club should remain separate.
+        if (!normaliseMergeValue(club)) {
+          return nameOnlyIndex[normaliseMergeValue(name)] || '';
+        }
+        return '';
+      };
+
+      const addOrMergePlayer = (preferredKey: string, candidate: PlayerData) => {
+        const existingKey = findExistingRowKey(candidate.player_name, candidate.current_club);
+        if (existingKey && playerMap[existingKey]) {
+          playerMap[existingKey] = mergePlayerRecord(playerMap[existingKey], candidate);
+          return existingKey;
+        }
+
+        playerMap[preferredKey] = candidate;
+        mergeIndex[buildPlayerMergeKey(candidate.player_name, candidate.current_club)] = preferredKey;
+        rememberNameOnly(candidate.player_name, preferredKey);
+        return preferredKey;
+      };
 
       databaseResult.data?.forEach(player => {
         if (['Scouted', 'Fuel For Football', 'FFF'].includes(player.category || '') || ['Scouted', 'Fuel For Football', 'FFF'].includes(player.representation_status || '')) return;
         const name = player.name;
         if (!name) return;
-        const key = `db:${player.id}`;
-        if (!playerMap[key]) {
-          playerMap[key] = {
-            id: player.id,
-            player_name: name,
-            position: player.position,
-            age: calculateAge(player.date_of_birth) ?? player.age,
-            current_club: player.club,
-            nationality: player.nationality,
-            date_of_birth: player.date_of_birth,
-            report_count: 0,
-            source: 'database',
-            notes: player.bio,
-            ig_handle: player.instagram_handle,
-            created_at: player.created_at,
-            profile_image_url: player.image_url,
-            club_logo_url: player.club_logo || getClubLogo(player.club),
-            transfermarkt_url: extractTransfermarktUrl((player as any).links),
-            messaged: !!player.has_representation_offer || player.offer_status === 'sent',
-            response_received: !!player.outreach_response_status,
-            representation_status: player.representation_status || null,
-          };
-          if (!nameIndex[name]) nameIndex[name] = key;
-        }
+        addOrMergePlayer(`db:${player.id}`, {
+          id: player.id,
+          player_name: name,
+          position: player.position,
+          age: calculateAge(player.date_of_birth) ?? player.age,
+          current_club: player.club,
+          nationality: player.nationality,
+          date_of_birth: player.date_of_birth,
+          report_count: 0,
+          source: 'database',
+          notes: player.bio,
+          ig_handle: player.instagram_handle,
+          created_at: player.created_at,
+          profile_image_url: player.image_url,
+          club_logo_url: player.club_logo || getClubLogo(player.club),
+          transfermarkt_url: extractTransfermarktUrl((player as any).links),
+          messaged: !!player.has_representation_offer || player.offer_status === 'sent',
+          response_received: !!player.outreach_response_status,
+          representation_status: player.representation_status || null,
+        });
       });
 
       scoutingResult.data?.forEach(report => {
         const name = report.player_name;
-        const existingKey = nameIndex[name];
-        if (!existingKey) {
-          const key = `scout:${report.id}`;
-          playerMap[key] = {
-            id: report.id, player_name: name, position: report.position,
-            age: calculateAge(report.date_of_birth) ?? report.age,
-            current_club: report.current_club, nationality: report.nationality,
-            date_of_birth: report.date_of_birth, report_count: 1, source: 'scouting',
-            notes: report.notes, created_at: report.created_at,
-            profile_image_url: (report as any).profile_image_url || null,
-            club_logo_url: getClubLogo(report.current_club)
-          };
-          nameIndex[name] = key;
-        } else {
-          const entry = playerMap[existingKey];
-          entry.report_count++;
-          if (report.created_at && (!entry.created_at || report.created_at > entry.created_at)) {
-            entry.created_at = report.created_at;
-          }
-          if ((report as any).profile_image_url && !entry.profile_image_url) {
-            entry.profile_image_url = (report as any).profile_image_url;
-          }
-        }
+        if (!name) return;
+        addOrMergePlayer(`scout:${report.id}`, {
+          id: report.id, player_name: name, position: report.position,
+          age: calculateAge(report.date_of_birth) ?? report.age,
+          current_club: report.current_club, nationality: report.nationality,
+          date_of_birth: report.date_of_birth, report_count: 1, source: 'scouting',
+          notes: report.notes, created_at: report.created_at,
+          profile_image_url: (report as any).profile_image_url || null,
+          club_logo_url: getClubLogo(report.current_club),
+        });
       });
 
       youthResult.data?.forEach(outreach => {
         const name = outreach.player_name;
-        const existingKey = nameIndex[name];
-        if (!existingKey) {
-          const key = `youth:${outreach.id}`;
-          playerMap[key] = {
-            id: outreach.id, player_name: name, position: (outreach as any).position || null,
-            age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
-            current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
-            date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'youth_outreach',
-            notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
-            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
-            parents_name: outreach.parents_name, parent_contact: outreach.parent_contact,
-            parent_approval: outreach.parent_approval, messaged: outreach.messaged,
-            response_received: outreach.response_received,
-          };
-          nameIndex[name] = key;
-        } else {
-          const entry = playerMap[existingKey];
-          if (!entry.parents_name && outreach.parents_name) entry.parents_name = outreach.parents_name;
-          if (!entry.parent_contact && outreach.parent_contact) entry.parent_contact = outreach.parent_contact;
-          if (!entry.ig_handle && outreach.ig_handle) entry.ig_handle = outreach.ig_handle;
-        }
+        if (!name) return;
+        addOrMergePlayer(`youth:${outreach.id}`, {
+          id: outreach.id, player_name: name, position: (outreach as any).position || null,
+          age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
+          current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
+          date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'youth_outreach',
+          notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
+          profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
+          parents_name: outreach.parents_name, parent_contact: outreach.parent_contact,
+          parent_approval: outreach.parent_approval, messaged: outreach.messaged,
+          response_received: outreach.response_received,
+        });
       });
 
       proResult.data?.forEach(outreach => {
         const name = outreach.player_name;
-        const existingKey = nameIndex[name];
-        if (!existingKey) {
-          const key = `pro:${outreach.id}`;
-          playerMap[key] = {
-            id: outreach.id, player_name: name, position: (outreach as any).position || null,
-            age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
-            current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
-            date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'pro_outreach',
-            notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
-            profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
-            messaged: outreach.messaged, response_received: outreach.response_received,
-          };
-          nameIndex[name] = key;
-        } else {
-          const entry = playerMap[existingKey];
-          if (!entry.ig_handle && outreach.ig_handle) entry.ig_handle = outreach.ig_handle;
-        }
+        if (!name) return;
+        addOrMergePlayer(`pro:${outreach.id}`, {
+          id: outreach.id, player_name: name, position: (outreach as any).position || null,
+          age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
+          current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
+          date_of_birth: (outreach as any).date_of_birth || null, report_count: 0, source: 'pro_outreach',
+          notes: outreach.notes, ig_handle: outreach.ig_handle, created_at: outreach.created_at,
+          profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
+          messaged: outreach.messaged, response_received: outreach.response_received,
+        });
       });
 
       setPlayers(Object.values(playerMap).sort((a, b) => {
