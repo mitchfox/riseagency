@@ -3,9 +3,10 @@ import { PlayerDatabase } from './PlayerDatabase';
 import { PlayerAddMode } from './PlayerAddMode';
 import { SquadView } from './SquadView';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw, Download, Users } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw, Download, Users, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ClubRatingSuggestionsDialog } from './ClubRatingSuggestionsDialog';
 
 type Mode = 'classic' | 'squad';
 type AddMode = 'ai' | 'manual';
@@ -21,6 +22,7 @@ export const PlayerDatabaseActions = () => {
   const [progress, setProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
+  const [ratingsOpen, setRatingsOpen] = useState(false);
 
   const fetchLivePlayerCount = async () => {
     const { count, error } = await supabase
@@ -211,12 +213,23 @@ export const PlayerDatabaseActions = () => {
             ? `Refreshing… ${refreshProgress?.updated ?? 0} updated${refreshProgress?.remaining != null ? ` · ${refreshProgress.remaining} left` : ''}`
             : 'Refresh all Transfermarkt data'}
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setRatingsOpen(true)}
+          title="AI-grade unrated clubs (R1-R5) then review before saving"
+          className="h-7 gap-1.5 px-2.5 text-[10px] font-semibold uppercase tracking-wider"
+        >
+          <Star className="h-3.5 w-3.5" /> Suggest club ratings
+        </Button>
       </div>
       {addOpen && (
         <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <PlayerAddMode key={addMode} initialMode={addMode} onExit={() => setAddOpen(false)} />
         </div>
       )}
+      <ClubRatingSuggestionsDialog open={ratingsOpen} onOpenChange={setRatingsOpen} />
     </section>
   );
 };
