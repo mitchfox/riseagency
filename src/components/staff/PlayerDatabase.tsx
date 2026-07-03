@@ -330,12 +330,12 @@ const MobilePlayerCard = ({
   player,
   fitScore,
   eligibility,
-  onOpen,
+  onEdit,
 }: {
   player: PlayerData;
   fitScore?: number;
   eligibility: React.ReactNode;
-  onOpen: () => void;
+  onEdit: () => void;
 }) => {
   const sourceLabel = player.source === 'database' ? 'DB'
     : player.source === 'scouting' ? 'Scout'
@@ -345,79 +345,111 @@ const MobilePlayerCard = ({
     ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : null;
   const rep = canonRepresentation(player.representation_status);
+  const cleanIg = player.ig_handle?.replace(/^@/, '').trim();
+  const displayPosition = normalisePosition(player.position) || player.position || '—';
   return (
-    <div
-      onClick={onOpen}
-      className="p-3 rounded-xl border border-border/60 bg-card/85 hover:bg-card active:scale-[0.995] transition-all cursor-pointer shadow-sm"
-    >
-      <div className="flex items-start gap-3">
-        <Avatar className="h-14 w-14 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
+    <article className="overflow-hidden rounded-xl border border-[hsl(var(--rise-gold)/0.28)] bg-card/85 shadow-[0_18px_44px_hsl(var(--background)/0.45)]">
+      <div className="bg-[linear-gradient(135deg,hsl(var(--rise-gold)/0.18),hsl(var(--card))_56%,hsl(var(--transfermarkt-blue)/0.18))] p-3">
+        <div className="flex items-start gap-3">
+        <Avatar className="h-16 w-16 flex-shrink-0 ring-2 ring-[hsl(var(--rise-gold)/0.65)] shadow-[0_0_12px_hsl(var(--rise-gold)/0.28)]">
           <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-sm">
+          <AvatarFallback className="bg-primary/15 text-primary font-black text-sm">
             {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
             {player.nationality && (
-              <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-4 h-auto rounded-sm flex-shrink-0" />
+                  <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="h-3.5 w-5 flex-shrink-0 rounded-sm object-cover" />
             )}
-            <span className="font-semibold text-sm truncate leading-tight">{player.player_name}</span>
-            <Badge variant="outline" className="text-[9px] flex-shrink-0 h-4 px-1.5">{player.position || '—'}</Badge>
-            {player.age != null && (
-              <span className="text-[10px] text-muted-foreground">{player.age}y</span>
-            )}
-            <span className="ml-auto flex items-center gap-1.5">
-              {eligibility}
+                <h3 className="truncate text-base font-black leading-tight text-foreground">{player.player_name}</h3>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className="h-5 border-[hsl(var(--rise-gold)/0.45)] bg-background/35 px-1.5 text-[10px] font-black text-primary">{displayPosition}</Badge>
+                {player.age != null && <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{player.age} yrs</Badge>}
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{sourceLabel}</Badge>
+                {rep !== 'Unknown' && <Badge variant="outline" className="h-5 px-1.5 text-[10px]">{rep}</Badge>}
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
               {typeof fitScore === 'number' && <MiniFitBadge score={fitScore} />}
-            </span>
-          </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain flex-shrink-0" />}
-            <span className="truncate">{player.current_club || '—'}</span>
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground/90 flex-wrap">
-            {dob && <span>DOB {dob}</span>}
-            {player.nationality && <span>· {player.nationality}</span>}
-            <span>· {sourceLabel}</span>
-            {rep && rep !== 'Unknown' && <span>· {rep}</span>}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            {player.transfermarkt_url ? (
-              <a
-                href={player.transfermarkt_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/20"
-              >
-                TM
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                No TM
-              </span>
-            )}
-            {player.ig_handle && (
-              <a
-                href={`https://instagram.com/${player.ig_handle.replace(/^@/, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-card px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:bg-muted"
-              >
-                <FaInstagram className="h-3 w-3" /> @{player.ig_handle.replace(/^@/, '')}
-              </a>
-            )}
-            {player.report_count > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                {player.report_count} report{player.report_count === 1 ? '' : 's'}
-              </span>
-            )}
+              <span className="flex h-6 items-center justify-center rounded-full border border-border/60 bg-background/45 px-2">{eligibility}</span>
+            </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+
+      <div className="space-y-3 p-3">
+        <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><Building2 className="h-3.5 w-3.5" /> Club</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+              {player.club_logo_url && <img src={player.club_logo_url} alt="" className="h-5 w-5 flex-shrink-0 object-contain" />}
+              <span className="truncate">{player.current_club || '—'}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><Flag className="h-3.5 w-3.5" /> Nationality</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+              {player.nationality && <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="h-3.5 w-5 flex-shrink-0 rounded-sm object-cover" />}
+              <span className="truncate">{player.nationality || '—'}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" /> DOB</div>
+            <div className="mt-1 truncate font-semibold text-foreground">{dob || '—'}</div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Reports</div>
+            <div className="mt-1 font-semibold text-foreground">{player.report_count} report{player.report_count === 1 ? '' : 's'}</div>
+          </div>
+        </div>
+
+        {(player.parents_name || player.parent_contact) && (
+          <div className="rounded-lg border border-border/55 bg-background/30 p-2 text-[11px]">
+            <div className="text-muted-foreground">Parent contact</div>
+            <div className="mt-1 font-semibold text-foreground">{[player.parents_name, player.parent_contact].filter(Boolean).join(' · ')}</div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-2">
+          <Button type="button" size="sm" onClick={onEdit} className="h-10 gap-1.5 text-[11px] font-black uppercase tracking-wider">
+            <Edit className="h-3.5 w-3.5" /> Edit
+          </Button>
+          {player.transfermarkt_url ? (
+            <a
+              href={player.transfermarkt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-[hsl(var(--transfermarkt-blue))] px-2 text-[11px] font-black uppercase tracking-wider text-[hsl(var(--transfermarkt-blue-foreground))] transition-colors hover:bg-[hsl(var(--transfermarkt-blue)/0.88)]"
+            >
+              <span className="rounded-sm bg-[hsl(var(--transfermarkt-blue-foreground)/0.16)] px-1 font-black">TM</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-border/60 bg-muted/25 px-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+              No TM
+            </span>
+          )}
+          {cleanIg ? (
+            <a
+              href={`https://instagram.com/${cleanIg}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-md border border-border/60 bg-background/45 px-2 text-[11px] font-bold text-foreground transition-colors hover:bg-muted/55"
+            >
+              <FaInstagram className="h-4 w-4 text-destructive" />
+              <span className="truncate">IG</span>
+            </a>
+          ) : (
+            <span className="inline-flex h-10 items-center justify-center rounded-md border border-border/60 bg-muted/20 px-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">No IG</span>
+          )}
+        </div>
+      </div>
+    </article>
   );
 };
 
