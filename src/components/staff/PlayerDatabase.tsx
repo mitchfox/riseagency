@@ -10,7 +10,7 @@ import { BlurTextarea } from '@/components/staff/BlurTextarea';
 import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2, SlidersHorizontal } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2, SlidersHorizontal, BarChart3, Globe2, ShieldCheck, AlertTriangle, Building2, ExternalLink, Flag, Link2, CalendarDays } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
