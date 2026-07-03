@@ -854,42 +854,86 @@ serve(async (req) => {
             if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
           }
 
-          // Current-season stats — scrape the public TM stats page (the
-          // internal API does not expose performanceData for most players).
-          // Mirrors the proven parser in sync-player-stats.
+          // Current-season stats — the old static <table class="items"> markup
+          // is gone; TM now loads stats via a Svelte component that hits
+          // /ceapi/performance-game/{id}. We aggregate that JSON directly.
+          //
+          // Season selection: pick the most recent seasonId (excluding
+          // national-team competitions) that actually has played appearances.
+          // This auto-handles both Aug–May calendars (which stay on 2025/26
+          // through Aug 2026 because 2026/27 has no games yet) and
+          // spring–autumn leagues like Norway/Sweden/Ireland where the
+          // calendar-year season is already live.
           try {
-            const now = new Date();
-            const seasonYear = now.getMonth() < 7 ? now.getFullYear() - 1 : now.getFullYear();
-            const statsUrl = `https://www.transfermarkt.co.uk/x/leistungsdaten/spieler/${tmId}/saison/${seasonYear}`;
-            const perfRes = await fetch(statsUrl, {
+            const apiRes = await fetch(`https://www.transfermarkt.co.uk/ceapi/performance-game/${tmId}`, {
               headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept': 'application/json',
                 'Accept-Language': 'en-GB,en;q=0.9',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
               },
             });
-            if (perfRes.ok) {
-              const html = await perfRes.text();
-              const tfootMatch = html.match(/<table class="items">[\s\S]*?<tfoot>([\s\S]*?)<\/tfoot>/);
-              if (tfootMatch) {
-                const tdValues: string[] = [];
-                const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/g;
-                let m: RegExpExecArray | null;
-                while ((m = tdRegex.exec(tfootMatch[1])) !== null) {
-                  tdValues.push(m[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim());
+            if (apiRes.ok) {
+              const payload = await apiRes.json();
+              const perf: any[] = Array.isArray(payload?.data?.performance) ? payload.data.performance : [];
+
+              // Exclude national-team competitions (TM's own default for the
+              // player profile club-stats view).
+              const NATIONAL_TEAM_TYPES = new Set([11, 17, 19, 20]);
+              const clubPerf = perf.filter((p) => {
+                const gi = p?.gameInformation || {};
+                if (gi.isNationalGame) return false;
+                if (NATIONAL_TEAM_TYPES.has(Number(gi.competitionTypeId))) return false;
+                return true;
+              });
+
+              const wasPlayed = (p: any) => {
+                const gen = p?.statistics?.generalStatistics || {};
+                const mins = Number(p?.statistics?.playingTimeStatistics?.playedMinutes ?? gen.playedMinutes ?? 0);
+                return gen.participationState === 'played' || mins > 0;
+              };
+
+              // Pick the most recent season with any played appearance.
+              let seasonYear: number | null = null;
+              for (const p of clubPerf) {
+                if (!wasPlayed(p)) continue;
+                const sid = Number(p?.gameInformation?.seasonId);
+                if (!Number.isFinite(sid)) continue;
+                if (seasonYear === null || sid > seasonYear) seasonYear = sid;
+              }
+
+              if (seasonYear !== null) {
+                const rows = clubPerf.filter((p) => Number(p?.gameInformation?.seasonId) === seasonYear && wasPlayed(p));
+                let matches = 0, goals = 0, assists = 0, minutes = 0, cleanSheets = 0, saves = 0;
+                for (const p of rows) {
+                  const gen = p?.statistics?.generalStatistics || {};
+                  const gs = p?.statistics?.goalStatistics || {};
+                  const gk = p?.statistics?.goalkeeperStatistics || {};
+                  const pt = p?.statistics?.playingTimeStatistics || {};
+                  matches += Number(gen.appearancesCount ?? 1) || 1;
+                  minutes += Number(pt.playedMinutes ?? gen.playedMinutes ?? 0) || 0;
+                  goals += Number(gs.goalsScoredTotal ?? 0) || 0;
+                  assists += Number(gs.assists ?? 0) || 0;
+                  cleanSheets += Number(gs.gamesWithoutConcededGoals ?? gk.gamesWithoutConcededGoals ?? 0) || 0;
+                  saves += Number(gk.saves ?? gs.scoringGoalkeeperSaves ?? 0) || 0;
                 }
-                if (tdValues.length >= 9) {
-                  const parseVal = (v: string) => parseInt(v.replace(/'/g, '').replace(/-/g, '0').replace(/\./g, '').trim(), 10) || 0;
-                  const matches = parseVal(tdValues[2]);
-                  const goals = parseVal(tdValues[3]);
-                  const assists = parseVal(tdValues[4]);
-                  const minutes = parseVal(tdValues[8]);
-                  if (minutes || matches || goals || assists) {
-                    await supabase
-                      .from('player_stats')
-                      .upsert({ player_id: row.id, minutes, matches, goals, assists, external_player_id: tmId, updated_at: new Date().toISOString() }, { onConflict: 'player_id' });
-                    fields.push('season_stats');
+
+                if (matches > 0 || minutes > 0 || goals > 0 || assists > 0) {
+                  const isGk = (data?.attributes?.position?.shortName === 'GK')
+                    || (data?.attributes?.positionGroup === 'GOALKEEPER');
+                  const patchRow: Record<string, unknown> = {
+                    player_id: row.id,
+                    minutes, matches, goals, assists,
+                    external_player_id: tmId,
+                    updated_at: new Date().toISOString(),
+                  };
+                  if (isGk) {
+                    patchRow.clean_sheets = cleanSheets;
+                    patchRow.saves = saves;
                   }
+                  const { error: statsErr } = await supabase
+                    .from('player_stats')
+                    .upsert(patchRow, { onConflict: 'player_id' });
+                  if (!statsErr) fields.push('season_stats');
                 }
               }
             }
