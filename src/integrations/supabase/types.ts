@@ -6603,11 +6603,14 @@ export type Database = {
           created_at: string | null
           external_player_id: string | null
           goals: number | null
+          goals_conceded: number | null
           id: string
           matches: number | null
           minutes: number | null
-          player_id: string
+          player_id: string | null
           saves: number | null
+          source: string
+          source_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -6616,11 +6619,14 @@ export type Database = {
           created_at?: string | null
           external_player_id?: string | null
           goals?: number | null
+          goals_conceded?: number | null
           id?: string
           matches?: number | null
           minutes?: number | null
-          player_id: string
+          player_id?: string | null
           saves?: number | null
+          source?: string
+          source_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -6629,11 +6635,14 @@ export type Database = {
           created_at?: string | null
           external_player_id?: string | null
           goals?: number | null
+          goals_conceded?: number | null
           id?: string
           matches?: number | null
           minutes?: number | null
-          player_id?: string
+          player_id?: string | null
           saves?: number | null
+          source?: string
+          source_id?: string | null
           updated_at?: string | null
         }
         Relationships: [

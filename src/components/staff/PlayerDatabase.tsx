@@ -1109,18 +1109,23 @@ export const PlayerDatabase = () => {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search — player-only suggestions. Clicking a suggestion filters the
+          table to that player and expands the inline detail row. */}
       <SearchWithSuggestions
         value={searchQuery}
         onCommit={setSearchQuery}
-        sources={players.flatMap(p => [
-          { label: p.player_name || '', sublabel: p.current_club || p.position || null, payload: p },
-          ...(p.current_club ? [{ label: p.current_club, sublabel: 'Club' }] : []),
-        ])}
-        placeholder="Search by name, club, position..."
+        sources={players.map(p => ({
+          label: p.player_name || '',
+          sublabel: [p.current_club, p.position].filter(Boolean).join(' · ') || null,
+          payload: p,
+        }))}
+        placeholder="Search by player name..."
         onSuggestionSelect={(s) => {
           if (s.payload && s.payload.id) {
-            openPlayerInDialog(s.payload);
+            const p = s.payload as PlayerData;
+            setSearchQuery(p.player_name);
+            setExpandedRowKey(`${p.source}-${p.id}`);
+            setSelectedPlayer(p);
           } else {
             setSearchQuery(s.label);
           }

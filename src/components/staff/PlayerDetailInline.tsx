@@ -30,7 +30,7 @@ interface SeasonStats {
   goals: number;
   assists: number;
   clean_sheets?: number | null;
-  saves?: number | null;
+  goals_conceded?: number | null;
   updated_at?: string | null;
 }
 
@@ -44,13 +44,13 @@ export const PlayerDetailInline: React.FC<Props> = ({ player, onClose, onUpdated
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (player.source !== 'database') { setStats(null); return; }
     setStatsLoading(true);
     (async () => {
       const { data } = await supabase
         .from('player_stats')
-        .select('minutes, matches, goals, assists, clean_sheets, saves, updated_at')
-        .eq('player_id', player.id)
+        .select('minutes, matches, goals, assists, clean_sheets, goals_conceded, updated_at')
+        .eq('source', player.source)
+        .eq('source_id', player.id)
         .maybeSingle();
       setStats(data as SeasonStats | null);
       setStatsLoading(false);
@@ -212,20 +212,32 @@ export const PlayerDetailInline: React.FC<Props> = ({ player, onClose, onUpdated
         <TabsContent value="stats" className="pt-3">
           {statsLoading ? (
             <p className="text-xs text-muted-foreground">Loading stats…</p>
-          ) : stats && (stats.minutes || stats.matches || stats.goals || stats.assists) ? (
-            <div>
-              <div className="grid grid-cols-4 gap-3">
-                <StatCard label="Matches" value={stats.matches} />
-                <StatCard label="Minutes" value={stats.minutes} />
-                <StatCard label="Goals" value={stats.goals} />
-                <StatCard label="Assists" value={stats.assists} />
-                {stats.clean_sheets != null && <StatCard label="Clean sheets" value={stats.clean_sheets} />}
-                {stats.saves != null && <StatCard label="Saves" value={stats.saves} />}
-              </div>
-              {stats.updated_at && (
-                <p className="text-[10px] text-muted-foreground mt-2">Last updated {new Date(stats.updated_at).toLocaleDateString('en-GB')}</p>
-              )}
-            </div>
+          ) : stats && (stats.minutes || stats.matches) ? (
+            (() => {
+              const isGk = (normalisePosition(player.position) || player.position || '').toUpperCase() === 'GK';
+              return (
+                <div>
+                  <div className="grid grid-cols-4 gap-3">
+                    <StatCard label="Matches" value={stats.matches} />
+                    <StatCard label="Minutes" value={stats.minutes} />
+                    {isGk ? (
+                      <>
+                        <StatCard label="Goals conceded" value={stats.goals_conceded ?? 0} />
+                        <StatCard label="Clean sheets" value={stats.clean_sheets ?? 0} />
+                      </>
+                    ) : (
+                      <>
+                        <StatCard label="Goals" value={stats.goals} />
+                        <StatCard label="Assists" value={stats.assists} />
+                      </>
+                    )}
+                  </div>
+                  {stats.updated_at && (
+                    <p className="text-[10px] text-muted-foreground mt-2">Last updated {new Date(stats.updated_at).toLocaleDateString('en-GB')}</p>
+                  )}
+                </div>
+              );
+            })()
           ) : (
             <p className="text-xs text-muted-foreground">
               No stats stored yet. Use "Refresh all Transfermarkt data" in Player Database Actions to pull the current season.
