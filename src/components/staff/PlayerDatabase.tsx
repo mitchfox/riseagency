@@ -1388,10 +1388,7 @@ export const PlayerDatabase = () => {
       </div>
 
       <div className="text-xs text-muted-foreground">
-        {visiblePlayers.length} of {filteredAndSortedPlayers.length} players
-        {sourceRecordCount > players.length && (
-          <span> · {sourceRecordCount} source records before same-name/club merging</span>
-        )}
+        {visiblePlayers.length} visible from {filteredAndSortedPlayers.length} matching players
       </div>
 
       {/* Mobile cards */}
@@ -1402,7 +1399,7 @@ export const PlayerDatabase = () => {
             player={player}
             fitScore={fitScoreByRowKey[`${player.source}-${player.id}`]}
             eligibility={<EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />}
-            onOpen={() => openPlayerInDialog(player)}
+            onEdit={() => openPlayerInDialog(player)}
           />
         ))}
       </div>
