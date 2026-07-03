@@ -795,7 +795,13 @@ serve(async (req) => {
 
           if (tmDob) { patch.date_of_birth = String(tmDob).slice(0, 10); fields.push('date_of_birth'); }
           if (tmAge) { patch.age = tmAge; fields.push('age'); }
-          const nationality = profile.nationality || VERIFIED_TM_NATIONALITY_FALLBACK[data?.nationalityDetails?.nationalities?.nationalityId || 0] || null;
+          const natBlock = data?.nationalityDetails?.nationalities;
+          const natId = Array.isArray(natBlock) ? natBlock[0]?.nationalityId : natBlock?.nationalityId;
+          const natName = Array.isArray(natBlock) ? natBlock[0]?.name : natBlock?.name;
+          const nationality = profile.nationality
+            || cleanCountry(natName)
+            || VERIFIED_TM_NATIONALITY_FALLBACK[natId || 0]
+            || null;
           if (nationality) { patch.nationality = nationality; fields.push('nationality'); }
           if (shortPos) { patch.position = shortPos; fields.push('position'); }
           if (current?.clubId) {
