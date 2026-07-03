@@ -96,7 +96,7 @@ export const SearchWithSuggestions = ({
     for (const s of sources) {
       const label = (s.label || "").trim();
       if (!label) continue;
-      const key = normalise(label);
+      const key = `${normalise(label)}::${normalise(s.sublabel || "")}`;
       if (!key || seen.has(key)) continue;
       const score = scoreMatch(q, label);
       if (score < 0) continue;
