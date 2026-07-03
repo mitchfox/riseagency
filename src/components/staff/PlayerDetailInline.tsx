@@ -144,8 +144,8 @@ export const PlayerDetailInline: React.FC<Props> = ({ player, onClose, onUpdated
             className="group relative"
             title="Change profile picture"
           >
-            <Avatar className="h-16 w-16 ring-2 ring-[hsl(var(--rise-gold)/0.5)] transition group-hover:ring-[hsl(var(--rise-gold))]">
-              <AvatarImage src={player.profile_image_url || undefined} />
+            <Avatar className="h-16 w-16 ring-2 ring-[hsl(var(--rise-gold)/0.7)] shadow-[0_0_18px_hsl(var(--rise-gold)/0.55)] transition group-hover:ring-[hsl(var(--rise-gold))] group-hover:shadow-[0_0_24px_hsl(var(--rise-gold)/0.8)]">
+              <AvatarImage src={player.profile_image_url || undefined} className="object-cover object-top" />
               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-bold">
                 {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </AvatarFallback>

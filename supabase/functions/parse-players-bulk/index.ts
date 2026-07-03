@@ -226,6 +226,19 @@ const getTmPositionValue = (data: any): string => {
   );
 };
 
+const TOP_AGENCIES = [
+  'CAA Base',
+  'Wasserman',
+  'CAA Stellar',
+  'Raiola Group',
+  'Gestifute',
+];
+const isTopAgency = (agency: string | null | undefined): boolean => {
+  if (!agency) return false;
+  const norm = String(agency).toLowerCase().replace(/[^a-z0-9]/g, '');
+  return TOP_AGENCIES.some(a => norm.includes(a.toLowerCase().replace(/[^a-z0-9]/g, '')));
+};
+
 const getTmAgency = (data: any): string | null => {
   const agency = cleanName(
     data?.attributes?.consultantAgency?.name
@@ -237,11 +250,19 @@ const getTmAgency = (data: any): string | null => {
 
 // TM lists family-run representation as "Relatives" / "Family". The staff DB
 // uses "Family" as the canonical option in agent_status, so surface that
-// explicitly for the enricher.
-const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' | null => {
+// explicitly for the enricher. Top agencies get a distinct status so the
+// filter can separate them out.
+const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' | 'top_agency' | null => {
   if (!agency) return null;
   if (/relatives|family/i.test(agency)) return 'family';
+  if (isTopAgency(agency)) return 'top_agency';
   return 'represented';
+};
+
+const representationLabelForStatus = (status: 'represented' | 'family' | 'top_agency'): string => {
+  if (status === 'family') return 'Family';
+  if (status === 'top_agency') return 'Top Agency';
+  return 'Represented';
 };
 
 const tmProfileImageUrl = (id: string) => `https://img.a.transfermarkt.technology/portrait/big/${id}-1.jpg`;
@@ -303,10 +324,21 @@ const fetchTmProfile = async (id: string) => {
     if (res.ok) {
       const html = await res.text();
 
-      // Nationality: meta description first, then keywords fallback.
+      // Nationality: preferred source is the "Citizenship:" row on the
+      // profile table — it's always in English and matches TM's canonical
+      // country name. Fall back to meta description ("from X ➤"), then the
+      // last keyword in the meta keywords list.
+      const citizenshipRaw = extractProfileField(html, ['Citizenship', 'Staatsbürgerschaft']);
+      if (citizenshipRaw) {
+        // TM often lists dual citizenship as "Turkey Germany" — take the first.
+        const first = citizenshipRaw.split(/\s{2,}|\n|,|\//).map((s) => s.trim()).filter(Boolean)[0];
+        nationality = cleanCountry(first || citizenshipRaw);
+      }
       const description = extractMetaContent(html, 'description');
-      const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
-      nationality = cleanCountry(fromMatch?.[1]);
+      if (!nationality) {
+        const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
+        nationality = cleanCountry(fromMatch?.[1]);
+      }
       if (!nationality) {
         const keywords = extractMetaContent(html, 'keywords');
         const lastKeyword = keywords?.split(',').map((part) => part.trim()).filter(Boolean).pop();
@@ -513,9 +545,11 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (tmDob) next.date_of_birth = String(tmDob).slice(0, 10);
   if (d?.lifeDates?.age) next.age = d.lifeDates.age;
 
-  const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
+  const natBlock = d?.nationalityDetails?.nationalities;
+  const tmNatId: number = Array.isArray(natBlock) ? (natBlock[0]?.nationalityId || 0) : (natBlock?.nationalityId || 0);
+  const tmNatName = Array.isArray(natBlock) ? natBlock[0]?.name : natBlock?.name;
   const profile = await fetchTmProfile(best.id);
-  const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
+  const fallbackNationality = cleanCountry(tmNatName) || VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
   next.nationality = profile.nationality || fallbackNationality || null;
   const tmAgency = getTmAgency(d);
   if (tmAgency || profile.agent) next.agency = tmAgency || profile.agent;
@@ -636,13 +670,22 @@ serve(async (req) => {
           const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
           if (matched.agency) {
             const agencyStatus = classifyAgencyStatus(matched.agency);
-            if (repIsUnknown) {
-              patch.representation_status = agencyStatus === 'family' ? 'Family' : 'Represented';
-              fields.push('representation_status');
+            if (agencyStatus) {
+              const desiredLabel = representationLabelForStatus(agencyStatus);
+              // Always upgrade to "Top Agency" when TM confirms one of the
+              // tier-one shops, even if the row was already flagged
+              // "Represented" by an earlier pass.
+              const shouldUpgradeToTop = agencyStatus === 'top_agency'
+                && existingRep.toLowerCase() !== 'top agency';
+              if (repIsUnknown || shouldUpgradeToTop) {
+                patch.representation_status = desiredLabel;
+                fields.push('representation_status');
+              }
             }
             // Also fill the fit-score signals so the badge picks it up.
             if (!hasValue(row.agent_status) && agencyStatus) {
-              patch.agent_status = agencyStatus;
+              // agent_status is a free-text field; store the canonical label.
+              patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
               fields.push('agent_status');
             }
             if (!hasValue(row.agent_name) && agencyStatus !== 'family') {
@@ -754,7 +797,13 @@ serve(async (req) => {
 
           if (tmDob) { patch.date_of_birth = String(tmDob).slice(0, 10); fields.push('date_of_birth'); }
           if (tmAge) { patch.age = tmAge; fields.push('age'); }
-          const nationality = profile.nationality || VERIFIED_TM_NATIONALITY_FALLBACK[data?.nationalityDetails?.nationalities?.nationalityId || 0] || null;
+          const natBlock = data?.nationalityDetails?.nationalities;
+          const natId = Array.isArray(natBlock) ? natBlock[0]?.nationalityId : natBlock?.nationalityId;
+          const natName = Array.isArray(natBlock) ? natBlock[0]?.name : natBlock?.name;
+          const nationality = profile.nationality
+            || cleanCountry(natName)
+            || VERIFIED_TM_NATIONALITY_FALLBACK[natId || 0]
+            || null;
           if (nationality) { patch.nationality = nationality; fields.push('nationality'); }
           if (shortPos) { patch.position = shortPos; fields.push('position'); }
           if (current?.clubId) {
@@ -772,17 +821,23 @@ serve(async (req) => {
           const agency = getTmAgency(data) || profile.agent;
           const agencyStatus = classifyAgencyStatus(agency);
           if (agencyStatus) {
-            patch.agent_status = agencyStatus; fields.push('agent_status');
+            patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
+            fields.push('agent_status');
             if (agencyStatus === 'family') {
               patch.agent_name = null;
-              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
-                patch.representation_status = 'Family'; fields.push('representation_status');
-              }
             } else {
               patch.agent_name = agency; fields.push('agent_name');
-              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
-                patch.representation_status = 'Represented'; fields.push('representation_status');
-              }
+            }
+            const currentRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
+            const repIsUnknown = !currentRep || /^unknown$/i.test(currentRep);
+            const desiredLabel = representationLabelForStatus(agencyStatus);
+            // Upgrade to "Top Agency" whenever TM confirms one of the
+            // tier-one shops, even if the row was previously "Represented".
+            const shouldUpgradeToTop = agencyStatus === 'top_agency'
+              && currentRep.toLowerCase() !== 'top agency';
+            if (repIsUnknown || shouldUpgradeToTop) {
+              patch.representation_status = desiredLabel;
+              fields.push('representation_status');
             }
           }
 
