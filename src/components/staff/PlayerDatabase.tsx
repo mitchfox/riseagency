@@ -1060,19 +1060,29 @@ export const PlayerDatabase = () => {
                   ))}
                 </div>
               </div>
-              {uniqueRepresentationStatuses.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Representation</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {uniqueRepresentationStatuses.map(status => (
-                      <button key={status}
-                        onClick={() => setRepresentationFilter(prev => prev.includes(status) ? prev.filter(v => v !== status) : [...prev, status])}
-                        className={`text-[10px] px-1.5 py-0.5 border rounded ${representationFilter.includes(status) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
-                      >{status}</button>
-                    ))}
-                  </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Representation</Label>
+                <div className="flex flex-wrap gap-1">
+                  {uniqueRepresentationStatuses.map(status => {
+                    const included = representationFilter.includes(status);
+                    const excluded = representationExclude.includes(status);
+                    const cycle = () => {
+                      if (!included && !excluded) { setRepresentationFilter(prev => [...prev, status]); return; }
+                      if (included) {
+                        setRepresentationFilter(prev => prev.filter(v => v !== status));
+                        setRepresentationExclude(prev => [...prev, status]);
+                        return;
+                      }
+                      setRepresentationExclude(prev => prev.filter(v => v !== status));
+                    };
+                    return (
+                      <button key={status} onClick={cycle}
+                        className={`text-[10px] px-1.5 py-0.5 border rounded ${included ? 'bg-primary text-primary-foreground border-primary' : excluded ? 'bg-destructive/20 text-destructive border-destructive line-through' : 'border-border'}`}
+                      >{excluded ? '−' : ''}{status}</button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">DOB Range</Label>
                 <div className="flex gap-1 items-center">
