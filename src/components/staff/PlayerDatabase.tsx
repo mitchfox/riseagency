@@ -507,17 +507,10 @@ export const PlayerDatabase = () => {
   }, [players]);
 
   const uniqueRepresentationStatuses = useMemo(() => {
-    // Only surface the player-facing representation labels. Internal workflow
-    // statuses (Scouted, Fuel For Football, Mandated, Prospect, etc.) are
-    // pipeline states — they don't belong in the "how is this player
-    // represented" filter.
-    const ALLOWED = ['Represented', 'Top Agency', 'Family', 'Unrepresented'];
-    const present = new Set(
-      players
-        .map(p => (p.representation_status || '').trim())
-        .filter(Boolean)
-    );
-    return ALLOWED.filter(label => present.has(label));
+    // Always surface the five canonical labels so users can filter on values
+    // that exist in the DB in any casing (e.g. "represented", "Represented"),
+    // and can also filter for players with no representation info at all.
+    return ['Represented', 'Top Agency', 'Family', 'Unrepresented', 'Unknown'];
   }, [players]);
 
   const upcomingBirthdayOptions = useMemo(() => {
