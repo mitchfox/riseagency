@@ -366,9 +366,16 @@ export const PlayerDatabase = () => {
 
   useEffect(() => {
     fetchAllPlayers();
-    const refresh = () => fetchAllPlayers();
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => { fetchAllPlayers(); }, 300);
+    };
     window.addEventListener('player-database-refresh', refresh);
-    return () => window.removeEventListener('player-database-refresh', refresh);
+    return () => {
+      window.removeEventListener('player-database-refresh', refresh);
+      if (t) clearTimeout(t);
+    };
   }, []);
 
   const fetchAllPlayers = async () => {

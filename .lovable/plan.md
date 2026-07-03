@@ -1,25 +1,15 @@
-## Plan
+## Problem
 
-Fix the player AI parser so Croatian Transfermarkt players are no longer shown as Costa Rican.
+In `PlayerAddMode.saveAccepted` the `player-database-refresh` event only fires once after the whole batch finishes (line 214). While AI bulk-add is processing dozens/hundreds of players, the count in the footer stays frozen, making it look like nothing is being added.
 
-### What I found
-- The AI vision prompt is already told not to guess nationality.
-- The wrong value is coming from our Transfermarkt enrichment step, not the image model.
-- Transfermarkt’s API is returning `nationalityId: 37` for the Croatian players in your screenshot, but our hardcoded map says `37 = Costa Rica` and `38 = Croatia`.
-- For those player API responses, `passportName` contains Croatian names and the page is clearly Croatian youth data, so the ID map is misaligned for this API.
+## Fix
 
-### Fix
-1. Replace the fragile hardcoded nationality ID lookup with a safer resolver:
-   - Prefer nationality names if the Transfermarkt API response includes a readable name field.
-   - Add a corrected fallback for the API’s observed IDs, including `37 = Croatia` for this endpoint.
-   - Never show Costa Rica for Croatian youth rows just because of the old ID map.
+Make the count update live as each player is saved:
 
-2. Add defensive validation around nationality assignment:
-   - If the Transfermarkt nationality cannot be resolved confidently, set nationality to `null` rather than guessing.
-   - Keep unmatched players as `nationality: null` and marked for review.
+1. **`src/components/staff/PlayerAddMode.tsx`** — inside the per-player loop in `saveAccepted` (and the equivalent manual-add save path), dispatch `window.dispatchEvent(new CustomEvent('player-database-refresh'))` immediately after every successful insert/update, not only at the end. Throttle to at most one dispatch per ~400ms so we don't refetch on every single row when the batch is huge.
 
-3. Clean up existing stale parsed output behaviour:
-   - Ensure accepted Transfermarkt matches overwrite any prior vision nationality.
-   - Ensure non-matches wipe hallucinated nationality.
+2. **`src/components/staff/PlayerDatabase.tsx`** — the existing `player-database-refresh` listener already refetches. Ensure the refetch updates `players.length` and `sourceRecordCount` without blocking (it already does via `setState`). Add a light debounce on the listener (~300ms trailing) so rapid events during a big bulk import coalesce into smooth updates instead of hammering the DB.
 
-4. Deploy the updated edge function and test it with known names from your screenshot, such as Lovro Trupčević and Luka Posavec, confirming they no longer return Costa Rica.
+3. Keep the final toast `${added} added, ${merged} merged` and the final refresh dispatch as-is so the closing state is always accurate.
+
+No schema, RLS, or parser changes — this is purely a UI live-update fix.
