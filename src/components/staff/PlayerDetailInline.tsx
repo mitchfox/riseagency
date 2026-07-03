@@ -11,6 +11,7 @@ import { Edit, UserPlus, Loader2, Camera, X, Upload, Link2 } from 'lucide-react'
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { PlayerDetailDialog, type DialogPlayer } from './PlayerDetailDialog';
 import { calculateAge } from '@/lib/ageUtils';
+import { normalisePosition } from '@/lib/positionNormalise';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
