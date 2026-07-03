@@ -1,22 +1,87 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PlayerDatabase } from './PlayerDatabase';
 import { PlayerAddMode } from './PlayerAddMode';
 import { SquadView } from './SquadView';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw, Download } from 'lucide-react';
+import { LayoutGrid, Table as TableIcon, Sparkles, UserPlus, RefreshCw, Download, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type Mode = 'classic' | 'squad';
 type AddMode = 'ai' | 'manual';
 
+const normaliseCountValue = (value: string | null | undefined) =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const mergedPlayerCountKey = (name: string | null | undefined, club: string | null | undefined) =>
+  `${normaliseCountValue(name)}::${normaliseCountValue(club)}`;
+
 export const PlayerDatabaseActions = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<AddMode>('ai');
+  const [livePlayerCount, setLivePlayerCount] = useState<number | null>(null);
+  const [countLoading, setCountLoading] = useState(true);
   const [enriching, setEnriching] = useState(false);
   const [progress, setProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshProgress, setRefreshProgress] = useState<{ updated: number; processed: number; remaining: number | null } | null>(null);
+
+  const fetchLivePlayerCount = async () => {
+    const excluded = ['Scouted', 'Fuel For Football', 'FFF'];
+    const [databaseResult, scoutingResult, youthResult, proResult] = await Promise.all([
+      supabase.from('players').select('id, name, club, category, representation_status').range(0, 9999),
+      supabase.from('scouting_reports').select('id, player_name, current_club').range(0, 9999),
+      supabase.from('player_outreach_youth').select('*').range(0, 9999),
+      supabase.from('player_outreach_pro').select('*').range(0, 9999),
+    ]);
+    if (!databaseResult.error && !scoutingResult.error && !youthResult.error && !proResult.error) {
+      const keys = new Set<string>();
+      const nameOnly = new Map<string, string | null>();
+      const addRow = (name: string | null | undefined, club: string | null | undefined) => {
+        const nameKey = normaliseCountValue(name);
+        if (!nameKey) return;
+        const key = mergedPlayerCountKey(name, club);
+        if (normaliseCountValue(club)) {
+          keys.add(key);
+          return;
+        }
+        const existing = nameOnly.get(nameKey);
+        if (existing === undefined) {
+          nameOnly.set(nameKey, key);
+          keys.add(key);
+        } else if (existing && existing !== key) {
+          nameOnly.set(nameKey, null);
+        }
+      };
+
+      (databaseResult.data || [])
+        .filter((player) => !excluded.includes(player.category || '') && !excluded.includes(player.representation_status || ''))
+        .forEach((player) => addRow(player.name, player.club));
+      (scoutingResult.data || []).forEach((report) => addRow(report.player_name, report.current_club));
+      (youthResult.data || []).forEach((outreach: any) => addRow(outreach.player_name, outreach.current_club));
+      (proResult.data || []).forEach((outreach: any) => addRow(outreach.player_name, outreach.current_club));
+      setLivePlayerCount(keys.size);
+    }
+    setCountLoading(false);
+  };
+
+  useEffect(() => {
+    fetchLivePlayerCount();
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const onRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<{ increment?: number }>).detail;
+      if (typeof detail?.increment === 'number') {
+        setLivePlayerCount((current) => current === null ? current : current + detail.increment);
+      }
+      if (t) clearTimeout(t);
+      t = setTimeout(fetchLivePlayerCount, typeof detail?.increment === 'number' ? 900 : 150);
+    };
+    window.addEventListener('player-database-refresh', onRefresh);
+    return () => {
+      window.removeEventListener('player-database-refresh', onRefresh);
+      if (t) clearTimeout(t);
+    };
+  }, []);
 
   const openAdd = (nextMode: AddMode) => {
     setAddMode(nextMode);
@@ -107,8 +172,18 @@ export const PlayerDatabaseActions = () => {
   return (
     <section className="rounded-lg border border-[hsl(var(--rise-gold)/0.35)] bg-card/65 px-2.5 py-2 shadow-[0_0_18px_hsl(var(--rise-gold)/0.08)]">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="mr-auto min-w-0 text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">
-          Player database actions
+        <div className="mr-auto flex min-w-[12rem] items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[hsl(var(--rise-gold)/0.35)] bg-[hsl(var(--rise-gold)/0.12)] text-[hsl(var(--rise-gold))]">
+            <Users className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">
+              Player database actions
+            </div>
+            <div className="text-[11px] font-semibold text-foreground">
+              {countLoading ? 'Counting players…' : `${(livePlayerCount ?? 0).toLocaleString('en-GB')} live database players`}
+            </div>
+          </div>
         </div>
         <Button
           type="button"

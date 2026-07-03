@@ -10,7 +10,7 @@ import { BlurTextarea } from '@/components/staff/BlurTextarea';
 import { SearchWithSuggestions } from '@/components/staff/SearchWithSuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Search, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2, SlidersHorizontal } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Users, Edit, CheckCircle2, HelpCircle, Clock, Star, UserPlus, Loader2, SlidersHorizontal, BarChart3, Globe2, ShieldCheck, AlertTriangle, Building2, ExternalLink, Flag, Link2, CalendarDays } from 'lucide-react';
 import { FaInstagram } from 'react-icons/fa';
 import { getCountryFlagUrl } from '@/lib/countryFlags';
 import { calculateAge, calculatePreciseAge, getEligibleDate } from '@/lib/ageUtils';
@@ -330,12 +330,12 @@ const MobilePlayerCard = ({
   player,
   fitScore,
   eligibility,
-  onOpen,
+  onEdit,
 }: {
   player: PlayerData;
   fitScore?: number;
   eligibility: React.ReactNode;
-  onOpen: () => void;
+  onEdit: () => void;
 }) => {
   const sourceLabel = player.source === 'database' ? 'DB'
     : player.source === 'scouting' ? 'Scout'
@@ -345,86 +345,324 @@ const MobilePlayerCard = ({
     ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : null;
   const rep = canonRepresentation(player.representation_status);
+  const cleanIg = player.ig_handle?.replace(/^@/, '').trim();
+  const displayPosition = normalisePosition(player.position) || player.position || '—';
   return (
-    <div
-      onClick={onOpen}
-      className="p-3 rounded-xl border border-border/60 bg-card/85 hover:bg-card active:scale-[0.995] transition-all cursor-pointer shadow-sm"
-    >
-      <div className="flex items-start gap-3">
-        <Avatar className="h-14 w-14 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
+    <article className="overflow-hidden rounded-xl border border-[hsl(var(--rise-gold)/0.28)] bg-card/85 shadow-[0_18px_44px_hsl(var(--background)/0.45)]">
+      <div className="bg-[linear-gradient(135deg,hsl(var(--rise-gold)/0.18),hsl(var(--card))_56%,hsl(var(--transfermarkt-blue)/0.18))] p-3">
+        <div className="flex items-start gap-3">
+        <Avatar className="h-16 w-16 flex-shrink-0 ring-2 ring-[hsl(var(--rise-gold)/0.65)] shadow-[0_0_12px_hsl(var(--rise-gold)/0.28)]">
           <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-sm">
+          <AvatarFallback className="bg-primary/15 text-primary font-black text-sm">
             {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
             {player.nationality && (
-              <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-4 h-auto rounded-sm flex-shrink-0" />
+                  <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="h-3.5 w-5 flex-shrink-0 rounded-sm object-cover" />
             )}
-            <span className="font-semibold text-sm truncate leading-tight">{player.player_name}</span>
-            <Badge variant="outline" className="text-[9px] flex-shrink-0 h-4 px-1.5">{player.position || '—'}</Badge>
-            {player.age != null && (
-              <span className="text-[10px] text-muted-foreground">{player.age}y</span>
-            )}
-            <span className="ml-auto flex items-center gap-1.5">
-              {eligibility}
+                <h3 className="truncate text-base font-black leading-tight text-foreground">{player.player_name}</h3>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className="h-5 border-[hsl(var(--rise-gold)/0.45)] bg-background/35 px-1.5 text-[10px] font-black text-primary">{displayPosition}</Badge>
+                {player.age != null && <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{player.age} yrs</Badge>}
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{sourceLabel}</Badge>
+                {rep !== 'Unknown' && <Badge variant="outline" className="h-5 px-1.5 text-[10px]">{rep}</Badge>}
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
               {typeof fitScore === 'number' && <MiniFitBadge score={fitScore} />}
+              <span className="flex h-6 items-center justify-center rounded-full border border-border/60 bg-background/45 px-2">{eligibility}</span>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 p-3">
+        <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><Building2 className="h-3.5 w-3.5" /> Club</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+              {player.club_logo_url && <img src={player.club_logo_url} alt="" className="h-5 w-5 flex-shrink-0 object-contain" />}
+              <span className="truncate">{player.current_club || '—'}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><Flag className="h-3.5 w-3.5" /> Nationality</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+              {player.nationality && <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="h-3.5 w-5 flex-shrink-0 rounded-sm object-cover" />}
+              <span className="truncate">{player.nationality || '—'}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" /> DOB</div>
+            <div className="mt-1 truncate font-semibold text-foreground">{dob || '—'}</div>
+          </div>
+          <div className="rounded-lg border border-border/55 bg-background/35 p-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Reports</div>
+            <div className="mt-1 font-semibold text-foreground">{player.report_count} report{player.report_count === 1 ? '' : 's'}</div>
+          </div>
+        </div>
+
+        {(player.parents_name || player.parent_contact) && (
+          <div className="rounded-lg border border-border/55 bg-background/30 p-2 text-[11px]">
+            <div className="text-muted-foreground">Parent contact</div>
+            <div className="mt-1 font-semibold text-foreground">{[player.parents_name, player.parent_contact].filter(Boolean).join(' · ')}</div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-2">
+          <Button type="button" size="sm" onClick={onEdit} className="h-10 gap-1.5 text-[11px] font-black uppercase tracking-wider">
+            <Edit className="h-3.5 w-3.5" /> Edit
+          </Button>
+          {player.transfermarkt_url ? (
+            <a
+              href={player.transfermarkt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-[hsl(var(--transfermarkt-blue))] px-2 text-[11px] font-black uppercase tracking-wider text-[hsl(var(--transfermarkt-blue-foreground))] transition-colors hover:bg-[hsl(var(--transfermarkt-blue)/0.88)]"
+            >
+              <span className="rounded-sm bg-[hsl(var(--transfermarkt-blue-foreground)/0.16)] px-1 font-black">TM</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-border/60 bg-muted/25 px-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+              No TM
             </span>
+          )}
+          {cleanIg ? (
+            <a
+              href={`https://instagram.com/${cleanIg}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-md border border-border/60 bg-background/45 px-2 text-[11px] font-bold text-foreground transition-colors hover:bg-muted/55"
+            >
+              <FaInstagram className="h-4 w-4 text-destructive" />
+              <span className="truncate">IG</span>
+            </a>
+          ) : (
+            <span className="inline-flex h-10 items-center justify-center rounded-md border border-border/60 bg-muted/20 px-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">No IG</span>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const normaliseAnalyticsLabel = (value: string | null | undefined) => {
+  const trimmed = String(value || '').trim();
+  return trimmed && !/^unknown$/i.test(trimmed) ? trimmed : 'Unknown';
+};
+
+const groupPlayersBy = (players: PlayerData[], getKey: (player: PlayerData) => string | null | undefined) => {
+  const map = new Map<string, PlayerData[]>();
+  players.forEach((player) => {
+    const key = normaliseAnalyticsLabel(getKey(player));
+    map.set(key, [...(map.get(key) || []), player]);
+  });
+  return [...map.entries()]
+    .map(([label, rows]) => ({ label, count: rows.length, players: rows }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+};
+
+const AnalyticsMetricCard = ({ label, value, sublabel, icon: Icon, accent = false }: {
+  label: string;
+  value: string | number;
+  sublabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accent?: boolean;
+}) => (
+  <div className="rounded-lg border border-border/60 bg-background/35 p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]">
+    <div className="flex items-center gap-3">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-md border ${accent ? 'border-[hsl(var(--rise-gold)/0.45)] bg-[hsl(var(--rise-gold)/0.14)] text-[hsl(var(--rise-gold))]' : 'border-border/60 bg-muted/35 text-muted-foreground'}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-2xl font-black leading-none text-foreground">{value}</div>
+        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      </div>
+    </div>
+    <p className="mt-3 text-xs text-muted-foreground">{sublabel}</p>
+  </div>
+);
+
+const AnalyticsBarList = ({
+  title,
+  items,
+  total,
+  emptyLabel,
+  onPick,
+  showFlags = false,
+}: {
+  title: string;
+  items: Array<{ label: string; count: number }>;
+  total: number;
+  emptyLabel: string;
+  onPick?: (label: string) => void;
+  showFlags?: boolean;
+}) => (
+  <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h4 className="text-xs font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">{title}</h4>
+      <span className="text-[10px] text-muted-foreground">Top {Math.min(items.length, 10)}</span>
+    </div>
+    <div className="space-y-2.5">
+      {items.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
+      {items.slice(0, 10).map((item, index) => {
+        const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+        const isUnknown = item.label === 'Unknown';
+        return (
+          <button
+            key={`${title}-${item.label}`}
+            type="button"
+            onClick={() => onPick?.(item.label)}
+            className="group w-full rounded-md border border-transparent p-1 text-left transition-colors hover:border-border/60 hover:bg-muted/20"
+          >
+            <div className="mb-1 flex items-center gap-2 text-xs">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-muted/35 text-[10px] font-black text-muted-foreground">{index + 1}</span>
+              {showFlags && !isUnknown && <img src={getCountryFlagUrl(item.label)} alt={item.label} className="h-3.5 w-5 shrink-0 rounded-sm object-cover" />}
+              {isUnknown && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />}
+              <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{item.label}</span>
+              <span className="font-black text-foreground">{item.count}</span>
+              <span className="w-8 text-right text-[10px] text-muted-foreground">{pct}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted/35">
+              <div
+                className="h-full rounded-full bg-[hsl(var(--rise-gold)/0.78)] transition-all group-hover:bg-[hsl(var(--rise-gold))]"
+                style={{ width: `${Math.max(4, pct)}%` }}
+              />
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const PlayerAnalyticsPanel = ({
+  players,
+  clubCountryMap,
+  fitScoreByRowKey,
+  onFilterNationality,
+}: {
+  players: PlayerData[];
+  clubCountryMap: Record<string, string>;
+  fitScoreByRowKey: Record<string, number>;
+  onFilterNationality: (nationality: string) => void;
+}) => {
+  const analytics = useMemo(() => {
+    const total = players.length;
+    const nationalities = groupPlayersBy(players, (player) => player.nationality);
+    const clubCountries = groupPlayersBy(players, (player) => findClubCountry(player.current_club, clubCountryMap));
+    const positions = groupPlayersBy(players, (player) => normalisePosition(player.position) || player.position);
+    const withTransfermarkt = players.filter((player) => !!player.transfermarkt_url).length;
+    const withDob = players.filter((player) => !!player.date_of_birth).length;
+    const withClub = players.filter((player) => !!player.current_club).length;
+    const strongFit = players.filter((player) => (fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0) >= 70).length;
+    const thinNationalities = nationalities.filter((item) => item.label !== 'Unknown' && item.count <= 2).length;
+    const unknownNationality = nationalities.find((item) => item.label === 'Unknown')?.count || 0;
+    const unknownClubCountry = clubCountries.find((item) => item.label === 'Unknown')?.count || 0;
+    const sourceCoverage = groupPlayersBy(players, (player) => player.source === 'database' ? 'Database' : player.source === 'scouting' ? 'Scouting reports' : player.source === 'youth_outreach' ? 'Youth outreach' : 'Pro outreach');
+    return { total, nationalities, clubCountries, positions, withTransfermarkt, withDob, withClub, strongFit, thinNationalities, unknownNationality, unknownClubCountry, sourceCoverage };
+  }, [players, clubCountryMap, fitScoreByRowKey]);
+
+  const pct = (value: number) => analytics.total > 0 ? `${Math.round((value / analytics.total) * 100)}%` : '0%';
+  const gaps = [
+    { label: 'Missing nationality', value: analytics.unknownNationality, icon: Flag },
+    { label: 'Unknown club country', value: analytics.unknownClubCountry, icon: Globe2 },
+    { label: 'No Transfermarkt link', value: analytics.total - analytics.withTransfermarkt, icon: Link2 },
+    { label: 'Thin nationality coverage', value: analytics.thinNationalities, icon: AlertTriangle },
+  ].sort((a, b) => b.value - a.value);
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-[hsl(var(--rise-gold)/0.35)] bg-card/75 shadow-[0_22px_70px_hsl(var(--background)/0.55)]">
+      <div className="border-b border-border/60 bg-[linear-gradient(135deg,hsl(var(--rise-gold)/0.16),hsl(var(--card))_52%,hsl(var(--transfermarkt-blue)/0.14))] p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[hsl(var(--rise-gold))]">
+              <BarChart3 className="h-4 w-4" /> Player Analytics
+            </div>
+            <h3 className="mt-1 text-2xl font-black text-foreground">Network coverage map</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Coverage by nationality, club country, position, source, and missing data.</p>
           </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain flex-shrink-0" />}
-            <span className="truncate">{player.current_club || '—'}</span>
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground/90 flex-wrap">
-            {dob && <span>DOB {dob}</span>}
-            {player.nationality && <span>· {player.nationality}</span>}
-            <span>· {sourceLabel}</span>
-            {rep && rep !== 'Unknown' && <span>· {rep}</span>}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            {player.transfermarkt_url ? (
-              <a
-                href={player.transfermarkt_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/20"
-              >
-                TM
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                No TM
-              </span>
-            )}
-            {player.ig_handle && (
-              <a
-                href={`https://instagram.com/${player.ig_handle.replace(/^@/, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-card px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:bg-muted"
-              >
-                <FaInstagram className="h-3 w-3" /> @{player.ig_handle.replace(/^@/, '')}
-              </a>
-            )}
-            {player.report_count > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                {player.report_count} report{player.report_count === 1 ? '' : 's'}
-              </span>
-            )}
+          <div className="grid grid-cols-3 gap-2 text-center md:min-w-[20rem]">
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.nationalities.filter((item) => item.label !== 'Unknown').length}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Nationalities</div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.clubCountries.filter((item) => item.label !== 'Unknown').length}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Club countries</div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.total.toLocaleString('en-GB')}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Players</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AnalyticsMetricCard label="Transfermarkt" value={pct(analytics.withTransfermarkt)} sublabel={`${analytics.withTransfermarkt.toLocaleString('en-GB')} players have a TM link`} icon={Link2} accent />
+          <AnalyticsMetricCard label="Date of birth" value={pct(analytics.withDob)} sublabel={`${analytics.withDob.toLocaleString('en-GB')} players have DOB coverage`} icon={CalendarDays} />
+          <AnalyticsMetricCard label="Club data" value={pct(analytics.withClub)} sublabel={`${analytics.withClub.toLocaleString('en-GB')} players have a current club`} icon={Building2} />
+          <AnalyticsMetricCard label="Strong fit" value={analytics.strongFit.toLocaleString('en-GB')} sublabel="Players scoring 70+ on the active fit model" icon={ShieldCheck} accent />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <AnalyticsBarList
+            title="Nationality coverage"
+            total={analytics.total}
+            items={analytics.nationalities}
+            emptyLabel="No nationality data yet."
+            showFlags
+            onPick={(label) => {
+              if (label !== 'Unknown') onFilterNationality(label);
+            }}
+          />
+          <AnalyticsBarList
+            title="Club country coverage"
+            total={analytics.total}
+            items={analytics.clubCountries}
+            emptyLabel="No club country data yet."
+            showFlags
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <AnalyticsBarList title="Position spread" total={analytics.total} items={analytics.positions} emptyLabel="No positions yet." />
+          <AnalyticsBarList title="Source mix" total={analytics.total} items={analytics.sourceCoverage} emptyLabel="No source data yet." />
+          <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+            <h4 className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">Coverage gaps</h4>
+            <div className="space-y-2.5">
+              {gaps.map(({ label, value, icon: Icon }) => (
+                <div key={label} className="rounded-lg border border-border/60 bg-background/35 p-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 text-xs font-semibold text-foreground">{label}</span>
+                    <span className={`text-sm font-black ${value > 0 ? 'text-destructive' : 'text-[hsl(var(--rise-gold))]'}`}>{value.toLocaleString('en-GB')}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted/35">
+                    <div className="h-full rounded-full bg-destructive/70" style={{ width: `${analytics.total > 0 ? Math.max(2, Math.round((value / analytics.total) * 100)) : 0}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
 export const PlayerDatabase = () => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [sourceRecordCount, setSourceRecordCount] = useState(0);
   const { isScoped, allowedIds } = useStatsUpdaterAssignments();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -449,6 +687,7 @@ export const PlayerDatabase = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [minFit, setMinFit] = useState<number>(0);
   const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [clubCountryMap, setClubCountryMap] = useState<Record<string, string>>({});
   const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
   const [clubRatings, setClubRatings] = useState<ClubRating[]>([]);
@@ -462,8 +701,9 @@ export const PlayerDatabase = () => {
   useEffect(() => {
     fetchAllPlayers();
     let t: ReturnType<typeof setTimeout> | null = null;
-    const refresh = () => {
+    const refresh = (event: Event) => {
       if (t) clearTimeout(t);
+      const detail = (event as CustomEvent<{ increment?: number }>).detail;
       t = setTimeout(() => {
         // Reset to newest-added first so freshly saved players appear at the
         // top instead of being hidden behind whatever sort was in use.
@@ -471,7 +711,7 @@ export const PlayerDatabase = () => {
         setSortDirection('desc');
         setVisibleCount(ITEMS_PER_PAGE);
         fetchAllPlayers();
-      }, 150);
+      }, typeof detail?.increment === 'number' ? 900 : 150);
     };
     window.addEventListener('player-database-refresh', refresh);
     return () => {
@@ -547,7 +787,6 @@ export const PlayerDatabase = () => {
       const scoutingRows = (scoutingResult.data || []).filter(report => !!report.player_name);
       const youthRows = (youthResult.data || []).filter(outreach => !!outreach.player_name);
       const proRows = (proResult.data || []).filter(outreach => !!outreach.player_name);
-      setSourceRecordCount(databaseRows.length + scoutingRows.length + youthRows.length + proRows.length);
 
       const rememberNameOnly = (name: string | null | undefined, rowKey: string) => {
         const nameKey = normaliseMergeValue(name);
@@ -928,7 +1167,7 @@ export const PlayerDatabase = () => {
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 title="Open on Transfermarkt"
-                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[#1a3a5c] text-white text-[9px] font-black tracking-tight hover:bg-[#245080] transition-colors"
+                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[hsl(var(--transfermarkt-blue))] text-[9px] font-black tracking-tight text-[hsl(var(--transfermarkt-blue-foreground))] transition-colors hover:bg-[hsl(var(--transfermarkt-blue)/0.88)]"
               >
                 TM
               </a>
@@ -1146,6 +1385,15 @@ export const PlayerDatabase = () => {
           Player Database
         </h2>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={analyticsOpen ? 'default' : 'outline'}
+            onClick={() => setAnalyticsOpen(v => !v)}
+            className="h-8 gap-1.5 text-xs"
+          >
+            <BarChart3 className="h-3.5 w-3.5" /> Analytics
+          </Button>
         <TableSettingsPopover
           storageKey="player-database"
           columns={DB_COLUMNS}
@@ -1292,6 +1540,19 @@ export const PlayerDatabase = () => {
         }}
       />
 
+      {analyticsOpen && (
+        <PlayerAnalyticsPanel
+          players={players}
+          clubCountryMap={clubCountryMap}
+          fitScoreByRowKey={fitScoreByRowKey}
+          onFilterNationality={(nationality) => {
+            setNationFilter(nationality);
+            setAnalyticsOpen(false);
+            setVisibleCount(ITEMS_PER_PAGE);
+          }}
+        />
+      )}
+
       <div className="rounded-lg border border-border/60 bg-card/60 p-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
@@ -1356,13 +1617,6 @@ export const PlayerDatabase = () => {
         <span className="flex items-center gap-1"><HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /> No DOB/rules</span>
       </div>
 
-      <div className="text-xs text-muted-foreground">
-        {visiblePlayers.length} of {filteredAndSortedPlayers.length} players
-        {sourceRecordCount > players.length && (
-          <span> · {sourceRecordCount} source records before same-name/club merging</span>
-        )}
-      </div>
-
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {visiblePlayers.map((player) => (
@@ -1371,7 +1625,7 @@ export const PlayerDatabase = () => {
             player={player}
             fitScore={fitScoreByRowKey[`${player.source}-${player.id}`]}
             eligibility={<EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />}
-            onOpen={() => openPlayerInDialog(player)}
+            onEdit={() => openPlayerInDialog(player)}
           />
         ))}
       </div>

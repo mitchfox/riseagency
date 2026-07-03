@@ -219,7 +219,10 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       } else {
         update(p._i, { _saved: true, _error: undefined });
         if (existing) merged++;
-        else added++;
+        else {
+          added++;
+          window.dispatchEvent(new CustomEvent('player-database-refresh', { detail: { increment: 1 } }));
+        }
       }
     }
     setBulkSaving(false);
