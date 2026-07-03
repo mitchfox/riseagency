@@ -1031,6 +1031,20 @@ export const PlayerDatabase = () => {
                   ))}
                 </div>
               </div>
+              {uniqueRepresentationStatuses.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Representation</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {uniqueRepresentationStatuses.map(status => (
+                      <button key={status}
+                        onClick={() => setRepresentationFilter(prev => prev.includes(status) ? prev.filter(v => v !== status) : [...prev, status])}
+                        className={`text-[10px] px-1.5 py-0.5 border rounded ${representationFilter.includes(status) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
+                      >{status}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">DOB Range</Label>
                 <div className="flex gap-1 items-center">
