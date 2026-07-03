@@ -55,6 +55,7 @@ const mergePlayerRecord = (base: PlayerData, incoming: PlayerData): PlayerData =
   messaged: base.messaged || incoming.messaged,
   response_received: base.response_received || incoming.response_received,
   representation_status: base.representation_status || incoming.representation_status,
+  agent_status: base.agent_status || incoming.agent_status,
 });
 
 // Map any representation_status string the DB might hold (any casing, plus
