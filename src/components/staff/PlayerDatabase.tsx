@@ -933,6 +933,19 @@ export const PlayerDatabase = () => {
               ))}
             </div>
           </div>
+          {uniqueRepresentationStatuses.length > 0 && (
+            <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-6">
+              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Representation Status</Label>
+              <div className="flex flex-wrap gap-1">
+                {uniqueRepresentationStatuses.map(status => (
+                  <button key={status}
+                    onClick={() => setRepresentationFilter(prev => prev.includes(status) ? prev.filter(v => v !== status) : [...prev, status])}
+                    className={`text-[10px] px-2 py-1 border rounded ${representationFilter.includes(status) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/60'}`}
+                  >{status}</button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         )}
       </div>
