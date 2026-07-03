@@ -657,13 +657,22 @@ serve(async (req) => {
           const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
           if (matched.agency) {
             const agencyStatus = classifyAgencyStatus(matched.agency);
-            if (repIsUnknown) {
-              patch.representation_status = agencyStatus === 'family' ? 'Family' : 'Represented';
-              fields.push('representation_status');
+            if (agencyStatus) {
+              const desiredLabel = representationLabelForStatus(agencyStatus);
+              // Always upgrade to "Top Agency" when TM confirms one of the
+              // tier-one shops, even if the row was already flagged
+              // "Represented" by an earlier pass.
+              const shouldUpgradeToTop = agencyStatus === 'top_agency'
+                && existingRep.toLowerCase() !== 'top agency';
+              if (repIsUnknown || shouldUpgradeToTop) {
+                patch.representation_status = desiredLabel;
+                fields.push('representation_status');
+              }
             }
             // Also fill the fit-score signals so the badge picks it up.
             if (!hasValue(row.agent_status) && agencyStatus) {
-              patch.agent_status = agencyStatus;
+              // agent_status is a free-text field; store the canonical label.
+              patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
               fields.push('agent_status');
             }
             if (!hasValue(row.agent_name) && agencyStatus !== 'family') {
