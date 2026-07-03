@@ -649,8 +649,13 @@ export const ProspectBoard = ({ isAdmin }: { isAdmin: boolean }) => {
       // Auto-sync stage from player outreach response, unless the user has
       // manually moved this prospect (stage_manual_override = true). Fire
       // updates in the background so the board renders fast.
+      // Only auto-sync stages that the mapper can produce — never demote
+      // prospects already at 'rising' or 'rise' (or any other later stage),
+      // since deriveStageFromResponse can't return those values.
+      const autoSyncableStages = new Set(['scouted', 'connected', 'rapport_building']);
       for (const p of fromProspects) {
         if (p.stage_manual_override) continue;
+        if (!autoSyncableStages.has(p.stage as string)) continue;
         const linked = p.linked_player_id ? playerById.get(p.linked_player_id) : null;
         if (!linked) continue;
         const desired = deriveStageFromResponse((linked as any).outreach_response_status);
