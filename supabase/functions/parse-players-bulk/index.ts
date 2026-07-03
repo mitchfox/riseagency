@@ -802,17 +802,23 @@ serve(async (req) => {
           const agency = getTmAgency(data) || profile.agent;
           const agencyStatus = classifyAgencyStatus(agency);
           if (agencyStatus) {
-            patch.agent_status = agencyStatus; fields.push('agent_status');
+            patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
+            fields.push('agent_status');
             if (agencyStatus === 'family') {
               patch.agent_name = null;
-              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
-                patch.representation_status = 'Family'; fields.push('representation_status');
-              }
             } else {
               patch.agent_name = agency; fields.push('agent_name');
-              if (!hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status))) {
-                patch.representation_status = 'Represented'; fields.push('representation_status');
-              }
+            }
+            const currentRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
+            const repIsUnknown = !currentRep || /^unknown$/i.test(currentRep);
+            const desiredLabel = representationLabelForStatus(agencyStatus);
+            // Upgrade to "Top Agency" whenever TM confirms one of the
+            // tier-one shops, even if the row was previously "Represented".
+            const shouldUpgradeToTop = agencyStatus === 'top_agency'
+              && currentRep.toLowerCase() !== 'top agency';
+            if (repIsUnknown || shouldUpgradeToTop) {
+              patch.representation_status = desiredLabel;
+              fields.push('representation_status');
             }
           }
 
