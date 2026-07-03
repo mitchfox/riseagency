@@ -453,6 +453,210 @@ const MobilePlayerCard = ({
   );
 };
 
+const normaliseAnalyticsLabel = (value: string | null | undefined) => {
+  const trimmed = String(value || '').trim();
+  return trimmed && !/^unknown$/i.test(trimmed) ? trimmed : 'Unknown';
+};
+
+const groupPlayersBy = (players: PlayerData[], getKey: (player: PlayerData) => string | null | undefined) => {
+  const map = new Map<string, PlayerData[]>();
+  players.forEach((player) => {
+    const key = normaliseAnalyticsLabel(getKey(player));
+    map.set(key, [...(map.get(key) || []), player]);
+  });
+  return [...map.entries()]
+    .map(([label, rows]) => ({ label, count: rows.length, players: rows }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+};
+
+const AnalyticsMetricCard = ({ label, value, sublabel, icon: Icon, accent = false }: {
+  label: string;
+  value: string | number;
+  sublabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accent?: boolean;
+}) => (
+  <div className="rounded-lg border border-border/60 bg-background/35 p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]">
+    <div className="flex items-center gap-3">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-md border ${accent ? 'border-[hsl(var(--rise-gold)/0.45)] bg-[hsl(var(--rise-gold)/0.14)] text-[hsl(var(--rise-gold))]' : 'border-border/60 bg-muted/35 text-muted-foreground'}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-2xl font-black leading-none text-foreground">{value}</div>
+        <div className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
+      </div>
+    </div>
+    <p className="mt-3 text-xs text-muted-foreground">{sublabel}</p>
+  </div>
+);
+
+const AnalyticsBarList = ({
+  title,
+  items,
+  total,
+  emptyLabel,
+  onPick,
+}: {
+  title: string;
+  items: Array<{ label: string; count: number }>;
+  total: number;
+  emptyLabel: string;
+  onPick?: (label: string) => void;
+}) => (
+  <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h4 className="text-xs font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">{title}</h4>
+      <span className="text-[10px] text-muted-foreground">Top {Math.min(items.length, 10)}</span>
+    </div>
+    <div className="space-y-2.5">
+      {items.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
+      {items.slice(0, 10).map((item, index) => {
+        const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+        const isUnknown = item.label === 'Unknown';
+        return (
+          <button
+            key={`${title}-${item.label}`}
+            type="button"
+            onClick={() => onPick?.(item.label)}
+            className="group w-full rounded-md border border-transparent p-1 text-left transition-colors hover:border-border/60 hover:bg-muted/20"
+          >
+            <div className="mb-1 flex items-center gap-2 text-xs">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-muted/35 text-[10px] font-black text-muted-foreground">{index + 1}</span>
+              {!isUnknown && <img src={getCountryFlagUrl(item.label)} alt={item.label} className="h-3.5 w-5 shrink-0 rounded-sm object-cover" />}
+              {isUnknown && <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />}
+              <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{item.label}</span>
+              <span className="font-black text-foreground">{item.count}</span>
+              <span className="w-8 text-right text-[10px] text-muted-foreground">{pct}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted/35">
+              <div
+                className="h-full rounded-full bg-[hsl(var(--rise-gold)/0.78)] transition-all group-hover:bg-[hsl(var(--rise-gold))]"
+                style={{ width: `${Math.max(4, pct)}%` }}
+              />
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const PlayerAnalyticsPanel = ({
+  players,
+  clubCountryMap,
+  fitScoreByRowKey,
+  onFilterNationality,
+}: {
+  players: PlayerData[];
+  clubCountryMap: Record<string, string>;
+  fitScoreByRowKey: Record<string, number>;
+  onFilterNationality: (nationality: string) => void;
+}) => {
+  const analytics = useMemo(() => {
+    const total = players.length;
+    const nationalities = groupPlayersBy(players, (player) => player.nationality);
+    const clubCountries = groupPlayersBy(players, (player) => findClubCountry(player.current_club, clubCountryMap));
+    const positions = groupPlayersBy(players, (player) => normalisePosition(player.position) || player.position);
+    const withTransfermarkt = players.filter((player) => !!player.transfermarkt_url).length;
+    const withDob = players.filter((player) => !!player.date_of_birth).length;
+    const withClub = players.filter((player) => !!player.current_club).length;
+    const withNationality = players.filter((player) => !!player.nationality && !/^unknown$/i.test(player.nationality)).length;
+    const strongFit = players.filter((player) => (fitScoreByRowKey[`${player.source}-${player.id}`] ?? 0) >= 70).length;
+    const thinNationalities = nationalities.filter((item) => item.label !== 'Unknown' && item.count <= 2).length;
+    const unknownNationality = nationalities.find((item) => item.label === 'Unknown')?.count || 0;
+    const unknownClubCountry = clubCountries.find((item) => item.label === 'Unknown')?.count || 0;
+    const sourceCoverage = groupPlayersBy(players, (player) => player.source === 'database' ? 'Database' : player.source === 'scouting' ? 'Scouting reports' : player.source === 'youth_outreach' ? 'Youth outreach' : 'Pro outreach');
+    return { total, nationalities, clubCountries, positions, withTransfermarkt, withDob, withClub, withNationality, strongFit, thinNationalities, unknownNationality, unknownClubCountry, sourceCoverage };
+  }, [players, clubCountryMap, fitScoreByRowKey]);
+
+  const pct = (value: number) => analytics.total > 0 ? `${Math.round((value / analytics.total) * 100)}%` : '0%';
+  const gaps = [
+    { label: 'Missing nationality', value: analytics.unknownNationality, icon: Flag },
+    { label: 'Unknown club country', value: analytics.unknownClubCountry, icon: Globe2 },
+    { label: 'No Transfermarkt link', value: analytics.total - analytics.withTransfermarkt, icon: Link2 },
+    { label: 'Thin nationality coverage', value: analytics.thinNationalities, icon: AlertTriangle },
+  ].sort((a, b) => b.value - a.value);
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-[hsl(var(--rise-gold)/0.35)] bg-card/75 shadow-[0_22px_70px_hsl(var(--background)/0.55)]">
+      <div className="border-b border-border/60 bg-[linear-gradient(135deg,hsl(var(--rise-gold)/0.16),hsl(var(--card))_52%,hsl(var(--transfermarkt-blue)/0.14))] p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[hsl(var(--rise-gold))]">
+              <BarChart3 className="h-4 w-4" /> Player Analytics
+            </div>
+            <h3 className="mt-1 text-2xl font-black text-foreground">Network coverage map</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Coverage by nationality, club country, position, source, and missing data.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center md:min-w-[20rem]">
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.nationalities.filter((item) => item.label !== 'Unknown').length}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Nationalities</div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.clubCountries.filter((item) => item.label !== 'Unknown').length}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Club countries</div>
+            </div>
+            <div className="rounded-lg border border-border/60 bg-background/40 p-2">
+              <div className="text-xl font-black text-foreground">{analytics.total.toLocaleString('en-GB')}</div>
+              <div className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">Players</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-3 md:p-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AnalyticsMetricCard label="Transfermarkt" value={pct(analytics.withTransfermarkt)} sublabel={`${analytics.withTransfermarkt.toLocaleString('en-GB')} players have a TM link`} icon={Link2} accent />
+          <AnalyticsMetricCard label="Date of birth" value={pct(analytics.withDob)} sublabel={`${analytics.withDob.toLocaleString('en-GB')} players have DOB coverage`} icon={CalendarDays} />
+          <AnalyticsMetricCard label="Club data" value={pct(analytics.withClub)} sublabel={`${analytics.withClub.toLocaleString('en-GB')} players have a current club`} icon={Building2} />
+          <AnalyticsMetricCard label="Strong fit" value={analytics.strongFit.toLocaleString('en-GB')} sublabel="Players scoring 70+ on the active fit model" icon={ShieldCheck} accent />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <AnalyticsBarList
+            title="Nationality coverage"
+            total={analytics.total}
+            items={analytics.nationalities}
+            emptyLabel="No nationality data yet."
+            onPick={(label) => {
+              if (label !== 'Unknown') onFilterNationality(label);
+            }}
+          />
+          <AnalyticsBarList
+            title="Club country coverage"
+            total={analytics.total}
+            items={analytics.clubCountries}
+            emptyLabel="No club country data yet."
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <AnalyticsBarList title="Position spread" total={analytics.total} items={analytics.positions} emptyLabel="No positions yet." />
+          <AnalyticsBarList title="Source mix" total={analytics.total} items={analytics.sourceCoverage} emptyLabel="No source data yet." />
+          <div className="rounded-lg border border-border/60 bg-card/60 p-3">
+            <h4 className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-[hsl(var(--rise-gold))]">Coverage gaps</h4>
+            <div className="space-y-2.5">
+              {gaps.map(({ label, value, icon: Icon }) => (
+                <div key={label} className="rounded-lg border border-border/60 bg-background/35 p-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 text-xs font-semibold text-foreground">{label}</span>
+                    <span className={`text-sm font-black ${value > 0 ? 'text-destructive' : 'text-[hsl(var(--rise-gold))]'}`}>{value.toLocaleString('en-GB')}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted/35">
+                    <div className="h-full rounded-full bg-destructive/70" style={{ width: `${analytics.total > 0 ? Math.max(2, Math.round((value / analytics.total) * 100)) : 0}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export const PlayerDatabase = () => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerData[]>([]);
