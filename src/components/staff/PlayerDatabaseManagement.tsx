@@ -96,6 +96,7 @@ export const PlayerDatabaseActions = () => {
     const toastId = toast.loading('Refreshing players from Transfermarkt…');
     let totalUpdated = 0;
     let totalProcessed = 0;
+    let totalWithStats = 0;
     const processedIds = new Set<string>();
     try {
       while (true) {
@@ -105,17 +106,19 @@ export const PlayerDatabaseActions = () => {
         if (error) throw error;
         const processed = Number(data?.processed) || 0;
         const updated = Number(data?.updated) || 0;
+        const withStats = Number(data?.with_stats) || 0;
         const remaining = data?.remaining ?? null;
         (data?.results || []).forEach((result: any) => {
           if (result?.id) processedIds.add(String(result.id));
         });
         totalProcessed += processed;
         totalUpdated += updated;
+        totalWithStats += withStats;
         setRefreshProgress({ updated: totalUpdated, processed: totalProcessed, remaining });
-        toast.loading(`Refreshing — ${totalUpdated} updated, ${remaining ?? '?'} remaining`, { id: toastId });
+        toast.loading(`Refreshing — ${totalUpdated} updated · ${totalWithStats} with stats · ${remaining ?? '?'} remaining`, { id: toastId });
         if (processed === 0 || (remaining !== null && remaining === 0)) break;
       }
-      toast.success(`Refresh complete — updated ${totalUpdated} of ${totalProcessed} scanned`, { id: toastId });
+      toast.success(`Refresh complete — updated ${totalUpdated} of ${totalProcessed} scanned · ${totalWithStats} with stats`, { id: toastId });
       if (totalUpdated > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
     } catch (err) {
       console.error('refresh_all failed', err);
