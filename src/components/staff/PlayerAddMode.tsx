@@ -93,8 +93,15 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       category: 'Other',
       representation_status: 'Other',
     };
+    const updatePayload = compact({
+      position: normalisePosition(manual.position) || manual.position.trim() || null,
+      nationality: manual.nationality.trim() && !/^unknown$/i.test(manual.nationality.trim()) ? manual.nationality.trim() : null,
+      date_of_birth: manual.date_of_birth || null,
+      club: cleanClub,
+      instagram_handle: manual.instagram_handle.trim() || null,
+    });
     const { error } = existing
-      ? await supabase.from('players').update(compact(payload)).eq('id', existing.id)
+      ? await supabase.from('players').update(updatePayload).eq('id', existing.id)
       : await supabase.from('players').insert(payload);
     setSavingManual(false);
     if (error) { toast.error(error.message); return; }
@@ -173,8 +180,22 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         representation_status: isRise ? 'represented' : 'Other',
         ...(links ? { links } : {}),
       };
+      const updatePayload = compact({
+        position: normalisePosition(p.position) || p.position || null,
+        nationality: p.nationality && !/^unknown$/i.test(p.nationality) ? p.nationality.trim() : null,
+        date_of_birth: p.date_of_birth || null,
+        age: p.age || null,
+        club: cleanClub,
+        league: p.league || null,
+        instagram_handle: p.instagram_handle || null,
+        bio: p.notes || null,
+        national_team: p.national_team === true ? true : null,
+        agent_name: isRise ? 'RISE Football Agency' : (normalisedAgency || null),
+        representation_status: isRise ? 'represented' : null,
+        ...(links ? { links } : {}),
+      });
       const { error } = existing
-        ? await supabase.from('players').update(compact(payload)).eq('id', existing.id)
+        ? await supabase.from('players').update(updatePayload).eq('id', existing.id)
         : await supabase.from('players').insert(payload);
       if (error) {
         update(p._i, { _error: error.message });
