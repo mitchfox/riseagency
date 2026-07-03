@@ -354,7 +354,13 @@ export const computeFitScore = (
 ): ScoreBreakdown => {
   const candidates = targets.filter(t => t.active && (scope ? t.scope === scope || t.scope === "both" : true));
   if (candidates.length === 0) {
-    return { total: 0, reasons: ["No active targets configured"], components: {}, target_id: null, target_name: null };
+    const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !== '';
+    const dataFloor =
+      (has(player.date_of_birth) || has(player.age) ? 12 : 0)
+      + (has(player.position) ? 8 : 0)
+      + (has(player.current_club) ? 10 : 0)
+      + (has(player.nationality) ? 5 : 0);
+    return { total: dataFloor, reasons: ["No active recruitment targets configured — baseline from profile completeness"], components: { data_completeness: dataFloor }, target_id: null, target_name: null };
   }
   let best: { target: RecruitmentTargetLite; res: ReturnType<typeof scoreAgainstTarget>; effectiveWeights: ScoringWeights } | null = null;
   for (const t of candidates) {
