@@ -55,6 +55,7 @@ const mergePlayerRecord = (base: PlayerData, incoming: PlayerData): PlayerData =
   messaged: base.messaged || incoming.messaged,
   response_received: base.response_received || incoming.response_received,
   representation_status: base.representation_status || incoming.representation_status,
+  agent_status: base.agent_status || incoming.agent_status,
 });
 
 // Map any representation_status string the DB might hold (any casing, plus
@@ -68,6 +69,26 @@ const canonRepresentation = (value: string | null | undefined): string => {
   if (raw === 'represented') return 'Represented';
   if (raw === 'family' || raw === 'relatives') return 'Family';
   if (raw === 'unrepresented') return 'Unrepresented';
+  return 'Unknown';
+};
+
+// Resolve the canonical representation label for the filter using the
+// player-details `agent_status` field as the source of truth. The legacy
+// `representation_status` column only wins when it explicitly says
+// "Top Agency" (that tier lives on the legacy column). Everything else
+// (mandated, prospect, Other, etc.) is Rise pipeline state, not agent
+// representation, so we ignore it here.
+const resolveRepresentationLabel = (
+  agentStatus: string | null | undefined,
+  representationStatus: string | null | undefined,
+): string => {
+  const rep = String(representationStatus || '').trim().toLowerCase();
+  if (rep === 'top agency' || rep === 'top_agency') return 'Top Agency';
+  const agent = String(agentStatus || '').trim().toLowerCase();
+  if (!agent) return 'Unknown';
+  if (agent === 'represented') return 'Represented';
+  if (agent === 'family' || agent === 'relatives') return 'Family';
+  if (agent === 'unrepresented') return 'Unrepresented';
   return 'Unknown';
 };
 
@@ -123,6 +144,7 @@ interface PlayerData {
   messaged?: boolean;
   response_received?: boolean;
   representation_status?: string | null;
+  agent_status?: string | null;
 }
 
 interface AgeRule {
@@ -217,6 +239,17 @@ const DB_COLUMNS: ColumnConfig[] = [
 const EligibilityBadge = ({ player, clubCountryMap, ageRules }: {
   player: PlayerData; clubCountryMap: Record<string, string>; ageRules: AgeRule[];
 }) => {
+  // Adults (18+) can always be contacted directly, regardless of club country
+  // or country-specific parent-contact rules. Country rules only matter for
+  // under-18s where we need parental permission timing.
+  const preciseAgeAdultCheck = calculatePreciseAge(player.date_of_birth);
+  if (preciseAgeAdultCheck !== null && preciseAgeAdultCheck >= 18) {
+    return (
+      <TooltipProvider><Tooltip><TooltipTrigger asChild>
+        <span className="inline-flex"><Star className="h-4 w-4 text-amber-500 fill-amber-500" /></span>
+      </TooltipTrigger><TooltipContent><p>Adult — can be contacted directly</p></TooltipContent></Tooltip></TooltipProvider>
+    );
+  }
   if (player.source === 'pro_outreach') {
     return (
       <TooltipProvider><Tooltip><TooltipTrigger asChild>
@@ -344,7 +377,7 @@ const MobilePlayerCard = ({
   const dob = player.date_of_birth
     ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : null;
-  const rep = canonRepresentation(player.representation_status);
+  const rep = resolveRepresentationLabel(player.agent_status, player.representation_status);
   const cleanIg = player.ig_handle?.replace(/^@/, '').trim();
   const displayPosition = normalisePosition(player.position) || player.position || '—';
   return (
@@ -723,7 +756,7 @@ export const PlayerDatabase = () => {
   const fetchAllPlayers = async () => {
     try {
       const [databaseResult, scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
-        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
+        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, agent_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
@@ -844,6 +877,7 @@ export const PlayerDatabase = () => {
           messaged: !!player.has_representation_offer || player.offer_status === 'sent',
           response_received: !!player.outreach_response_status,
           representation_status: player.representation_status || null,
+          agent_status: (player as any).agent_status || null,
         });
       });
 
@@ -1032,7 +1066,7 @@ export const PlayerDatabase = () => {
       }
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (representationFilter.length > 0 || representationExclude.length > 0) {
-        const canonical = canonRepresentation(player.representation_status);
+        const canonical = resolveRepresentationLabel(player.agent_status, player.representation_status);
         if (representationFilter.length > 0 && !representationFilter.includes(canonical)) return false;
         if (representationExclude.includes(canonical)) return false;
       }

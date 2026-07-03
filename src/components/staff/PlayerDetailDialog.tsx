@@ -242,7 +242,9 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           star_of_team: !!editForm.star_of_team,
           minutes_share: Number.isFinite(Number(editForm.minutes_share)) ? Math.max(0, Math.min(10, Math.round(Number(editForm.minutes_share)))) : 0,
           previous_serious_injury: editForm.previous_serious_injury || null,
-          agent_status: editForm.agent_status || null,
+          agent_status: (editForm.agent_status && String(editForm.agent_status).trim())
+            ? editForm.agent_status
+            : (editForm.agent_name && String(editForm.agent_name).trim() ? 'represented' : null),
           agent_name: editForm.agent_name || null,
           links: nextLinks.length > 0 ? nextLinks : null,
         };
@@ -285,7 +287,9 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
           star_of_team: !!editForm.star_of_team,
           minutes_share: Number.isFinite(Number(editForm.minutes_share)) ? Math.max(0, Math.min(10, Math.round(Number(editForm.minutes_share)))) : 0,
           previous_serious_injury: editForm.previous_serious_injury || null,
-          agent_status: editForm.agent_status || null,
+          agent_status: (editForm.agent_status && String(editForm.agent_status).trim())
+            ? editForm.agent_status
+            : (editForm.agent_name && String(editForm.agent_name).trim() ? 'represented' : null),
           agent_name: editForm.agent_name || null,
           ig_handle: editForm.ig_handle || null,
         } : {}),

@@ -661,6 +661,52 @@ const fetchTmSeasonStats = async (tmId: string): Promise<{
   } catch { return null; }
 };
 
+// HTML fallback: scrape the `<tfoot>` "Total" row from the leistungsdaten
+// page for the current season. This resolves cases where the ceapi
+// performance-game endpoint returns nothing (e.g. players whose only
+// appearances are in leagues the JSON API filters out).
+// Total row columns: label | hidden | Appearances | Goals | Assists |
+// Yellow | 2nd Yellow | Red | Minutes'
+const fetchTmSeasonStatsHtml = async (tmId: string): Promise<{
+  matches: number; minutes: number; goals: number; assists: number;
+  goals_conceded: number; clean_sheets: number; seasonYear: number;
+} | null> => {
+  const now = new Date();
+  const seasonYear = now.getMonth() < 7 ? now.getFullYear() - 1 : now.getFullYear();
+  const url = `https://www.transfermarkt.co.uk/x/leistungsdaten/spieler/${tmId}/saison/${seasonYear}`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
+      },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const tfootMatch = html.match(/<table class="items">[\s\S]*?<tfoot>([\s\S]*?)<\/tfoot>/);
+    if (!tfootMatch) return null;
+    const cells: string[] = [];
+    const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
+    let m;
+    while ((m = tdRe.exec(tfootMatch[1])) !== null) {
+      cells.push(m[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim());
+    }
+    if (cells.length < 9) return null;
+    const parseVal = (v: string): number => {
+      const cleaned = v.replace(/'/g, '').replace(/\./g, '').replace(/,/g, '').trim();
+      if (!cleaned || cleaned === '-') return 0;
+      return parseInt(cleaned, 10) || 0;
+    };
+    const matches = parseVal(cells[2]);
+    const goals = parseVal(cells[3]);
+    const assists = parseVal(cells[4]);
+    const minutes = parseVal(cells[8]);
+    if (matches === 0 && minutes === 0 && goals === 0 && assists === 0) return null;
+    return { matches, minutes, goals, assists, goals_conceded: 0, clean_sheets: 0, seasonYear };
+  } catch { return null; }
+};
+
 // Upsert stats using the (source, source_id) unique index so youth/pro
 // outreach entries can carry their own stats rows independent of players.id.
 const upsertPlayerStats = async (
@@ -844,7 +890,7 @@ serve(async (req) => {
 
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
+        .select('id, name, image_url, agent_name, agent_status, national_team, links, transfermarkt_url, category, representation_status')
         .order('name', { ascending: true })
         .range(0, 9999);
       if (fetchErr) {
@@ -853,7 +899,13 @@ serve(async (req) => {
 
       const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
       const rowsWithTm = (allRows || [])
-        .map((row: any) => ({ row, url: extractTransfermarktLink(row.links) }))
+        .map((row: any) => ({
+          row,
+          url: extractTransfermarktLink(row.links)
+            || (typeof row.transfermarkt_url === 'string' && /transfermarkt/i.test(row.transfermarkt_url)
+                ? row.transfermarkt_url
+                : null),
+        }))
         .filter(({ row, url }) => {
           if (!url) return false;
           if (skipIds.has(String(row.id))) return false;
@@ -947,16 +999,28 @@ serve(async (req) => {
             if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
           }
 
-          // Current-season stats via /ceapi/performance-game (see helper).
-          const stats = await fetchTmSeasonStats(tmId);
-          if (stats) {
-            const { error: statsErr } = await upsertPlayerStats(supabase, {
-              source: 'database', sourceId: row.id, playerId: row.id, tmId, stats,
-            });
-            if (!statsErr) fields.push('season_stats');
+          // Current-season stats: try the JSON ceapi first, then fall back
+          // to the HTML leistungsdaten tfoot. Always upsert a row keyed by
+          // the TM id so a player_stats record exists (even at zero) — the
+          // UI otherwise reports "No stats stored yet" and staff can't see
+          // that a sync actually ran.
+          let statsSource: 'ceapi' | 'html' | 'empty' = 'empty';
+          let stats = await fetchTmSeasonStats(tmId);
+          if (stats) statsSource = 'ceapi';
+          if (!stats) {
+            const html = await fetchTmSeasonStatsHtml(tmId);
+            if (html) { stats = html; statsSource = 'html'; }
           }
+          const statsToWrite = stats || {
+            matches: 0, minutes: 0, goals: 0, assists: 0,
+            goals_conceded: 0, clean_sheets: 0, seasonYear: 0,
+          };
+          const { error: statsErr } = await upsertPlayerStats(supabase, {
+            source: 'database', sourceId: row.id, playerId: row.id, tmId, stats: statsToWrite,
+          });
+          if (!statsErr && stats) fields.push('season_stats');
 
-          return { id: row.id, name: row.name, updated: fields.length > 0, fields };
+          return { id: row.id, name: row.name, updated: fields.length > 0, fields, stats_source: statsSource };
         } catch (err) {
           return { id: row.id, name: row.name, updated: false, fields: [], reason: (err as Error).message };
         }
@@ -996,13 +1060,18 @@ serve(async (req) => {
               }
             }
             if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
-            const stats = await fetchTmSeasonStats(tmId);
-            if (!stats) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_stats' };
+            let stats = await fetchTmSeasonStats(tmId);
+            let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
+            if (!stats) {
+              const html = await fetchTmSeasonStatsHtml(tmId);
+              if (html) { stats = html; statsSource = 'html'; }
+            }
+            const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
             const { error: statsErr } = await upsertPlayerStats(supabase, {
-              source: src, sourceId: r.id, playerId: null, tmId, stats,
+              source: src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
             });
             if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
-            return { id: r.id, name: r.player_name, source: src, updated: true, fields: ['season_stats'] };
+            return { id: r.id, name: r.player_name, source: src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
           } catch (err) {
             return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
           }
@@ -1011,9 +1080,12 @@ serve(async (req) => {
       }
 
       const remainingAfter = Math.max(0, rowsWithTm.length - workers.length);
+      const withStats = results.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length
+        + outreachResults.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length;
       return new Response(JSON.stringify({
         processed: results.length + outreachResults.length,
         updated: results.filter((r) => r.updated).length + outreachResults.filter((r) => r.updated).length,
+        with_stats: withStats,
         remaining_before: rowsWithTm.length,
         remaining: remainingAfter,
         results,
