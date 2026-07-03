@@ -324,10 +324,21 @@ const fetchTmProfile = async (id: string) => {
     if (res.ok) {
       const html = await res.text();
 
-      // Nationality: meta description first, then keywords fallback.
+      // Nationality: preferred source is the "Citizenship:" row on the
+      // profile table — it's always in English and matches TM's canonical
+      // country name. Fall back to meta description ("from X ➤"), then the
+      // last keyword in the meta keywords list.
+      const citizenshipRaw = extractProfileField(html, ['Citizenship', 'Staatsbürgerschaft']);
+      if (citizenshipRaw) {
+        // TM often lists dual citizenship as "Turkey Germany" — take the first.
+        const first = citizenshipRaw.split(/\s{2,}|\n|,|\//).map((s) => s.trim()).filter(Boolean)[0];
+        nationality = cleanCountry(first || citizenshipRaw);
+      }
       const description = extractMetaContent(html, 'description');
-      const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
-      nationality = cleanCountry(fromMatch?.[1]);
+      if (!nationality) {
+        const fromMatch = description?.match(/(?:from|aus)\s+([^➤,]+?)(?:\s+➤|,|$)/i);
+        nationality = cleanCountry(fromMatch?.[1]);
+      }
       if (!nationality) {
         const keywords = extractMetaContent(html, 'keywords');
         const lastKeyword = keywords?.split(',').map((part) => part.trim()).filter(Boolean).pop();
