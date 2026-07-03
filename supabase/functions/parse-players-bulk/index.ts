@@ -854,22 +854,43 @@ serve(async (req) => {
             if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
           }
 
-          // Current-season stats — best-effort. If the TM API doesn't expose
-          // performance data for this player, skip silently.
+          // Current-season stats — scrape the public TM stats page (the
+          // internal API does not expose performanceData for most players).
+          // Mirrors the proven parser in sync-player-stats.
           try {
-            const perfRes = await fetch(`${TM_API}/player/${tmId}/performanceData/current`);
+            const now = new Date();
+            const seasonYear = now.getMonth() < 7 ? now.getFullYear() - 1 : now.getFullYear();
+            const statsUrl = `https://www.transfermarkt.co.uk/x/leistungsdaten/spieler/${tmId}/saison/${seasonYear}`;
+            const perfRes = await fetch(statsUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-GB,en;q=0.9',
+              },
+            });
             if (perfRes.ok) {
-              const perfJson = await perfRes.json();
-              const totals = perfJson?.data?.totals || perfJson?.data?.summary || null;
-              const minutes = Number(totals?.minutesPlayed) || 0;
-              const matches = Number(totals?.appearances || totals?.matches) || 0;
-              const goals = Number(totals?.goals) || 0;
-              const assists = Number(totals?.assists) || 0;
-              if (minutes || matches || goals || assists) {
-                await supabase
-                  .from('player_stats')
-                  .upsert({ player_id: row.id, minutes, matches, goals, assists, external_player_id: tmId, updated_at: new Date().toISOString() }, { onConflict: 'player_id' });
-                fields.push('season_stats');
+              const html = await perfRes.text();
+              const tfootMatch = html.match(/<table class="items">[\s\S]*?<tfoot>([\s\S]*?)<\/tfoot>/);
+              if (tfootMatch) {
+                const tdValues: string[] = [];
+                const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/g;
+                let m: RegExpExecArray | null;
+                while ((m = tdRegex.exec(tfootMatch[1])) !== null) {
+                  tdValues.push(m[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim());
+                }
+                if (tdValues.length >= 9) {
+                  const parseVal = (v: string) => parseInt(v.replace(/'/g, '').replace(/-/g, '0').replace(/\./g, '').trim(), 10) || 0;
+                  const matches = parseVal(tdValues[2]);
+                  const goals = parseVal(tdValues[3]);
+                  const assists = parseVal(tdValues[4]);
+                  const minutes = parseVal(tdValues[8]);
+                  if (minutes || matches || goals || assists) {
+                    await supabase
+                      .from('player_stats')
+                      .upsert({ player_id: row.id, minutes, matches, goals, assists, external_player_id: tmId, updated_at: new Date().toISOString() }, { onConflict: 'player_id' });
+                    fields.push('season_stats');
+                  }
+                }
               }
             }
           } catch { /* ignore */ }
