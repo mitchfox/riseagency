@@ -70,9 +70,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onUpdated: (updated: DialogPlayer) => void;
   eligibilityBadge?: React.ReactNode;
+  initialEdit?: boolean;
 }
 
-const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, onUpdated, eligibilityBadge }) => {
+const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, onUpdated, eligibilityBadge, initialEdit }) => {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
@@ -82,7 +83,7 @@ const PlayerDetailDialogInner: React.FC<Props> = ({ player, open, onOpenChange, 
   // Hydrate the form only when a new player is opened, not on every parent render.
   useEffect(() => {
     if (!open || !player) return;
-    setEditMode(false);
+    setEditMode(!!initialEdit);
     setNotesReady(false);
     setEditForm({
       player_name: player.player_name,
