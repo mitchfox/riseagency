@@ -11,6 +11,7 @@ import { Edit, UserPlus, Loader2, Camera, X, Upload, Link2 } from 'lucide-react'
 import { PlayerNotesBoard } from './PlayerNotesBoard';
 import { PlayerDetailDialog, type DialogPlayer } from './PlayerDetailDialog';
 import { calculateAge } from '@/lib/ageUtils';
+import { normalisePosition } from '@/lib/positionNormalise';
 
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
@@ -190,7 +191,7 @@ export const PlayerDetailInline: React.FC<Props> = ({ player, onClose, onUpdated
 
         <TabsContent value="key" className="pt-3">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div><span className="text-muted-foreground text-[10px] uppercase tracking-wider">Position</span><p className="font-medium">{player.position || '-'}</p></div>
+            <div><span className="text-muted-foreground text-[10px] uppercase tracking-wider">Position</span><p className="font-medium">{normalisePosition(player.position) || player.position || '-'}</p></div>
             <div><span className="text-muted-foreground text-[10px] uppercase tracking-wider">Age</span><p className="font-medium">{player.age || calculateAge(player.date_of_birth) || '-'}</p></div>
             <div><span className="text-muted-foreground text-[10px] uppercase tracking-wider">Date of Birth</span><p className="font-medium">{player.date_of_birth ? new Date(player.date_of_birth).toLocaleDateString('en-GB') : '-'}</p></div>
             <div><span className="text-muted-foreground text-[10px] uppercase tracking-wider">Nationality</span><p className="font-medium">{player.nationality || '-'}</p></div>

@@ -293,6 +293,7 @@ const fetchTmProfile = async (id: string) => {
   let nationality: string | null = null;
   let agent: string | null = null;
   let nationalTeam: boolean | null = null;
+  let imageUrl: string | null = null;
 
   try {
     const res = await fetch(`https://www.transfermarkt.com/-/profil/spieler/${id}`, {
@@ -324,10 +325,20 @@ const fetchTmProfile = async (id: string) => {
           || /caps for\s+(?:the\s+)?[A-Za-z ]+ national team/i.test(description || '')) {
         nationalTeam = true;
       }
+
+      // Portrait: TM serves `${id}-${lastModified}.jpg`. The stale `-1.jpg`
+      // placeholder always 404s so we must read the current version from
+      // the profile HTML.
+      const portraitRe = new RegExp(`https://img\\.a\\.transfermarkt\\.technology/portrait/(?:big|header|medium)/${id}-\\d+\\.jpg`);
+      const portraitMatch = html.match(portraitRe);
+      if (portraitMatch) {
+        imageUrl = portraitMatch[0].replace('/portrait/header/', '/portrait/big/')
+                                    .replace('/portrait/medium/', '/portrait/big/');
+      }
     }
   } catch { /* keep nulls */ }
 
-  const profile = { nationality, agent, nationalTeam };
+  const profile = { nationality, agent, nationalTeam, imageUrl };
   tmProfileCache.set(id, profile);
   tmNationalityCache.set(id, nationality);
   return profile;
@@ -775,9 +786,12 @@ serve(async (req) => {
             }
           }
 
-          // Headshot: only fill when the player has no picture yet.
-          if (!hasValue(row.image_url)) {
-            patch.image_url = tmProfileImageUrl(tmId); fields.push('image_url');
+          // Headshot: fill when missing, and also overwrite the stale
+          // `-1.jpg` placeholder pattern that a previous run stored.
+          const currentImg = String(row.image_url || '');
+          const looksBroken = /\/portrait\/(?:big|header|medium)\/\d+-1\.jpg$/i.test(currentImg);
+          if ((!hasValue(row.image_url) || looksBroken) && profile.imageUrl) {
+            patch.image_url = profile.imageUrl; fields.push('image_url');
           }
 
           if (Object.keys(patch).length) {
