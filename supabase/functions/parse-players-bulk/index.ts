@@ -590,6 +590,99 @@ const runWithConcurrency = async <T, R>(items: T[], limit: number, worker: (item
   return results;
 };
 
+// Aggregate current-season stats from Transfermarkt's ceapi/performance-game.
+// Rules:
+//  - Exclude national-team games and youth international competitions
+//    (competitionTypeId 17/19/20) and senior friendlies (11).
+//  - Keep everything else: senior leagues, cups, European cups AND youth
+//    league competitions (type 7) so youth players like Enrico Piano get
+//    a real season line instead of nothing.
+//  - Pick the most-recent seasonId that has any played appearance.
+//  - "goals_conceded" = sum of opponentGoalsOnThePitch across played games.
+//  - "clean_sheets" = played games where opponentGoalsOnThePitch === 0.
+//  - "matches" = played game count, "minutes" = sum of playedMinutes.
+// Returns null when there is nothing to store.
+const fetchTmSeasonStats = async (tmId: string): Promise<{
+  matches: number; minutes: number; goals: number; assists: number;
+  goals_conceded: number; clean_sheets: number; seasonYear: number;
+} | null> => {
+  try {
+    const res = await fetch(`https://www.transfermarkt.co.uk/ceapi/performance-game/${tmId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'en-GB,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+    if (!res.ok) return null;
+    const payload = await res.json();
+    const perf: any[] = Array.isArray(payload?.data?.performance) ? payload.data.performance : [];
+    if (!perf.length) return null;
+
+    const SKIP_COMP_TYPES = new Set([11, 17, 19, 20]);
+    const club = perf.filter((p) => {
+      const gi = p?.gameInformation || {};
+      if (gi.isNationalGame) return false;
+      if (SKIP_COMP_TYPES.has(Number(gi.competitionTypeId))) return false;
+      return true;
+    });
+    const wasPlayed = (p: any) => {
+      const gen = p?.statistics?.generalStatistics || {};
+      const mins = Number(p?.statistics?.playingTimeStatistics?.playedMinutes ?? gen.playedMinutes ?? 0);
+      return gen.participationState === 'played' || mins > 0;
+    };
+
+    let seasonYear: number | null = null;
+    for (const p of club) {
+      if (!wasPlayed(p)) continue;
+      const sid = Number(p?.gameInformation?.seasonId);
+      if (!Number.isFinite(sid)) continue;
+      if (seasonYear === null || sid > seasonYear) seasonYear = sid;
+    }
+    if (seasonYear === null) return null;
+
+    const rows = club.filter((p) => Number(p?.gameInformation?.seasonId) === seasonYear && wasPlayed(p));
+    let matches = 0, minutes = 0, goals = 0, assists = 0, gc = 0, cs = 0;
+    for (const p of rows) {
+      const gen = p?.statistics?.generalStatistics || {};
+      const gs = p?.statistics?.goalStatistics || {};
+      const pt = p?.statistics?.playingTimeStatistics || {};
+      const mins = Number(pt.playedMinutes ?? gen.playedMinutes ?? 0) || 0;
+      const opp = Number(gs.opponentGoalsOnThePitch ?? 0) || 0;
+      matches += Number(gen.appearancesCount ?? 1) || 1;
+      minutes += mins;
+      goals += Number(gs.goalsScoredTotal ?? 0) || 0;
+      assists += Number(gs.assists ?? 0) || 0;
+      gc += opp;
+      if (mins > 0 && opp === 0) cs += 1;
+    }
+    if (matches === 0 && minutes === 0) return null;
+    return { matches, minutes, goals, assists, goals_conceded: gc, clean_sheets: cs, seasonYear };
+  } catch { return null; }
+};
+
+// Upsert stats using the (source, source_id) unique index so youth/pro
+// outreach entries can carry their own stats rows independent of players.id.
+const upsertPlayerStats = async (
+  supabase: any,
+  args: { source: 'database' | 'youth_outreach' | 'pro_outreach'; sourceId: string; playerId: string | null; tmId: string; stats: NonNullable<Awaited<ReturnType<typeof fetchTmSeasonStats>>>; },
+) => {
+  const row: Record<string, unknown> = {
+    source: args.source,
+    source_id: args.sourceId,
+    player_id: args.source === 'database' ? args.playerId : null,
+    external_player_id: args.tmId,
+    matches: args.stats.matches,
+    minutes: args.stats.minutes,
+    goals: args.stats.goals,
+    assists: args.stats.assists,
+    goals_conceded: args.stats.goals_conceded,
+    clean_sheets: args.stats.clean_sheets,
+    updated_at: new Date().toISOString(),
+  };
+  return supabase.from('player_stats').upsert(row, { onConflict: 'source,source_id' });
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
