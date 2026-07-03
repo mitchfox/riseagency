@@ -298,6 +298,7 @@ export const PlayerDatabase = () => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [representationFilter, setRepresentationFilter] = useState<string[]>([]);
+  const [representationExclude, setRepresentationExclude] = useState<string[]>([]);
   const [missingFilters, setMissingFilters] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
   const [nationFilter, setNationFilter] = useState<string>('all');
