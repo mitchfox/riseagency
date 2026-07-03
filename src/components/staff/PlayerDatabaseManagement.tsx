@@ -22,12 +22,15 @@ export const PlayerDatabaseActions = () => {
 
   const fetchLivePlayerCount = async () => {
     const excluded = ['Scouted', 'Fuel For Football', 'FFF'];
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('players')
-      .select('id', { count: 'exact', head: true })
-      .not('category', 'in', `(${excluded.map((v) => `"${v}"`).join(',')})`)
-      .not('representation_status', 'in', `(${excluded.map((v) => `"${v}"`).join(',')})`);
-    if (!error) setLivePlayerCount(count ?? 0);
+      .select('id, category, representation_status')
+      .range(0, 9999);
+    if (!error) {
+      setLivePlayerCount((data || []).filter((player) => (
+        !excluded.includes(player.category || '') && !excluded.includes(player.representation_status || '')
+      )).length);
+    }
     setCountLoading(false);
   };
 
