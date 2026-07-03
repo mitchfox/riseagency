@@ -1271,31 +1271,13 @@ export const PlayerDatabase = () => {
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
         {visiblePlayers.map((player) => (
-          <div key={`${player.source}-${player.id}`} className="p-3 border rounded-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors cursor-pointer" onClick={() => openPlayerInDialog(player)}>
-            <div className="flex items-center gap-3">
-              <EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />
-              <Avatar className="h-10 w-10 flex-shrink-0 ring-1 ring-[hsl(var(--rise-gold)/0.6)] shadow-[0_0_10px_hsl(var(--rise-gold)/0.35)]">
-                <AvatarImage src={player.profile_image_url || undefined} alt={player.player_name} className="object-cover object-top" />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/40 text-primary font-semibold text-xs">
-                  {player.player_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  {player.nationality && <img src={getCountryFlagUrl(player.nationality)} alt={player.nationality} className="w-5 h-auto rounded-sm flex-shrink-0" />}
-                  <span className="font-medium truncate">{player.player_name}</span>
-                  <Badge variant="outline" className="text-[10px] flex-shrink-0 ml-auto">{player.position || '-'}</Badge>
-                </div>
-                <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    {player.club_logo_url && <img src={player.club_logo_url} alt="" className="w-4 h-4 object-contain" />}
-                    <span className="truncate">{player.current_club || '-'}</span>
-                  </div>
-                  <span>{player.age ? `${player.age}y` : '-'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <MobilePlayerCard
+            key={`${player.source}-${player.id}`}
+            player={player}
+            fitScore={fitScoreByRowKey[`${player.source}-${player.id}`]}
+            eligibility={<EligibilityBadge player={player} clubCountryMap={clubCountryMap} ageRules={ageRules} />}
+            onOpen={() => openPlayerInDialog(player)}
+          />
         ))}
       </div>
 
