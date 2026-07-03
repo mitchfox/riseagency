@@ -143,6 +143,7 @@ interface PlayerData {
   messaged?: boolean;
   response_received?: boolean;
   representation_status?: string | null;
+  agent_status?: string | null;
 }
 
 interface AgeRule {
