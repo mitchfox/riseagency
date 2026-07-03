@@ -45,7 +45,7 @@ const mergePlayerRecord = (base: PlayerData, incoming: PlayerData): PlayerData =
   report_count: base.report_count + incoming.report_count,
   notes: base.notes || incoming.notes,
   ig_handle: base.ig_handle || incoming.ig_handle,
-  created_at: [base.created_at, incoming.created_at].filter(Boolean).sort().at(-1) || base.created_at,
+  created_at: [base.created_at, incoming.created_at].filter(Boolean).sort().pop() || base.created_at,
   profile_image_url: base.profile_image_url || incoming.profile_image_url,
   club_logo_url: base.club_logo_url || incoming.club_logo_url,
   transfermarkt_url: base.transfermarkt_url || incoming.transfermarkt_url,
