@@ -1167,7 +1167,7 @@ export const PlayerDatabase = () => {
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 title="Open on Transfermarkt"
-                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[#1a3a5c] text-white text-[9px] font-black tracking-tight hover:bg-[#245080] transition-colors"
+                className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-[hsl(var(--transfermarkt-blue))] text-[9px] font-black tracking-tight text-[hsl(var(--transfermarkt-blue-foreground))] transition-colors hover:bg-[hsl(var(--transfermarkt-blue)/0.88)]"
               >
                 TM
               </a>
