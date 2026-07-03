@@ -32,6 +32,20 @@ import { matchesQuery } from '@/lib/searchMatch';
 const buildPlayerKey = (name: string | null | undefined, dob: string | null | undefined) =>
   name && dob ? `${name.trim().toLowerCase()}::${dob}` : '';
 
+// Map any representation_status string the DB might hold (any casing, plus
+// legacy variants like "relatives") to one of five canonical player-facing
+// labels used by the filter. Anything unrecognised falls back to "Unknown".
+const CANONICAL_REPRESENTATION = ['Represented', 'Top Agency', 'Family', 'Unrepresented', 'Unknown'] as const;
+const canonRepresentation = (value: string | null | undefined): string => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'Unknown';
+  if (raw === 'top agency' || raw === 'top_agency') return 'Top Agency';
+  if (raw === 'represented') return 'Represented';
+  if (raw === 'family' || raw === 'relatives') return 'Family';
+  if (raw === 'unrepresented') return 'Unrepresented';
+  return 'Unknown';
+};
+
 const extractTransfermarktUrl = (links: unknown): string | null => {
   if (!links) return null;
   if (typeof links === 'string') {
@@ -298,6 +312,7 @@ export const PlayerDatabase = () => {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [representationFilter, setRepresentationFilter] = useState<string[]>([]);
+  const [representationExclude, setRepresentationExclude] = useState<string[]>([]);
   const [missingFilters, setMissingFilters] = useState<string[]>([]);
   const [ageFilter, setAgeFilter] = useState<string>('all');
   const [nationFilter, setNationFilter] = useState<string>('all');
@@ -506,17 +521,10 @@ export const PlayerDatabase = () => {
   }, [players]);
 
   const uniqueRepresentationStatuses = useMemo(() => {
-    // Only surface the player-facing representation labels. Internal workflow
-    // statuses (Scouted, Fuel For Football, Mandated, Prospect, etc.) are
-    // pipeline states — they don't belong in the "how is this player
-    // represented" filter.
-    const ALLOWED = ['Represented', 'Top Agency', 'Family', 'Unrepresented'];
-    const present = new Set(
-      players
-        .map(p => (p.representation_status || '').trim())
-        .filter(Boolean)
-    );
-    return ALLOWED.filter(label => present.has(label));
+    // Always surface the five canonical labels so users can filter on values
+    // that exist in the DB in any casing (e.g. "represented", "Represented"),
+    // and can also filter for players with no representation info at all.
+    return ['Represented', 'Top Agency', 'Family', 'Unrepresented', 'Unknown'];
   }, [players]);
 
   const upcomingBirthdayOptions = useMemo(() => {
@@ -624,9 +632,10 @@ export const PlayerDatabase = () => {
         if (!abbrev || !positionFilter.includes(abbrev)) return false;
       }
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
-      if (representationFilter.length > 0) {
-        const status = (player.representation_status || '').trim();
-        if (!status || !representationFilter.includes(status)) return false;
+      if (representationFilter.length > 0 || representationExclude.length > 0) {
+        const canonical = canonRepresentation(player.representation_status);
+        if (representationFilter.length > 0 && !representationFilter.includes(canonical)) return false;
+        if (representationExclude.includes(canonical)) return false;
       }
       if (birthdayFilterOffset !== null && !isBirthdayOnOffset(player.date_of_birth, birthdayFilterOffset)) return false;
       if (missingFilters.length > 0) {
@@ -663,7 +672,7 @@ export const PlayerDatabase = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     return result;
-  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, representationFilter, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
+  }, [players, deferredSearchQuery, ageFilter, nationFilter, positionFilter, sourceFilter, representationFilter, representationExclude, missingFilters, dobFrom, dobTo, birthMonthFilter, birthdayFilterOffset, sortField, sortDirection, isScoped, allowedIds, minFit, fitScoreByRowKey]);
 
   const visiblePlayers = filteredAndSortedPlayers.slice(0, visibleCount);
   const hasMore = visibleCount < filteredAndSortedPlayers.length;
@@ -675,6 +684,7 @@ export const PlayerDatabase = () => {
     setPositionFilter([]);
     setSourceFilter([]);
     setRepresentationFilter([]);
+    setRepresentationExclude([]);
     setMissingFilters([]);
     setDobFrom('');
     setDobTo('');
@@ -687,7 +697,7 @@ export const PlayerDatabase = () => {
     ? upcomingBirthdayOptions.find(option => option.offset === birthdayFilterOffset)?.label ?? null
     : null;
 
-  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || representationFilter.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
+  const hasActiveFilters = !!(searchQuery || ageFilter !== 'all' || nationFilter !== 'all' || positionFilter.length > 0 || sourceFilter.length > 0 || representationFilter.length > 0 || representationExclude.length > 0 || missingFilters.length > 0 || dobFrom || dobTo || birthMonthFilter !== 'all' || birthdayFilterOffset !== null);
 
   const openPlayerDetail = (player: PlayerData) => {
     const key = `${player.source}-${player.id}`;
@@ -941,19 +951,30 @@ export const PlayerDatabase = () => {
               ))}
             </div>
           </div>
-          {uniqueRepresentationStatuses.length > 0 && (
-            <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-6">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Representation Status</Label>
-              <div className="flex flex-wrap gap-1">
-                {uniqueRepresentationStatuses.map(status => (
-                  <button key={status}
-                    onClick={() => setRepresentationFilter(prev => prev.includes(status) ? prev.filter(v => v !== status) : [...prev, status])}
-                    className={`text-[10px] px-2 py-1 border rounded ${representationFilter.includes(status) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/60'}`}
-                  >{status}</button>
-                ))}
-              </div>
+          <div className="space-y-1 col-span-2 md:col-span-3 lg:col-span-6">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Representation Status <span className="normal-case text-muted-foreground/70">(click to include, click again to exclude)</span></Label>
+            <div className="flex flex-wrap gap-1">
+              {uniqueRepresentationStatuses.map(status => {
+                const included = representationFilter.includes(status);
+                const excluded = representationExclude.includes(status);
+                const cycle = () => {
+                  if (!included && !excluded) { setRepresentationFilter(prev => [...prev, status]); return; }
+                  if (included) {
+                    setRepresentationFilter(prev => prev.filter(v => v !== status));
+                    setRepresentationExclude(prev => [...prev, status]);
+                    return;
+                  }
+                  setRepresentationExclude(prev => prev.filter(v => v !== status));
+                };
+                return (
+                  <button key={status} onClick={cycle}
+                    className={`text-[10px] px-2 py-1 border rounded ${included ? 'bg-primary text-primary-foreground border-primary' : excluded ? 'bg-destructive/20 text-destructive border-destructive line-through' : 'border-border hover:border-primary/60'}`}
+                    title={included ? 'Included — click to exclude' : excluded ? 'Excluded — click to clear' : 'Click to include'}
+                  >{excluded ? '−' : ''}{status}</button>
+                );
+              })}
             </div>
-          )}
+          </div>
         </div>
         )}
       </div>
@@ -1039,19 +1060,29 @@ export const PlayerDatabase = () => {
                   ))}
                 </div>
               </div>
-              {uniqueRepresentationStatuses.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Representation</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {uniqueRepresentationStatuses.map(status => (
-                      <button key={status}
-                        onClick={() => setRepresentationFilter(prev => prev.includes(status) ? prev.filter(v => v !== status) : [...prev, status])}
-                        className={`text-[10px] px-1.5 py-0.5 border rounded ${representationFilter.includes(status) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'}`}
-                      >{status}</button>
-                    ))}
-                  </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Representation</Label>
+                <div className="flex flex-wrap gap-1">
+                  {uniqueRepresentationStatuses.map(status => {
+                    const included = representationFilter.includes(status);
+                    const excluded = representationExclude.includes(status);
+                    const cycle = () => {
+                      if (!included && !excluded) { setRepresentationFilter(prev => [...prev, status]); return; }
+                      if (included) {
+                        setRepresentationFilter(prev => prev.filter(v => v !== status));
+                        setRepresentationExclude(prev => [...prev, status]);
+                        return;
+                      }
+                      setRepresentationExclude(prev => prev.filter(v => v !== status));
+                    };
+                    return (
+                      <button key={status} onClick={cycle}
+                        className={`text-[10px] px-1.5 py-0.5 border rounded ${included ? 'bg-primary text-primary-foreground border-primary' : excluded ? 'bg-destructive/20 text-destructive border-destructive line-through' : 'border-border'}`}
+                      >{excluded ? '−' : ''}{status}</button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">DOB Range</Label>
                 <div className="flex gap-1 items-center">
@@ -1144,6 +1175,7 @@ export const PlayerDatabase = () => {
           {positionFilter.map(p => <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>)}
           {sourceFilter.map(s => <Badge key={s} variant="secondary" className="text-[10px]">{s === 'database' ? 'DB' : s === 'scouting' ? 'Scout' : s === 'youth_outreach' ? 'Youth' : 'Pro'}</Badge>)}
           {representationFilter.map(r => <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>)}
+          {representationExclude.map(r => <Badge key={`x-${r}`} variant="secondary" className="text-[10px] bg-destructive/20 text-destructive">−{r}</Badge>)}
           {(dobFrom || dobTo) && <Badge variant="secondary" className="text-[10px]">DOB filtered</Badge>}
           {birthMonthFilter !== 'all' && <Badge variant="secondary" className="text-[10px]">Born {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(birthMonthFilter) - 1]}</Badge>}
           {activeBirthdayLabel && <Badge variant="secondary" className="text-[10px]">Birthday: {activeBirthdayLabel}</Badge>}
