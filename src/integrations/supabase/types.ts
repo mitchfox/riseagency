@@ -1617,6 +1617,51 @@ export type Database = {
           },
         ]
       }
+      club_rating_suggestions: {
+        Row: {
+          club_name: string
+          confidence: string | null
+          country: string | null
+          created_at: string
+          current_academy: string | null
+          current_first: string | null
+          id: string
+          reasoning: string | null
+          status: string
+          suggested_academy: string | null
+          suggested_first: string | null
+          updated_at: string
+        }
+        Insert: {
+          club_name: string
+          confidence?: string | null
+          country?: string | null
+          created_at?: string
+          current_academy?: string | null
+          current_first?: string | null
+          id?: string
+          reasoning?: string | null
+          status?: string
+          suggested_academy?: string | null
+          suggested_first?: string | null
+          updated_at?: string
+        }
+        Update: {
+          club_name?: string
+          confidence?: string | null
+          country?: string | null
+          created_at?: string
+          current_academy?: string | null
+          current_first?: string | null
+          id?: string
+          reasoning?: string | null
+          status?: string
+          suggested_academy?: string | null
+          suggested_first?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       club_ratings: {
         Row: {
           academy_rating: string
