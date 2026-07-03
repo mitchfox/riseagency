@@ -999,16 +999,28 @@ serve(async (req) => {
             if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
           }
 
-          // Current-season stats via /ceapi/performance-game (see helper).
-          const stats = await fetchTmSeasonStats(tmId);
-          if (stats) {
-            const { error: statsErr } = await upsertPlayerStats(supabase, {
-              source: 'database', sourceId: row.id, playerId: row.id, tmId, stats,
-            });
-            if (!statsErr) fields.push('season_stats');
+          // Current-season stats: try the JSON ceapi first, then fall back
+          // to the HTML leistungsdaten tfoot. Always upsert a row keyed by
+          // the TM id so a player_stats record exists (even at zero) — the
+          // UI otherwise reports "No stats stored yet" and staff can't see
+          // that a sync actually ran.
+          let statsSource: 'ceapi' | 'html' | 'empty' = 'empty';
+          let stats = await fetchTmSeasonStats(tmId);
+          if (stats) statsSource = 'ceapi';
+          if (!stats) {
+            const html = await fetchTmSeasonStatsHtml(tmId);
+            if (html) { stats = html; statsSource = 'html'; }
           }
+          const statsToWrite = stats || {
+            matches: 0, minutes: 0, goals: 0, assists: 0,
+            goals_conceded: 0, clean_sheets: 0, seasonYear: 0,
+          };
+          const { error: statsErr } = await upsertPlayerStats(supabase, {
+            source: 'database', sourceId: row.id, playerId: row.id, tmId, stats: statsToWrite,
+          });
+          if (!statsErr && stats) fields.push('season_stats');
 
-          return { id: row.id, name: row.name, updated: fields.length > 0, fields };
+          return { id: row.id, name: row.name, updated: fields.length > 0, fields, stats_source: statsSource };
         } catch (err) {
           return { id: row.id, name: row.name, updated: false, fields: [], reason: (err as Error).message };
         }
