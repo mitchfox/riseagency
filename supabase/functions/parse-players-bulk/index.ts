@@ -570,7 +570,7 @@ serve(async (req) => {
       // This now targets players missing DOB, nationality OR the Transfermarkt URL.
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, links')
+        .select('id, name, date_of_birth, nationality, position, club, league, age, national_team, category, representation_status, agent_name, agent_status, links')
         .order('created_at', { ascending: false })
         .range(0, 9999);
 
@@ -623,9 +623,21 @@ serve(async (req) => {
           // "Represented" whenever Transfermarkt returns an agent name.
           const existingRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
           const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
-          if (repIsUnknown && matched.agency) {
-            patch.representation_status = 'Represented';
-            fields.push('representation_status');
+          if (matched.agency) {
+            const agencyStatus = classifyAgencyStatus(matched.agency);
+            if (repIsUnknown) {
+              patch.representation_status = agencyStatus === 'family' ? 'Family' : 'Represented';
+              fields.push('representation_status');
+            }
+            // Also fill the fit-score signals so the badge picks it up.
+            if (!hasValue(row.agent_status) && agencyStatus) {
+              patch.agent_status = agencyStatus;
+              fields.push('agent_status');
+            }
+            if (!hasValue(row.agent_name) && agencyStatus !== 'family') {
+              patch.agent_name = matched.agency;
+              fields.push('agent_name');
+            }
           }
 
           // Add Transfermarkt profile link if we matched an id and one isn't already stored.
