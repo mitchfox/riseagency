@@ -31,6 +31,21 @@ interface ParsedPlayer {
   _error?: string;
 }
 
+const normaliseMergeValue = (value: string | null | undefined) =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const sameNameAndClub = (row: any, name: string, club: string | null | undefined) =>
+  normaliseMergeValue(row?.name) === normaliseMergeValue(name)
+  && normaliseMergeValue(row?.club) === normaliseMergeValue(club);
+
+const compact = (payload: Record<string, unknown>) => {
+  const next: Record<string, unknown> = {};
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && String(value).trim() !== '') next[key] = value;
+  });
+  return next;
+};
+
 const blobToBase64 = (file: File) => new Promise<string>((resolve, reject) => {
   const r = new FileReader();
   r.onload = () => {
@@ -60,20 +75,40 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
   const saveManual = async () => {
     if (!manual.name.trim()) { toast.error('Name is required'); return; }
     setSavingManual(true);
-    const { error } = await supabase.from('players').insert({
-      name: manual.name.trim(),
+    const cleanName = manual.name.trim();
+    const cleanClub = manual.club.trim() || null;
+    const { data: possibleExisting } = await supabase
+      .from('players')
+      .select('id, name, club')
+      .ilike('name', cleanName)
+      .limit(20);
+    const existing = possibleExisting?.find(row => sameNameAndClub(row, cleanName, cleanClub));
+    const payload = {
+      name: cleanName,
       position: normalisePosition(manual.position) || manual.position.trim() || 'CM',
       nationality: manual.nationality.trim() || 'Unknown',
       date_of_birth: manual.date_of_birth || null,
-      club: manual.club.trim() || null,
+      club: cleanClub,
       instagram_handle: manual.instagram_handle.trim() || null,
-        category: 'Other',
-        representation_status: 'Other',
+      category: 'Other',
+      representation_status: 'Other',
+    };
+    const updatePayload = compact({
+      position: normalisePosition(manual.position) || manual.position.trim() || null,
+      nationality: manual.nationality.trim() && !/^unknown$/i.test(manual.nationality.trim()) ? manual.nationality.trim() : null,
+      date_of_birth: manual.date_of_birth || null,
+      club: cleanClub,
+      instagram_handle: manual.instagram_handle.trim() || null,
     });
+    const { error } = existing
+      ? Object.keys(updatePayload).length > 0
+        ? await supabase.from('players').update(updatePayload as any).eq('id', existing.id)
+        : { error: null }
+      : await supabase.from('players').insert(payload);
     setSavingManual(false);
     if (error) { toast.error(error.message); return; }
     window.dispatchEvent(new CustomEvent('player-database-refresh'));
-    toast.success('Player added');
+    toast.success(existing ? 'Player merged with existing record' : 'Player added');
     setManual({ name: '', position: '', nationality: '', date_of_birth: '', club: '', instagram_handle: '' });
     onExit();
   };
@@ -115,20 +150,29 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
     const toSave = parsed.map((p, i) => ({ ...p, _i: i })).filter((p) => p._accepted && !p._saved && p.name?.trim());
     if (toSave.length === 0) { toast.error('Nothing to save'); return; }
     setBulkSaving(true);
-    let ok = 0;
+    let added = 0;
+    let merged = 0;
     for (const p of toSave) {
       const normalisedAgency = (p.agency || '').trim();
       const isRise = /rise\s*football/i.test(normalisedAgency);
+      const cleanName = p.name.trim();
+      const cleanClub = p.club?.trim() || null;
       const links = p.transfermarkt_id
         ? [{ label: 'Transfermarkt', url: `https://www.transfermarkt.com/-/profil/spieler/${p.transfermarkt_id}` }]
         : null;
-      const { error } = await supabase.from('players').insert({
-        name: p.name.trim(),
+      const { data: possibleExisting } = await supabase
+        .from('players')
+        .select('id, name, club')
+        .ilike('name', cleanName)
+        .limit(20);
+      const existing = possibleExisting?.find(row => sameNameAndClub(row, cleanName, cleanClub));
+      const payload = {
+        name: cleanName,
         position: normalisePosition(p.position) || (p.position || 'CM').trim(),
         nationality: (p.nationality || 'Unknown').trim(),
         date_of_birth: p.date_of_birth || null,
         age: p.age || null,
-        club: p.club || null,
+        club: cleanClub,
         league: p.league || null,
         instagram_handle: p.instagram_handle || null,
         bio: p.notes || null,
@@ -137,17 +181,38 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         category: 'Other',
         representation_status: isRise ? 'represented' : 'Other',
         ...(links ? { links } : {}),
+      };
+      const updatePayload = compact({
+        position: normalisePosition(p.position) || p.position || null,
+        nationality: p.nationality && !/^unknown$/i.test(p.nationality) ? p.nationality.trim() : null,
+        date_of_birth: p.date_of_birth || null,
+        age: p.age || null,
+        club: cleanClub,
+        league: p.league || null,
+        instagram_handle: p.instagram_handle || null,
+        bio: p.notes || null,
+        national_team: p.national_team === true ? true : null,
+        agent_name: isRise ? 'RISE Football Agency' : (normalisedAgency || null),
+        representation_status: isRise ? 'represented' : null,
+        ...(links ? { links } : {}),
       });
+      const { error } = existing
+        ? Object.keys(updatePayload).length > 0
+          ? await supabase.from('players').update(updatePayload as any).eq('id', existing.id)
+          : { error: null }
+        : await supabase.from('players').insert(payload);
       if (error) {
         update(p._i, { _error: error.message });
       } else {
         update(p._i, { _saved: true, _error: undefined });
-        ok++;
+        if (existing) merged++;
+        else added++;
       }
     }
     setBulkSaving(false);
+    const ok = added + merged;
     if (ok > 0) window.dispatchEvent(new CustomEvent('player-database-refresh'));
-    toast.success(`Added ${ok} player${ok === 1 ? '' : 's'}`);
+    toast.success(`${added} added, ${merged} merged`);
     if (ok === toSave.length) onExit();
   };
 
