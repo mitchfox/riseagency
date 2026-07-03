@@ -1385,6 +1385,15 @@ export const PlayerDatabase = () => {
           Player Database
         </h2>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={analyticsOpen ? 'default' : 'outline'}
+            onClick={() => setAnalyticsOpen(v => !v)}
+            className="h-8 gap-1.5 text-xs"
+          >
+            <BarChart3 className="h-3.5 w-3.5" /> Analytics
+          </Button>
         <TableSettingsPopover
           storageKey="player-database"
           columns={DB_COLUMNS}
@@ -1530,6 +1539,19 @@ export const PlayerDatabase = () => {
           }
         }}
       />
+
+      {analyticsOpen && (
+        <PlayerAnalyticsPanel
+          players={players}
+          clubCountryMap={clubCountryMap}
+          fitScoreByRowKey={fitScoreByRowKey}
+          onFilterNationality={(nationality) => {
+            setNationFilter(nationality);
+            setAnalyticsOpen(false);
+            setVisibleCount(ITEMS_PER_PAGE);
+          }}
+        />
+      )}
 
       <div className="rounded-lg border border-border/60 bg-card/60 p-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
