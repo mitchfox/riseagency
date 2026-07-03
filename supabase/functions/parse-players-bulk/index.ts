@@ -545,9 +545,11 @@ const matchOnTransfermarkt = async (player: any): Promise<any> => {
   if (tmDob) next.date_of_birth = String(tmDob).slice(0, 10);
   if (d?.lifeDates?.age) next.age = d.lifeDates.age;
 
-  const tmNatId: number = d?.nationalityDetails?.nationalities?.nationalityId || 0;
+  const natBlock = d?.nationalityDetails?.nationalities;
+  const tmNatId: number = Array.isArray(natBlock) ? (natBlock[0]?.nationalityId || 0) : (natBlock?.nationalityId || 0);
+  const tmNatName = Array.isArray(natBlock) ? natBlock[0]?.name : natBlock?.name;
   const profile = await fetchTmProfile(best.id);
-  const fallbackNationality = VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
+  const fallbackNationality = cleanCountry(tmNatName) || VERIFIED_TM_NATIONALITY_FALLBACK[tmNatId] || null;
   next.nationality = profile.nationality || fallbackNationality || null;
   const tmAgency = getTmAgency(d);
   if (tmAgency || profile.agent) next.agency = tmAgency || profile.agent;
