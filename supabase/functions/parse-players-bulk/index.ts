@@ -890,7 +890,7 @@ serve(async (req) => {
 
       const { data: allRows, error: fetchErr } = await supabase
         .from('players')
-        .select('id, name, image_url, agent_name, agent_status, national_team, links, transfermarkt_url, category, representation_status')
+        .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
         .order('name', { ascending: true })
         .range(0, 9999);
       if (fetchErr) {
@@ -901,10 +901,7 @@ serve(async (req) => {
       const rowsWithTm = (allRows || [])
         .map((row: any) => ({
           row,
-          url: extractTransfermarktLink(row.links)
-            || (typeof row.transfermarkt_url === 'string' && /transfermarkt/i.test(row.transfermarkt_url)
-                ? row.transfermarkt_url
-                : null),
+          url: extractTransfermarktLink(row.links),
         }))
         .filter(({ row, url }) => {
           if (!url) return false;
