@@ -377,7 +377,7 @@ const MobilePlayerCard = ({
   const dob = player.date_of_birth
     ? new Date(player.date_of_birth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : null;
-  const rep = canonRepresentation(player.representation_status);
+  const rep = resolveRepresentationLabel(player.agent_status, player.representation_status);
   const cleanIg = player.ig_handle?.replace(/^@/, '').trim();
   const displayPosition = normalisePosition(player.position) || player.position || '—';
   return (
@@ -756,7 +756,7 @@ export const PlayerDatabase = () => {
   const fetchAllPlayers = async () => {
     try {
       const [databaseResult, scoutingResult, youthResult, proResult, clubLogosResult, clubCountryResult, rulesResult, ratingsResult] = await Promise.all([
-        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
+        supabase.from('players').select('id, name, position, age, nationality, date_of_birth, club, league, instagram_handle, bio, image_url, club_logo, created_at, category, representation_status, agent_status, has_representation_offer, offer_status, outreach_response_status, links').range(0, 4999),
         supabase.from('scouting_reports').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_youth').select('*').order('created_at', { ascending: false }),
         supabase.from('player_outreach_pro').select('*').order('created_at', { ascending: false }),
@@ -877,6 +877,7 @@ export const PlayerDatabase = () => {
           messaged: !!player.has_representation_offer || player.offer_status === 'sent',
           response_received: !!player.outreach_response_status,
           representation_status: player.representation_status || null,
+          agent_status: (player as any).agent_status || null,
         });
       });
 
@@ -1065,7 +1066,7 @@ export const PlayerDatabase = () => {
       }
       if (sourceFilter.length > 0 && !sourceFilter.includes(player.source)) return false;
       if (representationFilter.length > 0 || representationExclude.length > 0) {
-        const canonical = canonRepresentation(player.representation_status);
+        const canonical = resolveRepresentationLabel(player.agent_status, player.representation_status);
         if (representationFilter.length > 0 && !representationFilter.includes(canonical)) return false;
         if (representationExclude.includes(canonical)) return false;
       }
