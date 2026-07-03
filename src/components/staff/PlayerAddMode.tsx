@@ -101,7 +101,9 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       instagram_handle: manual.instagram_handle.trim() || null,
     });
     const { error } = existing
-      ? await supabase.from('players').update(updatePayload).eq('id', existing.id)
+      ? Object.keys(updatePayload).length > 0
+        ? await supabase.from('players').update(updatePayload as any).eq('id', existing.id)
+        : { error: null }
       : await supabase.from('players').insert(payload);
     setSavingManual(false);
     if (error) { toast.error(error.message); return; }
@@ -195,7 +197,9 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         ...(links ? { links } : {}),
       });
       const { error } = existing
-        ? await supabase.from('players').update(updatePayload).eq('id', existing.id)
+        ? Object.keys(updatePayload).length > 0
+          ? await supabase.from('players').update(updatePayload as any).eq('id', existing.id)
+          : { error: null }
         : await supabase.from('players').insert(payload);
       if (error) {
         update(p._i, { _error: error.message });
