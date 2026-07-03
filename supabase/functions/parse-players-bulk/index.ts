@@ -231,9 +231,20 @@ const getTmAgency = (data: any): string | null => {
     data?.attributes?.consultantAgency?.name
     || data?.attributes?.consultantAgency?.shortName
   );
-  if (!agency || /^unknown$/i.test(agency) || /relatives/i.test(agency)) return null;
+  if (!agency || /^unknown$/i.test(agency)) return null;
   return agency;
 };
+
+// TM lists family-run representation as "Relatives" / "Family". The staff DB
+// uses "Family" as the canonical option in agent_status, so surface that
+// explicitly for the enricher.
+const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' | null => {
+  if (!agency) return null;
+  if (/relatives|family/i.test(agency)) return 'family';
+  return 'represented';
+};
+
+const tmProfileImageUrl = (id: string) => `https://img.a.transfermarkt.technology/portrait/big/${id}-1.jpg`;
 
 const hasTmNationalTeam = (data: any): boolean => {
   return Array.isArray(data?.clubAssignments)
