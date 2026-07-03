@@ -402,13 +402,18 @@ export const PlayerDatabase = () => {
       };
 
       const playerMap: Record<string, PlayerData> = {};
+      // Track name -> key so overlays from scouting/outreach can still merge
+      // onto a database player when names match, without collapsing duplicate
+      // database rows that happen to share a name.
+      const nameIndex: Record<string, string> = {};
 
       databaseResult.data?.forEach(player => {
         if (['Scouted', 'Fuel For Football', 'FFF'].includes(player.category || '') || ['Scouted', 'Fuel For Football', 'FFF'].includes(player.representation_status || '')) return;
         const name = player.name;
         if (!name) return;
-        if (!playerMap[name]) {
-          playerMap[name] = {
+        const key = `db:${player.id}`;
+        if (!playerMap[key]) {
+          playerMap[key] = {
             id: player.id,
             player_name: name,
             position: player.position,
@@ -428,13 +433,16 @@ export const PlayerDatabase = () => {
             response_received: !!player.outreach_response_status,
             representation_status: player.representation_status || null,
           };
+          if (!nameIndex[name]) nameIndex[name] = key;
         }
       });
 
       scoutingResult.data?.forEach(report => {
         const name = report.player_name;
-        if (!playerMap[name]) {
-          playerMap[name] = {
+        const existingKey = nameIndex[name];
+        if (!existingKey) {
+          const key = `scout:${report.id}`;
+          playerMap[key] = {
             id: report.id, player_name: name, position: report.position,
             age: calculateAge(report.date_of_birth) ?? report.age,
             current_club: report.current_club, nationality: report.nationality,
@@ -443,21 +451,25 @@ export const PlayerDatabase = () => {
             profile_image_url: (report as any).profile_image_url || null,
             club_logo_url: getClubLogo(report.current_club)
           };
+          nameIndex[name] = key;
         } else {
-          playerMap[name].report_count++;
-          if (report.created_at && (!playerMap[name].created_at || report.created_at > playerMap[name].created_at)) {
-            playerMap[name].created_at = report.created_at;
+          const entry = playerMap[existingKey];
+          entry.report_count++;
+          if (report.created_at && (!entry.created_at || report.created_at > entry.created_at)) {
+            entry.created_at = report.created_at;
           }
-          if ((report as any).profile_image_url && !playerMap[name].profile_image_url) {
-            playerMap[name].profile_image_url = (report as any).profile_image_url;
+          if ((report as any).profile_image_url && !entry.profile_image_url) {
+            entry.profile_image_url = (report as any).profile_image_url;
           }
         }
       });
 
       youthResult.data?.forEach(outreach => {
         const name = outreach.player_name;
-        if (!playerMap[name]) {
-          playerMap[name] = {
+        const existingKey = nameIndex[name];
+        if (!existingKey) {
+          const key = `youth:${outreach.id}`;
+          playerMap[key] = {
             id: outreach.id, player_name: name, position: (outreach as any).position || null,
             age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
             current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
@@ -468,17 +480,21 @@ export const PlayerDatabase = () => {
             parent_approval: outreach.parent_approval, messaged: outreach.messaged,
             response_received: outreach.response_received,
           };
+          nameIndex[name] = key;
         } else {
-          if (!playerMap[name].parents_name && outreach.parents_name) playerMap[name].parents_name = outreach.parents_name;
-          if (!playerMap[name].parent_contact && outreach.parent_contact) playerMap[name].parent_contact = outreach.parent_contact;
-          if (!playerMap[name].ig_handle && outreach.ig_handle) playerMap[name].ig_handle = outreach.ig_handle;
+          const entry = playerMap[existingKey];
+          if (!entry.parents_name && outreach.parents_name) entry.parents_name = outreach.parents_name;
+          if (!entry.parent_contact && outreach.parent_contact) entry.parent_contact = outreach.parent_contact;
+          if (!entry.ig_handle && outreach.ig_handle) entry.ig_handle = outreach.ig_handle;
         }
       });
 
       proResult.data?.forEach(outreach => {
         const name = outreach.player_name;
-        if (!playerMap[name]) {
-          playerMap[name] = {
+        const existingKey = nameIndex[name];
+        if (!existingKey) {
+          const key = `pro:${outreach.id}`;
+          playerMap[key] = {
             id: outreach.id, player_name: name, position: (outreach as any).position || null,
             age: calculateAge((outreach as any).date_of_birth) ?? (outreach as any).age ?? null,
             current_club: (outreach as any).current_club || null, nationality: (outreach as any).nationality || null,
@@ -487,8 +503,10 @@ export const PlayerDatabase = () => {
             profile_image_url: null, club_logo_url: getClubLogo((outreach as any).current_club),
             messaged: outreach.messaged, response_received: outreach.response_received,
           };
+          nameIndex[name] = key;
         } else {
-          if (!playerMap[name].ig_handle && outreach.ig_handle) playerMap[name].ig_handle = outreach.ig_handle;
+          const entry = playerMap[existingKey];
+          if (!entry.ig_handle && outreach.ig_handle) entry.ig_handle = outreach.ig_handle;
         }
       });
 
