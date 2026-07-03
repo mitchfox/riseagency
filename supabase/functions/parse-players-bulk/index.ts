@@ -947,90 +947,14 @@ serve(async (req) => {
             if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
           }
 
-          // Current-season stats — the old static <table class="items"> markup
-          // is gone; TM now loads stats via a Svelte component that hits
-          // /ceapi/performance-game/{id}. We aggregate that JSON directly.
-          //
-          // Season selection: pick the most recent seasonId (excluding
-          // national-team competitions) that actually has played appearances.
-          // This auto-handles both Aug–May calendars (which stay on 2025/26
-          // through Aug 2026 because 2026/27 has no games yet) and
-          // spring–autumn leagues like Norway/Sweden/Ireland where the
-          // calendar-year season is already live.
-          try {
-            const apiRes = await fetch(`https://www.transfermarkt.co.uk/ceapi/performance-game/${tmId}`, {
-              headers: {
-                'Accept': 'application/json',
-                'Accept-Language': 'en-GB,en;q=0.9',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              },
+          // Current-season stats via /ceapi/performance-game (see helper).
+          const stats = await fetchTmSeasonStats(tmId);
+          if (stats) {
+            const { error: statsErr } = await upsertPlayerStats(supabase, {
+              source: 'database', sourceId: row.id, playerId: row.id, tmId, stats,
             });
-            if (apiRes.ok) {
-              const payload = await apiRes.json();
-              const perf: any[] = Array.isArray(payload?.data?.performance) ? payload.data.performance : [];
-
-              // Exclude national-team competitions (TM's own default for the
-              // player profile club-stats view).
-              const NATIONAL_TEAM_TYPES = new Set([11, 17, 19, 20]);
-              const clubPerf = perf.filter((p) => {
-                const gi = p?.gameInformation || {};
-                if (gi.isNationalGame) return false;
-                if (NATIONAL_TEAM_TYPES.has(Number(gi.competitionTypeId))) return false;
-                return true;
-              });
-
-              const wasPlayed = (p: any) => {
-                const gen = p?.statistics?.generalStatistics || {};
-                const mins = Number(p?.statistics?.playingTimeStatistics?.playedMinutes ?? gen.playedMinutes ?? 0);
-                return gen.participationState === 'played' || mins > 0;
-              };
-
-              // Pick the most recent season with any played appearance.
-              let seasonYear: number | null = null;
-              for (const p of clubPerf) {
-                if (!wasPlayed(p)) continue;
-                const sid = Number(p?.gameInformation?.seasonId);
-                if (!Number.isFinite(sid)) continue;
-                if (seasonYear === null || sid > seasonYear) seasonYear = sid;
-              }
-
-              if (seasonYear !== null) {
-                const rows = clubPerf.filter((p) => Number(p?.gameInformation?.seasonId) === seasonYear && wasPlayed(p));
-                let matches = 0, goals = 0, assists = 0, minutes = 0, cleanSheets = 0, saves = 0;
-                for (const p of rows) {
-                  const gen = p?.statistics?.generalStatistics || {};
-                  const gs = p?.statistics?.goalStatistics || {};
-                  const gk = p?.statistics?.goalkeeperStatistics || {};
-                  const pt = p?.statistics?.playingTimeStatistics || {};
-                  matches += Number(gen.appearancesCount ?? 1) || 1;
-                  minutes += Number(pt.playedMinutes ?? gen.playedMinutes ?? 0) || 0;
-                  goals += Number(gs.goalsScoredTotal ?? 0) || 0;
-                  assists += Number(gs.assists ?? 0) || 0;
-                  cleanSheets += Number(gs.gamesWithoutConcededGoals ?? gk.gamesWithoutConcededGoals ?? 0) || 0;
-                  saves += Number(gk.saves ?? gs.scoringGoalkeeperSaves ?? 0) || 0;
-                }
-
-                if (matches > 0 || minutes > 0 || goals > 0 || assists > 0) {
-                  const isGk = (data?.attributes?.position?.shortName === 'GK')
-                    || (data?.attributes?.positionGroup === 'GOALKEEPER');
-                  const patchRow: Record<string, unknown> = {
-                    player_id: row.id,
-                    minutes, matches, goals, assists,
-                    external_player_id: tmId,
-                    updated_at: new Date().toISOString(),
-                  };
-                  if (isGk) {
-                    patchRow.clean_sheets = cleanSheets;
-                    patchRow.saves = saves;
-                  }
-                  const { error: statsErr } = await supabase
-                    .from('player_stats')
-                    .upsert(patchRow, { onConflict: 'player_id' });
-                  if (!statsErr) fields.push('season_stats');
-                }
-              }
-            }
-          } catch { /* ignore */ }
+            if (!statsErr) fields.push('season_stats');
+          }
 
           return { id: row.id, name: row.name, updated: fields.length > 0, fields };
         } catch (err) {
@@ -1039,13 +963,61 @@ serve(async (req) => {
       });
       results.push(...workers);
 
+      // Youth + pro outreach: same TM stats aggregation, keyed by
+      // (source, source_id) so each outreach row gets its own stats line
+      // even if no matching `players` row exists.
+      const outreachTables: Array<{ src: 'youth_outreach' | 'pro_outreach'; table: 'player_outreach_youth' | 'player_outreach_pro' }> = [
+        { src: 'youth_outreach', table: 'player_outreach_youth' },
+        { src: 'pro_outreach', table: 'player_outreach_pro' },
+      ];
+      const outreachResults: Array<{ id: string; name: string; source: string; updated: boolean; fields: string[]; reason?: string }> = [];
+      for (const { src, table } of outreachTables) {
+        const { data: orows } = await supabase
+          .from(table)
+          .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url')
+          .order('created_at', { ascending: false })
+          .range(0, 4999);
+        const candidates = (orows || [])
+          .filter((r: any) => !skipIds.has(String(r.id)))
+          .slice(0, Math.min(limit, 20));
+        const batch = await runWithConcurrency(candidates, 3, async (r: any) => {
+          try {
+            let tmId: string | null = null;
+            const urlMatch = String(r.transfermarkt_url || '').match(/\/spieler\/(\d+)/i);
+            if (urlMatch) tmId = urlMatch[1];
+            if (!tmId) {
+              const matched = await matchOnTransfermarkt({
+                name: r.player_name, position: r.position, nationality: r.nationality,
+                date_of_birth: r.date_of_birth, age: null,
+              });
+              if (matched?.transfermarkt_id) {
+                tmId = String(matched.transfermarkt_id);
+                await supabase.from(table).update({ transfermarkt_url: transfermarktProfileUrl(tmId) }).eq('id', r.id);
+              }
+            }
+            if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
+            const stats = await fetchTmSeasonStats(tmId);
+            if (!stats) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_stats' };
+            const { error: statsErr } = await upsertPlayerStats(supabase, {
+              source: src, sourceId: r.id, playerId: null, tmId, stats,
+            });
+            if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
+            return { id: r.id, name: r.player_name, source: src, updated: true, fields: ['season_stats'] };
+          } catch (err) {
+            return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
+          }
+        });
+        outreachResults.push(...batch);
+      }
+
       const remainingAfter = Math.max(0, rowsWithTm.length - workers.length);
       return new Response(JSON.stringify({
-        processed: results.length,
-        updated: results.filter((r) => r.updated).length,
+        processed: results.length + outreachResults.length,
+        updated: results.filter((r) => r.updated).length + outreachResults.filter((r) => r.updated).length,
         remaining_before: rowsWithTm.length,
         remaining: remainingAfter,
         results,
+        outreach_results: outreachResults,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
