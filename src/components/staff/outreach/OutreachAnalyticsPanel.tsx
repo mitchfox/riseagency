@@ -59,6 +59,7 @@ export type AnalyticsRow = {
   responseStatus: AnalyticsResponseStatus;
   responseNotes?: string | null;
   responseAt?: string | null;
+  aiScore?: number | null;
 };
 
 type Props = {
@@ -74,6 +75,77 @@ type Props = {
 
 const pct = (num: number, den: number) =>
   den === 0 ? "—" : `${Math.round((num / den) * 100)}%`;
+
+// Colour ramp matching FitScoreBadge so band pips read the same visually.
+const scoreColour = (total: number) => {
+  const stops: Array<[number, [number, number, number]]> = [
+    [0, [0, 85, 50]],
+    [25, [20, 90, 52]],
+    [50, [50, 90, 52]],
+    [75, [130, 70, 42]],
+    [85, [85, 65, 45]],
+    [100, [45, 62, 42]],
+  ];
+  let h = 0, s = 0, l = 0;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, c0] = stops[i];
+    const [t1, c1] = stops[i + 1];
+    if (total >= t0 && total <= t1) {
+      const f = (total - t0) / (t1 - t0 || 1);
+      h = c0[0] + (c1[0] - c0[0]) * f;
+      s = c0[1] + (c1[1] - c0[1]) * f;
+      l = c0[2] + (c1[2] - c0[2]) * f;
+      break;
+    }
+  }
+  return `hsl(${h.toFixed(0)}, ${s.toFixed(0)}%, ${l.toFixed(0)}%)`;
+};
+
+type BandKey = "90-100" | "80-89" | "70-79" | "60-69" | "50-59" | "40-49" | "30-39" | "20-29" | "10-19" | "0-9" | "none";
+
+const BAND_ORDER: BandKey[] = ["90-100", "80-89", "70-79", "60-69", "50-59", "40-49", "30-39", "20-29", "10-19", "0-9", "none"];
+
+const bandFor = (score: number | null | undefined): BandKey => {
+  if (score == null || Number.isNaN(score)) return "none";
+  const s = Math.max(0, Math.min(100, Math.round(score)));
+  if (s >= 90) return "90-100";
+  if (s >= 80) return "80-89";
+  if (s >= 70) return "70-79";
+  if (s >= 60) return "60-69";
+  if (s >= 50) return "50-59";
+  if (s >= 40) return "40-49";
+  if (s >= 30) return "30-39";
+  if (s >= 20) return "20-29";
+  if (s >= 10) return "10-19";
+  return "0-9";
+};
+
+const BAND_LABEL: Record<BandKey, string> = {
+  "90-100": "90-100",
+  "80-89": "80-89",
+  "70-79": "70-79",
+  "60-69": "60-69",
+  "50-59": "50-59",
+  "40-49": "40-49",
+  "30-39": "30-39",
+  "20-29": "20-29",
+  "10-19": "10-19",
+  "0-9": "0-9",
+  none: "No score",
+};
+
+const BAND_MID: Record<BandKey, number> = {
+  "90-100": 95, "80-89": 85, "70-79": 75, "60-69": 65, "50-59": 55,
+  "40-49": 45, "30-39": 35, "20-29": 25, "10-19": 15, "0-9": 5, none: 0,
+};
+
+const REPLIED_SET_CONST = new Set<AnalyticsResponseStatus>([
+  "replied", "interested", "negotiating", "offer_made",
+  "meeting", "signed", "declined", "not_interested",
+]);
+const INTERESTED_SET_CONST = new Set<AnalyticsResponseStatus>([
+  "interested", "negotiating", "offer_made", "meeting", "signed",
+]);
 
 const fmtDate = (iso?: string | null) => {
   if (!iso) return "—";
@@ -96,11 +168,36 @@ export default function OutreachAnalyticsPanel({
 }: Props) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "sent" | "viewed" | AnalyticsResponseStatus>("all");
+  const [bandFilter, setBandFilter] = useState<"all" | BandKey>("all");
+
+  const hasScores = useMemo(() => rows.some((r) => typeof r.aiScore === "number"), [rows]);
 
   const sentRows = useMemo(
     () => rows.filter((r) => ["sent", "signed", "declined"].includes((r.status || "").toLowerCase()) || r.viewCount > 0 || r.responseStatus !== "none"),
     [rows],
   );
+
+  const isSent = (r: AnalyticsRow) =>
+    ["sent", "signed", "declined"].includes((r.status || "").toLowerCase()) || r.viewCount > 0 || r.responseStatus !== "none";
+
+  const bandStats = useMemo(() => {
+    const buckets: Record<BandKey, AnalyticsRow[]> = {
+      "90-100": [], "80-89": [], "70-79": [], "60-69": [], "50-59": [],
+      "40-49": [], "30-39": [], "20-29": [], "10-19": [], "0-9": [], none: [],
+    };
+    rows.forEach((r) => buckets[bandFor(r.aiScore)].push(r));
+    return BAND_ORDER.map((band) => {
+      const items = buckets[band];
+      const created = items.length;
+      const sent = items.filter(isSent);
+      const sentCount = sent.length;
+      const viewed = sent.filter((r) => r.viewCount > 0).length;
+      const replied = sent.filter((r) => REPLIED_SET_CONST.has(r.responseStatus)).length;
+      const interested = sent.filter((r) => INTERESTED_SET_CONST.has(r.responseStatus)).length;
+      const signed = sent.filter((r) => r.responseStatus === "signed").length;
+      return { band, created, sent: sentCount, viewed, replied, interested, signed };
+    }).filter((b) => b.created > 0);
+  }, [rows]);
 
   const totals = useMemo(() => {
     const totalCreated = rows.length;
@@ -130,6 +227,7 @@ export default function OutreachAnalyticsPanel({
       if (filter === "sent" && !sentRows.includes(r)) return false;
       if (filter === "viewed" && r.viewCount === 0) return false;
       if (RESPONSE_ORDER.includes(filter as AnalyticsResponseStatus) && r.responseStatus !== filter) return false;
+      if (bandFilter !== "all" && bandFor(r.aiScore) !== bandFilter) return false;
       if (!ql) return true;
       return (
         r.label.toLowerCase().includes(ql) ||
@@ -142,7 +240,7 @@ export default function OutreachAnalyticsPanel({
       const bd = new Date(b.createdAt || b.lastViewedAt || 0).getTime();
       return bd - ad;
     });
-  }, [rows, sentRows, q, filter]);
+  }, [rows, sentRows, q, filter, bandFilter]);
 
   const exportCsv = () => {
     const head = [
@@ -155,6 +253,7 @@ export default function OutreachAnalyticsPanel({
       "Response",
       "Response at",
       "Notes",
+      "AI score",
     ];
     const lines = [head.join(",")].concat(
       rows.map((r) =>
@@ -168,6 +267,7 @@ export default function OutreachAnalyticsPanel({
           RESPONSE_LABELS[r.responseStatus],
           r.responseAt ?? "",
           (r.responseNotes ?? "").replace(/\n/g, " "),
+          r.aiScore == null ? "" : String(Math.round(r.aiScore)),
         ]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(","),
@@ -224,6 +324,51 @@ export default function OutreachAnalyticsPanel({
         ))}
       </div>
 
+      {hasScores && bandStats.length > 0 && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="px-3 py-2 bg-muted/30 border-b border-border flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wider text-[#cbb96b] font-semibold">AI score bands</div>
+            <div className="text-[10px] text-muted-foreground">Conversion by fit score</div>
+          </div>
+          <div className="grid grid-cols-12 gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+            <div className="col-span-2">Band</div>
+            <div className="col-span-1 text-right">Created</div>
+            <div className="col-span-1 text-right">Sent</div>
+            <div className="col-span-1 text-right">Viewed</div>
+            <div className="col-span-1 text-right">Replied</div>
+            <div className="col-span-1 text-right">Interest</div>
+            <div className="col-span-1 text-right">Signed</div>
+            <div className="col-span-1 text-right">View %</div>
+            <div className="col-span-1 text-right">Reply %</div>
+            <div className="col-span-1 text-right">Int %</div>
+            <div className="col-span-1 text-right">Sign %</div>
+          </div>
+          <div className="divide-y divide-border">
+            {bandStats.map((b) => (
+              <div key={b.band} className="grid grid-cols-12 gap-2 px-3 py-1.5 text-[11px] items-center">
+                <div className="col-span-2 flex items-center gap-2">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ background: scoreColour(BAND_MID[b.band]) }}
+                  />
+                  <span className="text-white font-medium">{BAND_LABEL[b.band]}</span>
+                </div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.created}</div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.sent}</div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.viewed}</div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.replied}</div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.interested}</div>
+                <div className="col-span-1 text-right text-muted-foreground">{b.signed}</div>
+                <div className="col-span-1 text-right text-[#cbb96b]">{pct(b.viewed, b.sent)}</div>
+                <div className="col-span-1 text-right text-[#cbb96b]">{pct(b.replied, b.viewed)}</div>
+                <div className="col-span-1 text-right text-[#cbb96b]">{pct(b.interested, b.replied)}</div>
+                <div className="col-span-1 text-right text-[#cbb96b]">{pct(b.signed, b.sent)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -249,6 +394,26 @@ export default function OutreachAnalyticsPanel({
           </button>
         ))}
       </div>
+
+      {hasScores && bandStats.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Band</span>
+          {(["all", ...bandStats.map((b) => b.band)] as const).map((b) => (
+            <button
+              key={b}
+              type="button"
+              onClick={() => setBandFilter(b as any)}
+              className={`px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider transition border ${
+                bandFilter === b
+                  ? "bg-[#cbb96b] text-black border-[#cbb96b] font-semibold"
+                  : "text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {b === "all" ? "All bands" : BAND_LABEL[b as BandKey]}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30 border-b border-border">
