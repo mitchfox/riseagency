@@ -1,47 +1,50 @@
-## Goal
+# Plan: make Player Management show represented players first, reliably
 
-Keep the two status systems separate:
+## Actual issue
+Player Management is still starting at **Mandate**, even though the database has 5 players with `representation_status = represented` and `category = Signed`:
 
-- `representation_status`: internal RISE relationship status. Used by Players, Player Management, Coaching Data, Match Data, Athlete Centre, public represented-player sections and anything focused on players RISE works with. Values include `represented`, `fuel_for_football`, `mandated`, `previously_mandated`, `prospect`, `scouted`, `other`.
-- `agent_status`: external Transfermarkt/scouting agent signal. Used by Player Database, scouting/outreach and fit-score logic. Values include `represented`, `top_agency`, `unrepresented`, `family`, `unknown`.
+- Jaroslav Svoboda
+- Michael Vit Mulligan
+- Phil Conteh
+- Sandra Soares Martins
+- Tyrese Omotoye
 
-## What I will change
+So this is no longer a data absence issue. It is a rendering/grouping issue inside Player Management.
 
-### 1. Restore the internal status rule in data/player areas
-Audit and correct only views that should be internal-player focused so they use `representation_status` and never `agent_status`:
+## Fix
+1. **Stop relying on custom category fetch timing for core groups**
+   - Hard-code the canonical staff-management groups in this order:
+     1. Signed → `representation_status = represented`
+     2. Mandate → `representation_status = mandated`
+     3. Fuel For Football → `representation_status = fuel_for_football`
+     4. Previously Mandated → `representation_status = previously_mandated`
+     5. Prospect → `representation_status = prospect`
+     6. Other → `representation_status = other` or blank
+     7. Scouted → `representation_status = scouted`
+   - Custom categories can still appear after these, but cannot override or remove Signed.
 
-- Player Management
-- Coaching Data / Match Data / Comparisons
-- Athlete Centre
-- player sorting/grouping utilities
-- public represented-player sections
+2. **Group only from `representation_status` in Player Management**
+   - Do not use `agent_status`.
+   - Do not use `category` for the core staff player groups.
+   - This matches your rule: Player Management/Data are internal player-workflow sections, not scouting sections.
 
-This should make players with `representation_status = represented` show in Players, Data, Match Data etc again.
+3. **Force the Signed group to render whenever represented rows exist**
+   - If `players.filter(p => representation_status === 'represented')` returns rows, render **Signed (5)** before Mandate.
+   - Do not filter empty groups except after this canonical grouping has been built.
 
-### 2. Keep Player Database and scouting on agent status
-Leave Player Database/scouting filters based on `agent_status` for Transfermarkt representation analysis. Do not move those screens back to internal `representation_status` for agent representation.
+4. **Use the same canonical grouping for the left avatar rail and mobile dropdown**
+   - The left vertical avatar rail and the main card groups will be based on one shared `visibleCategoryGroups` result, so they cannot disagree.
 
-### 3. Stop Transfermarkt refresh from touching internal representation status
-Keep the Transfermarkt refresh limited to `agent_name`, `agent_status`, Transfermarkt links, image and factual scouting enrichment. It must not write `representation_status` at all.
+5. **Add temporary diagnostic output only if still needed**
+   - If the UI still starts at Mandate after the deterministic grouping, add a hidden/dev-only console log showing the first five groups and counts from the client response.
+   - Remove it once confirmed.
 
-### 4. Fix the incorrect case/value issue caused by earlier changes
-Normalise the accidental title-case internal statuses that break grouping, without guessing player relationships:
+## Validation
+- Confirm the first visible heading in `/staff?section=players` is **Signed (5)**.
+- Confirm the first five player cards under it are the represented players listed above.
+- Confirm Match Data/Data dropdowns still use `representation_status` ordering and are not affected by `agent_status`.
 
-- `Other` should be normalised to `other` where it is being used as an internal status.
-- Do not convert players into `represented`, `mandated` or `fuel_for_football` unless they already have that internal value or you explicitly name them.
-
-### 5. Add a narrow database guard
-Add a guard so future automated processes cannot write scouting/agent labels into `representation_status` again. It will allow only the internal values and block values such as `Top Agency`, `Family`, `Unrepresented` and title-case `Represented`.
-
-## What I will not do
-
-- I will not change Player Database to use internal `representation_status` for agent representation.
-- I will not use `agent_status` in Players, Match Data, Coaching Data or Player Management.
-- I will not bulk-guess which `other` players should actually be `represented`, `mandated` or `fuel_for_football`.
-- I will not touch unrelated UI or outreach analytics.
-
-## Technical notes
-
-- `src/components/staff/PlayerDatabase.tsx` already has `agent_status`-based resolution for agent representation, so that area should remain on the scouting model.
-- `src/components/staff/CoachingDataSection.tsx` fetches and passes `representation_status`, so the likely issue is bad data values and any accidental status normalisation/filtering elsewhere, not a need to use `agent_status`.
-- The database currently has many `Other` values and fewer canonical lowercase statuses. The fix will normalise `Other` to `other` so grouping utilities recognise it consistently.
+## Out of scope
+- No Player Database changes.
+- No `agent_status` changes.
+- No database migration unless we discover the browser is genuinely receiving different row data from the database query.

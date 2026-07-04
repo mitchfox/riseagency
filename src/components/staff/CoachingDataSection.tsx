@@ -14,6 +14,7 @@ import { sortPlayersByRepresentation, getStatusLabel } from "@/lib/playerSorting
 import { toast } from "sonner";
 import { AiShellSuggestions } from "@/components/staff/AiShellSuggestions";
 import { useStatsUpdaterAssignments, applyStatsUpdaterScope } from "@/hooks/useStatsUpdaterAssignments";
+import { fetchAllPlayers } from "@/lib/fetchAllPlayers";
 
 interface PlayerAnalysis {
   id: string;
@@ -67,10 +68,7 @@ export const CoachingDataSection = () => {
   }, [selectedPlayer]);
 
   const fetchPlayers = async () => {
-    const { data } = await supabase
-      .from("players")
-      .select("id, name, position, image_url, representation_status, age, club, date_of_birth")
-      .order("name");
+    const data = await fetchAllPlayers<{ id: string; name: string; position: string; image_url: string | null; representation_status?: string | null }>("id, name, position, image_url, representation_status, age, club, date_of_birth");
     setPlayers(sortPlayersByRepresentation(data || []));
   };
 

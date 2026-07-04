@@ -37,6 +37,7 @@ import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { LongTermVisionEditor } from "@/components/staff/LongTermVisionEditor";
 import { OperatingProfileViewer } from "@/components/staff/OperatingProfileViewer";
 import { sortPlayersByRepresentation } from "@/lib/playerSorting";
+import { fetchAllPlayers } from "@/lib/fetchAllPlayers";
 
 interface Player {
   id: string;
@@ -237,12 +238,8 @@ export const AthleteCentre = () => {
   }, [selectedPlayer]);
 
   const fetchPlayers = async () => {
-    const { data, error } = await supabase
-      .from("players")
-      .select("id, name, position, club, image_url, nationality, age, representation_status")
-      .order("name");
-
-    if (!error && data) {
+    try {
+      const data = await fetchAllPlayers<Player>("id, name, position, club, image_url, nationality, age, representation_status");
       const userId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
       let filtered = data as Player[];
       if (userId) {
@@ -272,6 +269,8 @@ export const AthleteCentre = () => {
           setSelectedPlayer(firstRepresented?.id || sorted[0].id);
         }
       }
+    } catch (error) {
+      console.error("Failed to fetch players:", error);
     }
     setLoading(false);
   };
