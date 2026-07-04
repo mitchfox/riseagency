@@ -324,7 +324,8 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
       const { data, error } = await supabase
         .from("players")
         .select("id, name, representation_status, club, club_logo")
-        .order("name");
+        .order("name")
+        .range(0, 4999);
 
       if (error) throw error;
       let list: any[] = data || [];

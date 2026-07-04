@@ -165,7 +165,8 @@ export const HighlightCompiler = ({ defaultPlayerId }: HighlightCompilerProps = 
     const { data } = await supabase
       .from("players")
       .select("id, name, position, club, image_url, representation_status")
-      .order("name");
+      .order("name")
+      .range(0, 4999);
     setPlayers(data || []);
   };
 

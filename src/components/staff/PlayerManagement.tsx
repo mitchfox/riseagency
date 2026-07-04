@@ -413,7 +413,8 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
       const { data: playersData, error: playersError } = await supabase
         .from("players")
         .select("*")
-        .order("name");
+        .order("name")
+        .range(0, 4999);
 
       if (playersError) throw playersError;
 

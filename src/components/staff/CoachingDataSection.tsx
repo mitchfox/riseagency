@@ -70,7 +70,8 @@ export const CoachingDataSection = () => {
     const { data } = await supabase
       .from("players")
       .select("id, name, position, image_url, representation_status, age, club, date_of_birth")
-      .order("name");
+      .order("name")
+      .range(0, 4999);
     setPlayers(sortPlayersByRepresentation(data || []));
   };
 

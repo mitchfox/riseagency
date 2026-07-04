@@ -240,7 +240,8 @@ export const AthleteCentre = () => {
     const { data, error } = await supabase
       .from("players")
       .select("id, name, position, club, image_url, nationality, age, representation_status")
-      .order("name");
+      .order("name")
+      .range(0, 4999);
 
     if (!error && data) {
       const userId = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
