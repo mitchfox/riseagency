@@ -71,7 +71,7 @@ export const CoachingDataSection = () => {
       .from("players")
       .select("id, name, position, image_url, representation_status, age, club, date_of_birth")
       .order("name");
-    setPlayers(data || []);
+    setPlayers(sortPlayersByRepresentation(data || []));
   };
 
   const fetchPlayerAnalyses = async (playerId: string) => {
