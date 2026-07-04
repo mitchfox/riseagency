@@ -48,6 +48,7 @@ import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
 import { PlayerSpqHistory } from "./PlayerSpqHistory";
 import { getRepresentationStatusKey, sortPlayersByRepresentation } from "@/lib/playerSorting";
+import { fetchAllPlayers } from "@/lib/fetchAllPlayers";
 
 interface Player {
   id: string;
@@ -410,13 +411,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const fetchPlayers = async (preserveSelection = false) => {
     try {
-      const { data: playersData, error: playersError } = await supabase
-        .from("players")
-        .select("*")
-        .order("name")
-        .range(0, 4999);
-
-      if (playersError) throw playersError;
+      const playersData = await fetchAllPlayers<Player>("*");
 
       setPlayers(sortPlayersByRepresentation(playersData || []));
       

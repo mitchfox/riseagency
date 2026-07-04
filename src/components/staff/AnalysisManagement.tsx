@@ -3,6 +3,7 @@ import * as tus from 'tus-js-client';
 import { useNavigate } from "react-router-dom";
 import { sharedSupabase as supabase } from "@/integrations/supabase/sharedClient";
 import { supabase as localSupabase } from "@/integrations/supabase/client";
+import { fetchAllPlayers } from "@/lib/fetchAllPlayers";
 import { invokeEdgeFunction } from "@/lib/edgeFunctionHelper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -321,13 +322,7 @@ export const AnalysisManagement = ({ isAdmin, defaultPlayerId }: AnalysisManagem
 
   const fetchPlayers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("players")
-        .select("id, name, representation_status, club, club_logo")
-        .order("name")
-        .range(0, 4999);
-
-      if (error) throw error;
+      const data = await fetchAllPlayers<any>("id, name, representation_status, club, club_logo");
       let list: any[] = data || [];
       try {
         const uid = localStorage.getItem("staff_user_id") || sessionStorage.getItem("staff_user_id");
