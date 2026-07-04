@@ -36,6 +36,7 @@ import { SessionResumeBanner, saveSession, clearSession, type SessionState } fro
 import { AddTestResultDialog } from "@/components/staff/AddTestResultDialog";
 import { LongTermVisionEditor } from "@/components/staff/LongTermVisionEditor";
 import { OperatingProfileViewer } from "@/components/staff/OperatingProfileViewer";
+import { sortPlayersByRepresentation } from "@/lib/playerSorting";
 
 interface Player {
   id: string;
@@ -66,12 +67,13 @@ interface PlayerAnalysis {
   fixture_stats?: any;
 }
 
-const STATUS_ORDER = ['represented', 'mandated', 'previously_mandated', 'fuel_for_football', 'other', 'scouted'];
+const STATUS_ORDER = ['represented', 'mandated', 'fuel_for_football', 'previously_mandated', 'prospect', 'other', 'scouted'];
 const STATUS_LABELS: Record<string, string> = {
   represented: 'Represented',
   mandated: 'Mandated',
-  previously_mandated: 'Previously Mandated',
   fuel_for_football: 'Fuel for Football',
+  previously_mandated: 'Previously Mandated',
+  prospect: 'Prospect',
   other: 'Other',
   scouted: 'Scouted',
 };
@@ -258,15 +260,16 @@ export const AthleteCentre = () => {
           }
         } catch {/* ignore */}
       }
-      setPlayers(filtered);
+      const sorted = sortPlayersByRepresentation(filtered);
+      setPlayers(sorted);
       if (filtered.length > 0) {
         const savedPlayerId = localStorage.getItem('athleteCentre_lastPlayer');
-        const savedPlayer = savedPlayerId ? filtered.find(p => p.id === savedPlayerId) : null;
+        const savedPlayer = savedPlayerId ? sorted.find(p => p.id === savedPlayerId) : null;
         if (savedPlayer) {
           setSelectedPlayer(savedPlayer.id);
         } else {
-          const firstRepresented = filtered.find(p => p.representation_status === 'represented');
-          setSelectedPlayer(firstRepresented?.id || filtered[0].id);
+          const firstRepresented = sorted.find(p => p.representation_status === 'represented');
+          setSelectedPlayer(firstRepresented?.id || sorted[0].id);
         }
       }
     }
@@ -279,7 +282,7 @@ export const AthleteCentre = () => {
     STATUS_ORDER.forEach(status => {
       const matching = players.filter(p => p.representation_status === status);
       if (matching.length > 0) {
-        groups.push({ status, label: STATUS_LABELS[status] || status, players: matching });
+        groups.push({ status, label: STATUS_LABELS[status] || status, players: sortPlayersByRepresentation(matching) });
       }
     });
     

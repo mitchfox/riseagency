@@ -13,6 +13,7 @@ export interface PlayerOption {
   image_url?: string | null;
   club?: string | null;
   representation_status?: string | null;
+  category?: string | null;
 }
 
 interface PlayerComboboxProps {
@@ -38,8 +39,8 @@ interface PlayerComboboxProps {
 const STATUS_ORDER = [
   'represented',
   'mandated',
-  'previously_mandated',
   'fuel_for_football',
+  'previously_mandated',
   'prospect',
   'other',
   'scouted',
@@ -54,6 +55,33 @@ const STATUS_LABELS: Record<string, string> = {
   other: 'Other',
   scouted: 'Scouted',
 };
+
+const normaliseRepresentationStatus = (status?: string | null) => {
+  const normalised = String(status || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+
+  const map: Record<string, string> = {
+    signed: 'represented',
+    represented: 'represented',
+    mandate: 'mandated',
+    mandated: 'mandated',
+    'fuel for football': 'fuel_for_football',
+    fuel_for_football: 'fuel_for_football',
+    'previously mandated': 'previously_mandated',
+    previously_mandated: 'previously_mandated',
+    prospect: 'prospect',
+    scouted: 'scouted',
+    other: 'other',
+  };
+
+  return map[normalised] || normalised.replace(/\s+/g, '_');
+};
+
+const getPlayerStatus = (player: PlayerOption) =>
+  normaliseRepresentationStatus(player.representation_status || player.category || 'other');
 
 export const PlayerCombobox = ({
   players,
@@ -78,10 +106,15 @@ export const PlayerCombobox = ({
   // Filter players by query
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return players;
-    return players.filter(p => {
+    const matching = q ? players.filter(p => {
       const haystack = [p.name, p.position, p.club].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
+    }) : players;
+
+    return [...matching].sort((a, b) => {
+      const statusDiff = STATUS_ORDER.indexOf(getPlayerStatus(a)) - STATUS_ORDER.indexOf(getPlayerStatus(b));
+      if (statusDiff !== 0) return statusDiff;
+      return (a.name || '').localeCompare(b.name || '');
     });
   }, [players, query]);
 
@@ -94,12 +127,12 @@ export const PlayerCombobox = ({
       .map(status => ({
         status,
         label: STATUS_LABELS[status] || status,
-        players: filtered.filter(p => (p.representation_status || 'other') === status),
+        players: filtered.filter(p => getPlayerStatus(p) === status),
       }))
       .filter(g => g.players.length > 0);
     // Catch any unrecognised statuses
     const handled = new Set(STATUS_ORDER);
-    const others = filtered.filter(p => !handled.has(p.representation_status || 'other'));
+    const others = filtered.filter(p => !handled.has(getPlayerStatus(p)));
     if (others.length > 0) {
       groups.push({ status: 'uncategorised', label: 'Other', players: others });
     }

@@ -47,6 +47,7 @@ import { PlayerContractsTab } from "./PlayerContractsTab";
 import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
 import { PlayerSpqHistory } from "./PlayerSpqHistory";
+import { sortPlayersByRepresentation } from "@/lib/playerSorting";
 
 interface Player {
   id: string;
@@ -415,7 +416,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
 
       if (playersError) throw playersError;
 
-      setPlayers(playersData || []);
+      setPlayers(sortPlayersByRepresentation(playersData || []));
       
       // Preserve URL parameters if requested
       if (preserveSelection && selectedPlayerId) {
@@ -1408,7 +1409,7 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     : players;
   const groupedPlayers = categorySections.map(category => ({
     ...category,
-    players: _searchedPlayers.filter(p => (p.representation_status || 'other') === category.key),
+    players: sortPlayersByRepresentation(_searchedPlayers.filter(p => (p.representation_status || 'other') === category.key)),
   }));
   const knownCategoryKeys = new Set(categorySections.map(c => c.key));
   const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(p.representation_status || 'other'));
