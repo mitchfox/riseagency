@@ -268,12 +268,6 @@ const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' |
   return 'represented';
 };
 
-const representationLabelForStatus = (status: 'represented' | 'family' | 'top_agency'): string => {
-  if (status === 'family') return 'Family';
-  if (status === 'top_agency') return 'Top Agency';
-  return 'Represented';
-};
-
 const tmProfileImageUrl = (id: string) => `https://img.a.transfermarkt.technology/portrait/big/${id}-1.jpg`;
 
 const hasTmNationalTeam = (data: any): boolean => {
@@ -780,9 +774,8 @@ serve(async (req) => {
         const missingDob = !hasValue(row.date_of_birth);
         const missingNationality = isMissingNationality(row.nationality);
         const missingTransfermarktUrl = !extractTransfermarktLink(row.links);
-        const missingRepresentation = !hasValue(row.representation_status) || /^unknown$/i.test(String(row.representation_status).trim());
         const missingNationalTeam = row.national_team !== true;
-        return missingDob || missingNationality || missingTransfermarktUrl || missingRepresentation || missingNationalTeam;
+        return missingDob || missingNationality || missingTransfermarktUrl || missingNationalTeam;
       });
       const candidates = candidateRows.slice(0, limit);
 
@@ -1026,7 +1019,8 @@ serve(async (req) => {
             } else {
               patch.agent_name = agency; fields.push('agent_name');
             }
-            // NEVER touch representation_status here — RISE curates it manually.
+            // NEVER touch representation_status here — RISE's internal player
+            // relationship status is curated manually in staff tools.
           }
 
           // Headshot: fill when missing, and also overwrite the stale
