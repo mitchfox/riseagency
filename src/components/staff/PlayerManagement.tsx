@@ -47,7 +47,7 @@ import { PlayerContractsTab } from "./PlayerContractsTab";
 import { PlayerReferenceImagesUploader } from "./PlayerReferenceImagesUploader";
 import { PlayerCategoriesDialog } from "./PlayerCategoriesDialog";
 import { PlayerSpqHistory } from "./PlayerSpqHistory";
-import { sortPlayersByRepresentation } from "@/lib/playerSorting";
+import { getRepresentationStatusKey, sortPlayersByRepresentation } from "@/lib/playerSorting";
 
 interface Player {
   id: string;
@@ -62,6 +62,7 @@ interface Player {
   visible_on_stars_page: boolean;
   highlights: any;
   representation_status: string;
+  category?: string | null;
   has_representation_offer?: boolean | null;
   club: string | null;
   club_logo: string | null;
@@ -1400,19 +1401,31 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     { id: 'scouted', name: 'Scouted', key: 'scouted', sort_order: 50, is_system: true },
     { id: 'other', name: 'Other', key: 'other', sort_order: 60, is_system: true },
   ];
-  const categorySections = (customCategories.length > 0 ? customCategories : fallbackCategories)
-    .map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }));
+  const fallbackKeys = new Set(fallbackCategories.map(c => c.key));
+  const customByKey = new Map(customCategories.map(c => [c.key || categoryStatusKey(c.name), c]));
+  const categorySections = [
+    ...fallbackCategories.map(fallback => {
+      const custom = customByKey.get(fallback.key);
+      return custom ? { ...custom, key: fallback.key } : fallback;
+    }),
+    ...customCategories.filter(c => !fallbackKeys.has(c.key || categoryStatusKey(c.name))),
+  ].map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }));
 
   // Group players directly from the managed Player Categories settings
   const _searchedPlayers = playerSearchTerm.trim()
     ? players.filter(p => matchesQuery(playerSearchTerm, [p.name]))
     : players;
+  const getPlayerGroupKey = (player: Player) => {
+    const statusKey = getRepresentationStatusKey(player.representation_status);
+    if (statusKey && statusKey !== 'other') return statusKey;
+    return statusKey || 'other';
+  };
   const groupedPlayers = categorySections.map(category => ({
     ...category,
-    players: sortPlayersByRepresentation(_searchedPlayers.filter(p => (p.representation_status || 'other') === category.key)),
+    players: sortPlayersByRepresentation(_searchedPlayers.filter(p => getPlayerGroupKey(p) === category.key)),
   }));
   const knownCategoryKeys = new Set(categorySections.map(c => c.key));
-  const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(p.representation_status || 'other'));
+  const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(getPlayerGroupKey(p)));
   const visibleCategoryGroups = [
     ...groupedPlayers,
     ...(uncategorisedPlayers.length > 0 ? [{ id: 'uncategorised', name: 'Uncategorised', key: 'uncategorised', sort_order: 9999, is_system: false, players: uncategorisedPlayers }] : []),
