@@ -15,6 +15,9 @@ import { PlayerOfferCustomiser } from "./PlayerOfferCustomiser";
 import { FitScoreBadge } from "./recruitment/FitScoreBadge";
 import { TemplatePickerInline } from "./recruitment/TemplatePickerInline";
 import { CreateOfferButton } from "./recruitment/CreateOfferButton";
+import { computeFitScore } from "@/lib/fitScore";
+import { useRecruitmentTargets, useScoringSettings } from "@/hooks/useRecruitmentScoring";
+import { useClubMaps } from "@/hooks/useClubMaps";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import ProposalVisitorsBell, { type ProposalVisit } from "./outreach/ProposalVisitorsBell";
 import ViewedVisitorsExpansion from "./outreach/ViewedVisitorsExpansion";
@@ -140,6 +143,32 @@ export const RepresentationOffers = () => {
   const [visits, setVisits] = useState<ProposalVisit[]>([]);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ id: string; name: string; position: string | null; club: string | null; nationality: string | null; date_of_birth: string | null; ig_handle?: string | null; source: 'players' | 'youth' | 'pro' | 'scout' }[]>([]);
+
+  // Live fit-score inputs — same source of truth as FitScoreBadge so the
+  // analytics panel bands match the pip shown next to each player.
+  const { targets } = useRecruitmentTargets();
+  const { settings } = useScoringSettings();
+  const { enrichForFit } = useClubMaps();
+
+  const fitScoreFor = (p: OfferPlayer): number | null => {
+    try {
+      const enriched = enrichForFit(p as any);
+      const r = computeFitScore(
+        enriched as any,
+        targets,
+        settings.weights,
+        settings.age_sweet_spot_band,
+        undefined,
+        settings.bonus_weights,
+        settings.position_adjacency_factor,
+        settings.league_strength_weight,
+        settings.position_weights,
+      );
+      return Math.max(0, Math.min(100, Math.round(r.total)));
+    } catch {
+      return null;
+    }
+  };
 
   // Lookup map: lower-cased name → Instagram @handle. Falls back to whatever
   // we already have on the player row, then to the outreach tables (youth /
@@ -612,6 +641,7 @@ export const RepresentationOffers = () => {
               responseStatus: ((p.outreach_response_status as AnalyticsResponseStatus) || 'none'),
               responseNotes: p.outreach_response_notes ?? null,
               responseAt: p.outreach_response_at ?? null,
+              aiScore: fitScoreFor(p),
             };
           })}
         />
