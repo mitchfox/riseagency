@@ -178,7 +178,7 @@ export const PlayerDatabaseActions = () => {
 
   const refreshAllTransfermarkt = async () => {
     if (refreshJob && (refreshJob.status === 'running' || refreshJob.status === 'pending')) return;
-    if (!confirm('Refresh every player that has a Transfermarkt URL? This keeps running in the background even if you close the tab.')) return;
+    if (!confirm('Refresh the next 300 stale Transfermarkt rows? Already scanned rows from the last 24 hours will be skipped.')) return;
     try {
       const { data, error } = await supabase.functions.invoke('refresh-transfermarkt-start', { body: {} });
       if (error) throw error;
