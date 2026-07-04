@@ -812,33 +812,20 @@ serve(async (req) => {
           if (!row.age && matched.age) { patch.age = matched.age; fields.push('age'); }
           if (row.national_team !== true && matched.national_team === true) { patch.national_team = true; fields.push('national_team'); }
 
-          // Representation status: only fill when empty/unknown. Set to
-          // "Represented" whenever Transfermarkt returns an agent name.
-          const existingRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
-          const repIsUnknown = !existingRep || /^unknown$/i.test(existingRep);
+          // Agent fields only. NEVER touch representation_status — that is a
+          // manually-curated field driven by RISE's own coaching/network work
+          // and must not be overwritten by Transfermarkt enrichment.
           if (matched.agency) {
             const agencyStatus = classifyAgencyStatus(matched.agency);
             if (agencyStatus) {
-              const desiredLabel = representationLabelForStatus(agencyStatus);
-              // Always upgrade to "Top Agency" when TM confirms one of the
-              // tier-one shops, even if the row was already flagged
-              // "Represented" by an earlier pass.
-              const shouldUpgradeToTop = agencyStatus === 'top_agency'
-                && existingRep.toLowerCase() !== 'top agency';
-              if (repIsUnknown || shouldUpgradeToTop) {
-                patch.representation_status = desiredLabel;
-                fields.push('representation_status');
+              if (!hasValue(row.agent_status)) {
+                patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
+                fields.push('agent_status');
               }
-            }
-            // Also fill the fit-score signals so the badge picks it up.
-            if (!hasValue(row.agent_status) && agencyStatus) {
-              // agent_status is a free-text field; store the canonical label.
-              patch.agent_status = agencyStatus === 'family' ? 'family' : 'represented';
-              fields.push('agent_status');
-            }
-            if (!hasValue(row.agent_name) && agencyStatus !== 'family') {
-              patch.agent_name = matched.agency;
-              fields.push('agent_name');
+              if (!hasValue(row.agent_name) && agencyStatus !== 'family') {
+                patch.agent_name = matched.agency;
+                fields.push('agent_name');
+              }
             }
           }
 
