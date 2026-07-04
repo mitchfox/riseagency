@@ -80,6 +80,9 @@ export const PlayerDatabaseActions = () => {
         (data?.results || []).forEach((result: any) => {
           if (result?.id) processedIds.add(String(result.id));
         });
+        (data?.outreach_results || []).forEach((result: any) => {
+          if (result?.id) processedIds.add(String(result.id));
+        });
         totalProcessed += processed;
         totalUpdated += updated;
         totalWithStats += withStats;
