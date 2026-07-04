@@ -876,44 +876,74 @@ serve(async (req) => {
 
     // Refresh mode: for every player that has a Transfermarkt URL, re-pull
     // the profile, headshot and current-season stats from TM. Runs in
-    // batches (via `limit` + `skipIds`) so the UI can page through the
-    // whole database without timing out.
+    // batches driven by a persistent job row (`transfermarkt_refresh_jobs`).
+    // The function self-chains via fetch so the refresh keeps going even if
+    // the browser tab is closed, and the UI watches the job row over
+    // realtime for live progress. Keyset pagination on `players.name`
+    // guarantees every player is scanned exactly once with no re-fetches.
     if (mode === 'refresh_all') {
       const supabaseUrl = Deno.env.get('SUPABASE_URL');
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
       if (!supabaseUrl || !serviceKey) {
         return new Response(JSON.stringify({ error: 'Backend not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      const limit = Math.min(Math.max(Number(body.limit) || 10, 1), 25);
-      const skipIds = new Set((Array.isArray(body.skipIds) ? body.skipIds : []).map((id) => String(id)));
+      const jobId = String(body.jobId || '').trim();
+      if (!jobId) {
+        return new Response(JSON.stringify({ error: 'jobId required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const batchSize = Math.min(Math.max(Number(body.batchSize) || 25, 1), 50);
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      const { data: allRows, error: fetchErr } = await supabase
-        .from('players')
-        .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
-        .order('name', { ascending: true })
-        .range(0, 9999);
-      if (fetchErr) {
-        return new Response(JSON.stringify({ error: fetchErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const { data: job, error: jobErr } = await supabase
+        .from('transfermarkt_refresh_jobs')
+        .select('*')
+        .eq('id', jobId)
+        .maybeSingle();
+      if (jobErr || !job) {
+        return new Response(JSON.stringify({ error: 'job_not_found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (job.status === 'cancelled' || job.status === 'complete' || job.status === 'failed') {
+        return new Response(JSON.stringify({ done: true, status: job.status }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
-      const rowsWithTm = (allRows || [])
-        .map((row: any) => ({
-          row,
-          url: extractTransfermarktLink(row.links),
-        }))
-        .filter(({ row, url }) => {
-          if (!url) return false;
-          if (skipIds.has(String(row.id))) return false;
+
+      // Pull the next slab of players after the cursor. We need to over-fetch
+      // because many rows won't have a TM url; keep pulling in pages until we
+      // have `batchSize` eligible candidates or the table is exhausted.
+      const candidates: Array<{ row: any; url: string }> = [];
+      let cursorName: string | null = job.last_processed_name;
+      let exhausted = false;
+      while (candidates.length < batchSize && !exhausted) {
+        let q = supabase
+          .from('players')
+          .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
+          .order('name', { ascending: true })
+          .limit(200);
+        if (cursorName) q = q.gt('name', cursorName);
+        const { data: slab, error: slabErr } = await q;
+        if (slabErr) {
+          await supabase.from('transfermarkt_refresh_jobs').update({
+            status: 'failed', error: slabErr.message, finished_at: new Date().toISOString(),
+          }).eq('id', jobId);
+          return new Response(JSON.stringify({ error: slabErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        if (!slab || slab.length === 0) { exhausted = true; break; }
+        for (const row of slab) {
+          cursorName = row.name;
+          const url = extractTransfermarktLink(row.links);
+          if (!url) continue;
           const category = String(row.category || '').trim().toLowerCase();
           const representation = String(row.representation_status || '').trim().toLowerCase();
-          if (excludedStatuses.has(category) || excludedStatuses.has(representation)) return false;
-          return /\/spieler\/(\d+)/i.test(url);
-        });
-      const candidates = rowsWithTm.slice(0, limit);
+          if (excludedStatuses.has(category) || excludedStatuses.has(representation)) continue;
+          if (!/\/spieler\/(\d+)/i.test(url)) continue;
+          candidates.push({ row, url });
+          if (candidates.length >= batchSize) break;
+        }
+        if (slab.length < 200) exhausted = true;
+      }
 
-      const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string }> = [];
+      const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string; stats_source?: string }> = [];
 
       const workers = await runWithConcurrency(candidates, 3, async ({ row, url }) => {
         const idMatch = url!.match(/\/spieler\/(\d+)/i);
@@ -1024,69 +1054,105 @@ serve(async (req) => {
       });
       results.push(...workers);
 
-      // Youth + pro outreach: same TM stats aggregation, keyed by
-      // (source, source_id) so each outreach row gets its own stats line
-      // even if no matching `players` row exists.
-      const outreachTables: Array<{ src: 'youth_outreach' | 'pro_outreach'; table: 'player_outreach_youth' | 'player_outreach_pro' }> = [
-        { src: 'youth_outreach', table: 'player_outreach_youth' },
-        { src: 'pro_outreach', table: 'player_outreach_pro' },
-      ];
-      const outreachResults: Array<{ id: string; name: string; source: string; updated: boolean; fields: string[]; reason?: string }> = [];
-      for (const { src, table } of outreachTables) {
-        const { data: orows } = await supabase
-          .from(table)
-          .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url')
-          .order('created_at', { ascending: false })
-          .range(0, 4999);
-        const candidates = (orows || [])
-          .filter((r: any) => !skipIds.has(String(r.id)))
-          .slice(0, Math.min(limit, 20));
-        const batch = await runWithConcurrency(candidates, 3, async (r: any) => {
-          try {
-            let tmId: string | null = null;
-            const urlMatch = String(r.transfermarkt_url || '').match(/\/spieler\/(\d+)/i);
-            if (urlMatch) tmId = urlMatch[1];
-            if (!tmId) {
-              const matched = await matchOnTransfermarkt({
-                name: r.player_name, position: r.position, nationality: r.nationality,
-                date_of_birth: r.date_of_birth, age: null,
-              });
-              if (matched?.transfermarkt_id) {
-                tmId = String(matched.transfermarkt_id);
-                await supabase.from(table).update({ transfermarkt_url: transfermarktProfileUrl(tmId) }).eq('id', r.id);
+      // One-shot outreach pass: fetch and process youth + pro outreach ONCE
+      // per job, then flip `outreach_done`. Subsequent batches never touch
+      // outreach again.
+      const outreachResults: Array<{ id: string; name: string; source: string; updated: boolean; fields: string[]; reason?: string; stats_source?: string }> = [];
+      let outreachDoneNow = false;
+      if (!job.outreach_done) {
+        const outreachTables: Array<{ src: 'youth_outreach' | 'pro_outreach'; table: 'player_outreach_youth' | 'player_outreach_pro' }> = [
+          { src: 'youth_outreach', table: 'player_outreach_youth' },
+          { src: 'pro_outreach', table: 'player_outreach_pro' },
+        ];
+        for (const { src, table } of outreachTables) {
+          const { data: orows } = await supabase
+            .from(table)
+            .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url')
+            .order('created_at', { ascending: false })
+            .range(0, 4999);
+          const batch = await runWithConcurrency(orows || [], 3, async (r: any) => {
+            try {
+              let tmId: string | null = null;
+              const urlMatch = String(r.transfermarkt_url || '').match(/\/spieler\/(\d+)/i);
+              if (urlMatch) tmId = urlMatch[1];
+              if (!tmId) {
+                const matched = await matchOnTransfermarkt({
+                  name: r.player_name, position: r.position, nationality: r.nationality,
+                  date_of_birth: r.date_of_birth, age: null,
+                });
+                if (matched?.transfermarkt_id) {
+                  tmId = String(matched.transfermarkt_id);
+                  await supabase.from(table).update({ transfermarkt_url: transfermarktProfileUrl(tmId) }).eq('id', r.id);
+                }
               }
+              if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
+              let stats = await fetchTmSeasonStats(tmId);
+              let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
+              if (!stats) {
+                const html = await fetchTmSeasonStatsHtml(tmId);
+                if (html) { stats = html; statsSource = 'html'; }
+              }
+              const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
+              const { error: statsErr } = await upsertPlayerStats(supabase, {
+                source: src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
+              });
+              if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
+              return { id: r.id, name: r.player_name, source: src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
+            } catch (err) {
+              return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
             }
-            if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
-            let stats = await fetchTmSeasonStats(tmId);
-            let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
-            if (!stats) {
-              const html = await fetchTmSeasonStatsHtml(tmId);
-              if (html) { stats = html; statsSource = 'html'; }
-            }
-            const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
-            const { error: statsErr } = await upsertPlayerStats(supabase, {
-              source: src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
-            });
-            if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
-            return { id: r.id, name: r.player_name, source: src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
-          } catch (err) {
-            return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
-          }
-        });
-        outreachResults.push(...batch);
+          });
+          outreachResults.push(...batch);
+        }
+        outreachDoneNow = true;
       }
 
-      const remainingAfter = Math.max(0, rowsWithTm.length - workers.length);
-      const withStats = results.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length
+      const batchProcessed = results.length + outreachResults.length;
+      const batchUpdated = results.filter((r: any) => r.updated).length + outreachResults.filter((r: any) => r.updated).length;
+      const batchWithStats = results.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length
         + outreachResults.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length;
+
+      const done = exhausted && candidates.length === 0;
+
+      // Re-read status to honour any cancellation the UI issued during work.
+      const { data: liveJob } = await supabase
+        .from('transfermarkt_refresh_jobs')
+        .select('status')
+        .eq('id', jobId)
+        .maybeSingle();
+      const cancelled = liveJob?.status === 'cancelled';
+
+      await supabase.from('transfermarkt_refresh_jobs').update({
+        processed: (job.processed || 0) + batchProcessed,
+        updated: (job.updated || 0) + batchUpdated,
+        with_stats: (job.with_stats || 0) + batchWithStats,
+        last_processed_name: cursorName,
+        outreach_done: job.outreach_done || outreachDoneNow,
+        status: cancelled ? 'cancelled' : (done ? 'complete' : 'running'),
+        finished_at: (cancelled || done) ? new Date().toISOString() : null,
+      }).eq('id', jobId);
+
+      // Self-chain: fire and forget another invocation to keep processing
+      // server-side. The browser doesn't need to poll for the next batch.
+      if (!done && !cancelled) {
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+        // Do NOT await — let this response return immediately.
+        fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${anonKey}`,
+            'apikey': anonKey,
+          },
+          body: JSON.stringify({ mode: 'refresh_all', jobId, batchSize }),
+        }).catch((err) => console.error('self-chain failed', err));
+      }
+
       return new Response(JSON.stringify({
-        processed: results.length + outreachResults.length,
-        updated: results.filter((r) => r.updated).length + outreachResults.filter((r) => r.updated).length,
-        with_stats: withStats,
-        remaining_before: rowsWithTm.length,
-        remaining: remainingAfter,
-        results,
-        outreach_results: outreachResults,
+        done, cancelled,
+        processed: batchProcessed,
+        updated: batchUpdated,
+        with_stats: batchWithStats,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
