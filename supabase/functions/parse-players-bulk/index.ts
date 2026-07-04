@@ -1026,17 +1026,7 @@ serve(async (req) => {
             } else {
               patch.agent_name = agency; fields.push('agent_name');
             }
-            const currentRep = hasValue(row.representation_status) ? String(row.representation_status).trim() : '';
-            const repIsUnknown = !currentRep || /^unknown$/i.test(currentRep);
-            const desiredLabel = representationLabelForStatus(agencyStatus);
-            // Upgrade to "Top Agency" whenever TM confirms one of the
-            // tier-one shops, even if the row was previously "Represented".
-            const shouldUpgradeToTop = agencyStatus === 'top_agency'
-              && currentRep.toLowerCase() !== 'top agency';
-            if (repIsUnknown || shouldUpgradeToTop) {
-              patch.representation_status = desiredLabel;
-              fields.push('representation_status');
-            }
+            // NEVER touch representation_status here — RISE curates it manually.
           }
 
           // Headshot: fill when missing, and also overwrite the stale
