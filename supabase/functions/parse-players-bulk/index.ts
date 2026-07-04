@@ -268,12 +268,6 @@ const classifyAgencyStatus = (agency: string | null): 'represented' | 'family' |
   return 'represented';
 };
 
-const representationLabelForStatus = (status: 'represented' | 'family' | 'top_agency'): string => {
-  if (status === 'family') return 'Family';
-  if (status === 'top_agency') return 'Top Agency';
-  return 'Represented';
-};
-
 const tmProfileImageUrl = (id: string) => `https://img.a.transfermarkt.technology/portrait/big/${id}-1.jpg`;
 
 const hasTmNationalTeam = (data: any): boolean => {
