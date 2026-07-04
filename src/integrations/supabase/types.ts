@@ -10005,6 +10005,57 @@ export type Database = {
           },
         ]
       }
+      transfermarkt_refresh_jobs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          id: string
+          last_processed_name: string | null
+          outreach_done: boolean
+          processed: number
+          started_at: string
+          started_by: string | null
+          status: string
+          total_outreach: number
+          total_players: number
+          updated: number
+          updated_at: string
+          with_stats: number
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          last_processed_name?: string | null
+          outreach_done?: boolean
+          processed?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          total_outreach?: number
+          total_players?: number
+          updated?: number
+          updated_at?: string
+          with_stats?: number
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          last_processed_name?: string | null
+          outreach_done?: boolean
+          processed?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          total_outreach?: number
+          total_players?: number
+          updated?: number
+          updated_at?: string
+          with_stats?: number
+        }
+        Relationships: []
+      }
       transfermarkt_shortlist: {
         Row: {
           added_to_outreach: boolean
