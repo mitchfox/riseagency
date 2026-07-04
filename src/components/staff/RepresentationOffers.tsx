@@ -641,6 +641,7 @@ export const RepresentationOffers = () => {
               responseStatus: ((p.outreach_response_status as AnalyticsResponseStatus) || 'none'),
               responseNotes: p.outreach_response_notes ?? null,
               responseAt: p.outreach_response_at ?? null,
+              aiScore: fitScoreFor(p),
             };
           })}
         />
