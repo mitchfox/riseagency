@@ -6,6 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const runInBackground = (promise: Promise<unknown>) => {
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime?.waitUntil) {
+    runtime.waitUntil(promise);
+  } else {
+    promise.catch((err) => console.error('background task failed', err));
+  }
+};
+
 interface ImageInput { base64: string; mimeType?: string }
 
 const SYSTEM_PROMPT = `You are a football scouting assistant. Extract a list of football players from the supplied text and/or screenshots. For each player infer the most likely values for: name, position (use short codes GK, CB, LB, RB, CDM, CM, CAM, RW, LW, CF only), nationality (country name in English), date_of_birth (YYYY-MM-DD if visible, otherwise null), age (integer if visible, otherwise null), club, league, instagram_handle (without @), shirt_number (integer if visible, otherwise null), team_side ("left" or "right" if the image shows two teams, otherwise null), name_is_stub (true if the label is only an initial + surname like "B. Szywała", otherwise false), national_team (true only if the source explicitly mentions this player has represented a national team at any age group, otherwise null — never guess), agency (only set if an agency name is written verbatim in the source text, otherwise null), notes (short free-form text with anything else useful).
@@ -912,13 +921,23 @@ serve(async (req) => {
         return new Response(JSON.stringify({ done: true, status: job.status }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
+      const targetTotal = Math.max(Number(job.total_players) || 0, 0);
+      const alreadyProcessed = Math.max(Number(job.processed) || 0, 0);
+      if (targetTotal <= alreadyProcessed) {
+        await supabase.from('transfermarkt_refresh_jobs').update({
+          status: 'complete',
+          finished_at: new Date().toISOString(),
+        }).eq('id', jobId);
+        return new Response(JSON.stringify({ done: true, processed: 0, updated: 0, with_stats: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
 
       // Small per-invocation slices so each chained edge function call
       // completes well under the CPU limit. The job self-chains until every
       // source is exhausted; the "batch size" the UI advertises is the outer
       // progress window, not what one invocation must chew through.
-      const PLAYER_SLICE = 20;
+      const PLAYER_SLICE = Math.min(20, targetTotal - alreadyProcessed);
       const OUTREACH_SLICE = 15;
 
       const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string; stats_source?: string }> = [];
@@ -929,7 +948,7 @@ serve(async (req) => {
       const playerCandidates: Array<{ row: any; url: string }> = [];
       if (!playersDone) {
         let scanned = 0;
-        while (playerCandidates.length < PLAYER_SLICE && scanned < 400) {
+          while (playerCandidates.length < PLAYER_SLICE && scanned < 400) {
           let q = supabase
             .from('players')
             .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status, last_tm_refreshed_at')
@@ -947,13 +966,17 @@ serve(async (req) => {
           scanned += slab.length;
           for (const row of slab) {
             cursorName = row.name;
-            const url = extractTransfermarktLink(row.links);
-            if (!url) continue;
-            if (!/\/spieler\/(\d+)/i.test(url)) continue;
             const category = String(row.category || '').trim().toLowerCase();
             const representation = String(row.representation_status || '').trim().toLowerCase();
             if (excludedStatuses.has(category) || excludedStatuses.has(representation)) continue;
             if (row.last_tm_refreshed_at && row.last_tm_refreshed_at > freshCutoffIso) continue;
+              const url = extractTransfermarktLink(row.links);
+              if (!url || !/\/spieler\/(\d+)/i.test(url)) {
+                await supabase.from('players').update({ last_tm_refreshed_at: new Date().toISOString() }).eq('id', row.id);
+                playerCandidates.push({ row, url: '' });
+                if (playerCandidates.length >= PLAYER_SLICE) break;
+                continue;
+              }
             playerCandidates.push({ row, url });
             if (playerCandidates.length >= PLAYER_SLICE) break;
           }
@@ -1089,11 +1112,14 @@ serve(async (req) => {
       const cursorUpdate: Record<string, unknown> = {};
       for (const spec of outreachSpecs) {
         if (job[spec.doneCol]) continue;
+        const remainingForJob = targetTotal - alreadyProcessed - results.length - outreachResults.length;
+        if (remainingForJob <= 0) break;
+        const sourceLimit = Math.min(OUTREACH_SLICE, remainingForJob);
         let outreachCursor: string | null = (job[spec.cursorCol] as string | null) || null;
         let sliceDone = false;
         const picked: any[] = [];
         let scanned = 0;
-        while (picked.length < OUTREACH_SLICE && scanned < 400) {
+        while (picked.length < sourceLimit && scanned < 400) {
           let oq = supabase
             .from(spec.table)
             .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url, last_tm_refreshed_at')
@@ -1113,7 +1139,7 @@ serve(async (req) => {
             outreachCursor = r.id;
             if (r.last_tm_refreshed_at && r.last_tm_refreshed_at > freshCutoffIso) continue;
             picked.push(r);
-            if (picked.length >= OUTREACH_SLICE) break;
+            if (picked.length >= sourceLimit) break;
           }
           if (orows.length < 200) { sliceDone = true; break; }
         }
@@ -1168,6 +1194,8 @@ serve(async (req) => {
       const allDone = playersDone
         && (cursorUpdate.outreach_youth_done ?? job.outreach_youth_done)
         && (cursorUpdate.outreach_pro_done ?? job.outreach_pro_done);
+      const targetReached = (alreadyProcessed + batchProcessed) >= targetTotal;
+      const shouldComplete = allDone || targetReached;
 
       // Re-read status to honour any cancellation the UI issued during work.
       const { data: liveJob } = await supabase
@@ -1184,28 +1212,47 @@ serve(async (req) => {
         last_processed_name: cursorName,
         players_done: playersDone,
         ...cursorUpdate,
-        status: cancelled ? 'cancelled' : (allDone ? 'complete' : 'running'),
-        finished_at: (cancelled || allDone) ? new Date().toISOString() : null,
+        status: cancelled ? 'cancelled' : (shouldComplete ? 'complete' : 'running'),
+        finished_at: (cancelled || shouldComplete) ? new Date().toISOString() : null,
       }).eq('id', jobId);
+
+      console.log(`Transfermarkt refresh job ${jobId}: +${batchProcessed} scanned, +${batchUpdated} updated, ${alreadyProcessed + batchProcessed}/${targetTotal}`);
 
       // Self-chain: fire and forget another invocation to keep processing
       // server-side. The browser doesn't need to poll for the next batch.
-      if (!allDone && !cancelled) {
+      if (!shouldComplete && !cancelled) {
         const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-        // Do NOT await — let this response return immediately.
-        fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
+        runInBackground(fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${anonKey}`,
-            'apikey': anonKey,
+            'Authorization': `Bearer ${serviceKey}`,
+            'apikey': anonKey || serviceKey,
           },
           body: JSON.stringify({ mode: 'refresh_all', jobId, batchSize }),
-        }).catch((err) => console.error('self-chain failed', err));
+        }).then(async (res) => {
+          if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            const message = `self-chain failed: ${res.status} ${text}`.slice(0, 1000);
+            console.error(message);
+            await supabase.from('transfermarkt_refresh_jobs').update({
+              status: 'failed',
+              error: message,
+              finished_at: new Date().toISOString(),
+            }).eq('id', jobId);
+          }
+        }).catch(async (err) => {
+          console.error('self-chain failed', err);
+          await supabase.from('transfermarkt_refresh_jobs').update({
+            status: 'failed',
+            error: String(err?.message || err || 'self-chain failed').slice(0, 1000),
+            finished_at: new Date().toISOString(),
+          }).eq('id', jobId);
+        }));
       }
 
       return new Response(JSON.stringify({
-        done: allDone, cancelled,
+        done: shouldComplete, cancelled,
         processed: batchProcessed,
         updated: batchUpdated,
         with_stats: batchWithStats,

@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DAILY_REFRESH_BATCH_TARGET = 300;
+
+const runInBackground = (promise: Promise<unknown>) => {
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime?.waitUntil) {
+    runtime.waitUntil(promise);
+  } else {
+    promise.catch((err) => console.error('background task failed', err));
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -38,8 +49,15 @@ serve(async (req) => {
 
     const staleFilter = (q: any) => q.or(`last_tm_refreshed_at.is.null,last_tm_refreshed_at.lt.${freshCutoffIso}`);
 
+    const excluded = '("Scouted","Fuel For Football","FFF")';
+    const eligiblePlayers = supabase
+      .from('players')
+      .select('*', { count: 'exact', head: true })
+      .or(`category.is.null,category.not.in.${excluded}`)
+      .or(`representation_status.is.null,representation_status.not.in.${excluded}`);
+
     const { count: playersCount } = await staleFilter(
-      supabase.from('players').select('*', { count: 'exact', head: true }),
+      eligiblePlayers,
     );
     const { count: youthCount } = await staleFilter(
       supabase.from('player_outreach_youth').select('*', { count: 'exact', head: true }),
@@ -48,11 +66,14 @@ serve(async (req) => {
       supabase.from('player_outreach_pro').select('*', { count: 'exact', head: true }),
     );
 
+    const staleTotal = (playersCount || 0) + (youthCount || 0) + (proCount || 0);
+    const targetTotal = Math.min(DAILY_REFRESH_BATCH_TARGET, staleTotal);
+
     const { data: job, error: jobErr } = await supabase
       .from('transfermarkt_refresh_jobs')
       .insert({
         status: 'running',
-        total_players: playersCount || 0,
+        total_players: targetTotal,
         total_outreach: (youthCount || 0) + (proCount || 0),
       })
       .select('*')
@@ -63,17 +84,38 @@ serve(async (req) => {
       });
     }
 
-    // Kick off the first batch. Fire-and-forget: the batch function
-    // self-chains until the cursor is exhausted.
-    fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
+    console.log(`starting Transfermarkt refresh job ${job.id}: target ${targetTotal} of ${staleTotal} stale rows`);
+
+    // Kick off the first batch in the edge-runtime background lifecycle. A
+    // plain un-awaited fetch can be cancelled as soon as this function returns,
+    // which is what left jobs parked at 0 scanned.
+    runInBackground(fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${anonKey}`,
-        'apikey': anonKey,
+        'Authorization': `Bearer ${serviceKey}`,
+        'apikey': anonKey || serviceKey,
       },
       body: JSON.stringify({ mode: 'refresh_all', jobId: job.id, batchSize: 25 }),
-    }).catch((err) => console.error('initial kick failed', err));
+    }).then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        const message = `initial refresh batch failed: ${res.status} ${text}`.slice(0, 1000);
+        console.error(message);
+        await supabase.from('transfermarkt_refresh_jobs').update({
+          status: 'failed',
+          error: message,
+          finished_at: new Date().toISOString(),
+        }).eq('id', job.id);
+      }
+    }).catch(async (err) => {
+      console.error('initial kick failed', err);
+      await supabase.from('transfermarkt_refresh_jobs').update({
+        status: 'failed',
+        error: String(err?.message || err || 'initial kick failed').slice(0, 1000),
+        finished_at: new Date().toISOString(),
+      }).eq('id', job.id);
+    }));
 
     return new Response(JSON.stringify({ jobId: job.id, resumed: false }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
