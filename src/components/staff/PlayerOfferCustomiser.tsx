@@ -400,6 +400,34 @@ export const PlayerOfferCustomiser = ({ playerId, playerName, open, onOpenChange
                 );
               })}
             </div>
+            <div className="pt-2 mt-2 border-t border-border/60 space-y-2">
+              <Label className="font-medium text-sm">"What Are The Terms" section</Label>
+              <p className="text-xs text-muted-foreground">Shows the Fees, Agreement and FAQs cards. On by default — turn off to hide all three at once.</p>
+              {(() => {
+                const TERMS_KEYS = ["fees", "agreement", "faqs"];
+                const termsVisible = !TERMS_KEYS.every((k) => hidden.has(k));
+                return (
+                  <div className="flex items-center justify-between rounded border p-2">
+                    <Label className="font-medium text-sm">What Are The Terms</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{termsVisible ? "Visible" : "Hidden"}</span>
+                      <Switch
+                        checked={termsVisible}
+                        onCheckedChange={(checked) => {
+                          const next = new Set(hidden);
+                          if (checked) {
+                            TERMS_KEYS.forEach((k) => next.delete(k));
+                          } else {
+                            TERMS_KEYS.forEach((k) => next.add(k));
+                          }
+                          setHidden(next);
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </>
         )}
