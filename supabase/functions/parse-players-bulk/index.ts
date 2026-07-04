@@ -892,6 +892,12 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: 'jobId required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       const batchSize = Math.min(Math.max(Number(body.batchSize) || 25, 1), 50);
+      // Skip-if-fresh window. Anyone already refreshed within this many hours
+      // is considered done and won't be re-scraped, so a running (or retried)
+      // job never repeats work and re-clicking the button after a completed
+      // run correctly finishes as a no-op.
+      const FRESH_HOURS = 24;
+      const freshCutoffIso = new Date(Date.now() - FRESH_HOURS * 3600 * 1000).toISOString();
       const supabase = createClient(supabaseUrl, serviceKey);
 
       const { data: job, error: jobErr } = await supabase
@@ -908,44 +914,54 @@ serve(async (req) => {
 
       const excludedStatuses = new Set(['scouted', 'fuel for football', 'fff']);
 
-      // Pull the next slab of players after the cursor. We need to over-fetch
-      // because many rows won't have a TM url; keep pulling in pages until we
-      // have `batchSize` eligible candidates or the table is exhausted.
-      const candidates: Array<{ row: any; url: string }> = [];
-      let cursorName: string | null = job.last_processed_name;
-      let exhausted = false;
-      while (candidates.length < batchSize && !exhausted) {
-        let q = supabase
-          .from('players')
-          .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status')
-          .order('name', { ascending: true })
-          .limit(200);
-        if (cursorName) q = q.gt('name', cursorName);
-        const { data: slab, error: slabErr } = await q;
-        if (slabErr) {
-          await supabase.from('transfermarkt_refresh_jobs').update({
-            status: 'failed', error: slabErr.message, finished_at: new Date().toISOString(),
-          }).eq('id', jobId);
-          return new Response(JSON.stringify({ error: slabErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-        if (!slab || slab.length === 0) { exhausted = true; break; }
-        for (const row of slab) {
-          cursorName = row.name;
-          const url = extractTransfermarktLink(row.links);
-          if (!url) continue;
-          const category = String(row.category || '').trim().toLowerCase();
-          const representation = String(row.representation_status || '').trim().toLowerCase();
-          if (excludedStatuses.has(category) || excludedStatuses.has(representation)) continue;
-          if (!/\/spieler\/(\d+)/i.test(url)) continue;
-          candidates.push({ row, url });
-          if (candidates.length >= batchSize) break;
-        }
-        if (slab.length < 200) exhausted = true;
-      }
+      // Small per-invocation slices so each chained edge function call
+      // completes well under the CPU limit. The job self-chains until every
+      // source is exhausted; the "batch size" the UI advertises is the outer
+      // progress window, not what one invocation must chew through.
+      const PLAYER_SLICE = 20;
+      const OUTREACH_SLICE = 15;
 
       const results: Array<{ id: string; name: string; updated: boolean; fields: string[]; reason?: string; stats_source?: string }> = [];
 
-      const workers = await runWithConcurrency(candidates, 3, async ({ row, url }) => {
+      // ---------- PLAYERS ----------
+      let cursorName: string | null = job.last_processed_name;
+      let playersDone = !!job.players_done;
+      const playerCandidates: Array<{ row: any; url: string }> = [];
+      if (!playersDone) {
+        let scanned = 0;
+        while (playerCandidates.length < PLAYER_SLICE && scanned < 400) {
+          let q = supabase
+            .from('players')
+            .select('id, name, image_url, agent_name, agent_status, national_team, links, category, representation_status, last_tm_refreshed_at')
+            .order('name', { ascending: true })
+            .limit(200);
+          if (cursorName) q = q.gt('name', cursorName);
+          const { data: slab, error: slabErr } = await q;
+          if (slabErr) {
+            await supabase.from('transfermarkt_refresh_jobs').update({
+              status: 'failed', error: slabErr.message, finished_at: new Date().toISOString(),
+            }).eq('id', jobId);
+            return new Response(JSON.stringify({ error: slabErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+          if (!slab || slab.length === 0) { playersDone = true; break; }
+          scanned += slab.length;
+          for (const row of slab) {
+            cursorName = row.name;
+            const url = extractTransfermarktLink(row.links);
+            if (!url) continue;
+            if (!/\/spieler\/(\d+)/i.test(url)) continue;
+            const category = String(row.category || '').trim().toLowerCase();
+            const representation = String(row.representation_status || '').trim().toLowerCase();
+            if (excludedStatuses.has(category) || excludedStatuses.has(representation)) continue;
+            if (row.last_tm_refreshed_at && row.last_tm_refreshed_at > freshCutoffIso) continue;
+            playerCandidates.push({ row, url });
+            if (playerCandidates.length >= PLAYER_SLICE) break;
+          }
+          if (slab.length < 200) { playersDone = true; break; }
+        }
+      }
+
+      const workers = await runWithConcurrency(playerCandidates, 3, async ({ row, url }) => {
         const idMatch = url!.match(/\/spieler\/(\d+)/i);
         const tmId = idMatch?.[1];
         if (!tmId) return { id: row.id, name: row.name, updated: false, fields: [], reason: 'no_tm_id' };
@@ -1021,10 +1037,11 @@ serve(async (req) => {
             patch.image_url = profile.imageUrl; fields.push('image_url');
           }
 
-          if (Object.keys(patch).length) {
-            const { error: updErr } = await supabase.from('players').update(patch).eq('id', row.id);
-            if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
-          }
+          // Always stamp last_tm_refreshed_at so this row is skipped for the
+          // rest of the 24h window, even when nothing else changed.
+          const patchWithStamp = { ...patch, last_tm_refreshed_at: new Date().toISOString() };
+          const { error: updErr } = await supabase.from('players').update(patchWithStamp).eq('id', row.id);
+          if (updErr) return { id: row.id, name: row.name, updated: false, fields, reason: updErr.message };
 
           // Current-season stats: try the JSON ceapi first, then fall back
           // to the HTML leistungsdaten tfoot. Always upsert a row keyed by
@@ -1054,57 +1071,93 @@ serve(async (req) => {
       });
       results.push(...workers);
 
-      // One-shot outreach pass: fetch and process youth + pro outreach ONCE
-      // per job, then flip `outreach_done`. Subsequent batches never touch
-      // outreach again.
+      // ---------- OUTREACH (youth + pro) ----------
+      // Same pattern as players: keyset-page a small slice per invocation,
+      // stamp last_tm_refreshed_at so we never redo a row inside 24h.
       const outreachResults: Array<{ id: string; name: string; source: string; updated: boolean; fields: string[]; reason?: string; stats_source?: string }> = [];
-      let outreachDoneNow = false;
-      if (!job.outreach_done) {
-        const outreachTables: Array<{ src: 'youth_outreach' | 'pro_outreach'; table: 'player_outreach_youth' | 'player_outreach_pro' }> = [
-          { src: 'youth_outreach', table: 'player_outreach_youth' },
-          { src: 'pro_outreach', table: 'player_outreach_pro' },
-        ];
-        for (const { src, table } of outreachTables) {
-          const { data: orows } = await supabase
-            .from(table)
-            .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url')
-            .order('created_at', { ascending: false })
-            .range(0, 4999);
-          const batch = await runWithConcurrency(orows || [], 3, async (r: any) => {
-            try {
-              let tmId: string | null = null;
-              const urlMatch = String(r.transfermarkt_url || '').match(/\/spieler\/(\d+)/i);
-              if (urlMatch) tmId = urlMatch[1];
-              if (!tmId) {
-                const matched = await matchOnTransfermarkt({
-                  name: r.player_name, position: r.position, nationality: r.nationality,
-                  date_of_birth: r.date_of_birth, age: null,
-                });
-                if (matched?.transfermarkt_id) {
-                  tmId = String(matched.transfermarkt_id);
-                  await supabase.from(table).update({ transfermarkt_url: transfermarktProfileUrl(tmId) }).eq('id', r.id);
-                }
-              }
-              if (!tmId) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: 'no_tm_id' };
-              let stats = await fetchTmSeasonStats(tmId);
-              let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
-              if (!stats) {
-                const html = await fetchTmSeasonStatsHtml(tmId);
-                if (html) { stats = html; statsSource = 'html'; }
-              }
-              const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
-              const { error: statsErr } = await upsertPlayerStats(supabase, {
-                source: src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
-              });
-              if (statsErr) return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: statsErr.message };
-              return { id: r.id, name: r.player_name, source: src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
-            } catch (err) {
-              return { id: r.id, name: r.player_name, source: src, updated: false, fields: [], reason: (err as Error).message };
-            }
-          });
-          outreachResults.push(...batch);
+
+      type OutreachSpec = {
+        src: 'youth_outreach' | 'pro_outreach';
+        table: 'player_outreach_youth' | 'player_outreach_pro';
+        cursorCol: 'last_processed_outreach_youth_id' | 'last_processed_outreach_pro_id';
+        doneCol: 'outreach_youth_done' | 'outreach_pro_done';
+      };
+      const outreachSpecs: OutreachSpec[] = [
+        { src: 'youth_outreach', table: 'player_outreach_youth', cursorCol: 'last_processed_outreach_youth_id', doneCol: 'outreach_youth_done' },
+        { src: 'pro_outreach', table: 'player_outreach_pro', cursorCol: 'last_processed_outreach_pro_id', doneCol: 'outreach_pro_done' },
+      ];
+      const cursorUpdate: Record<string, unknown> = {};
+      for (const spec of outreachSpecs) {
+        if (job[spec.doneCol]) continue;
+        let outreachCursor: string | null = (job[spec.cursorCol] as string | null) || null;
+        let sliceDone = false;
+        const picked: any[] = [];
+        let scanned = 0;
+        while (picked.length < OUTREACH_SLICE && scanned < 400) {
+          let oq = supabase
+            .from(spec.table)
+            .select('id, player_name, date_of_birth, nationality, position, current_club, transfermarkt_url, last_tm_refreshed_at')
+            .order('id', { ascending: true })
+            .limit(200);
+          if (outreachCursor) oq = oq.gt('id', outreachCursor);
+          const { data: orows, error: oerr } = await oq;
+          if (oerr) {
+            await supabase.from('transfermarkt_refresh_jobs').update({
+              status: 'failed', error: oerr.message, finished_at: new Date().toISOString(),
+            }).eq('id', jobId);
+            return new Response(JSON.stringify({ error: oerr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+          if (!orows || orows.length === 0) { sliceDone = true; break; }
+          scanned += orows.length;
+          for (const r of orows) {
+            outreachCursor = r.id;
+            if (r.last_tm_refreshed_at && r.last_tm_refreshed_at > freshCutoffIso) continue;
+            picked.push(r);
+            if (picked.length >= OUTREACH_SLICE) break;
+          }
+          if (orows.length < 200) { sliceDone = true; break; }
         }
-        outreachDoneNow = true;
+        cursorUpdate[spec.cursorCol] = outreachCursor;
+        cursorUpdate[spec.doneCol] = sliceDone;
+
+        const batch = await runWithConcurrency(picked, 3, async (r: any) => {
+          try {
+            let tmId: string | null = null;
+            const urlMatch = String(r.transfermarkt_url || '').match(/\/spieler\/(\d+)/i);
+            if (urlMatch) tmId = urlMatch[1];
+            if (!tmId) {
+              const matched = await matchOnTransfermarkt({
+                name: r.player_name, position: r.position, nationality: r.nationality,
+                date_of_birth: r.date_of_birth, age: null,
+              });
+              if (matched?.transfermarkt_id) {
+                tmId = String(matched.transfermarkt_id);
+                await supabase.from(spec.table).update({ transfermarkt_url: transfermarktProfileUrl(tmId) }).eq('id', r.id);
+              }
+            }
+            const stampIso = new Date().toISOString();
+            if (!tmId) {
+              await supabase.from(spec.table).update({ last_tm_refreshed_at: stampIso }).eq('id', r.id);
+              return { id: r.id, name: r.player_name, source: spec.src, updated: false, fields: [], reason: 'no_tm_id' };
+            }
+            let stats = await fetchTmSeasonStats(tmId);
+            let statsSource: 'ceapi' | 'html' | 'empty' = stats ? 'ceapi' : 'empty';
+            if (!stats) {
+              const html = await fetchTmSeasonStatsHtml(tmId);
+              if (html) { stats = html; statsSource = 'html'; }
+            }
+            const statsToWrite = stats || { matches: 0, minutes: 0, goals: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, seasonYear: 0 };
+            const { error: statsErr } = await upsertPlayerStats(supabase, {
+              source: spec.src, sourceId: r.id, playerId: null, tmId, stats: statsToWrite,
+            });
+            await supabase.from(spec.table).update({ last_tm_refreshed_at: stampIso }).eq('id', r.id);
+            if (statsErr) return { id: r.id, name: r.player_name, source: spec.src, updated: false, fields: [], reason: statsErr.message };
+            return { id: r.id, name: r.player_name, source: spec.src, updated: !!stats, fields: stats ? ['season_stats'] : [], stats_source: statsSource };
+          } catch (err) {
+            return { id: r.id, name: r.player_name, source: spec.src, updated: false, fields: [], reason: (err as Error).message };
+          }
+        });
+        outreachResults.push(...batch);
       }
 
       const batchProcessed = results.length + outreachResults.length;
@@ -1112,7 +1165,9 @@ serve(async (req) => {
       const batchWithStats = results.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length
         + outreachResults.filter((r: any) => r.stats_source && r.stats_source !== 'empty').length;
 
-      const done = exhausted && candidates.length === 0;
+      const allDone = playersDone
+        && (cursorUpdate.outreach_youth_done ?? job.outreach_youth_done)
+        && (cursorUpdate.outreach_pro_done ?? job.outreach_pro_done);
 
       // Re-read status to honour any cancellation the UI issued during work.
       const { data: liveJob } = await supabase
@@ -1127,14 +1182,15 @@ serve(async (req) => {
         updated: (job.updated || 0) + batchUpdated,
         with_stats: (job.with_stats || 0) + batchWithStats,
         last_processed_name: cursorName,
-        outreach_done: job.outreach_done || outreachDoneNow,
-        status: cancelled ? 'cancelled' : (done ? 'complete' : 'running'),
-        finished_at: (cancelled || done) ? new Date().toISOString() : null,
+        players_done: playersDone,
+        ...cursorUpdate,
+        status: cancelled ? 'cancelled' : (allDone ? 'complete' : 'running'),
+        finished_at: (cancelled || allDone) ? new Date().toISOString() : null,
       }).eq('id', jobId);
 
       // Self-chain: fire and forget another invocation to keep processing
       // server-side. The browser doesn't need to poll for the next batch.
-      if (!done && !cancelled) {
+      if (!allDone && !cancelled) {
         const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
         // Do NOT await — let this response return immediately.
         fetch(`${supabaseUrl}/functions/v1/parse-players-bulk`, {
@@ -1149,7 +1205,7 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify({
-        done, cancelled,
+        done: allDone, cancelled,
         processed: batchProcessed,
         updated: batchUpdated,
         with_stats: batchWithStats,
