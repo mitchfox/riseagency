@@ -6052,6 +6052,7 @@ export type Database = {
           initial_message: string | null
           is_starred: boolean
           last_contact_at: string | null
+          last_tm_refreshed_at: string | null
           manually_viewed_at: string | null
           messaged: boolean | null
           minutes_share: number | null
@@ -6087,6 +6088,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          last_tm_refreshed_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
           minutes_share?: number | null
@@ -6122,6 +6124,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          last_tm_refreshed_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
           minutes_share?: number | null
@@ -6168,6 +6171,7 @@ export type Database = {
           initial_message: string | null
           is_starred: boolean
           last_contact_at: string | null
+          last_tm_refreshed_at: string | null
           manually_viewed_at: string | null
           messaged: boolean | null
           minutes_share: number | null
@@ -6206,6 +6210,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          last_tm_refreshed_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
           minutes_share?: number | null
@@ -6244,6 +6249,7 @@ export type Database = {
           initial_message?: string | null
           is_starred?: boolean
           last_contact_at?: string | null
+          last_tm_refreshed_at?: string | null
           manually_viewed_at?: string | null
           messaged?: boolean | null
           minutes_share?: number | null
@@ -6830,6 +6836,7 @@ export type Database = {
           image_url: string | null
           instagram_handle: string | null
           is_starred: boolean
+          last_tm_refreshed_at: string | null
           league: string | null
           links: Json | null
           minutes_share: number | null
@@ -6896,6 +6903,7 @@ export type Database = {
           image_url?: string | null
           instagram_handle?: string | null
           is_starred?: boolean
+          last_tm_refreshed_at?: string | null
           league?: string | null
           links?: Json | null
           minutes_share?: number | null
@@ -6962,6 +6970,7 @@ export type Database = {
           image_url?: string | null
           instagram_handle?: string | null
           is_starred?: boolean
+          last_tm_refreshed_at?: string | null
           league?: string | null
           links?: Json | null
           minutes_share?: number | null
@@ -10011,7 +10020,12 @@ export type Database = {
           finished_at: string | null
           id: string
           last_processed_name: string | null
+          last_processed_outreach_pro_id: string | null
+          last_processed_outreach_youth_id: string | null
           outreach_done: boolean
+          outreach_pro_done: boolean
+          outreach_youth_done: boolean
+          players_done: boolean
           processed: number
           started_at: string
           started_by: string | null
@@ -10027,7 +10041,12 @@ export type Database = {
           finished_at?: string | null
           id?: string
           last_processed_name?: string | null
+          last_processed_outreach_pro_id?: string | null
+          last_processed_outreach_youth_id?: string | null
           outreach_done?: boolean
+          outreach_pro_done?: boolean
+          outreach_youth_done?: boolean
+          players_done?: boolean
           processed?: number
           started_at?: string
           started_by?: string | null
@@ -10043,7 +10062,12 @@ export type Database = {
           finished_at?: string | null
           id?: string
           last_processed_name?: string | null
+          last_processed_outreach_pro_id?: string | null
+          last_processed_outreach_youth_id?: string | null
           outreach_done?: boolean
+          outreach_pro_done?: boolean
+          outreach_youth_done?: boolean
+          players_done?: boolean
           processed?: number
           started_at?: string
           started_by?: string | null

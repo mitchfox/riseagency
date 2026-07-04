@@ -21,7 +21,9 @@ type RefreshJob = {
   processed: number;
   updated: number;
   with_stats: number;
-  outreach_done: boolean;
+  outreach_done?: boolean;
+  outreach_youth_done?: boolean;
+  outreach_pro_done?: boolean;
   error: string | null;
 };
 
@@ -123,11 +125,12 @@ export const PlayerDatabaseActions = () => {
 
   const formatToastMessage = (job: RefreshJob) => {
     const total = job.total_players || 0;
+    const outreachDone = !!(job.outreach_youth_done && job.outreach_pro_done);
     const parts = [
       `${job.processed.toLocaleString('en-GB')}${total ? ` / ${total.toLocaleString('en-GB')}` : ''} scanned`,
       `${job.updated.toLocaleString('en-GB')} updated`,
       `${job.with_stats.toLocaleString('en-GB')} with stats`,
-      job.outreach_done ? 'outreach done' : 'outreach pending',
+      outreachDone ? 'outreach done' : 'outreach pending',
     ];
     return parts.join(' · ');
   };

@@ -30,18 +30,23 @@ serve(async (req) => {
       }
     }
 
-    // Seed totals. Count of players with a transfermarkt link is expensive to
-    // do exactly server-side without SQL; use the players count as an upper
-    // bound and let the UI display "processed / total" as an approximation.
-    const { count: playersCount } = await supabase
-      .from('players')
-      .select('*', { count: 'exact', head: true });
-    const { count: youthCount } = await supabase
-      .from('player_outreach_youth')
-      .select('*', { count: 'exact', head: true });
-    const { count: proCount } = await supabase
-      .from('player_outreach_pro')
-      .select('*', { count: 'exact', head: true });
+    // Seed totals against the "not fresh in last 24h" window so the UI shows
+    // remaining-to-refresh, not the whole table. Re-clicking after a
+    // completed run therefore shows 0/0 instead of restarting from scratch.
+    const FRESH_HOURS = 24;
+    const freshCutoffIso = new Date(Date.now() - FRESH_HOURS * 3600 * 1000).toISOString();
+
+    const staleFilter = (q: any) => q.or(`last_tm_refreshed_at.is.null,last_tm_refreshed_at.lt.${freshCutoffIso}`);
+
+    const { count: playersCount } = await staleFilter(
+      supabase.from('players').select('*', { count: 'exact', head: true }),
+    );
+    const { count: youthCount } = await staleFilter(
+      supabase.from('player_outreach_youth').select('*', { count: 'exact', head: true }),
+    );
+    const { count: proCount } = await staleFilter(
+      supabase.from('player_outreach_pro').select('*', { count: 'exact', head: true }),
+    );
 
     const { data: job, error: jobErr } = await supabase
       .from('transfermarkt_refresh_jobs')
