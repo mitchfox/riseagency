@@ -112,7 +112,9 @@ export const PlayerCombobox = ({
     }) : players;
 
     return [...matching].sort((a, b) => {
-      const statusDiff = STATUS_ORDER.indexOf(getPlayerStatus(a)) - STATUS_ORDER.indexOf(getPlayerStatus(b));
+      const aStatusIndex = STATUS_ORDER.indexOf(getPlayerStatus(a));
+      const bStatusIndex = STATUS_ORDER.indexOf(getPlayerStatus(b));
+      const statusDiff = (aStatusIndex === -1 ? STATUS_ORDER.length : aStatusIndex) - (bStatusIndex === -1 ? STATUS_ORDER.length : bStatusIndex);
       if (statusDiff !== 0) return statusDiff;
       return (a.name || '').localeCompare(b.name || '');
     });

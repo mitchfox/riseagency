@@ -7,8 +7,8 @@ const STATUS_PRIORITY: Record<string, number> = {
   fuel_for_football: 2,
   previously_mandated: 3,
   prospect: 4,
-  other: 4,
-  scouted: 5,
+  other: 5,
+  scouted: 6,
 };
 
 const normaliseRepresentationStatus = (status?: string | null): string => {
@@ -39,8 +39,8 @@ export const sortPlayersByRepresentation = <T extends { representation_status?: 
   players: T[]
 ): T[] => {
   return [...players].sort((a, b) => {
-    const aPriority = STATUS_PRIORITY[normaliseRepresentationStatus(a.representation_status)] ?? 6;
-    const bPriority = STATUS_PRIORITY[normaliseRepresentationStatus(b.representation_status)] ?? 6;
+    const aPriority = STATUS_PRIORITY[normaliseRepresentationStatus(a.representation_status)] ?? 7;
+    const bPriority = STATUS_PRIORITY[normaliseRepresentationStatus(b.representation_status)] ?? 7;
     if (aPriority !== bPriority) return aPriority - bPriority;
     return (a.name || '').localeCompare(b.name || '');
   });
