@@ -11,7 +11,7 @@ const STATUS_PRIORITY: Record<string, number> = {
   scouted: 6,
 };
 
-const normaliseRepresentationStatus = (status?: string | null): string => {
+export const getRepresentationStatusKey = (status?: string | null): string => {
   const normalised = String(status || "")
     .trim()
     .toLowerCase()
@@ -39,15 +39,15 @@ export const sortPlayersByRepresentation = <T extends { representation_status?: 
   players: T[]
 ): T[] => {
   return [...players].sort((a, b) => {
-    const aPriority = STATUS_PRIORITY[normaliseRepresentationStatus(a.representation_status)] ?? 7;
-    const bPriority = STATUS_PRIORITY[normaliseRepresentationStatus(b.representation_status)] ?? 7;
+    const aPriority = STATUS_PRIORITY[getRepresentationStatusKey(a.representation_status)] ?? 7;
+    const bPriority = STATUS_PRIORITY[getRepresentationStatusKey(b.representation_status)] ?? 7;
     if (aPriority !== bPriority) return aPriority - bPriority;
     return (a.name || '').localeCompare(b.name || '');
   });
 };
 
 export const getStatusLabel = (status: string): string => {
-  const normalised = normaliseRepresentationStatus(status);
+  const normalised = getRepresentationStatusKey(status);
   const labels: Record<string, string> = {
     represented: 'Represented',
     mandated: 'Mandated',
@@ -68,13 +68,13 @@ export const groupPlayersByStatus = <T extends { representation_status?: string 
   const statusOrder = ['represented', 'mandated', 'fuel_for_football', 'previously_mandated', 'prospect', 'other', 'scouted'];
   
   statusOrder.forEach(status => {
-    const matching = players.filter(p => normaliseRepresentationStatus(p.representation_status) === status);
+    const matching = players.filter(p => getRepresentationStatusKey(p.representation_status) === status);
     if (matching.length > 0) {
       groups.push({ status, label: getStatusLabel(status), players: matching });
     }
   });
   
-  const uncategorised = players.filter(p => !statusOrder.includes(normaliseRepresentationStatus(p.representation_status)));
+  const uncategorised = players.filter(p => !statusOrder.includes(getRepresentationStatusKey(p.representation_status)));
   if (uncategorised.length > 0) {
     groups.push({ status: 'uncategorised', label: 'Uncategorised', players: uncategorised });
   }
