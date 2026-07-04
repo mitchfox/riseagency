@@ -1393,23 +1393,20 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
   
   const selectedPlayerSeasonStats = selectedPlayer ? getSeasonStats(selectedPlayer) : null;
 
-  const fallbackCategories = [
+  const canonicalCategorySections = [
     { id: 'represented', name: 'Signed', key: 'represented', sort_order: 10, is_system: true },
     { id: 'mandated', name: 'Mandate', key: 'mandated', sort_order: 20, is_system: true },
     { id: 'fuel_for_football', name: 'Fuel For Football', key: 'fuel_for_football', sort_order: 30, is_system: true },
     { id: 'previously_mandated', name: 'Previously Mandated', key: 'previously_mandated', sort_order: 40, is_system: true },
-    { id: 'scouted', name: 'Scouted', key: 'scouted', sort_order: 50, is_system: true },
+    { id: 'prospect', name: 'Prospect', key: 'prospect', sort_order: 50, is_system: true },
     { id: 'other', name: 'Other', key: 'other', sort_order: 60, is_system: true },
+    { id: 'scouted', name: 'Scouted', key: 'scouted', sort_order: 70, is_system: true },
   ];
-  const fallbackKeys = new Set(fallbackCategories.map(c => c.key));
-  const customByKey = new Map(customCategories.map(c => [c.key || categoryStatusKey(c.name), c]));
-  const categorySections = [
-    ...fallbackCategories.map(fallback => {
-      const custom = customByKey.get(fallback.key);
-      return custom ? { ...custom, key: fallback.key } : fallback;
-    }),
-    ...customCategories.filter(c => !fallbackKeys.has(c.key || categoryStatusKey(c.name))),
-  ].map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }));
+  const canonicalCategoryKeys = new Set(canonicalCategorySections.map(c => c.key));
+  const customCategorySections = customCategories
+    .map(c => ({ ...c, key: c.key || categoryStatusKey(c.name) }))
+    .filter(c => !canonicalCategoryKeys.has(c.key));
+  const categorySections = [...canonicalCategorySections, ...customCategorySections];
 
   // Group players directly from the managed Player Categories settings
   const _searchedPlayers = playerSearchTerm.trim()
@@ -1417,19 +1414,14 @@ const PlayerManagement = ({ isAdmin }: { isAdmin: boolean }) => {
     : players;
   const getPlayerGroupKey = (player: Player) => {
     const statusKey = getRepresentationStatusKey(player.representation_status);
-    if (statusKey && statusKey !== 'other') return statusKey;
-    return statusKey || 'other';
+    if (canonicalCategoryKeys.has(statusKey)) return statusKey;
+    return 'other';
   };
   const groupedPlayers = categorySections.map(category => ({
     ...category,
     players: sortPlayersByRepresentation(_searchedPlayers.filter(p => getPlayerGroupKey(p) === category.key)),
   }));
-  const knownCategoryKeys = new Set(categorySections.map(c => c.key));
-  const uncategorisedPlayers = _searchedPlayers.filter(p => !knownCategoryKeys.has(getPlayerGroupKey(p)));
-  const visibleCategoryGroups = [
-    ...groupedPlayers,
-    ...(uncategorisedPlayers.length > 0 ? [{ id: 'uncategorised', name: 'Uncategorised', key: 'uncategorised', sort_order: 9999, is_system: false, players: uncategorisedPlayers }] : []),
-  ].filter(group => group.players.length > 0);
+  const visibleCategoryGroups = groupedPlayers.filter(group => group.players.length > 0);
 
   // State for collapsed sections - other, scouted, fuel_for_football, prospect collapsed by default
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
