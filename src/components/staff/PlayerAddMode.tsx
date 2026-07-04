@@ -91,7 +91,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
       club: cleanClub,
       instagram_handle: manual.instagram_handle.trim() || null,
       category: 'Other',
-      representation_status: 'Other',
+      representation_status: 'other',
     };
     const updatePayload = compact({
       position: normalisePosition(manual.position) || manual.position.trim() || null,
@@ -191,7 +191,7 @@ export const PlayerAddMode = ({ onExit, initialMode = 'ai' }: { onExit: () => vo
         national_team: p.national_team === true ? true : null,
         agent_name: isRise ? 'RISE Football Agency' : (normalisedAgency || null),
         category: 'Other',
-        representation_status: isRise ? 'represented' : 'Other',
+        representation_status: isRise ? 'represented' : 'other',
         ...(links ? { links } : {}),
       };
       const updatePayload = compact({

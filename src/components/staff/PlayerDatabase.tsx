@@ -58,9 +58,8 @@ const mergePlayerRecord = (base: PlayerData, incoming: PlayerData): PlayerData =
   agent_status: base.agent_status || incoming.agent_status,
 });
 
-// Map any representation_status string the DB might hold (any casing, plus
-// legacy variants like "relatives") to one of five canonical player-facing
-// labels used by the filter. Anything unrecognised falls back to "Unknown".
+// Map external agent-status values to the scouting filter labels. This is
+// deliberately separate from RISE's internal representation_status field.
 const CANONICAL_REPRESENTATION = ['Represented', 'Top Agency', 'Family', 'Unrepresented', 'Unknown'] as const;
 const canonRepresentation = (value: string | null | undefined): string => {
   const raw = String(value || '').trim().toLowerCase();
@@ -72,18 +71,14 @@ const canonRepresentation = (value: string | null | undefined): string => {
   return 'Unknown';
 };
 
-// Resolve the canonical representation label for the filter using the
-// player-details `agent_status` field as the source of truth. The legacy
-// `representation_status` column only wins when it explicitly says
-// "Top Agency" (that tier lives on the legacy column). Everything else
-// (mandated, prospect, Other, etc.) is Rise pipeline state, not agent
-// representation, so we ignore it here.
+// Resolve the scouting representation label from `agent_status`. Internal
+// `representation_status` values such as represented, mandated, prospect and
+// fuel_for_football are RISE workflow state and are ignored by Player Database
+// agent-representation filters.
 const resolveRepresentationLabel = (
   agentStatus: string | null | undefined,
   representationStatus: string | null | undefined,
 ): string => {
-  const rep = String(representationStatus || '').trim().toLowerCase();
-  if (rep === 'top agency' || rep === 'top_agency') return 'Top Agency';
   const agent = String(agentStatus || '').trim().toLowerCase();
   if (!agent) return 'Unknown';
   if (agent === 'represented') return 'Represented';
